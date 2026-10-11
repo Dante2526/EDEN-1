@@ -14,6 +14,8 @@ import {
   ChangeType,
   Skill,
   McpServer,
+  KnowledgeFact,
+  KnowledgeCategory,
 } from './lib/types';
 import {
   loadConversations,
@@ -26,7 +28,10 @@ import {
   saveSkills,
   loadMcpServers,
   saveMcpServers,
+  loadKnowledgeFacts,
+  saveKnowledgeFacts,
 } from './lib/storage';
+import { formatKnowledgePrompt, createKnowledgeFact } from './lib/knowledge-base';
 import { generateId, generateTitleFromMessage, formatFileSize } from './lib/utils';
 import { ChatHeader } from './components/chat-header';
 import { ChatSidebar } from './components/chat-sidebar';
@@ -291,8 +296,54 @@ const TERMINAL_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, ...GITHUB_TOOLS];
+const MEMORY_SAVE_TOOL = {
+  type: 'function',
+  function: {
+    name: 'save_memory',
+    description:
+      'Salva um fato duradouro, regra de projeto ou preferência do usuário na Base de Conhecimento permanente para ser lembrado em todas as conversas futuras.',
+    parameters: {
+      type: 'object',
+      properties: {
+        fact: {
+          type: 'string',
+          description: 'O fato atemporal e claro a ser retido (ex: "O usuário hospeda a aplicação na Vercel no plano Hobby").',
+        },
+        category: {
+          type: 'string',
+          enum: ['stack', 'preference', 'rule', 'general'],
+          description: 'Categoria do fato: stack técnica, preferência do usuário, regra de projeto ou geral.',
+        },
+      },
+      required: ['fact'],
+    },
+  },
+};
+
+const MEMORY_FORGET_TOOL = {
+  type: 'function',
+  function: {
+    name: 'forget_memory',
+    description:
+      'Remove um fato desatualizado ou revogado da memória permanente.',
+    parameters: {
+      type: 'object',
+      properties: {
+        factId: {
+          type: 'string',
+          description: 'O ID do fato a ser esquecido (ex: "mem_123").',
+        },
+        query: {
+          type: 'string',
+          description: 'Texto ou palavra-chave para buscar e esquecer se o ID não for conhecido.',
+        },
+      },
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -356,6 +407,9 @@ function AppContent() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
   const [testingServerId, setTestingServerId] = useState<string | null>(null);
+
+  // Knowledge Base & Persistent Memory state
+  const [knowledgeFacts, setKnowledgeFacts] = useState<KnowledgeFact[]>([]);
 
   // Theme state (dark / light mode)
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
@@ -505,6 +559,10 @@ function AppContent() {
     loadMcpServers().then((loadedServers) => {
       setMcpServers(loadedServers);
     });
+
+    loadKnowledgeFacts().then((loadedFacts) => {
+      setKnowledgeFacts(loadedFacts);
+    });
   }, []);
 
   // Persist conversations
@@ -527,6 +585,11 @@ function AppContent() {
       saveMcpServers(mcpServers);
     }
   }, [mcpServers]);
+
+  // Persist knowledgeFacts
+  useEffect(() => {
+    saveKnowledgeFacts(knowledgeFacts);
+  }, [knowledgeFacts]);
 
   // Handle user scroll detection on message container
   const handleMessagesScroll = useCallback(() => {
@@ -662,6 +725,26 @@ function AppContent() {
 
   const handleDeleteSkill = useCallback((id: string) => {
     setSkills((prev) => prev.filter((s) => s.id !== id || s.isBuiltin));
+  }, []);
+
+  // Knowledge Base Memory Handlers
+  const handleAddKnowledgeFact = useCallback((factText: string, category?: KnowledgeCategory) => {
+    try {
+      const newFact = createKnowledgeFact(factText, category);
+      setKnowledgeFacts((prev) => [...prev, newFact]);
+      return newFact;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }, []);
+
+  const handleDeleteKnowledgeFact = useCallback((id: string) => {
+    setKnowledgeFacts((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  const handleClearKnowledgeFacts = useCallback(() => {
+    setKnowledgeFacts([]);
   }, []);
 
   const handleAddMcpServer = useCallback(async (serverData: { name: string; url: string; transport: 'sse' | 'http'; apiKey?: string }) => {
@@ -949,6 +1032,64 @@ function AppContent() {
         };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || 'Falha ao compilar documento' }) };
+      }
+    }
+
+    if (name === 'save_memory') {
+      try {
+        const factText = args.fact?.trim();
+        if (!factText) {
+          return { result: JSON.stringify({ error: 'O parâmetro fact é obrigatório.' }) };
+        }
+        const newFact = createKnowledgeFact(factText, args.category);
+        setKnowledgeFacts((prev) => {
+          const exists = prev.some((f) => f.fact.toLowerCase() === factText.toLowerCase());
+          return exists ? prev : [...prev, newFact];
+        });
+        return {
+          result: JSON.stringify({
+            status: 'success',
+            id: newFact.id,
+            fact: newFact.fact,
+            category: newFact.category,
+            instruction: `Fato gravado com sucesso na Base de Conhecimento permanente (ID: ${newFact.id}). Ele estará ativo em todas as conversas futuras.`,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao salvar memória' }) };
+      }
+    }
+
+    if (name === 'forget_memory') {
+      try {
+        const targetId = args.factId?.trim();
+        const query = args.query?.toLowerCase()?.trim();
+        let removedCount = 0;
+        setKnowledgeFacts((prev) => {
+          const filtered = prev.filter((f) => {
+            if (targetId && f.id === targetId) {
+              removedCount++;
+              return false;
+            }
+            if (query && (f.fact.toLowerCase().includes(query) || f.id.toLowerCase().includes(query))) {
+              removedCount++;
+              return false;
+            }
+            return true;
+          });
+          removedCount = prev.length - filtered.length;
+          return filtered;
+        });
+        return {
+          result: JSON.stringify({
+            status: 'success',
+            instruction: removedCount > 0
+              ? `${removedCount} fato(s) removido(s) com sucesso da memória permanente.`
+              : 'Nenhum fato correspondente encontrado para remover.',
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao remover memória' }) };
       }
     }
 
@@ -1412,7 +1553,8 @@ function AppContent() {
       '2. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída.\n' +
       '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
       '4. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python.\n' +
-      '5. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.';
+      '5. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
+      '6. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.';
 
     const planPrompt = activePlan
       ? 'Você é um estrategista e arquiteto de planejamento sênior. O MODO PLANO (FUNÇÃO PLAN) está ATIVADO. Para a solicitação do usuário, crie OBRIGATORIAMENTE um PLANO DE AÇÃO COMPLETO, PRÁTICO E EXECUTÁVEL, formatado estritamente com os seguintes tópicos em Markdown:\n\n' +
@@ -1431,6 +1573,9 @@ function AppContent() {
           .map((s) => `### Habilidade: ${s.name}\n${s.systemPrompt}`)
           .join('\n\n')
       : undefined;
+
+    // Injetar Base de Conhecimento persistente (Memória de longo prazo)
+    const memoriesPrompt = formatKnowledgePrompt(knowledgeFacts);
 
     // Obter ferramentas ativas de servidores MCP conectados
     const activeMcpServers = mcpServers.filter((s) => s.enabled && s.status === 'connected' && s.tools.length > 0);
@@ -1457,6 +1602,7 @@ function AppContent() {
       repo: repoPrompt,
       plan: planPrompt,
       skills: skillsPrompt,
+      memories: memoriesPrompt,
     });
 
     const controller = new AbortController();
@@ -1914,7 +2060,7 @@ function AppContent() {
       setIsStreaming(false);
       abortControllerRef.current = null;
     }
-  }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers]);
+  }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
