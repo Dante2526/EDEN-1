@@ -98,4 +98,18 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
     - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
     - Build de produção Vite verde em `dist/`.
 
-**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP e Leitura Web Profunda com `fetch_url`.
+## 13. Execução Real de Código Python no Navegador (`run_python` via Pyodide WASM)
+- **Problema:** O terminal do Synap operava apenas como um emulador para comandos Git/GitHub, sem capacidade de executar código de verdade. A IA ficava limitada a suposições teóricas para cálculos matemáticos precisos, simulações, formatações de dados e testes de algoritmos.
+- **Solução Implementada:**
+  - **100% Gratuito & Custo Zero Vitalício:** Roda CPython 3.12 compilado para WebAssembly (Pyodide v0.26.4) inteiramente no hardware do cliente, sem requisições para servidores externos, sem limites de créditos e sem chaves de API.
+  - **Execução em Segundo Plano (Web Worker):** Criado o Web Worker `src/workers/pyodide-worker.ts`, garantindo que cálculos pesados ou scripts de longa duração nunca travem a renderização da interface ou o fluxo do chat.
+  - **Lazy-Loading Sob Demanda:** O runtime do Pyodide só é baixado do CDN oficial na primeira vez que a ferramenta é chamada, preservando o carregamento ultrarrápido inicial do Synap.
+  - **Captura Automática de I/O e Timeout:** Redireciona e intercepta streams de `sys.stdout` (`print(...)`) e `sys.stderr`, com cronômetro de execução e timeout estrito de 15 segundos para encerrar e recriar o Worker em caso de loops infinitos.
+  - **Interface Visual de Terminal Python:** Card estilizado no chat (`chat-message.tsx`) com badge "Python 3 (WASM)", bloco com código executado e janela de console para exibição de saídas e métricas de tempo em milissegundos.
+  - **Evidências de Verificação:**
+    - Testes unitários do cliente Pyodide: 3/3 passando (`src/lib/pyodide-client.test.ts`).
+    - Testes de regressão da suíte completa: 13/13 passando sem falhas.
+    - Verificação de tipos estritos: `tsc --noEmit` com 0 erros.
+    - Build de produção do Vite compilado em 681ms com chunk isolado do worker (`pyodide-worker.js`).
+
+**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP, Leitura Web Profunda com `fetch_url` e Execução Real de Python com `run_python`.

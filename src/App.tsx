@@ -43,6 +43,7 @@ import { commitStagedChanges } from './lib/github-commit';
 import { StudioPanel } from './studio/studio-panel';
 import { ErrorModal, AppErrorInfo } from './components/error-modal';
 import { CompactionMarker } from './components/compaction-marker';
+import { executePythonCode, formatPythonOutput } from './lib/pyodide-client';
 import { prepareMessagesForApi, shouldCompact, compactConversation } from './lib/context-compactor';
 import {
   convertMcpToolsToOpenAi,
@@ -194,6 +195,26 @@ const FETCH_URL_TOOL = {
   },
 };
 
+const PYTHON_TOOL = {
+  type: 'function',
+  function: {
+    name: 'run_python',
+    description:
+      'Executa scripts Python 3 reais no navegador via WebAssembly (Pyodide). ' +
+      'Use SEMPRE para cálculos matemáticos complexos, estatística, testes de algoritmos, simulações ou manipulação de dados.',
+    parameters: {
+      type: 'object',
+      properties: {
+        code: {
+          type: 'string',
+          description: 'O script Python completo e executável a ser rodado.',
+        },
+      },
+      required: ['code'],
+    },
+  },
+};
+
 const IMAGE_GEN_TOOL = {
   type: 'function',
   function: {
@@ -232,8 +253,8 @@ const TERMINAL_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, ...GITHUB_TOOLS];
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -846,6 +867,28 @@ function AppContent() {
       }
     }
 
+    if (name === 'run_python') {
+      try {
+        const code = args.code || args.script || '';
+        const execRes = await executePythonCode(code);
+        const formatted = formatPythonOutput(execRes);
+        return {
+          result: JSON.stringify({
+            code,
+            success: execRes.success,
+            stdout: execRes.stdout,
+            stderr: execRes.stderr,
+            result: execRes.result,
+            executionTimeMs: execRes.executionTimeMs,
+            error: execRes.error,
+            output: formatted,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao executar código Python' }) };
+      }
+    }
+
     if (name === 'generate_image') {
       try {
         const prompt = args.prompt || '';
@@ -1304,7 +1347,8 @@ function AppContent() {
       'Regras estritas para ferramentas:\n' +
       '1. Geração de Imagens: Quando o usuário pedir qualquer imagem ou ilustração, execute OBRIGATORIAMENTE a ferramenta `generate_image`. NUNCA invente, presuma ou escreva links de imagens ou sintaxe markdown como `![...](https://...)` no seu texto antes da execução da ferramenta.\n' +
       '2. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída.\n' +
-      '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.';
+      '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
+      '4. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python.';
 
     const planPrompt = activePlan
       ? 'Você é um estrategista e arquiteto de planejamento sênior. O MODO PLANO (FUNÇÃO PLAN) está ATIVADO. Para a solicitação do usuário, crie OBRIGATORIAMENTE um PLANO DE AÇÃO COMPLETO, PRÁTICO E EXECUTÁVEL, formatado estritamente com os seguintes tópicos em Markdown:\n\n' +

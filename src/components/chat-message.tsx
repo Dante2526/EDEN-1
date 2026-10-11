@@ -257,6 +257,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       case 'run_terminal_command':
       case 'terminal':
         return 'Executando comando…';
+      case 'run_python':
+        return 'Executando Python…';
       case 'web_search':
       case 'search_web':
         return 'Juntando as fontes…';
@@ -472,11 +474,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 try {
                   parsedArgs = JSON.parse(tc.arguments || '{}');
                 } catch {}
-                const targetParam = parsedArgs.url || parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
+                const targetParam = parsedArgs.code || parsedArgs.url || parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
 
                 if (tc.status === 'running') {
                   const isThisWebSearch = tc.name === 'web_search' || tc.name === 'search_web';
                   const isThisFetchUrl = tc.name === 'fetch_url';
+                  const isThisPython = tc.name === 'run_python';
                   const isThisImageGen = tc.name === 'generate_image';
                   const orbState = isThisImageGen
                     ? 'shaping'
@@ -485,6 +488,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'composing';
                   const orbLabel = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisPython
+                    ? 'Executando Python…'
                     : isThisFetchUrl
                     ? 'Lendo página…'
                     : isThisWebSearch
@@ -492,6 +497,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando…';
                   const actionTitle = isThisImageGen
                     ? 'Criando Imagem'
+                    : isThisPython
+                    ? 'Executando Python 3'
                     : isThisFetchUrl
                     ? 'Lendo Página Web'
                     : isThisWebSearch
@@ -499,6 +506,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando';
                   const actionBadge = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisPython
+                    ? 'WebAssembly Engine'
                     : isThisFetchUrl
                     ? 'Extraindo conteúdo…'
                     : isThisWebSearch
@@ -508,6 +517,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : getToolActionLabel(tc.name);
                   const actionDescription = isThisImageGen
                     ? 'Gerando arte com Stable Diffusion / Flux em alta resolução…'
+                    : isThisPython
+                    ? 'Executando script no navegador via Pyodide sem travar a interface…'
                     : isThisFetchUrl
                     ? 'Baixando e higienizando texto do artigo ou documentação…'
                     : isThisWebSearch
@@ -676,6 +687,71 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       <span className="ml-auto text-[10px] text-[#787268] shrink-0 font-sans">
                         {tc.status === 'error' ? 'falhou' : isTruncated ? 'lida (truncada)' : 'lida com sucesso'}
                       </span>
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'run_python') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = JSON.parse(tc.result || '{}');
+                  } catch {}
+                  const codeContent = parsedResult?.code || parsedArgs?.code || '';
+                  const stdout = parsedResult?.stdout || '';
+                  const stderr = parsedResult?.stderr || parsedResult?.error || '';
+                  const executionTimeMs = parsedResult?.executionTimeMs;
+                  const isSuccess = parsedResult?.success !== false && !parsedResult?.error;
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="rounded-xl overflow-hidden border border-[#3e392f] bg-[#141310] shadow-sm my-2 font-mono text-xs w-full"
+                    >
+                      <div className="flex items-center justify-between px-3 py-2 bg-[#1f1d19] border-b border-[#2d2a23]">
+                        <div className="flex items-center gap-2 truncate">
+                          <Terminal className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <span className="text-[#f3efe6] font-semibold">Python 3 (WASM)</span>
+                          {executionTimeMs !== undefined && (
+                            <span className="text-[10px] text-[#8c867a]">
+                              ({executionTimeMs}ms)
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isSuccess ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                              sucesso
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                              erro
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {codeContent && (
+                        <div className="p-3 bg-[#171612] border-b border-[#24211a] max-h-40 overflow-y-auto">
+                          <pre className="text-[#e2dcce] whitespace-pre-wrap break-words leading-relaxed">
+                            {codeContent}
+                          </pre>
+                        </div>
+                      )}
+
+                      {(stdout || stderr) && (
+                        <div className="p-3 max-h-56 overflow-y-auto space-y-1.5 text-[11px] leading-relaxed bg-[#11100d]">
+                          {stdout && (
+                            <pre className="text-emerald-300 whitespace-pre-wrap break-words">
+                              {stdout}
+                            </pre>
+                          )}
+                          {stderr && (
+                            <pre className="text-rose-300 bg-rose-950/20 p-2 rounded border border-rose-900/30 whitespace-pre-wrap break-words">
+                              {stderr}
+                            </pre>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 }
