@@ -21,6 +21,7 @@ import {
   Globe,
   Download,
   Table,
+  Brain,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -258,6 +259,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
         return 'Criando a imagem…';
       case 'generate_document':
         return 'Compilando documento…';
+      case 'save_memory':
+        return 'Guardando na memória…';
+      case 'forget_memory':
+        return 'Atualizando memória…';
       case 'run_terminal_command':
       case 'terminal':
         return 'Executando comando…';
@@ -486,13 +491,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisPython = tc.name === 'run_python';
                   const isThisDocGen = tc.name === 'generate_document';
                   const isThisImageGen = tc.name === 'generate_image';
+                  const isThisMemory = tc.name === 'save_memory' || tc.name === 'forget_memory';
                   const orbState = isThisImageGen
                     ? 'shaping'
-                    : isThisWebSearch || isThisFetchUrl
+                    : isThisWebSearch || isThisFetchUrl || isThisMemory
                     ? 'weaving'
                     : 'composing';
                   const orbLabel = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisMemory
+                    ? (tc.name === 'save_memory' ? 'Guardando na memória…' : 'Atualizando memória…')
                     : isThisDocGen
                     ? 'Compilando documento…'
                     : isThisPython
@@ -504,6 +512,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando…';
                   const actionTitle = isThisImageGen
                     ? 'Criando Imagem'
+                    : isThisMemory
+                    ? (tc.name === 'save_memory' ? 'Salvando na Memória' : 'Atualizando Memória')
                     : isThisDocGen
                     ? 'Compilando Documento'
                     : isThisPython
@@ -839,6 +849,83 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                             Falha na geração
                           </span>
                         ) : null}
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'save_memory') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = JSON.parse(tc.result || '{}');
+                  } catch {}
+                  const factText: string = parsedResult?.fact || parsedArgs?.fact || '';
+                  const category: string = parsedResult?.category || parsedArgs?.category || 'general';
+                  const memId: string = parsedResult?.id || '';
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="rounded-2xl p-3 my-2 bg-[#1b1e24] border border-sky-500/30 shadow-xs flex items-center justify-between gap-3 w-full"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
+                          <Brain className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[11px] font-semibold text-sky-200">
+                              Memória Retida
+                            </span>
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 font-bold uppercase">
+                              {category}
+                            </span>
+                            {memId && (
+                              <span className="text-[10px] text-[#6b655b] font-mono">
+                                {memId}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#dcd7cb] leading-snug truncate max-w-xl">
+                            {factText}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        <Check className="w-3 h-3" />
+                        <span>Salvo</span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'forget_memory') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = JSON.parse(tc.result || '{}');
+                  } catch {}
+                  const instruction: string = parsedResult?.instruction || 'Memória atualizada.';
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="rounded-2xl p-3 my-2 bg-[#201e1a] border border-[#3e392f] shadow-xs flex items-center justify-between gap-3 w-full"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 rounded-xl bg-[#141310] border border-[#2d2a23] text-amber-400 shrink-0">
+                          <Brain className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[11px] font-semibold text-[#f3efe6]">
+                            Memória Atualizada
+                          </span>
+                          <p className="text-xs text-[#8c867a] leading-snug">
+                            {instruction}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-[10px] text-zinc-500 font-mono">
+                        forget_memory
                       </div>
                     </div>
                   );

@@ -126,5 +126,21 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
     - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
     - Build de produção Vite verde em 1.79s.
 
-**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python` e Geração Universal de Arquivos com `generate_document`.
+## 15. Base de Conhecimento e Memória Persistente entre Conversas (`save_memory` e `forget_memory`)
+- **Problema:** Cada conversa no Synap operava de forma 100% isolada. Informações repetidas pelo usuário (ex.: plano da Vercel, versões de libs como Tailwind v4, diretrizes pessoais de comunicação ADHD) precisavam ser reditadas em cada novo chat.
+- **Solução Implementada:**
+  - **100% Client-Side & Custo Zero Vitalício:** Memória persistida no IndexedDB local do navegador (`synap_knowledge_base_v1`) sem servidor externo, sem custos de API de banco de dados e com privacidade integral no dispositivo.
+  - **Aprendizado Autônomo da IA:** Registradas as ferramentas `save_memory` e `forget_memory` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`. A IA extrai e salva fatos atemporais autonomamente no decorrer da interação.
+  - **Injeção Transparente em Todo Chat:** O motor de montagem de contexto (`prepareMessagesForApi` em `context-compactor.ts`) injeta o bloco estruturado `--- BASE DE CONHECIMENTO PERSISTENTE (MEMÓRIA DE LONGO PRAZO) ---` no topo do System Prompt em todas as conversas ativas ou futuras.
+  - **Painel de Gestão e Auditoria:** Nova sub-aba *"Memória"* no painel lateral de Extensões com contador em tempo real, badges por categoria (`Stack`, `Preferência`, `Regra`, `Geral`), formulário para cadastro manual rápido e exclusão individual ou em massa.
+  - **Feedback Visual no Chat:** Cards estilizados no histórico com ícone de cérebro (`Brain`), indicação da categoria do fato e badge verde de confirmação `Salvo`.
+  - **Evidências de Verificação:**
+    - Testes unitários do motor de memória: 5/5 passando (`src/lib/knowledge-base.test.ts`).
+    - Testes unitários do compactador com memórias: 6/6 passando (`src/lib/context-compactor.test.ts`).
+    - Suíte completa de testes: 14/14 testes passando (100% verde).
+    - Verificação de tipos estritos: `tsc --noEmit` com 0 erros.
+    - Build de produção Vite verde em 2.61s.
+
+**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python`, Geração Universal de Arquivos com `generate_document` e Base de Conhecimento Persistente com `save_memory`/`forget_memory`.
+
 
