@@ -152,7 +152,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
     - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
     - Build de produção do Vite compilado em 1.49s.
 
-**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de 6 Skills Nativas (incluindo Conventional Commits e Office Architect), Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python`, Geração Universal de Arquivos com `generate_document` e Base de Conhecimento Persistente com `save_memory`/`forget_memory`.
+## 17. Habilidade Nativa: Mobile-First Design & UX (`mobile-first`)
+- **Problema:** Ao sugerir componentes visuais, telas ou estilização CSS/Tailwind, a IA muitas vezes pensava prioritariamente em telas desktop, gerando botões pequenos para toque, tabelas cortadas e scroll horizontal indesejado em celulares.
+- **Solução Implementada:**
+  - **Skill Built-in Nativa:** Adicionada em `src/lib/storage.ts` com ID `mobile-first` e ícone `Smartphone` (`smartphone`).
+  - **Diretrizes Estritas:**
+    - Teste de viewport base: 360px a 430px.
+    - Touch targets mínimos de 44x44px e padding de clique ergonômico.
+    - Prevenção total de scroll horizontal (`overflow-x: hidden`, quebras `break-words`/`truncate`, `min-w-0`).
+    - Tailwind mobile-first por padrão (ex: `flex-col sm:flex-row`, `w-full sm:w-auto`).
+  - **Evidências de Verificação:**
+    - 14/14 testes unitários passando.
+    - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
+    - Build de produção do Vite compilado em 1.73s.
+
+**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de 7 Skills Nativas (incluindo Mobile-First, Conventional Commits e Office Architect), Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python`, Geração Universal de Arquivos com `generate_document` e Base de Conhecimento Persistente com `save_memory`/`forget_memory`.
+
 
 
 

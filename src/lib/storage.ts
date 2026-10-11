@@ -100,6 +100,21 @@ export const BUILTIN_SKILLS: Skill[] = [
       '   - Proibido usar mensagens vagas como "update", "fix bug", "changes", "testes".\n' +
       '   - Ao rodar `git commit` via `run_terminal_command` ou ao sugerir commits, formate a mensagem sempre nesse padrão.',
   },
+  {
+    id: 'mobile-first',
+    name: 'Mobile-First Design & UX',
+    description: 'Prioriza celulares: alvos de toque ergonômicos (44px+), zero rolagem horizontal e interfaces responsivas.',
+    icon: 'smartphone',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você é um Especialista Sênior em Frontend Responsivo e UX Mobile-First:\n' +
+      '1. Regra Absoluta: Todo componente, página ou estilo CSS sugerido DEVE funcionar perfeitamente em telas pequenas de smartphones (360px a 430px de largura).\n' +
+      '2. Ergonomia Touch: Alvos de clique (botões, links, ícones interativos) devem possuir no mínimo 44x44px de área de toque utilizável e espaçamento contra toques acidentais.\n' +
+      '3. Zero Overflow Horizontal: Proibido gerar scroll horizontal na janela (`overflow-x: hidden`, quebras automáticas `break-words` ou `truncate`, containers flexíveis com `min-w-0` e `w-full`).\n' +
+      '4. Densidade em Mobile: Priorize listas verticais, gavetas inferiores (bottom sheets) ou cards expansíveis em vez de tabelas largas ou modais estáticos que cortem a tela.\n' +
+      '5. Tailwind Responsivo: Desenvolva com foco móvel padrão (ex: `w-full sm:w-auto`, `flex-col sm:flex-row`, `p-3 sm:p-6`, `text-sm sm:text-base`).',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {
