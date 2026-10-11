@@ -174,6 +174,26 @@ const WEB_SEARCH_TOOL = {
   },
 };
 
+const FETCH_URL_TOOL = {
+  type: 'function',
+  function: {
+    name: 'fetch_url',
+    description:
+      'Lê e extrai o conteúdo textual limpo de uma página web, documentação ou artigo online a partir de uma URL. ' +
+      'Use após `web_search` para acessar os detalhes de um link encontrado ou diretamente quando o usuário enviar um link.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'A URL completa e válida (começando com http:// ou https://) da página a ser lida.',
+        },
+      },
+      required: ['url'],
+    },
+  },
+};
+
 const IMAGE_GEN_TOOL = {
   type: 'function',
   function: {
@@ -212,8 +232,8 @@ const TERMINAL_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, ...GITHUB_TOOLS];
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -803,6 +823,29 @@ function AppContent() {
       }
     }
 
+    if (name === 'fetch_url') {
+      try {
+        const targetUrl = args.url || args.link || '';
+        const res = await fetch(`/api/fetch-url?url=${encodeURIComponent(targetUrl)}`, {
+          headers: { 'x-api-key': import.meta.env.VITE_API_SECRET || '' },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return { result: JSON.stringify({ error: data.error || `Erro HTTP ${res.status}` }) };
+        }
+        return {
+          result: JSON.stringify({
+            url: data.url,
+            title: data.title,
+            content: data.content,
+            truncated: data.truncated,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || `Erro ao ler URL ${args.url}` }) };
+      }
+    }
+
     if (name === 'generate_image') {
       try {
         const prompt = args.prompt || '';
@@ -1261,7 +1304,7 @@ function AppContent() {
       'Regras estritas para ferramentas:\n' +
       '1. Geração de Imagens: Quando o usuário pedir qualquer imagem ou ilustração, execute OBRIGATORIAMENTE a ferramenta `generate_image`. NUNCA invente, presuma ou escreva links de imagens ou sintaxe markdown como `![...](https://...)` no seu texto antes da execução da ferramenta.\n' +
       '2. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída.\n' +
-      '3. Busca Web: Use `web_search` para consultar informações e fontes na internet.';
+      '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.';
 
     const planPrompt = activePlan
       ? 'Você é um estrategista e arquiteto de planejamento sênior. O MODO PLANO (FUNÇÃO PLAN) está ATIVADO. Para a solicitação do usuário, crie OBRIGATORIAMENTE um PLANO DE AÇÃO COMPLETO, PRÁTICO E EXECUTÁVEL, formatado estritamente com os seguintes tópicos em Markdown:\n\n' +

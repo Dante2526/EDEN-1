@@ -18,6 +18,7 @@ import {
   GitBranch,
   Zap,
   AlertTriangle,
+  Globe,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -259,6 +260,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       case 'web_search':
       case 'search_web':
         return 'Juntando as fontes…';
+      case 'fetch_url':
+        return 'Lendo página…';
       case 'edit_file':
         return 'Editando arquivo…';
       case 'read_file':
@@ -469,16 +472,35 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 try {
                   parsedArgs = JSON.parse(tc.arguments || '{}');
                 } catch {}
-                const targetParam = parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
+                const targetParam = parsedArgs.url || parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
 
                 if (tc.status === 'running') {
                   const isThisWebSearch = tc.name === 'web_search' || tc.name === 'search_web';
+                  const isThisFetchUrl = tc.name === 'fetch_url';
                   const isThisImageGen = tc.name === 'generate_image';
-                  const orbState = isThisImageGen ? 'shaping' : isThisWebSearch ? 'weaving' : 'composing';
-                  const orbLabel = isThisImageGen ? 'Criando a imagem…' : isThisWebSearch ? 'Juntando as fontes…' : 'Executando…';
-                  const actionTitle = isThisImageGen ? 'Criando Imagem' : isThisWebSearch ? 'Pesquisando na Internet' : 'Executando';
+                  const orbState = isThisImageGen
+                    ? 'shaping'
+                    : isThisWebSearch || isThisFetchUrl
+                    ? 'weaving'
+                    : 'composing';
+                  const orbLabel = isThisImageGen
+                    ? 'Criando a imagem…'
+                    : isThisFetchUrl
+                    ? 'Lendo página…'
+                    : isThisWebSearch
+                    ? 'Juntando as fontes…'
+                    : 'Executando…';
+                  const actionTitle = isThisImageGen
+                    ? 'Criando Imagem'
+                    : isThisFetchUrl
+                    ? 'Lendo Página Web'
+                    : isThisWebSearch
+                    ? 'Pesquisando na Internet'
+                    : 'Executando';
                   const actionBadge = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisFetchUrl
+                    ? 'Extraindo conteúdo…'
                     : isThisWebSearch
                     ? 'Juntando as fontes…'
                     : tc.name === 'edit_file'
@@ -486,6 +508,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : getToolActionLabel(tc.name);
                   const actionDescription = isThisImageGen
                     ? 'Gerando arte com Stable Diffusion / Flux em alta resolução…'
+                    : isThisFetchUrl
+                    ? 'Baixando e higienizando texto do artigo ou documentação…'
                     : isThisWebSearch
                     ? 'Consultando a web e cruzando informações de fontes confiáveis'
                     : tc.name === 'edit_file'
@@ -620,6 +644,38 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           )}
                         </div>
                       )}
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'fetch_url') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = JSON.parse(tc.result || '{}');
+                  } catch {}
+                  const pageTitle = parsedResult?.title || '';
+                  const isTruncated = parsedResult?.truncated;
+                  return (
+                    <div
+                      key={tc.id}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#24211d] border border-[#383329] text-xs font-mono text-[#c4bfb6] shadow-2xs"
+                    >
+                      {tc.status === 'error' ? (
+                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                      ) : (
+                        <Globe className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      )}
+                      <span className="font-semibold text-[#f3efe6]">
+                        {pageTitle ? `Página: ${pageTitle}` : 'fetch_url'}
+                      </span>
+                      {targetParam && (
+                        <span className="text-[#a39d93] truncate max-w-[220px] sm:max-w-[360px]" title={targetParam}>
+                          ({targetParam})
+                        </span>
+                      )}
+                      <span className="ml-auto text-[10px] text-[#787268] shrink-0 font-sans">
+                        {tc.status === 'error' ? 'falhou' : isTruncated ? 'lida (truncada)' : 'lida com sucesso'}
+                      </span>
                     </div>
                   );
                 }

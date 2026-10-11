@@ -83,4 +83,19 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
     - Verificação de tipos estritos: `tsc --noEmit` com 0 erros.
     - Build de produção do Vite compilado em 768ms com 0 erros.
 
-**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares e Conector Universal MCP integrado.
+## 12. Ferramenta de Leitura Profunda da Web (`fetch_url`)
+- **Problema:** A ferramenta de busca `web_search` trazia apenas resumos curtos de 2 linhas do DuckDuckGo/Wikipedia, impossibilitando a leitura de documentações técnicas atualizadas (ex.: React 19, MDN, novas APIs) ou de URLs compartilhadas diretamente pelo usuário.
+- **Solução Implementada:**
+  - **Sanitização Semântica com Cheerio:** Extrator dedicado (`src/lib/html-extractor.ts`) que descarta tags ruidosas (`<script>`, `<style>`, `<nav>`, `<footer>`, `<header>`, etc.), prioriza tags de conteúdo principal (`<article>`, `<main>`) e normaliza texto limpo.
+  - **Proteção de Janela de Contexto:** Limite máximo de 10.000 caracteres (~2.5k tokens) com indicação explícita de truncamento para evitar explosão de contexto da LLM.
+  - **Segurança e Anti-SSRF:** Endpoint `/api/fetch-url.ts` bloqueia requisições a `localhost`, `127.0.0.1`, loops IPv6 e subredes privadas (RFC 1918), além de contar com timeout estrito de 8 segundos e checagem de Content-Type legível.
+  - **Registro no Servidor e IA:** Handler integrado ao Express em `server.ts` e exportado como Web Standard Request para Vercel Serverless. Declarada a tool `fetch_url` no OpenAI Function Calling schema em `src/App.tsx`, com instrução explícita no System Prompt.
+  - **Experiência Visual na UI:** Badge dinâmico em `chat-message.tsx` com ícone `Globe`, estado de raciocínio animado via `ThinkingOrb` (modo `weaving`) e card concluído com título da página e domínio.
+  - **Evidências de Verificação:**
+    - Testes unitários do extrator: 2/2 passando (`src/lib/html-extractor.test.ts`).
+    - Testes de regressão da suíte completa: 10/10 passando (`context-compactor`, `mcp-client` e `html-extractor`).
+    - Teste funcional de SSRF e scraping real de `example.com`: 100% aprovado.
+    - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
+    - Build de produção Vite verde em `dist/`.
+
+**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP e Leitura Web Profunda com `fetch_url`.

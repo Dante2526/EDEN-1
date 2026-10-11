@@ -10,6 +10,7 @@ import ttsHandler from './api/tts';
 import githubHandler from './api/github';
 import searchHandler from './api/search';
 import imageHandler from './api/image';
+import fetchUrlHandler from './api/fetch-url';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
@@ -114,6 +115,7 @@ app.all('/api/tts', adaptWebHandler(ttsHandler));
 app.all('/api/github', adaptWebHandler(githubHandler));
 app.all('/api/search', adaptWebHandler(searchHandler));
 app.all('/api/image', adaptWebHandler(imageHandler));
+app.all('/api/fetch-url', adaptWebHandler(fetchUrlHandler));
 
 // Fallback explícito para rotas de API inexistentes (evita retornar HTML do SPA)
 app.all('/api/*', (req, res) => {
