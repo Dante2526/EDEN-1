@@ -17,8 +17,9 @@ import {
   X,
   Layers,
   FileText,
+  Brain,
 } from 'lucide-react';
-import { Skill, McpServer, SkillIcon } from '../../lib/types';
+import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
 interface ExtensionsPanelProps {
   skills: Skill[];
@@ -31,6 +32,10 @@ interface ExtensionsPanelProps {
   onDeleteMcpServer: (id: string) => void;
   onTestMcpServer: (id: string) => Promise<void>;
   testingServerId?: string | null;
+  knowledgeFacts: KnowledgeFact[];
+  onAddKnowledgeFact: (fact: string, category?: KnowledgeCategory) => void;
+  onDeleteKnowledgeFact: (id: string) => void;
+  onClearKnowledgeFacts: () => void;
 }
 
 export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
@@ -44,8 +49,14 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
   onDeleteMcpServer,
   onTestMcpServer,
   testingServerId,
+  knowledgeFacts,
+  onAddKnowledgeFact,
+  onDeleteKnowledgeFact,
+  onClearKnowledgeFacts,
 }) => {
-  const [subTab, setSubTab] = useState<'skills' | 'mcp'>('skills');
+  const [subTab, setSubTab] = useState<'skills' | 'mcp' | 'memories'>('skills');
+  const [newFactText, setNewFactText] = useState('');
+  const [newFactCategory, setNewFactCategory] = useState<KnowledgeCategory>('general');
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isAddMcpOpen, setIsAddMcpOpen] = useState(false);
   const [expandedMcpId, setExpandedMcpId] = useState<string | null>(null);
@@ -151,6 +162,24 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             </span>
           )}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setSubTab('memories')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+            subTab === 'memories'
+              ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
+              : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+          }`}
+        >
+          <Brain className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+          <span>Memória</span>
+          {knowledgeFacts.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-300 text-[10px] font-bold">
+              {knowledgeFacts.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Main Content Area */}
@@ -233,7 +262,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
               ))}
             </div>
           </>
-        ) : (
+        ) : subTab === 'mcp' ? (
           <>
             {/* MCP Header */}
             <div className="flex items-center justify-between">
@@ -366,6 +395,125 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                           ))}
                         </div>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Header / Clear Button */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-semibold text-[#f3efe6]">Base de Conhecimento</h3>
+                <p className="text-[10px] text-[#8c867a]">Fatos permanentes ativos em todas as conversas</p>
+              </div>
+              {knowledgeFacts.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Tem certeza que deseja apagar todas as memórias salvas?')) {
+                      onClearKnowledgeFacts();
+                    }
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-[10px] font-medium text-rose-400 transition cursor-pointer"
+                  title="Limpar todas as memórias"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Limpar Tudo</span>
+                </button>
+              )}
+            </div>
+
+            {/* Quick Add Fact Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newFactText.trim()) return;
+                onAddKnowledgeFact(newFactText.trim(), newFactCategory);
+                setNewFactText('');
+              }}
+              className="p-2.5 rounded-xl bg-[#201e1a] border border-[#2d2a25] space-y-2"
+            >
+              <div className="text-[11px] font-medium text-[#c4bfb6]">Adicionar Novo Fato</div>
+              <input
+                type="text"
+                required
+                placeholder="Ex: O projeto usa Vercel Hobby e Tailwind CSS v4"
+                value={newFactText}
+                onChange={(e) => setNewFactText(e.target.value)}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-[#141311] border border-[#2d2a25] text-xs text-[#f3efe6] placeholder-[#6b655b] focus:outline-none focus:border-sky-400"
+              />
+              <div className="flex items-center gap-2">
+                <select
+                  value={newFactCategory}
+                  onChange={(e) => setNewFactCategory(e.target.value as KnowledgeCategory)}
+                  className="px-2 py-1 rounded-lg bg-[#141311] border border-[#2d2a25] text-[11px] text-[#c4bfb6] focus:outline-none focus:border-sky-400"
+                >
+                  <option value="stack">Stack Técnica</option>
+                  <option value="preference">Preferência</option>
+                  <option value="rule">Regra de Projeto</option>
+                  <option value="general">Geral</option>
+                </select>
+                <button
+                  type="submit"
+                  className="flex-1 flex items-center justify-center gap-1 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-medium transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Salvar Fato</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Facts List */}
+            {knowledgeFacts.length === 0 ? (
+              <div className="p-6 text-center space-y-2 rounded-xl bg-[#201e1a] border border-[#2d2a25]">
+                <Brain className="w-8 h-8 text-sky-400/40 mx-auto" />
+                <p className="text-xs text-[#c4bfb6] font-medium">Nenhum fato gravado ainda</p>
+                <p className="text-[11px] text-[#8c867a] leading-relaxed">
+                  A IA aprenderá fatos automaticamente com a ferramenta <code className="text-sky-300">save_memory</code> ou você pode cadastrar manualmente acima.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {knowledgeFacts.map((item) => {
+                  const getCategoryBadge = (cat?: KnowledgeCategory) => {
+                    switch (cat) {
+                      case 'stack':
+                        return <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">STACK</span>;
+                      case 'preference':
+                        return <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">PREFERÊNCIA</span>;
+                      case 'rule':
+                        return <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">REGRA</span>;
+                      default:
+                        return <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30">GERAL</span>;
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-3 rounded-xl bg-[#201e1a] border border-[#2d2a25] hover:border-[#3e3b33] transition space-y-2 group"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {getCategoryBadge(item.category)}
+                          <span className="text-[10px] text-[#6b655b] font-mono">{item.id}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteKnowledgeFact(item.id)}
+                          className="opacity-70 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 text-[#8c867a] hover:text-rose-400 transition cursor-pointer"
+                          title="Esquecer este fato"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#f3efe6] leading-relaxed break-words">{item.fact}</p>
+                      <div className="text-[10px] text-[#6b655b]">
+                        Salvo em {new Date(item.createdAt).toLocaleDateString('pt-BR')}
+                      </div>
                     </div>
                   );
                 })}

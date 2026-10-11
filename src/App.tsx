@@ -2128,6 +2128,10 @@ function AppContent() {
         onDeleteMcpServer={handleDeleteMcpServer}
         onTestMcpServer={handleTestMcpServer}
         testingServerId={testingServerId}
+        knowledgeFacts={knowledgeFacts}
+        onAddKnowledgeFact={handleAddKnowledgeFact}
+        onDeleteKnowledgeFact={handleDeleteKnowledgeFact}
+        onClearKnowledgeFacts={handleClearKnowledgeFacts}
       />
 
       {/* Main Content Area */}

@@ -11,7 +11,7 @@ import {
   FolderGit2,
   Blocks,
 } from 'lucide-react';
-import { Conversation, ActiveRepoState, Skill, McpServer } from '../lib/types';
+import { Conversation, ActiveRepoState, Skill, McpServer, KnowledgeFact, KnowledgeCategory } from '../lib/types';
 import { formatDate } from '../lib/utils';
 import { PWAInstallButton } from './pwa-install-button';
 import { ClaudeLogo } from './claude-logo';
@@ -49,6 +49,10 @@ interface ChatSidebarProps {
   onDeleteMcpServer: (id: string) => void;
   onTestMcpServer: (id: string) => Promise<void>;
   testingServerId?: string | null;
+  knowledgeFacts: KnowledgeFact[];
+  onAddKnowledgeFact: (fact: string, category?: KnowledgeCategory) => void;
+  onDeleteKnowledgeFact: (id: string) => void;
+  onClearKnowledgeFacts: () => void;
 }
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
@@ -78,6 +82,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
   onDeleteMcpServer,
   onTestMcpServer,
   testingServerId,
+  knowledgeFacts,
+  onAddKnowledgeFact,
+  onDeleteKnowledgeFact,
+  onClearKnowledgeFacts,
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -249,6 +257,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             onDeleteMcpServer={onDeleteMcpServer}
             onTestMcpServer={onTestMcpServer}
             testingServerId={testingServerId}
+            knowledgeFacts={knowledgeFacts}
+            onAddKnowledgeFact={onAddKnowledgeFact}
+            onDeleteKnowledgeFact={onDeleteKnowledgeFact}
+            onClearKnowledgeFacts={onClearKnowledgeFacts}
           />
         ) : (
           <>
