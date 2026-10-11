@@ -112,4 +112,19 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
     - Verificação de tipos estritos: `tsc --noEmit` com 0 erros.
     - Build de produção do Vite compilado em 681ms com chunk isolado do worker (`pyodide-worker.js`).
 
-**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP, Leitura Web Profunda com `fetch_url` e Execução Real de Python com `run_python`.
+## 14. Gerador Universal de Arquivos e Documentos (`generate_document` no Navegador)
+- **Problema:** O Synap não gerava arquivos binários reais para download. Solicitações de relatórios em PDF, planilhas orçamentárias em Excel, documentações em Word ou slides em PowerPoint eram limitadas a blocos de texto ou markdown estático.
+- **Solução Implementada:**
+  - **100% Client-Side & Custo Zero Vitalício:** O app gera arquivos binários autênticos (`.pdf`, `.xlsx`, `.docx`, `.pptx`) diretamente na memória do navegador (`Blob` -> `URL.createObjectURL`), sem dependência de microserviços pagos, servidores headless ou APIs externas.
+  - **Code-Splitting com Dynamic Imports:** Para prevenir inchaço do bundle principal, os motores compiladores (`jspdf`, `jspdf-autotable`, `exceljs`, `docx`, `pptxgenjs`) utilizam `await import(...)` sob demanda em `src/lib/document-generator.ts`. O bundle de entrada do Synap permanece enxuto em ~310 kB.
+  - **Tool OpenAI Nativa (`generate_document`):** Schema padronizado registrado em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS` em `src/App.tsx`, com suporte a tabelas estruturadas, métricas resumidas, seções e bullet points.
+  - **Skill Nativa "Office & PDF Architect":** Adicionada ao catálogo nativo em `src/lib/storage.ts` com ícone `FileText` (`'file-text'`) e diretrizes especializadas para produção de planilhas financeiras, relatórios corporativos e apresentações executivas.
+  - **Experiência Visual Interativa de Download:** Card dedicado no chat (`chat-message.tsx`) com badge de formato colorido (PDF vermelho, Excel verde, Word azul, PowerPoint âmbar), tamanho legível em KB/MB e botão de download direto com um clique (`<a download>`).
+  - **Evidências de Verificação:**
+    - Testes unitários do motor de documentos: 2/2 passando (`src/lib/document-generator.test.ts`).
+    - Suíte completa de testes: 9/9 testes passando sem regressões.
+    - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
+    - Build de produção Vite verde em 1.79s.
+
+**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python` e Geração Universal de Arquivos com `generate_document`.
+

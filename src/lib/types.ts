@@ -137,7 +137,7 @@ export interface AppSettings {
   speechRate?: number;
 }
 
-export type SkillIcon = 'flask' | 'bug' | 'shield' | 'zap' | 'sparkles';
+export type SkillIcon = 'flask' | 'bug' | 'shield' | 'zap' | 'sparkles' | 'file-text';
 
 export interface Skill {
   id: string;

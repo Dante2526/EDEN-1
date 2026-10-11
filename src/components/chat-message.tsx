@@ -19,6 +19,8 @@ import {
   Zap,
   AlertTriangle,
   Globe,
+  Download,
+  Table,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -254,6 +256,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     switch (toolName) {
       case 'generate_image':
         return 'Criando a imagem…';
+      case 'generate_document':
+        return 'Compilando documento…';
       case 'run_terminal_command':
       case 'terminal':
         return 'Executando comando…';
@@ -474,12 +478,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 try {
                   parsedArgs = JSON.parse(tc.arguments || '{}');
                 } catch {}
-                const targetParam = parsedArgs.code || parsedArgs.url || parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
+                const targetParam = parsedArgs.filename || parsedArgs.code || parsedArgs.url || parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
 
                 if (tc.status === 'running') {
                   const isThisWebSearch = tc.name === 'web_search' || tc.name === 'search_web';
                   const isThisFetchUrl = tc.name === 'fetch_url';
                   const isThisPython = tc.name === 'run_python';
+                  const isThisDocGen = tc.name === 'generate_document';
                   const isThisImageGen = tc.name === 'generate_image';
                   const orbState = isThisImageGen
                     ? 'shaping'
@@ -488,6 +493,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'composing';
                   const orbLabel = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisDocGen
+                    ? 'Compilando documento…'
                     : isThisPython
                     ? 'Executando Python…'
                     : isThisFetchUrl
@@ -497,6 +504,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando…';
                   const actionTitle = isThisImageGen
                     ? 'Criando Imagem'
+                    : isThisDocGen
+                    ? 'Compilando Documento'
                     : isThisPython
                     ? 'Executando Python 3'
                     : isThisFetchUrl
@@ -506,6 +515,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando';
                   const actionBadge = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisDocGen
+                    ? `${parsedArgs.type ? parsedArgs.type.toUpperCase() : 'Office'} Engine`
                     : isThisPython
                     ? 'WebAssembly Engine'
                     : isThisFetchUrl
@@ -517,6 +528,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : getToolActionLabel(tc.name);
                   const actionDescription = isThisImageGen
                     ? 'Gerando arte com Stable Diffusion / Flux em alta resolução…'
+                    : isThisDocGen
+                    ? 'Compilando arquivo binário e preparando link para download no navegador…'
                     : isThisPython
                     ? 'Executando script no navegador via Pyodide sem travar a interface…'
                     : isThisFetchUrl
@@ -752,6 +765,81 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           )}
                         </div>
                       )}
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'generate_document') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = JSON.parse(tc.result || '{}');
+                  } catch {}
+                  const docType: string = parsedResult?.type || parsedArgs?.type || 'pdf';
+                  const filename: string = parsedResult?.filename || parsedArgs?.filename || 'documento';
+                  const title: string = parsedResult?.title || parsedArgs?.title || filename;
+                  const sizeBytes: number = parsedResult?.sizeBytes || 0;
+                  const downloadUrl: string = parsedResult?.url || '';
+                  const hasError = tc.status === 'error' || Boolean(parsedResult?.error);
+
+                  // Estilos e ícones por formato
+                  let badgeBg = 'bg-rose-500/15 text-rose-300 border-rose-500/30';
+                  let iconElement = <FileText className="w-5 h-5 text-rose-400 shrink-0" />;
+                  let typeLabel = 'PDF';
+
+                  if (docType === 'excel') {
+                    badgeBg = 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+                    iconElement = <Table className="w-5 h-5 text-emerald-400 shrink-0" />;
+                    typeLabel = 'Excel';
+                  } else if (docType === 'docx') {
+                    badgeBg = 'bg-sky-500/15 text-sky-300 border-sky-500/30';
+                    iconElement = <FileText className="w-5 h-5 text-sky-400 shrink-0" />;
+                    typeLabel = 'Word';
+                  } else if (docType === 'pptx') {
+                    badgeBg = 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+                    iconElement = <Layers className="w-5 h-5 text-amber-400 shrink-0" />;
+                    typeLabel = 'PowerPoint';
+                  }
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="rounded-2xl p-3.5 my-2.5 bg-[#201e1a] border border-[#3e392f] shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2.5 rounded-xl bg-[#141310] border border-[#2d2a23]">
+                          {iconElement}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-[#f3efe6] truncate">
+                              {title}
+                            </span>
+                            <span className={`text-[10px] font-sans font-bold px-1.5 py-0.5 rounded border ${badgeBg}`}>
+                              {typeLabel}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-[#a39d93] font-mono mt-0.5 truncate">
+                            {filename} {sizeBytes > 0 && `• ${formatFileSize(sizeBytes)}`}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        {downloadUrl && !hasError ? (
+                          <a
+                            href={downloadUrl}
+                            download={filename}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#d97757] hover:bg-[#c26547] text-white text-xs font-semibold transition shadow-xs cursor-pointer select-none"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Baixar Arquivo</span>
+                          </a>
+                        ) : hasError ? (
+                          <span className="text-[11px] text-rose-400 font-mono">
+                            Falha na geração
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 }

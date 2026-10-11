@@ -63,6 +63,19 @@ export const BUILTIN_SKILLS: Skill[] = [
       '2. Otimize imports e lazy loading para manter o bundle enxuto.\n' +
       '3. Evite operações bloqueantes no loop de eventos e minimize overhead de chamadas de rede.',
   },
+  {
+    id: 'doc-creator',
+    name: 'Office & PDF Architect',
+    description: 'Especialista em criação e exportação de planilhas Excel (.xlsx), relatórios PDF, contratos Word e slides PPT.',
+    icon: 'file-text',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você é um especialista em Design e Arquitetura de Documentos Corporativos:\n' +
+      '1. Escolha o formato ideal para cada solicitação do usuário: Excel (.xlsx) para tabelas/números, PDF para relatórios e documentos protegidos, Word (.docx) para textos longos/contratos, e PowerPoint (.pptx) para apresentações.\n' +
+      '2. Ao usar a ferramenta `generate_document`, organize os dados com cabeçalhos claros, seções bem estruturadas e formatação profissional.\n' +
+      '3. Avise sempre ao usuário que o arquivo foi gerado e já está disponível para download imediato no card interativo.',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {

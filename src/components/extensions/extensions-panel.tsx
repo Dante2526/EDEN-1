@@ -16,6 +16,7 @@ import {
   ChevronUp,
   X,
   Layers,
+  FileText,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon } from '../../lib/types';
 
@@ -104,6 +105,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
         return <ShieldCheck className="w-4 h-4 text-sky-400" />;
       case 'zap':
         return <Zap className="w-4 h-4 text-amber-400" />;
+      case 'file-text':
+        return <FileText className="w-4 h-4 text-orange-400" />;
       default:
         return <Blocks className="w-4 h-4 text-purple-400" />;
     }
