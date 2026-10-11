@@ -1,5 +1,5 @@
 import { get, set, clear } from 'idb-keyval';
-import { Conversation, AppSettings, Skill, McpServer } from './types';
+import { Conversation, AppSettings, Skill, McpServer, KnowledgeFact } from './types';
 import { StudioSession } from '../studio/studio-types';
 
 const STUDIO_SESSIONS_KEY = 'synap_studio_sessions';
@@ -7,6 +7,7 @@ const CONVERSATIONS_KEY = 'nim_chat_conversations_v1';
 const SETTINGS_KEY = 'nim_chat_settings_v1';
 const SKILLS_KEY = 'synap_skills_v1';
 const MCP_SERVERS_KEY = 'synap_mcp_servers_v1';
+const KNOWLEDGE_FACTS_KEY = 'synap_knowledge_base_v1';
 
 export const BUILTIN_SKILLS: Skill[] = [
   {
@@ -206,4 +207,23 @@ export async function saveMcpServers(servers: McpServer[]): Promise<void> {
     console.error('Failed to save MCP servers to IndexedDB:', error);
   }
 }
+
+export async function loadKnowledgeFacts(): Promise<KnowledgeFact[]> {
+  try {
+    const data = await get<KnowledgeFact[]>(KNOWLEDGE_FACTS_KEY);
+    return data || [];
+  } catch (error) {
+    console.error('Failed to load knowledge facts from IndexedDB:', error);
+    return [];
+  }
+}
+
+export async function saveKnowledgeFacts(facts: KnowledgeFact[]): Promise<void> {
+  try {
+    await set(KNOWLEDGE_FACTS_KEY, facts);
+  } catch (error) {
+    console.error('Failed to save knowledge facts to IndexedDB:', error);
+  }
+}
+
 

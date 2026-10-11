@@ -167,3 +167,14 @@ export interface McpServer {
   tools: McpTool[];
   lastConnectedAt?: number;
 }
+
+export type KnowledgeCategory = 'stack' | 'preference' | 'rule' | 'general';
+
+export interface KnowledgeFact {
+  id: string;
+  fact: string;
+  category?: KnowledgeCategory;
+  createdAt: number;
+  updatedAt?: number;
+}
+
