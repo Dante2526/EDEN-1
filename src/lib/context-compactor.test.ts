@@ -71,6 +71,14 @@ function runTests() {
   assert.strictEqual(prepared.length, 2 + 6, 'Deve conter prompts do sistema + 6 mensagens recentes');
   console.log('✅ Teste 5 passou: prepareMessagesForApi prepara histórico otimizado');
 
+  // Teste 6: prepareMessagesForApi injeta bloco de memórias persistentes
+  const preparedWithMemories = prepareMessagesForApi(alreadyCompactedConv, {
+    base: 'Base prompt',
+    memories: '--- BASE DE CONHECIMENTO PERSISTENTE ---',
+  });
+  assert.strictEqual(preparedWithMemories[1].content, '--- BASE DE CONHECIMENTO PERSISTENTE ---');
+  console.log('✅ Teste 6 passou: prepareMessagesForApi injeta bloco de memórias');
+
   console.log('🎉 Todos os testes de context-compactor passaram com sucesso!');
 }
 
