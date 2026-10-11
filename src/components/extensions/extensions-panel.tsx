@@ -18,6 +18,7 @@ import {
   Layers,
   FileText,
   Brain,
+  GitCommit,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -118,6 +119,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
         return <Zap className="w-4 h-4 text-amber-400" />;
       case 'file-text':
         return <FileText className="w-4 h-4 text-orange-400" />;
+      case 'git-commit':
+        return <GitCommit className="w-4 h-4 text-cyan-400" />;
       default:
         return <Blocks className="w-4 h-4 text-purple-400" />;
     }

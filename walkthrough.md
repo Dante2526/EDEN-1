@@ -141,6 +141,18 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
     - Verificação de tipos estritos: `tsc --noEmit` com 0 erros.
     - Build de produção Vite verde em 2.61s.
 
-**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de Skills Modulares, Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python`, Geração Universal de Arquivos com `generate_document` e Base de Conhecimento Persistente com `save_memory`/`forget_memory`.
+## 16. Habilidade Nativa: Conventional Commits (`conventional-commits`)
+- **Problema:** A IA gerava mensagens de commit em formatos arbitrários ou sem padronização ao rodar comandos no terminal ou sugerir commits.
+- **Solução Implementada:**
+  - **Skill Built-in Nativa:** Adicionada ao catálogo padrão em `src/lib/storage.ts` com ID `conventional-commits` e ícone `GitCommit` (`git-commit`).
+  - **Diretrizes Estritas:** Exige estrutura `<tipo>(<escopo>): <descrição no imperativo>`, restringe tipos permitidos (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`), limita o assunto a 72 caracteres e proíbe mensagens genéricas ("update", "changes", etc.).
+  - **Auto-merge com IndexedDB:** O carregador de habilidades (`loadSkills`) funde automaticamente a nova skill para usuários existentes sem sobrescrever preferências prévias.
+  - **Evidências de Verificação:**
+    - 14/14 testes unitários passando.
+    - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
+    - Build de produção do Vite compilado em 1.49s.
+
+**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de 6 Skills Nativas (incluindo Conventional Commits e Office Architect), Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python`, Geração Universal de Arquivos com `generate_document` e Base de Conhecimento Persistente com `save_memory`/`forget_memory`.
+
 
 

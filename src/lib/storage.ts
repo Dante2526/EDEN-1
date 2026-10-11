@@ -77,6 +77,29 @@ export const BUILTIN_SKILLS: Skill[] = [
       '2. Ao usar a ferramenta `generate_document`, organize os dados com cabeçalhos claros, seções bem estruturadas e formatação profissional.\n' +
       '3. Avise sempre ao usuário que o arquivo foi gerado e já está disponível para download imediato no card interativo.',
   },
+  {
+    id: 'conventional-commits',
+    name: 'Conventional Commits',
+    description: 'Padroniza todas as mensagens de commit (feat, fix, refactor, docs, chore, test) no padrão profissional v1.0.0.',
+    icon: 'git-commit',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você segue RIGOROSAMENTE a convenção oficial Conventional Commits (v1.0.0) em qualquer interação de versionamento Git:\n' +
+      '1. Formato estrito: `<tipo>(<escopo opcional>): <descrição no imperativo e em minúsculas>`\n' +
+      '2. Tipos permitidos:\n' +
+      '   - feat: nova funcionalidade para o usuário\n' +
+      '   - fix: correção de bug\n' +
+      '   - refactor: refatoração de código que não altera comportamento nem conserta bug\n' +
+      '   - docs: mudanças exclusivamente em documentação\n' +
+      '   - test: adição ou correção de testes\n' +
+      '   - chore: manutenção, ferramentas, dependências ou scripts\n' +
+      '   - perf: otimização de desempenho\n' +
+      '3. Regras de ouro:\n' +
+      '   - Linha de assunto curta (máximo 72 caracteres).\n' +
+      '   - Proibido usar mensagens vagas como "update", "fix bug", "changes", "testes".\n' +
+      '   - Ao rodar `git commit` via `run_terminal_command` ou ao sugerir commits, formate a mensagem sempre nesse padrão.',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {
