@@ -20,6 +20,7 @@ import {
   Brain,
   GitCommit,
   Smartphone,
+  Cloud,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -124,6 +125,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
         return <GitCommit className="w-4 h-4 text-cyan-400" />;
       case 'smartphone':
         return <Smartphone className="w-4 h-4 text-pink-400" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4 text-slate-300" />;
       default:
         return <Blocks className="w-4 h-4 text-purple-400" />;
     }

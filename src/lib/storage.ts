@@ -115,6 +115,22 @@ export const BUILTIN_SKILLS: Skill[] = [
       '4. Densidade em Mobile: Priorize listas verticais, gavetas inferiores (bottom sheets) ou cards expansíveis em vez de tabelas largas ou modais estáticos que cortem a tela.\n' +
       '5. Tailwind Responsivo: Desenvolva com foco móvel padrão (ex: `w-full sm:w-auto`, `flex-col sm:flex-row`, `p-3 sm:p-6`, `text-sm sm:text-base`).',
   },
+  {
+    id: 'vercel-edge',
+    name: 'Vercel Edge Awareness',
+    description: 'Respeita limites da Vercel Hobby: Edge Runtime, timeouts, payload de 4.5MB e cold starts.',
+    icon: 'cloud',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você conhece profundamente as limitações da Vercel (plano Hobby) e DEVE respeitá-las em todo código de backend/API:\n' +
+      '1. Edge Runtime: rotas em `/api` rodam com `runtime: "edge"`. Use apenas Web Standard APIs (`Request`, `Response`, `fetch`, `URL`, `crypto`). PROIBIDO `fs`, `path`, `child_process` ou pacotes dependentes de Node.js nativo.\n' +
+      '2. Timeouts: funções serverless Hobby têm limite curto (10s a 60s com `maxDuration`). Operações longas devem usar streaming (SSE) ou ser divididas em chamadas curtas.\n' +
+      '3. Payload: o corpo de requisição/resposta é limitado a ~4.5MB. Comprima imagens no cliente e evite enviar arquivos grandes em Base64 pelo servidor.\n' +
+      '4. Cold Starts: mantenha bundles de funções enxutos. Prefira pacotes leves (ex: `@octokit/rest` em vez de `octokit`) e use imports dinâmicos para libs pesadas.\n' +
+      '5. Sem estado em disco: o filesystem é efêmero e somente leitura. Persistência deve usar serviços externos ou o armazenamento do cliente (IndexedDB/localStorage).\n' +
+      '6. Variáveis de ambiente: nunca exponha segredos no bundle do cliente; use apenas `VITE_*` para valores públicos.',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {

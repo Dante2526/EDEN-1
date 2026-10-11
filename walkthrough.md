@@ -166,7 +166,14 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
     - Tipagem TypeScript estrita: `tsc --noEmit` com 0 erros.
     - Build de produção do Vite compilado em 1.73s.
 
-**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de 7 Skills Nativas (incluindo Mobile-First, Conventional Commits e Office Architect), Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python`, Geração Universal de Arquivos com `generate_document` e Base de Conhecimento Persistente com `save_memory`/`forget_memory`.
+## 18. Habilidade Nativa: Vercel Edge Awareness (`vercel-edge`)
+- **Problema:** A IA sugeria código incompatível com a Vercel Hobby (uso de `fs`/Node nativo no Edge, operações longas sem streaming, payloads acima de 4.5MB, bundles pesados), causando erros 500 e timeouts já vividos no projeto.
+- **Solução Implementada:**
+  - **Skill Built-in Nativa:** ID `vercel-edge`, ícone `Cloud`, ativada por padrão em `src/lib/storage.ts`.
+  - **Diretrizes:** Edge Runtime com Web Standard APIs apenas; timeouts (10–60s) com streaming SSE; limite de payload ~4.5MB; bundles enxutos e imports dinâmicos; filesystem efêmero; segredos nunca no bundle (`VITE_*` só para valores públicos).
+  - **Evidências de Verificação:** 14/14 testes passando, `tsc --noEmit` com 0 erros, build Vite verde em 1.71s.
+
+**Status atual da Aplicação:** Estável, pronta para produção, com Context Compaction, Auto-Continuação de 45 rodadas, Catálogo de 8 Skills Nativas (incluindo Vercel Edge Awareness, Mobile-First, Conventional Commits e Office Architect), Conector Universal MCP, Leitura Web Profunda com `fetch_url`, Execução Real de Python com `run_python`, Geração Universal de Arquivos com `generate_document` e Base de Conhecimento Persistente com `save_memory`/`forget_memory`.
 
 
 
