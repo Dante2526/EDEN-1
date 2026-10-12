@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@andresaya/edge-tts": "^1.8.1",
-    "@octokit/rest": "^22.0.1",
+    
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",
     "clsx": "^2.1.1",
