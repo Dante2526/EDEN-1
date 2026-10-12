@@ -16,9 +16,10 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
-  // Rastreia o ÍNDICE do último resultado final que já processamos
-  const lastFinalIndexRef = useRef<number>(-1);
+  // Texto final acumulado de TODAS as sessões de reconhecimento
   const finalTextRef = useRef<string>('');
+  // Texto salvo antes de cada restart (onend → start)
+  const savedTextRef = useRef<string>('');
   const isManuallyStoppedRef = useRef<boolean>(false);
   const isListeningRef = useRef<boolean>(false);
 
@@ -41,7 +42,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   const startListening = () => {
     setErrorMessage(null);
     finalTextRef.current = '';
-    lastFinalIndexRef.current = -1;
+    savedTextRef.current = '';
     isManuallyStoppedRef.current = false;
 
     const SpeechRecognition =
@@ -64,30 +65,29 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       };
 
       recognition.onresult = (event: any) => {
-        let interim = '';
-
-        // Itera sobre TODOS os resultados do evento
-        for (let i = 0; i < event.results.length; ++i) {
-          const res = event.results[i];
-          const text = res[0]?.transcript || '';
-
-          if (res.isFinal) {
-            // SÓ processa resultados finais que NÃO foram processados ainda
-            if (i > lastFinalIndexRef.current) {
-              finalTextRef.current += text + ' ';
-              lastFinalIndexRef.current = i; // Atualiza o índice do último final processado
-            }
-          } else {
-            // Resultados intermediários (interim) são sempre temporários
-            interim += text;
+        // event.resultIndex = índice do primeiro resultado que MUDOU desde o último evento
+        // Resultados antes desse índice não mudaram (já foram processados)
+        
+        // Pega apenas resultados NOVOS que são finais
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalTextRef.current += result[0].transcript + ' ';
           }
         }
 
-        // O texto final acumulado + o interim atual
-        const currentFull = (finalTextRef.current + interim).trim();
+        // Pega o último resultado interim (não-final) se houver
+        let interim = '';
+        const lastResult = event.results[event.results.length - 1];
+        if (lastResult && !lastResult.isFinal) {
+          interim = lastResult[0].transcript;
+        }
 
-        if (currentFull) {
-          onTranscript(currentFull, Boolean(interim));
+        // Texto completo = texto salvo de sessões anteriores + texto final atual + interim
+        const fullText = (savedTextRef.current + finalTextRef.current + interim).trim();
+
+        if (fullText) {
+          onTranscript(fullText, Boolean(interim));
         }
       };
 
@@ -104,8 +104,13 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       };
 
       recognition.onend = () => {
-        // Se a escuta foi interrompida automaticamente pelo navegador sem o usuário parar
+        // Se a escuta foi interrompida automaticamente pelo navegador (comum no mobile)
         if (!isManuallyStoppedRef.current && isListeningRef.current) {
+          // Salva o texto final acumulado ANTES de reiniciar
+          // (porque event.results vai zerar no novo start)
+          savedTextRef.current += finalTextRef.current;
+          finalTextRef.current = '';
+          
           try {
             recognition.start();
             return;

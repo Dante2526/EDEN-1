@@ -498,10 +498,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             </div>
           )}
 
-          {/* Tool Calls Execution Status */}
+          {/* Tool Calls Execution Status - só mostra o ÚLTIMO running (1 orb) */}
           {message.toolCalls && message.toolCalls.length > 0 && (
             <div className="w-full mb-3 space-y-2">
-              {message.toolCalls.map((tc) => {
+              {(() => {
+                // Encontra o último tool running
+                const lastRunning = [...message.toolCalls].reverse().find((tc) => tc.status === 'running');
+                // Se tem running, só mostra ele. Se não, mostra todos (completos)
+                const toolsToShow = lastRunning ? [lastRunning] : message.toolCalls;
+                return toolsToShow.map((tc) => {
                 let parsedArgs: any = {};
                 try {
                   parsedArgs = JSON.parse(tc.arguments || '{}');
@@ -975,7 +980,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     </span>
                   </div>
                 );
-              })}
+              });
+              })()}
             </div>
           )}
 
