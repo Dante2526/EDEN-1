@@ -16,8 +16,9 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
-  const accumulatedRef = useRef<string>('');
-  const sessionFinalRef = useRef<string>('');
+  // Rastreia o ÍNDICE do último resultado final que já processamos
+  const lastFinalIndexRef = useRef<number>(-1);
+  const finalTextRef = useRef<string>('');
   const isManuallyStoppedRef = useRef<boolean>(false);
   const isListeningRef = useRef<boolean>(false);
 
@@ -26,7 +27,6 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     onStateChange?.(isListening);
   }, [isListening, onStateChange]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
@@ -40,8 +40,8 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
 
   const startListening = () => {
     setErrorMessage(null);
-    accumulatedRef.current = '';
-    sessionFinalRef.current = '';
+    finalTextRef.current = '';
+    lastFinalIndexRef.current = -1;
     isManuallyStoppedRef.current = false;
 
     const SpeechRecognition =
@@ -65,26 +65,26 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
 
       recognition.onresult = (event: any) => {
         let interim = '';
-        let currentFinal = '';
 
+        // Itera sobre TODOS os resultados do evento
         for (let i = 0; i < event.results.length; ++i) {
           const res = event.results[i];
           const text = res[0]?.transcript || '';
+
           if (res.isFinal) {
-            currentFinal += text + ' ';
+            // SÓ processa resultados finais que NÃO foram processados ainda
+            if (i > lastFinalIndexRef.current) {
+              finalTextRef.current += text + ' ';
+              lastFinalIndexRef.current = i; // Atualiza o índice do último final processado
+            }
           } else {
+            // Resultados intermediários (interim) são sempre temporários
             interim += text;
           }
         }
 
-        // Se temos texto final nesta rodada, acumula UMA VEZ
-        if (currentFinal) {
-          accumulatedRef.current += currentFinal;
-          sessionFinalRef.current = ''; // Limpa pra próxima rodada
-        }
-
-        // Monta o texto completo: acumulado + interim atual
-        const currentFull = (accumulatedRef.current + interim).trim();
+        // O texto final acumulado + o interim atual
+        const currentFull = (finalTextRef.current + interim).trim();
 
         if (currentFull) {
           onTranscript(currentFull, Boolean(interim));
@@ -106,10 +106,6 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       recognition.onend = () => {
         // Se a escuta foi interrompida automaticamente pelo navegador sem o usuário parar
         if (!isManuallyStoppedRef.current && isListeningRef.current) {
-          if (sessionFinalRef.current) {
-            accumulatedRef.current += sessionFinalRef.current;
-            sessionFinalRef.current = '';
-          }
           try {
             recognition.start();
             return;
@@ -149,7 +145,6 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
 
   return (
     <>
-      {/* Toast de erro caso a permissão seja negada */}
       {errorMessage && (
         <div className="fixed bottom-24 sm:bottom-28 left-4 right-4 sm:left-auto sm:right-1/2 sm:translate-x-1/2 max-w-md mx-auto z-40 animate-in fade-in duration-200">
           <div className="bg-[color:var(--c-bg-2d1c1a)] border border-[color:var(--c-bg-7a3429)] text-[color:var(--c-fg-f4ada3)] rounded-xl p-3 text-xs shadow-xl flex items-center justify-between gap-2">
@@ -168,7 +163,6 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         </div>
       )}
 
-      {/* Botão de Microfone com feedback ativo direto */}
       <button
         type="button"
         onClick={toggleListening}

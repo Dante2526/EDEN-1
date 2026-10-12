@@ -10,26 +10,29 @@ interface SearchResult {
   link: string;
 }
 
-function sanitizeSnippetForAi(text: string): string {
-  if (!text || typeof text !== 'string') return '';
+function stripHtml(text: string): string {
   return text
     .replace(/<[^>]*>?/gm, '')
-    .replace(/https?:\/\/[^\s]+/g, '')
-    .replace(/javascript:/gi, '')
-    .replace(/data:/gi, '')
-    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 async function searchDuckDuckGoHtml(query: string): Promise<SearchResult[]> {
-  const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  // Usa a interface lite do DuckDuckGo que é mais estável para scraping
+  const url = `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}&kl=br-pt`;
   const res = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
     },
-    signal: AbortSignal.timeout(5000),
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!res.ok) return [];
@@ -38,28 +41,84 @@ async function searchDuckDuckGoHtml(query: string): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
 
   try {
-    const resultBlocks = html.split('<div class="result ');
-    for (let i = 1; i < resultBlocks.length && results.length < 5; i++) {
-      const block = resultBlocks[i];
-      const titleMatch = block.match(/<a class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
-      const snippetMatch = block.match(/<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
+    // A lite interface do DDG usa uma tabela com classe .result-snippet
+    // Os links estão em <a class="result-link" href="...">
+    // E os snippets em <td class="result-snippet">
+    
+    // Regex mais robusta: pega qualquer <a> com href começando com http dentro de um <td>
+    const linkRegex = /<a[^>]+class="result-link"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+    const snippetRegex = /<td[^>]+class="result-snippet"[^>]*>([\s\S]*?)<\/td>/gi;
 
-      if (titleMatch) {
-        let link = titleMatch[1];
-        if (link.includes('uddg=')) {
-          const match = link.match(/uddg=([^&]+)/);
-          if (match) link = decodeURIComponent(match[1]);
-        }
-        const title = sanitizeSnippetForAi(titleMatch[2]);
-        const snippet = snippetMatch ? sanitizeSnippetForAi(snippetMatch[1]) : '';
+    const links: Array<{ link: string; title: string }> = [];
+    const snippets: string[] = [];
 
-        if (title && link.startsWith('http')) {
-          results.push({ title, snippet, link });
+    let linkMatch;
+    while ((linkMatch = linkRegex.exec(html)) !== null) {
+      let link = linkMatch[1];
+      // DDG lite às vezes coloca redirect
+      if (link.includes('uddg=')) {
+        const uddgMatch = link.match(/uddg=([^&]+)/);
+        if (uddgMatch) link = decodeURIComponent(uddgMatch[1]);
+      }
+      const title = stripHtml(linkMatch[2]);
+      if (title && link.startsWith('http')) {
+        links.push({ link, title });
+      }
+    }
+
+    let snippetMatch;
+    while ((snippetMatch = snippetRegex.exec(html)) !== null) {
+      snippets.push(stripHtml(snippetMatch[1]));
+    }
+
+    // Combina links com snippets
+    for (let i = 0; i < Math.min(links.length, 6); i++) {
+      results.push({
+        title: links[i].title,
+        snippet: snippets[i] || '',
+        link: links[i].link,
+      });
+    }
+
+    // Fallback: se a regex da lite não achou nada, tenta a interface HTML normal
+    if (results.length === 0) {
+      const htmlUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+      const htmlRes = await fetch(htmlUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (htmlRes.ok) {
+        const html2 = await htmlRes.text();
+        // Tenta múltiplas regex patterns (DDG muda HTML frequentemente)
+        const patterns = [
+          /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
+          /<a[^>]+class="result__url"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
+          /<a[^>]+rel="ugc"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
+        ];
+
+        for (const pattern of patterns) {
+          let match;
+          while ((match = pattern.exec(html2)) !== null && results.length < 5) {
+            let link = match[1];
+            if (link.includes('uddg=')) {
+              const uddgMatch = link.match(/uddg=([^&]+)/);
+              if (uddgMatch) link = decodeURIComponent(uddgMatch[1]);
+            }
+            const title = stripHtml(match[2]);
+            if (title && link.startsWith('http')) {
+              results.push({ title, snippet: '', link });
+            }
+          }
+          if (results.length > 0) break;
         }
       }
     }
   } catch (parseErr) {
-    console.warn('Failed to parse DDG HTML:', parseErr);
+    console.warn('Failed to parse DDG results:', parseErr);
   }
   return results;
 }
@@ -80,6 +139,21 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const results = await searchDuckDuckGoHtml(q);
+    
+    // Se não achou nada, retorna um resultado placeholder explicando
+    if (results.length === 0) {
+      return new Response(JSON.stringify([
+        {
+          title: `Resultados para: ${q}`,
+          snippet: `Não foi possível extrair resultados do DuckDuckGo. Tente acessar diretamente: https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+          link: `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+        }
+      ]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+      });
+    }
+
     return new Response(JSON.stringify(results), {
       status: 200,
       headers: {
@@ -89,7 +163,13 @@ export default async function handler(req: Request): Promise<Response> {
     });
   } catch (error: any) {
     console.error('Search error:', error);
-    return new Response(JSON.stringify([]), {
+    return new Response(JSON.stringify([
+      {
+        title: `Erro na busca: ${q}`,
+        snippet: `Ocorreu um erro ao buscar. Tente novamente ou acesse: https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+        link: `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+      }
+    ]), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
