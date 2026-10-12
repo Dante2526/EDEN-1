@@ -5,7 +5,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root { --c-page-bg: #ffffff; --c-page-fg: #1c1b19; }
-.dark { --c-page-bg: #000000; --c-page-fg: #ececec; }
+.dark { --c-page-bg: #111217; --c-page-fg: #f7fafc; }
 
 /* Tokens dark-* (ex.: bg-dark-bg) seguem o tema: valores claros quando fora de .dark */
 :root:not(.dark) {
@@ -19,13 +19,13 @@
 }
 
 @theme {
-  --color-dark-bg: #000000;
-  --color-dark-bg-secondary: #121212;
-  --color-dark-card: #121212;
-  --color-dark-header: #0a0a0a;
-  --color-dark-hover: #1f1f1f;
-  --color-dark-text: #ececec;
-  --color-dark-text-secondary: #9b9b9b;
+  --color-dark-bg: #111217;
+  --color-dark-bg-secondary: #1E2029;
+  --color-dark-card: #1E2029;
+  --color-dark-header: #15171E;
+  --color-dark-hover: #252836;
+  --color-dark-text: #f7fafc;
+  --color-dark-text-secondary: #a0aec0;
 }
 
 @layer base {
@@ -52,9 +52,9 @@
   --sb-thumb-hover: #8f949e;
 }
 .dark {
-  --sb-track: #0a0a0a;
-  --sb-thumb: #3a3a3a;
-  --sb-thumb-hover: #555555;
+  --sb-track: #1e293b;
+  --sb-thumb: #475569;
+  --sb-thumb-hover: #64748b;
 }
 * {
   scrollbar-width: thin;

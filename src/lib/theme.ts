@@ -26,7 +26,7 @@ export function applyTheme(theme: ThemeMode): void {
   root.style.colorScheme = theme;
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'dark' ? '#000000' : '#ffffff');
+    ?.setAttribute('content', theme === 'dark' ? '#111217' : '#ffffff');
 
   localStorage.setItem(THEME_STORAGE_KEY, theme);
 }
