@@ -16,10 +16,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
-  // Texto final acumulado de TODAS as sessões de reconhecimento
   const finalTextRef = useRef<string>('');
-  // Texto salvo antes de cada restart (onend → start)
-  const savedTextRef = useRef<string>('');
   const isManuallyStoppedRef = useRef<boolean>(false);
   const isListeningRef = useRef<boolean>(false);
 
@@ -31,94 +28,102 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {}
+        try { recognitionRef.current.abort(); } catch {}
         recognitionRef.current = null;
       }
     };
   }, []);
 
+  const createRecognition = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+
+    const recognition = new SpeechRecognition();
+    // continuous = false: cada sessão captura UMA frase e para
+    // Isso evita o bug do mobile de reenviar todos os resultados
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'pt-BR';
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      // Com continuous=false, só temos 1 resultado por sessão
+      // event.results só tem o resultado atual, sem acumular
+      let interim = '';
+      let final = '';
+
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          final += result[0].transcript + ' ';
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+
+      // Se temos final, acumula
+      if (final) {
+        finalTextRef.current += final;
+      }
+
+      // Mostra: acumulado + interim atual
+      const fullText = (finalTextRef.current + interim).trim();
+      if (fullText) {
+        onTranscript(fullText, Boolean(interim));
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error === 'not-allowed') {
+        setErrorMessage('Permissão de microfone negada no navegador.');
+        stopListening();
+      } else if (event.error === 'no-speech') {
+        // Sem fala detectada, reinicia se ainda ativo
+      } else if (event.error === 'network') {
+        setErrorMessage('Erro de conexão no reconhecimento de voz.');
+        stopListening();
+      }
+    };
+
+    recognition.onend = () => {
+      // Com continuous=false, onend dispara após cada frase
+      // Se o usuário não parou manualmente, reinicia pra capturar a próxima
+      if (!isManuallyStoppedRef.current && isListeningRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          // Se falhar ao reiniciar rapidamente, tenta novamente em 100ms
+          setTimeout(() => {
+            if (!isManuallyStoppedRef.current && isListeningRef.current) {
+              try { recognition.start(); } catch {}
+            }
+          }, 100);
+        }
+      }
+      setIsListening(false);
+    };
+
+    return recognition;
+  };
+
   const startListening = () => {
     setErrorMessage(null);
     finalTextRef.current = '';
-    savedTextRef.current = '';
     isManuallyStoppedRef.current = false;
 
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
+    const recognition = createRecognition();
+    if (!recognition) {
       setErrorMessage('Reconhecimento de voz não suportado neste navegador. Use o Chrome ou Edge.');
       return;
     }
 
     try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'pt-BR';
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event: any) => {
-        // event.resultIndex = índice do primeiro resultado que MUDOU desde o último evento
-        // Resultados antes desse índice não mudaram (já foram processados)
-        
-        // Pega apenas resultados NOVOS que são finais
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          if (result.isFinal) {
-            finalTextRef.current += result[0].transcript + ' ';
-          }
-        }
-
-        // Pega o último resultado interim (não-final) se houver
-        let interim = '';
-        const lastResult = event.results[event.results.length - 1];
-        if (lastResult && !lastResult.isFinal) {
-          interim = lastResult[0].transcript;
-        }
-
-        // Texto completo = texto salvo de sessões anteriores + texto final atual + interim
-        const fullText = (savedTextRef.current + finalTextRef.current + interim).trim();
-
-        if (fullText) {
-          onTranscript(fullText, Boolean(interim));
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        if (event.error === 'not-allowed') {
-          setErrorMessage('Permissão de microfone negada no navegador.');
-          stopListening();
-        } else if (event.error === 'no-speech') {
-          // Silêncio temporário é normal, mantém escuta ativa
-        } else if (event.error === 'network') {
-          setErrorMessage('Erro de conexão no reconhecimento de voz.');
-          stopListening();
-        }
-      };
-
-      recognition.onend = () => {
-        // Se a escuta foi interrompida automaticamente pelo navegador (comum no mobile)
-        if (!isManuallyStoppedRef.current && isListeningRef.current) {
-          // Salva o texto final acumulado ANTES de reiniciar
-          // (porque event.results vai zerar no novo start)
-          savedTextRef.current += finalTextRef.current;
-          finalTextRef.current = '';
-          
-          try {
-            recognition.start();
-            return;
-          } catch {}
-        }
-        setIsListening(false);
-      };
-
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err: any) {
@@ -131,9 +136,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   const stopListening = () => {
     isManuallyStoppedRef.current = true;
     if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
+      try { recognitionRef.current.stop(); } catch {}
       recognitionRef.current = null;
     }
     setIsListening(false);

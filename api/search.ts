@@ -23,102 +23,105 @@ function stripHtml(text: string): string {
     .trim();
 }
 
-async function searchDuckDuckGoHtml(query: string): Promise<SearchResult[]> {
-  // Usa a interface lite do DuckDuckGo que é mais estável para scraping
-  const url = `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}&kl=br-pt`;
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-    },
-    signal: AbortSignal.timeout(8000),
-  });
-
-  if (!res.ok) return [];
-
-  const html = await res.text();
+// DuckDuckGo Instant Answer API - oficial, estável, sem bloqueio
+async function searchDuckDuckGoApi(query: string): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
 
   try {
-    // A lite interface do DDG usa uma tabela com classe .result-snippet
-    // Os links estão em <a class="result-link" href="...">
-    // E os snippets em <td class="result-snippet">
-    
-    // Regex mais robusta: pega qualquer <a> com href começando com http dentro de um <td>
-    const linkRegex = /<a[^>]+class="result-link"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
-    const snippetRegex = /<td[^>]+class="result-snippet"[^>]*>([\s\S]*?)<\/td>/gi;
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1&t=synap`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'SynapAI/1.0' },
+      signal: AbortSignal.timeout(5000),
+    });
 
-    const links: Array<{ link: string; title: string }> = [];
-    const snippets: string[] = [];
+    if (!res.ok) return [];
 
-    let linkMatch;
-    while ((linkMatch = linkRegex.exec(html)) !== null) {
-      let link = linkMatch[1];
-      // DDG lite às vezes coloca redirect
-      if (link.includes('uddg=')) {
-        const uddgMatch = link.match(/uddg=([^&]+)/);
-        if (uddgMatch) link = decodeURIComponent(uddgMatch[1]);
-      }
-      const title = stripHtml(linkMatch[2]);
-      if (title && link.startsWith('http')) {
-        links.push({ link, title });
-      }
-    }
+    const data = await res.json();
 
-    let snippetMatch;
-    while ((snippetMatch = snippetRegex.exec(html)) !== null) {
-      snippets.push(stripHtml(snippetMatch[1]));
-    }
-
-    // Combina links com snippets
-    for (let i = 0; i < Math.min(links.length, 6); i++) {
+    // 1. Abstract principal
+    if (data.AbstractText && data.AbstractURL) {
       results.push({
-        title: links[i].title,
-        snippet: snippets[i] || '',
-        link: links[i].link,
+        title: data.Heading || query,
+        snippet: data.AbstractText,
+        link: data.AbstractURL,
       });
     }
 
-    // Fallback: se a regex da lite não achou nada, tenta a interface HTML normal
-    if (results.length === 0) {
-      const htmlUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-      const htmlRes = await fetch(htmlUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-        },
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (htmlRes.ok) {
-        const html2 = await htmlRes.text();
-        // Tenta múltiplas regex patterns (DDG muda HTML frequentemente)
-        const patterns = [
-          /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
-          /<a[^>]+class="result__url"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
-          /<a[^>]+rel="ugc"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
-        ];
-
-        for (const pattern of patterns) {
-          let match;
-          while ((match = pattern.exec(html2)) !== null && results.length < 5) {
-            let link = match[1];
-            if (link.includes('uddg=')) {
-              const uddgMatch = link.match(/uddg=([^&]+)/);
-              if (uddgMatch) link = decodeURIComponent(uddgMatch[1]);
-            }
-            const title = stripHtml(match[2]);
-            if (title && link.startsWith('http')) {
-              results.push({ title, snippet: '', link });
+    // 2. Related Topics (Topicos relacionados)
+    if (Array.isArray(data.RelatedTopics)) {
+      for (const topic of data.RelatedTopics.slice(0, 5)) {
+        if (results.length >= 6) break;
+        if (topic.Text && topic.FirstURL) {
+          results.push({
+            title: topic.Text.split(' - ')[0] || topic.Text.substring(0, 80),
+            snippet: topic.Text,
+            link: topic.FirstURL,
+          });
+        }
+        // Sub-topics (categorias)
+        if (topic.Topics && Array.isArray(topic.Topics)) {
+          for (const sub of topic.Topics.slice(0, 2)) {
+            if (results.length >= 6) break;
+            if (sub.Text && sub.FirstURL) {
+              results.push({
+                title: sub.Text.split(' - ')[0] || sub.Text.substring(0, 80),
+                snippet: sub.Text,
+                link: sub.FirstURL,
+              });
             }
           }
-          if (results.length > 0) break;
         }
       }
     }
-  } catch (parseErr) {
-    console.warn('Failed to parse DDG results:', parseErr);
+
+    // 3. Results (se houver)
+    if (Array.isArray(data.Results)) {
+      for (const r of data.Results.slice(0, 3)) {
+        if (results.length >= 6) break;
+        if (r.Text && r.FirstURL) {
+          results.push({
+            title: r.Text.substring(0, 80),
+            snippet: r.Text,
+            link: r.FirstURL,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('DDG API error:', err);
+  }
+
+  return results;
+}
+
+// Wikipedia OpenSearch - segundo fallback, muito estável
+async function searchWikipedia(query: string): Promise<SearchResult[]> {
+  const results: SearchResult[] = [];
+  try {
+    const url = `https://pt.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=5&namespace=0&format=json&origin=*`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'SynapAI/1.0' },
+      signal: AbortSignal.timeout(4000),
+    });
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const titles: string[] = data[1] || [];
+    const snippets: string[] = data[2] || [];
+    const links: string[] = data[3] || [];
+
+    for (let i = 0; i < titles.length && results.length < 5; i++) {
+      if (titles[i] && links[i]) {
+        results.push({
+          title: titles[i],
+          snippet: snippets[i] || '',
+          link: links[i],
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Wikipedia search error:', err);
   }
   return results;
 }
@@ -138,14 +141,21 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    const results = await searchDuckDuckGoHtml(q);
-    
-    // Se não achou nada, retorna um resultado placeholder explicando
+    // 1. Tenta DuckDuckGo Instant Answer API
+    let results = await searchDuckDuckGoApi(q);
+
+    // 2. Se DDG não achou nada, tenta Wikipedia
+    if (results.length === 0) {
+      const wikiResults = await searchWikipedia(q);
+      results = wikiResults;
+    }
+
+    // 3. Se ainda não achou nada, retorna link de busca direto
     if (results.length === 0) {
       return new Response(JSON.stringify([
         {
-          title: `Resultados para: ${q}`,
-          snippet: `Não foi possível extrair resultados do DuckDuckGo. Tente acessar diretamente: https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+          title: `Buscar: ${q}`,
+          snippet: `Não encontrei resultados estruturados. Acesse a busca completa em:`,
           link: `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
         }
       ]), {
@@ -166,7 +176,7 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(JSON.stringify([
       {
         title: `Erro na busca: ${q}`,
-        snippet: `Ocorreu um erro ao buscar. Tente novamente ou acesse: https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+        snippet: `Ocorreu um erro. Acesse diretamente:`,
         link: `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
       }
     ]), {
