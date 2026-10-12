@@ -61,6 +61,40 @@ import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } fro
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
 
+// Tools que funcionam SEM repo ativo (busca global no GitHub)
+const SEARCH_GITHUB_REPOS_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'search_github_repos',
+    description: 'Busca repositórios públicos no GitHub por nome, descrição ou tópico. Use para encontrar bibliotecas, ferramentas, skills, templates ou exemplos de código. Retorna: full_name, descrição, URL, stars, linguagem e branch padrão.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Termo de busca (ex: "cursor rules", "ai skills", "tailwind components")' },
+      },
+      required: ['query'],
+    },
+  },
+};
+
+const READ_GITHUB_FILE_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'read_github_file',
+    description: 'Lê o conteúdo de um arquivo de QUALQUER repositório público do GitHub (não apenas o repositório ativo). Use após search_github_repos para ler READMEs, arquivos de configuração, prompts, skills ou código-fonte de repositórios encontrados.',
+    parameters: {
+      type: 'object',
+      properties: {
+        owner: { type: 'string', description: 'Owner do repositório (ex: "Dante2526")' },
+        repo: { type: 'string', description: 'Nome do repositório (ex: "Synap")' },
+        path: { type: 'string', description: 'Caminho do arquivo (ex: "README.md", "src/index.ts")' },
+        branch: { type: 'string', description: 'Branch (padrão: main)' },
+      },
+      required: ['owner', 'repo', 'path'],
+    },
+  },
+};
+
 const GITHUB_TOOLS = [
   {
     type: 'function',
@@ -342,8 +376,8 @@ const MEMORY_FORGET_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, ...GITHUB_TOOLS];
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -1187,6 +1221,45 @@ function AppContent() {
         return {
           result: JSON.stringify({ error: err?.message || 'Falha ao executar comando no terminal.' }),
         };
+      }
+    }
+
+    // Buscar repos no GitHub (NÃO precisa de repo ativo)
+    if (name === 'search_github_repos') {
+      try {
+        const res = await fetch(`/api/github?action=search_repos&q=${encodeURIComponent(args.query)}`, {
+          headers: { 'x-api-key': import.meta.env.VITE_API_SECRET || '' },
+        });
+        if (!res.ok) throw new Error(`Erro na busca (${res.status})`);
+        const repos = await res.json();
+        return { result: JSON.stringify(repos) };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || `Erro ao buscar repos: ${args.query}` }) };
+      }
+    }
+
+    // Ler arquivo de QUALQUER repo (NÃO precisa de repo ativo)
+    if (name === 'read_github_file') {
+      try {
+        const params = new URLSearchParams({
+          action: 'read_any_file',
+          owner: args.owner,
+          repo: args.repo,
+          path: args.path,
+          branch: args.branch || 'main',
+        });
+        const res = await fetch(`/api/github?${params.toString()}`, {
+          headers: { 'x-api-key': import.meta.env.VITE_API_SECRET || '' },
+        });
+        if (!res.ok) throw new Error(`Erro ao ler arquivo (${res.status})`);
+        const data = await res.json();
+        if (data.content && data.encoding === 'base64') {
+          const decoded = atob(data.content.replace(/\n/g, ''));
+          return { result: decoded };
+        }
+        return { result: JSON.stringify(data) };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || `Erro ao ler arquivo: ${args.owner}/${args.repo}/${args.path}` }) };
       }
     }
 

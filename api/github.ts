@@ -81,6 +81,33 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // Buscar repositórios no GitHub por nome/descrição
+    if (action === 'search_repos') {
+      const q = url.searchParams.get('q') || '';
+      if (!q.trim()) return new Response(JSON.stringify({ error: 'Query obrigatória.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      const data = await ghFetch(`/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=10`, token);
+      const repos = (data.items || []).map((r: any) => ({
+        full_name: r.full_name,
+        description: r.description || '',
+        html_url: r.html_url,
+        stargazers_count: r.stargazers_count,
+        language: r.language || '',
+        default_branch: r.default_branch,
+      }));
+      return new Response(JSON.stringify(repos), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Ler arquivo de QUALQUER repo (não só o ativo) — pra IA poder ler skills de outros repos
+    if (action === 'read_any_file') {
+      const anyOwner = url.searchParams.get('owner') || '';
+      const anyRepo = url.searchParams.get('repo') || '';
+      const anyPath = url.searchParams.get('path') || '';
+      const anyBranch = url.searchParams.get('branch') || 'main';
+      if (!anyOwner || !anyRepo || !anyPath) return new Response(JSON.stringify({ error: 'owner, repo e path obrigatórios.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      const data = await ghFetch(`/repos/${anyOwner}/${anyRepo}/contents/${anyPath}?ref=${anyBranch}`, token);
+      return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
     return new Response(JSON.stringify({ error: 'Ação não suportada.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message || 'Erro GitHub API' }), {
