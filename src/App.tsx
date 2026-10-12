@@ -2234,7 +2234,7 @@ function AppContent() {
               </p>
             </div>
           ) : (
-            <div className="py-4 divide-y divide-[color:var(--c-bg-2d2a24)]/60">
+            <div className="py-4 space-y-4">
               {activeConversation.messages.map((msg, index) => {
                 const prevMsg = index > 0 ? activeConversation.messages[index - 1] : null;
                 const showCompactionMarker =

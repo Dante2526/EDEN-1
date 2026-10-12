@@ -167,9 +167,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
           </button>
         </div>
 
-        <span className="text-[10px] text-[color:var(--c-fg-6b675e)] font-mono hidden sm:inline select-none">
-          NVIDIA NIM
-        </span>
       </div>
 
       {/* ================= CLAUDE.AI BOTTOM SHEET / MODAL ================= */}

@@ -352,6 +352,29 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap font-sans">
               {displayContent}
             </div>
+
+            {/* Ações da mensagem do usuário (Copiar) */}
+            <div className="flex justify-end mt-1.5 -mb-0.5 pt-1 border-t border-[color:var(--c-bg-3e3b34)]/40">
+              <button
+                type="button"
+                onClick={handleCopy}
+                aria-label="Copiar mensagem"
+                title="Copiar mensagem"
+                className="opacity-70 hover:opacity-100 p-1 rounded-md text-[11px] text-[color:var(--c-fg-c4bfb6)] hover:text-[color:var(--c-fg-f3efe6)] transition flex items-center gap-1 cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span className="text-[10px] text-emerald-400">Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span className="text-[10px]">Copiar</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       ) : (

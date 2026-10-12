@@ -58,7 +58,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
   onToggleTheme,
 }) => {
   return (
-    <header className="h-14 sm:h-15 bg-dark-header/90 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between relative sticky top-0 z-30 select-none max-w-full">
+    <header className="h-14 sm:h-15 bg-transparent px-3 sm:px-5 flex items-center justify-between relative sticky top-0 z-30 select-none max-w-full">
       {/* Left side: Claude sidebar toggle & New chat (New chat hidden on mobile to avoid clutter) */}
       <div className="flex items-center gap-1.5 sm:gap-2 z-10 shrink-0">
         <button
