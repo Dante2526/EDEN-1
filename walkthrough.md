@@ -186,3 +186,15 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - **UI:** botão Sol/Lua movido do header para o rodapé da sidebar, ao lado de Configurações.
 - **Evidências:** `tsc --noEmit` 0 erros, `npm test` verde, `vite build` ok. Verificação visual no navegador ainda pendente (feita pelo usuário).
 
+## 20. Transcrição por Voz em Tempo Real sem Popup Flutuante
+- **Problema:** O microfone exibia uma barra/popup flutuante invasiva sobre o chat e sofria com atraso superior a 15 segundos antes de transcrever a fala.
+- **Causa Raiz:** O componente realizava uma chamada prévia a `navigator.mediaDevices.getUserMedia` encerrando as faixas de áudio imediatamente (`track.stop()`), o que prendia o hardware de áudio no SO antes de instanciar a API nativa `SpeechRecognition`. Além disso, havia um popup flutuante redundante na interface.
+- **Solução:**
+  - **Eliminação do Popup:** Removido o card flutuante. O feedback visual ocorre diretamente no botão de microfone (anel pulsante e realce).
+  - **Zero Delay (Tempo Real):** Removido o pré-aquecimento bloqueante de áudio. A SpeechRecognition inicia imediatamente.
+  - **Transcrição Direta no Input:** O texto reconhecido é inserido continuamente no textarea em tempo real sem latência.
+- **Evidências:**
+  - `npx tsc --noEmit` aprovado com 0 erros.
+  - 14/14 testes unitários passando (`npm test`).
+  - Build Vite de produção gerado com sucesso.
+

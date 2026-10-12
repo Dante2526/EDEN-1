@@ -217,11 +217,11 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         </div>
       )}
 
-      {/* Claude.ai Warm Input Box with Drag & Drop */}
+      {/* Input Box with Drag & Drop (DSS Dark Card Style) */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        className="relative rounded-2xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-24221e)] shadow-xl transition-all focus-within:border-[color:var(--c-bg-5a554a)] focus-within:ring-1 focus-within:ring-[color:var(--c-bg-5a554a)]/30"
+        className="relative rounded-2xl border border-gray-800/60 dark:border-white/10 bg-dark-card shadow-2xl transition-all focus-within:border-[#d97757]/40 focus-within:ring-1 focus-within:ring-[#d97757]/20"
       >
         {/* Previews for attached images and documents */}
         <FileAttachmentPreviews
