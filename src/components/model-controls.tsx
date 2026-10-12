@@ -93,18 +93,18 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             aria-label="Selecionar modelo"
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
               openSheet === 'model'
-                ? 'bg-[#33302a] text-[#f3efe6] border border-[#4a463d]'
-                : 'bg-[#22201d] hover:bg-[#2c2925] border border-[#36332d] text-[#b8b3a8]'
+                ? 'bg-[color:var(--c-bg-33302a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-4a463d)]'
+                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
             }`}
           >
-            <span className="font-medium text-[#f3efe6]">
+            <span className="font-medium text-[color:var(--c-fg-f3efe6)]">
               {selectedModel === 'z-ai/glm-5.3'
                 ? 'GLM-5.3'
                 : selectedModel === 'moonshotai/kimi-k3'
                 ? 'Kimi K3'
                 : 'GLM Flash'}
             </span>
-            <ChevronDown className="w-3.5 h-3.5 text-[#8c867a]" />
+            <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
           </button>
 
           {/* Reasoning / Extended Thinking Pill */}
@@ -114,14 +114,14 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             aria-label="Ajustar pensamento estendido"
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
               openSheet === 'reasoning'
-                ? 'bg-[#33302a] text-[#f3efe6] border border-[#4a463d]'
-                : 'bg-[#22201d] hover:bg-[#2c2925] border border-[#36332d] text-[#b8b3a8]'
+                ? 'bg-[color:var(--c-bg-33302a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-4a463d)]'
+                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
             }`}
           >
-            <Brain className="w-3.5 h-3.5 text-[#d97757]" />
-            <span className="text-[#8c867a] text-[11px]">pensar:</span>
-            <span className="text-[#f3efe6] font-medium">{reasoningEffort}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-[#8c867a]" />
+            <Brain className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
+            <span className="text-[color:var(--c-fg-8c867a)] text-[11px]">pensar:</span>
+            <span className="text-[color:var(--c-fg-f3efe6)] font-medium">{reasoningEffort}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
           </button>
 
           {/* Plan Mode Pill */}
@@ -132,15 +132,15 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             title="Ativar/Desativar modo de planejamento estruturado"
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
               isPlanMode
-                ? 'bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40'
-                : 'bg-[#22201d] hover:bg-[#2c2925] border border-[#36332d] text-[#8c867a]'
+                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40'
+                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-8c867a)]'
             }`}
           >
-            <ListTodo className={`w-3.5 h-3.5 ${isPlanMode ? 'text-[#d97757]' : 'text-[#8c867a]'}`} />
-            <span className={isPlanMode ? 'text-[#f3efe6]' : ''}>Plano</span>
+            <ListTodo className={`w-3.5 h-3.5 ${isPlanMode ? 'text-[color:var(--c-fg-d97757)]' : 'text-[color:var(--c-fg-8c867a)]'}`} />
+            <span className={isPlanMode ? 'text-[color:var(--c-fg-f3efe6)]' : ''}>Plano</span>
             <span
               className={`text-[9px] px-1 py-0.2 rounded font-mono uppercase font-bold ${
-                isPlanMode ? 'bg-[#d97757] text-white' : 'bg-[#2f2d28] text-[#8c867a]'
+                isPlanMode ? 'bg-[#d97757] text-white' : 'bg-[color:var(--c-bg-2f2d28)] text-[color:var(--c-fg-8c867a)]'
               }`}
             >
               {isPlanMode ? 'ON' : 'OFF'}
@@ -155,19 +155,19 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             title="Clique para abrir a Ferramenta de Monitoramento de Tokens & Contexto"
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
               openSheet === 'tokens'
-                ? 'bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40 shadow-xs'
-                : 'bg-[#22201d] hover:bg-[#2c2925] border border-[#36332d] text-[#b8b3a8]'
+                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shadow-xs'
+                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
             }`}
           >
-            <Zap className="w-3.5 h-3.5 text-[#d97757]" />
-            <span className="text-[#8c867a] text-[11px]">tokens:</span>
-            <span className="font-mono font-medium text-[#f3efe6]">
+            <Zap className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
+            <span className="text-[color:var(--c-fg-8c867a)] text-[11px]">tokens:</span>
+            <span className="font-mono font-medium text-[color:var(--c-fg-f3efe6)]">
               {conversationTokens?.totalTokens ? conversationTokens.totalTokens.toLocaleString() : '0'}
             </span>
           </button>
         </div>
 
-        <span className="text-[10px] text-[#6b675e] font-mono hidden sm:inline select-none">
+        <span className="text-[10px] text-[color:var(--c-fg-6b675e)] font-mono hidden sm:inline select-none">
           NVIDIA NIM
         </span>
       </div>
@@ -182,18 +182,18 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
           />
 
           {/* Claude Warm Card */}
-          <div className="relative w-full max-w-md mx-auto bg-[#23211d] border border-[#3b3831] rounded-t-2xl sm:rounded-2xl p-4 sm:p-5 shadow-2xl z-10 animate-in slide-in-from-bottom duration-150 pb-6 sm:pb-5">
+          <div className="relative w-full max-w-md mx-auto bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3b3831)] rounded-t-2xl sm:rounded-2xl p-4 sm:p-5 shadow-2xl z-10 animate-in slide-in-from-bottom duration-150 pb-6 sm:pb-5">
             {/* Header */}
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#312f2a]">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-[color:var(--c-bg-312f2a)]">
               <div>
-                <h3 className="text-sm font-semibold text-[#f3efe6] tracking-tight">
+                <h3 className="text-sm font-semibold text-[color:var(--c-fg-f3efe6)] tracking-tight">
                   {openSheet === 'model'
                     ? 'Modelo'
                     : openSheet === 'reasoning'
                     ? 'Pensamento Estendido (Reasoning)'
                     : '⚡ Monitor de Tokens & Contexto'}
                 </h3>
-                <p className="text-xs text-[#9c9588] mt-0.5">
+                <p className="text-xs text-[color:var(--c-fg-9c9588)] mt-0.5">
                   {openSheet === 'model'
                     ? 'Selecione o modelo do Synap'
                     : openSheet === 'reasoning'
@@ -205,7 +205,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 type="button"
                 onClick={() => setOpenSheet(null)}
                 aria-label="Fechar"
-                className="p-1 rounded-lg text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#302d27] transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -214,38 +214,38 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             {/* List or Content */}
             {openSheet === 'tokens' ? (
               <div className="space-y-3">
-                <div className="p-3.5 rounded-xl bg-[#1e1c19] border border-[#312f2a] space-y-2.5">
-                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[#2c2924]">
-                    <span className="text-[#a8a296]">Tokens de Prompt (Entrada):</span>
-                    <span className="font-mono text-[#f3efe6] font-semibold">
+                <div className="p-3.5 rounded-xl bg-[color:var(--c-bg-1e1c19)] border border-[color:var(--c-bg-312f2a)] space-y-2.5">
+                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[color:var(--c-bg-2c2924)]">
+                    <span className="text-[color:var(--c-fg-a8a296)]">Tokens de Prompt (Entrada):</span>
+                    <span className="font-mono text-[color:var(--c-fg-f3efe6)] font-semibold">
                       {conversationTokens?.promptTokens ? conversationTokens.promptTokens.toLocaleString() : '0'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[#2c2924]">
-                    <span className="text-[#a8a296]">Tokens de Resposta (Saída / Raciocínio):</span>
-                    <span className="font-mono text-[#f3efe6] font-semibold">
+                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[color:var(--c-bg-2c2924)]">
+                    <span className="text-[color:var(--c-fg-a8a296)]">Tokens de Resposta (Saída / Raciocínio):</span>
+                    <span className="font-mono text-[color:var(--c-fg-f3efe6)] font-semibold">
                       {conversationTokens?.completionTokens ? conversationTokens.completionTokens.toLocaleString() : '0'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs pt-0.5">
-                    <span className="text-[#d97757] font-semibold flex items-center gap-1.5">
+                    <span className="text-[color:var(--c-fg-d97757)] font-semibold flex items-center gap-1.5">
                       <Zap className="w-3.5 h-3.5" />
                       <span>Total Consumido no Chat:</span>
                     </span>
-                    <span className="font-mono text-[#d97757] font-bold text-sm">
+                    <span className="font-mono text-[color:var(--c-fg-d97757)] font-bold text-sm">
                       {conversationTokens?.totalTokens ? conversationTokens.totalTokens.toLocaleString() : '0'}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#191714] border border-[#2d2b25] text-xs space-y-2 text-[#8c867a]">
+                <div className="p-3 rounded-xl bg-[color:var(--c-bg-191714)] border border-[color:var(--c-bg-2d2b25)] text-xs space-y-2 text-[color:var(--c-fg-8c867a)]">
                   <div className="flex justify-between items-center">
                     <span>Janela de Contexto Total:</span>
-                    <span className="text-[#c4bcaa] font-mono font-medium">128.000 tokens</span>
+                    <span className="text-[color:var(--c-fg-c4bcaa)] font-mono font-medium">128.000 tokens</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Limite por Resposta (max_tokens):</span>
-                    <span className="text-[#c4bcaa] font-mono font-medium">8.192 tokens</span>
+                    <span className="text-[color:var(--c-fg-c4bcaa)] font-mono font-medium">8.192 tokens</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Streaming Usage (NVIDIA):</span>
@@ -253,8 +253,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                   </div>
                 </div>
 
-                <div className="text-[11px] text-[#8c867a] bg-[#1a1815] p-2.5 rounded-lg border border-[#272520] leading-relaxed">
-                  💡 <strong className="text-[#c4bfb6]">Dica:</strong> Cada resposta da IA também exibe o selo <span className="text-[#d97757]">⚡ [número] tokens</span> no rodapé. Clique nele para ver o consumo individual da mensagem.
+                <div className="text-[11px] text-[color:var(--c-fg-8c867a)] bg-[color:var(--c-bg-1a1815)] p-2.5 rounded-lg border border-[color:var(--c-bg-272520)] leading-relaxed">
+                  💡 <strong className="text-[color:var(--c-fg-c4bfb6)]">Dica:</strong> Cada resposta da IA também exibe o selo <span className="text-[color:var(--c-fg-d97757)]">⚡ [número] tokens</span> no rodapé. Clique nele para ver o consumo individual da mensagem.
                 </div>
 
                 {onOpenTerminal && (
@@ -264,9 +264,9 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                       setOpenSheet(null);
                       onOpenTerminal();
                     }}
-                    className="w-full py-2 px-3 rounded-xl bg-[#282520] hover:bg-[#332f29] border border-[#3a362f] text-xs font-mono text-[#f3efe6] flex items-center justify-center gap-2 transition cursor-pointer"
+                    className="w-full py-2 px-3 rounded-xl bg-[color:var(--c-bg-282520)] hover:bg-[color:var(--c-bg-332f29)] border border-[color:var(--c-bg-3a362f)] text-xs font-mono text-[color:var(--c-fg-f3efe6)] flex items-center justify-center gap-2 transition cursor-pointer"
                   >
-                    <Terminal className="w-3.5 h-3.5 text-[#d97757]" />
+                    <Terminal className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                     <span>Abrir Monitor no Terminal (`tokens`)</span>
                   </button>
                 )}
@@ -285,30 +285,30 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                       }}
                       className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-[#2e2b26] text-[#f3efe6] border border-[#d97757]/40 shadow-xs'
-                          : 'bg-[#1e1c19] hover:bg-[#282622] border border-[#312f2a] text-[#b8b3a8]'
+                          ? 'bg-[color:var(--c-bg-2e2b26)] text-[color:var(--c-fg-f3efe6)] border border-[#d97757]/40 shadow-xs'
+                          : 'bg-[color:var(--c-bg-1e1c19)] hover:bg-[color:var(--c-bg-282622)] border border-[color:var(--c-bg-312f2a)] text-[color:var(--c-fg-b8b3a8)]'
                       }`}
                     >
                       <div className="min-w-0 flex-1 pr-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-[#f3efe6]">{item.title}</span>
+                          <span className="font-semibold text-sm text-[color:var(--c-fg-f3efe6)]">{item.title}</span>
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded font-medium ${
                               isSelected
-                                ? 'bg-[#d97757]/20 text-[#f09a7d]'
-                                : 'bg-[#2b2925] text-[#8c867a]'
+                                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)]'
+                                : 'bg-[color:var(--c-bg-2b2925)] text-[color:var(--c-fg-8c867a)]'
                             }`}
                           >
                             {item.badge}
                           </span>
                         </div>
-                        <p className="text-xs text-[#9c9588] mt-0.5 leading-snug">
+                        <p className="text-xs text-[color:var(--c-fg-9c9588)] mt-0.5 leading-snug">
                           {item.subtitle}
                         </p>
                       </div>
 
                       {isSelected && (
-                        <Check className="w-4 h-4 text-[#d97757] flex-shrink-0" />
+                        <Check className="w-4 h-4 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
                       )}
                     </div>
                   );
@@ -328,30 +328,30 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                       }}
                       className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-[#2e2b26] text-[#f3efe6] border border-[#d97757]/40 shadow-xs'
-                          : 'bg-[#1e1c19] hover:bg-[#282622] border border-[#312f2a] text-[#b8b3a8]'
+                          ? 'bg-[color:var(--c-bg-2e2b26)] text-[color:var(--c-fg-f3efe6)] border border-[#d97757]/40 shadow-xs'
+                          : 'bg-[color:var(--c-bg-1e1c19)] hover:bg-[color:var(--c-bg-282622)] border border-[color:var(--c-bg-312f2a)] text-[color:var(--c-fg-b8b3a8)]'
                       }`}
                     >
                       <div className="min-w-0 flex-1 pr-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm text-[#f3efe6]">{item.title}</span>
+                          <span className="font-semibold text-sm text-[color:var(--c-fg-f3efe6)]">{item.title}</span>
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded font-mono font-medium ${
                               isSelected
-                                ? 'bg-[#d97757]/20 text-[#f09a7d]'
-                                : 'bg-[#2b2925] text-[#8c867a]'
+                                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)]'
+                                : 'bg-[color:var(--c-bg-2b2925)] text-[color:var(--c-fg-8c867a)]'
                             }`}
                           >
                             {item.level}
                           </span>
                         </div>
-                        <p className="text-xs text-[#9c9588] mt-0.5 leading-snug">
+                        <p className="text-xs text-[color:var(--c-fg-9c9588)] mt-0.5 leading-snug">
                           {item.subtitle}
                         </p>
                       </div>
 
                       {isSelected && (
-                        <Check className="w-4 h-4 text-[#d97757] flex-shrink-0" />
+                        <Check className="w-4 h-4 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
                       )}
                     </div>
                   );

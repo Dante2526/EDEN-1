@@ -178,3 +178,11 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 
 
 
+
+## 19. Tema Claro/Escuro Funcional
+- **Problema:** a classe `.dark` alternava, mas ~760 cores hex fixas nunca reagiam (0 usos de `dark:`).
+- **Solução:** codemod `scripts/migrate-theme.mjs` troca os hex por variáveis CSS (`src/theme-vars.generated.css`: claro neutro/branco, escuro igual ao anterior). Escalas slate/zinc invertidas no claro; scrollbar, seleção, body e `text-white` adaptados. Terminal e code-block permanecem escuros nos dois temas.
+- **FOUC:** script inline em `index.html` aplica o tema salvo antes do React; `applyTheme` atualiza `color-scheme` e `theme-color`.
+- **UI:** botão Sol/Lua movido do header para o rodapé da sidebar, ao lado de Configurações.
+- **Evidências:** `tsc --noEmit` 0 erros, `npm test` verde, `vite build` ok. Verificação visual no navegador ainda pendente (feita pelo usuário).
+

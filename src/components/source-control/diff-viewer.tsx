@@ -70,15 +70,15 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-5xl h-[92vh] rounded-2xl bg-[#1d1b18] border border-[#3b3831] shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-5xl h-[92vh] rounded-2xl bg-[color:var(--c-bg-1d1b18)] border border-[color:var(--c-bg-3b3831)] shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-[#312f2a] bg-[#23211d] flex items-center justify-between flex-wrap gap-2">
+        <div className="px-4 py-3 border-b border-[color:var(--c-bg-312f2a)] bg-[color:var(--c-bg-23211d)] flex items-center justify-between flex-wrap gap-2">
           {/* File path & badge */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <FileCode className="w-4 h-4 text-[#d97757] shrink-0" />
+            <FileCode className="w-4 h-4 text-[color:var(--c-fg-d97757)] shrink-0" />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs sm:text-sm text-[#f3efe6] font-medium truncate">
+                <span className="font-mono text-xs sm:text-sm text-[color:var(--c-fg-f3efe6)] font-medium truncate">
                   {change.path}
                 </span>
                 <span
@@ -97,12 +97,12 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     : 'D • Deleted'}
                 </span>
                 {change.staged && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40">
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40">
                     Staged
                   </span>
                 )}
               </div>
-              <p className="text-[10px] font-mono text-[#8c867a]">
+              <p className="text-[10px] font-mono text-[color:var(--c-fg-8c867a)]">
                 {change.repo} · branch {change.branch}
               </p>
             </div>
@@ -118,9 +118,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                   setEditedText(change.newContent);
                   setIsEditing(true);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-[#c4bfb6] hover:text-[#f3efe6] bg-[#2d2a24] hover:bg-[#38342d] border border-[#3e3a32] transition cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-[color:var(--c-fg-c4bfb6)] hover:text-[color:var(--c-fg-f3efe6)] bg-[color:var(--c-bg-2d2a24)] hover:bg-[color:var(--c-bg-38342d)] border border-[color:var(--c-bg-3e3a32)] transition cursor-pointer"
               >
-                <Edit3 className="w-3.5 h-3.5 text-[#d97757]" />
+                <Edit3 className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                 <span className="hidden sm:inline">Editar conteúdo</span>
               </button>
             ) : (
@@ -175,7 +175,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Fechar diff viewer"
-              className="w-7 h-7 rounded-lg bg-[#2e2b26] hover:bg-[#38352f] text-[#a39d93] hover:text-[#f3efe6] transition flex items-center justify-center cursor-pointer ml-1"
+              className="w-7 h-7 rounded-lg bg-[color:var(--c-bg-2e2b26)] hover:bg-[color:var(--c-bg-38352f)] text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] transition flex items-center justify-center cursor-pointer ml-1"
             >
               <X className="w-4 h-4" />
             </button>
@@ -183,15 +183,15 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         </div>
 
         {/* Content area: Diff Viewer or Inline Editor */}
-        <div className="flex-1 overflow-auto bg-[#181714]">
+        <div className="flex-1 overflow-auto bg-[color:var(--c-bg-181714)]">
           {isEditing ? (
             <div className="h-full flex flex-col p-3">
-              <div className="flex items-center justify-between mb-2 text-xs font-mono text-[#8c867a]">
+              <div className="flex items-center justify-between mb-2 text-xs font-mono text-[color:var(--c-fg-8c867a)]">
                 <span>Editando conteúdo pendente:</span>
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="text-xs text-[#a39d93] hover:text-[#f3efe6] underline cursor-pointer"
+                  className="text-xs text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] underline cursor-pointer"
                 >
                   Cancelar edição
                 </button>
@@ -199,13 +199,13 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               <textarea
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                className="flex-1 w-full p-4 font-mono text-xs sm:text-sm bg-[#12110f] border border-[#3b3831] rounded-xl text-[#f3efe6] focus:outline-hidden focus:border-[#d97757] resize-none leading-relaxed"
+                className="flex-1 w-full p-4 font-mono text-xs sm:text-sm bg-[color:var(--c-bg-12110f)] border border-[color:var(--c-bg-3b3831)] rounded-xl text-[color:var(--c-fg-f3efe6)] focus:outline-hidden focus:border-[#d97757] resize-none leading-relaxed"
                 spellCheck={false}
               />
             </div>
           ) : (
             <div className="p-2 sm:p-4">
-              <Suspense fallback={<div className="p-4 text-sm font-mono text-[#8c867a]">Carregando visualizador de diff...</div>}>
+              <Suspense fallback={<div className="p-4 text-sm font-mono text-[color:var(--c-fg-8c867a)]">Carregando visualizador de diff...</div>}>
                 <ReactDiffViewer
                   oldValue={change.originalContent || ''}
                   newValue={change.newContent}

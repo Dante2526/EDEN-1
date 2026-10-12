@@ -64,7 +64,7 @@ ${item.stack ? `Stack Trace:\n${item.stack}` : ''}`;
               <ShieldAlert className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-[color:var(--c-on-strong)] flex items-center gap-2">
                 <span>Inspetor de Erros do Sistema</span>
                 {current?.status && (
                   <span className="text-xs px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 font-mono border border-red-500/30">
@@ -103,7 +103,7 @@ ${item.stack ? `Stack Trace:\n${item.stack}` : ''}`;
             )}
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+              className="p-2 text-slate-400 hover:text-[color:var(--c-on-strong)] hover:bg-slate-800 rounded-xl transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -221,7 +221,7 @@ ${item.stack ? `Stack Trace:\n${item.stack}` : ''}`;
                       </div>
 
                       <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-700 space-y-1.5 text-slate-300 font-sans">
-                        <p className="font-bold text-white text-xs">Passo a Passo Rápido para Resolver:</p>
+                        <p className="font-bold text-[color:var(--c-on-strong)] text-xs">Passo a Passo Rápido para Resolver:</p>
                         <ol className="list-decimal list-inside space-y-1 text-slate-300">
                           <li>Acesse <a href="https://vercel.com/dashboard" target="_blank" rel="noreferrer" className="text-amber-400 underline font-mono">vercel.com/dashboard</a> e selecione seu projeto.</li>
                           <li>Vá em <strong>Settings</strong> &rarr; <strong>Environment Variables</strong>.</li>

@@ -58,14 +58,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
   onToggleTheme,
 }) => {
   return (
-    <header className="h-14 sm:h-15 border-b border-[#2d2b26] bg-dark-header/90 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between relative sticky top-0 z-30 select-none max-w-full">
+    <header className="h-14 sm:h-15 border-b border-[color:var(--c-bg-2d2b26)] bg-dark-header/90 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between relative sticky top-0 z-30 select-none max-w-full">
       {/* Left side: Claude sidebar toggle & New chat (New chat hidden on mobile to avoid clutter) */}
       <div className="flex items-center gap-1.5 sm:gap-2 z-10 shrink-0">
         <button
           type="button"
           onClick={onToggleSidebar}
           aria-label="Alternar barra lateral"
-          className="p-1.5 rounded-lg text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#282622] transition-colors md:hidden cursor-pointer"
+          className="p-1.5 rounded-lg text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition-colors md:hidden cursor-pointer"
         >
           <PanelLeft className="w-5 h-5" />
         </button>
@@ -75,26 +75,26 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           onClick={onNewChat}
           aria-label="Nova conversa"
           title="Nova conversa"
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[#c2bcb0] hover:text-[#f3efe6] hover:bg-[#282622] text-xs sm:text-sm font-medium transition-colors cursor-pointer"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[color:var(--c-fg-c2bcb0)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] text-xs sm:text-sm font-medium transition-colors cursor-pointer"
         >
-          <Plus className="w-4 h-4 text-[#d97757]" />
+          <Plus className="w-4 h-4 text-[color:var(--c-fg-d97757)]" />
           <span>Nova conversa</span>
         </button>
 
         {activeRepo ? (
-          <div className="hidden xl:flex items-center gap-1.5 p-1 px-2.5 rounded-xl bg-[#23211d] border border-[#3e3b33] text-xs font-mono min-w-0 shadow-xs ml-1">
+          <div className="hidden xl:flex items-center gap-1.5 p-1 px-2.5 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b33)] text-xs font-mono min-w-0 shadow-xs ml-1">
             <button
               type="button"
               onClick={onOpenSourceControl}
               title={`Repositório exclusivo deste chat: ${activeRepo.fullName} (${activeRepo.branch}). Clique para abrir Source Control.`}
-              className="flex items-center gap-1.5 text-[#f3efe6] hover:text-[#d97757] transition truncate cursor-pointer"
+              className="flex items-center gap-1.5 text-[color:var(--c-fg-f3efe6)] hover:text-[color:var(--c-fg-d97757)] transition truncate cursor-pointer"
             >
-              <FolderGit2 className="w-3.5 h-3.5 text-[#d97757] shrink-0" />
+              <FolderGit2 className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] shrink-0" />
               <span className="truncate max-w-[120px] sm:max-w-[170px] font-medium">
                 {activeRepo.fullName}
               </span>
-              <span className="text-[#8c867a]">·</span>
-              <span className="text-[#c4bfb6] truncate max-w-[70px]">{activeRepo.branch}</span>
+              <span className="text-[color:var(--c-fg-8c867a)]">·</span>
+              <span className="text-[color:var(--c-fg-c4bfb6)] truncate max-w-[70px]">{activeRepo.branch}</span>
             </button>
 
             {pendingChangesCount > 0 && (
@@ -102,7 +102,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
                 type="button"
                 onClick={onOpenSourceControl}
                 title={`${pendingChangesCount} alteração(ões) pendente(s) no Source Control`}
-                className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40 hover:bg-[#d97757]/30 transition cursor-pointer"
+                className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 hover:bg-[#d97757]/30 transition cursor-pointer"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#d97757] animate-pulse" />
                 <span>●{pendingChangesCount}</span>
@@ -112,8 +112,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
         ) : (
           <div className="hidden lg:flex items-center gap-2.5 ml-1">
             <div className="flex items-center gap-2">
-              <ClaudeLogo className="w-5 h-5 text-[#d97757]" />
-              <span className="font-serif text-base sm:text-lg text-[#f3efe6] tracking-tight font-normal">
+              <ClaudeLogo className="w-5 h-5 text-[color:var(--c-fg-d97757)]" />
+              <span className="font-serif text-base sm:text-lg text-[color:var(--c-fg-f3efe6)] tracking-tight font-normal">
                 Synap
               </span>
             </div>
@@ -124,14 +124,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
       {/* Center: Exactly Centered Chat / Studio Switcher */}
       {onToggleStudioMode && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto z-20">
-          <div className="flex bg-[#181714] border border-[#2d2b26] rounded-xl p-1 shadow-md">
+          <div className="flex bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-2d2b26)] rounded-xl p-1 shadow-md">
             <button
               type="button"
               onClick={() => onToggleStudioMode(false)}
               className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
                 !isStudioMode
                   ? 'bg-[#d97757] text-white shadow-sm font-semibold'
-                  : 'text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#25231e]'
+                  : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
               <MessageSquare className="w-4 h-4 shrink-0" />
@@ -143,7 +143,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
                 isStudioMode
                   ? 'bg-[#d97757] text-white shadow-sm font-semibold'
-                  : 'text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#25231e]'
+                  : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
               <Bot className="w-4 h-4 shrink-0" />
@@ -188,33 +188,17 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
             title="Abrir/Fechar Terminal (Ctrl+`)"
             className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-colors duration-150 cursor-pointer select-none ${
               isTerminalOpen
-                ? 'bg-[#d97757]/20 text-[#f09a7d] border-[#d97757]/40 shadow-xs'
-                : 'bg-[#25231f] hover:bg-[#2e2a24] text-[#c4bfb6] hover:text-[#f3efe6] border-[#36332d]'
+                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border-[#d97757]/40 shadow-xs'
+                : 'bg-[color:var(--c-bg-25231f)] hover:bg-[color:var(--c-bg-2e2a24)] text-[color:var(--c-fg-c4bfb6)] hover:text-[color:var(--c-fg-f3efe6)] border-[color:var(--c-bg-36332d)]'
             }`}
           >
-            <TerminalIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[#d97757] shrink-0" />
+            <TerminalIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[color:var(--c-fg-d97757)] shrink-0" />
             <span className="hidden sm:inline font-medium">Terminal</span>
             <ChevronDown
-              className={`hidden sm:inline w-3.5 h-3.5 text-[#8c867a] transition-transform duration-200 ${
-                isTerminalOpen ? 'rotate-180 text-[#d97757]' : ''
+              className={`hidden sm:inline w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)] transition-transform duration-200 ${
+                isTerminalOpen ? 'rotate-180 text-[color:var(--c-fg-d97757)]' : ''
               }`}
             />
-          </button>
-        )}
-
-        {onToggleTheme && (
-          <button
-            type="button"
-            onClick={(e) => onToggleTheme(e)}
-            aria-label={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
-            title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
-            className="p-1.5 rounded-lg text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#282622] transition-colors cursor-pointer group"
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
-            ) : (
-              <Moon className="w-4 h-4 text-indigo-400 group-hover:-rotate-12 transition-transform duration-300" />
-            )}
           </button>
         )}
 
@@ -224,7 +208,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
             onClick={onOpenSettings}
             aria-label="Configurações"
             title="Configurações"
-            className="p-1.5 rounded-lg text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#282622] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition-colors cursor-pointer"
           >
             <Settings className="w-4 h-4" />
           </button>

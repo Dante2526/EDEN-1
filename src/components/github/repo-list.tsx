@@ -65,16 +65,16 @@ export const RepoList: React.FC<RepoListProps> = ({
   );
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#181714] text-[#f3efe6] select-none overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-[color:var(--c-bg-181714)] text-[color:var(--c-fg-f3efe6)] select-none overflow-hidden">
       {/* Top Header */}
-      <div className="p-3 border-b border-[#2d2a25] bg-[#1d1b18] flex items-center justify-between">
+      <div className="p-3 border-b border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-1d1b18)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FolderGit2 className="w-4 h-4 text-amber-400 shrink-0" />
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[#c4bfb6]">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[color:var(--c-fg-c4bfb6)]">
               Repositórios GitHub
             </h2>
-            <p className="text-[10px] text-[#8c867a]">Vinculados individualmente por chat</p>
+            <p className="text-[10px] text-[color:var(--c-fg-8c867a)]">Vinculados individualmente por chat</p>
           </div>
         </div>
         {hasPat && (
@@ -83,9 +83,9 @@ export const RepoList: React.FC<RepoListProps> = ({
             onClick={loadRepos}
             disabled={loading}
             title="Atualizar repositórios"
-            className="p-1 rounded text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622] transition cursor-pointer"
+            className="p-1 rounded text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#d97757]' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[color:var(--c-fg-d97757)]' : ''}`} />
           </button>
         )}
       </div>
@@ -93,12 +93,12 @@ export const RepoList: React.FC<RepoListProps> = ({
       {/* If no PAT configured */}
       {!hasPat ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#262420] border border-[#3b3831] flex items-center justify-center text-[#d97757]">
+          <div className="w-12 h-12 rounded-2xl bg-[color:var(--c-bg-262420)] border border-[color:var(--c-bg-3b3831)] flex items-center justify-center text-[color:var(--c-fg-d97757)]">
             <KeyRound className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-[#f3efe6]">GitHub Não Conectado</h3>
-            <p className="text-xs text-[#8c867a] mt-1 max-w-xs">
+            <h3 className="text-sm font-medium text-[color:var(--c-fg-f3efe6)]">GitHub Não Conectado</h3>
+            <p className="text-xs text-[color:var(--c-fg-8c867a)] mt-1 max-w-xs">
               Conecte seu Personal Access Token do GitHub para que a IA possa ler e editar arquivos
               do seu repositório.
             </p>
@@ -114,15 +114,15 @@ export const RepoList: React.FC<RepoListProps> = ({
       ) : (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Search box */}
-          <div className="p-3 border-b border-[#2d2a25] bg-dark-bg">
+          <div className="p-3 border-b border-[color:var(--c-bg-2d2a25)] bg-dark-bg">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#736e65] absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-[color:var(--c-fg-736e65)] absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar repositórios..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#141310] border border-[#3b3831] text-xs text-[#f3efe6] placeholder-[#6b665c] focus:outline-hidden focus:border-[#d97757]"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-3b3831)] text-xs text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-6b665c)] focus:outline-hidden focus:border-[#d97757]"
               />
             </div>
           </div>
@@ -130,7 +130,7 @@ export const RepoList: React.FC<RepoListProps> = ({
           {/* Repo list content */}
           <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-3 text-[#8c867a]">
+              <div className="flex flex-col items-center justify-center py-12 space-y-3 text-[color:var(--c-fg-8c867a)]">
                 <ThinkingOrb
                   state="connecting"
                   size={64}
@@ -139,8 +139,8 @@ export const RepoList: React.FC<RepoListProps> = ({
                   aria-label="Conectando…"
                 />
                 <div className="flex flex-col items-center text-center">
-                  <span className="text-xs text-[#c4bfb6] font-medium">Conectando aos repositórios…</span>
-                  <span className="text-[10px] text-[#736e65] mt-0.5">Consultando API do GitHub</span>
+                  <span className="text-xs text-[color:var(--c-fg-c4bfb6)] font-medium">Conectando aos repositórios…</span>
+                  <span className="text-[10px] text-[color:var(--c-fg-736e65)] mt-0.5">Consultando API do GitHub</span>
                 </div>
               </div>
             ) : error ? (
@@ -149,13 +149,13 @@ export const RepoList: React.FC<RepoListProps> = ({
                 <button
                   type="button"
                   onClick={onOpenSettings}
-                  className="text-xs text-[#d97757] hover:underline"
+                  className="text-xs text-[color:var(--c-fg-d97757)] hover:underline"
                 >
                   Verificar token em Configurações
                 </button>
               </div>
             ) : filteredRepos.length === 0 ? (
-              <div className="text-center py-10 text-xs text-[#8c867a]">
+              <div className="text-center py-10 text-xs text-[color:var(--c-fg-8c867a)]">
                 Nenhum repositório encontrado com esse filtro.
               </div>
             ) : (
@@ -167,8 +167,8 @@ export const RepoList: React.FC<RepoListProps> = ({
                     key={repo.id}
                     className={`p-3 rounded-xl border transition flex flex-col justify-between gap-2.5 ${
                       isActive
-                        ? 'bg-[#2b2720] border-[#d97757]/60 shadow-xs'
-                        : 'bg-[#1f1d19] border-[#312f2a] hover:border-[#423e35]'
+                        ? 'bg-[color:var(--c-bg-2b2720)] border-[#d97757]/60 shadow-xs'
+                        : 'bg-[color:var(--c-bg-1f1d19)] border-[color:var(--c-bg-312f2a)] hover:border-[color:var(--c-bg-423e35)]'
                     }`}
                   >
                     <div>
@@ -176,17 +176,17 @@ export const RepoList: React.FC<RepoListProps> = ({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
                           {repo.private ? (
-                            <Lock className="w-3.5 h-3.5 text-[#a39d93] shrink-0" />
+                            <Lock className="w-3.5 h-3.5 text-[color:var(--c-fg-a39d93)] shrink-0" />
                           ) : (
-                            <Globe className="w-3.5 h-3.5 text-[#a39d93] shrink-0" />
+                            <Globe className="w-3.5 h-3.5 text-[color:var(--c-fg-a39d93)] shrink-0" />
                           )}
-                          <span className="font-medium text-xs text-[#f3efe6] truncate">
+                          <span className="font-medium text-xs text-[color:var(--c-fg-f3efe6)] truncate">
                             {repo.name}
                           </span>
                         </div>
 
                         {isActive && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40 shrink-0">
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shrink-0">
                             Vinculado a este chat
                           </span>
                         )}
@@ -194,14 +194,14 @@ export const RepoList: React.FC<RepoListProps> = ({
 
                       {/* Description */}
                       {repo.description && (
-                        <p className="text-[11px] text-[#a39d93] line-clamp-2 mt-1 leading-relaxed">
+                        <p className="text-[11px] text-[color:var(--c-fg-a39d93)] line-clamp-2 mt-1 leading-relaxed">
                           {repo.description}
                         </p>
                       )}
                     </div>
 
                     {/* Meta info & Open button */}
-                    <div className="flex items-center justify-between pt-1 border-t border-[#292722] text-[11px] text-[#8c867a]">
+                    <div className="flex items-center justify-between pt-1 border-t border-[color:var(--c-bg-292722)] text-[11px] text-[color:var(--c-fg-8c867a)]">
                       <div className="flex items-center gap-3">
                         {repo.language && (
                           <span className="flex items-center gap-1 font-mono">
@@ -228,8 +228,8 @@ export const RepoList: React.FC<RepoListProps> = ({
                         }
                         className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
                           isActive
-                            ? 'bg-[#332e26] hover:bg-[#d97757] text-[#f3efe6]'
-                            : 'bg-[#2a2620] hover:bg-[#d97757] text-[#e8e3d8]'
+                            ? 'bg-[color:var(--c-bg-332e26)] hover:bg-[#d97757] text-[color:var(--c-fg-f3efe6)]'
+                            : 'bg-[color:var(--c-bg-2a2620)] hover:bg-[#d97757] text-[color:var(--c-fg-e8e3d8)]'
                         }`}
                       >
                         <span>{isActive ? 'Explorar Arquivos' : 'Vincular a este Chat'}</span>

@@ -103,9 +103,9 @@ const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
 
   return (
     <div className="my-3 flex flex-col items-start max-w-md w-full">
-      <div className="relative w-full aspect-square max-w-[440px] rounded-2xl overflow-hidden border border-[#3e392f] bg-[#1d1b18] shadow-md group">
+      <div className="relative w-full aspect-square max-w-[440px] rounded-2xl overflow-hidden border border-[color:var(--c-bg-3e392f)] bg-[color:var(--c-bg-1d1b18)] shadow-md group">
         {status === 'loading' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 bg-[#1d1b18] z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 bg-[color:var(--c-bg-1d1b18)] z-10">
             <ThinkingOrb
               state="shaping"
               size={64}
@@ -113,11 +113,11 @@ const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
               speed={1.5}
               aria-label="Criando a imagem…"
             />
-            <span className="text-xs font-medium text-[#f09a7d] animate-pulse">
+            <span className="text-xs font-medium text-[color:var(--c-fg-f09a7d)] animate-pulse">
               Criando a imagem…
             </span>
             {retryCount > 1 && (
-              <span className="text-[10px] text-[#8c867a]">
+              <span className="text-[10px] text-[color:var(--c-fg-8c867a)]">
                 Tentativa {retryCount} de {MAX_RETRIES}…
               </span>
             )}
@@ -141,7 +141,7 @@ const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
               target="_blank"
               rel="noreferrer"
               title="Abrir imagem em tamanho real"
-              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/20 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-[color:var(--c-on-strong)]/80 hover:text-[color:var(--c-on-strong)] hover:bg-white/20 transition cursor-pointer"
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
@@ -164,7 +164,7 @@ const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
                 href={src}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[11px] underline text-[#d97757] hover:text-[#e08868] p-1.5"
+                className="text-[11px] underline text-[color:var(--c-fg-d97757)] hover:text-[color:var(--c-fg-e08868)] p-1.5"
               >
                 Ver link direto
               </a>
@@ -174,7 +174,7 @@ const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
       </div>
 
       {alt && alt !== 'image' && !alt.startsWith('http') && status === 'ready' && (
-        <span className="text-[11px] text-[#8c867a] mt-1.5 italic px-1 font-sans">
+        <span className="text-[11px] text-[color:var(--c-fg-8c867a)] mt-1.5 italic px-1 font-sans">
           {alt}
         </span>
       )}
@@ -304,10 +304,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       {isUser ? (
         /* ================= USER MESSAGE (Claude warm card on right) ================= */
         <div className="flex justify-end">
-          <div className="bg-[#302e2a] text-[#f3efe6] border border-[#3e3b34] rounded-2xl px-4 py-2.5 max-w-[90%] sm:max-w-[80%] shadow-xs">
+          <div className="bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl px-4 py-2.5 max-w-[90%] sm:max-w-[80%] shadow-xs">
             {message.isPlanMode && (
-              <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[#3e3b34] text-[11px] font-mono font-medium text-[#f09a7d]">
-                <ListTodo className="w-3.5 h-3.5 text-[#d97757]" />
+              <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[color:var(--c-bg-3e3b34)] text-[11px] font-mono font-medium text-[color:var(--c-fg-f09a7d)]">
+                <ListTodo className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                 <span>Modo Plano Ativado</span>
               </div>
             )}
@@ -321,7 +321,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     href={img}
                     target="_blank"
                     rel="noreferrer"
-                    className="block rounded-xl overflow-hidden border border-[#4a473f] hover:opacity-90 transition-opacity"
+                    className="block rounded-xl overflow-hidden border border-[color:var(--c-bg-4a473f)] hover:opacity-90 transition-opacity"
                   >
                     <img
                       src={img}
@@ -339,11 +339,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 {message.documents.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#23211d] border border-[#444038] text-xs text-[#f3efe6]"
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-444038)] text-xs text-[color:var(--c-fg-f3efe6)]"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#d97757] flex-shrink-0" />
+                    <FileText className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
                     <span className="font-medium truncate max-w-[150px]">{doc.name}</span>
-                    <span className="text-[10px] text-[#8c867a] font-mono">{formatFileSize(doc.size)}</span>
+                    <span className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono">{formatFileSize(doc.size)}</span>
                   </div>
                 ))}
               </div>
@@ -359,10 +359,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
         <div className="flex flex-col items-start w-full">
           {/* Claude Icon / Header */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <ClaudeLogo className="w-5 h-5 text-[#d97757]" />
-            <span className="font-serif text-sm font-medium text-[#c4bfb6]">Synap</span>
+            <ClaudeLogo className="w-5 h-5 text-[color:var(--c-fg-d97757)]" />
+            <span className="font-serif text-sm font-medium text-[color:var(--c-fg-c4bfb6)]">Synap</span>
             {hasRunningTool ? (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#d97757]/15 text-[#f09a7d] border border-[#d97757]/30 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#d97757]/15 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 shadow-2xs">
                 <ThinkingOrb
                   state={isImageGen ? 'shaping' : isWebSearch ? 'weaving' : 'composing'}
                   size={20}
@@ -377,7 +377,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   }
                 />
                 <span>{isImageGen ? 'Criando imagem' : isWebSearch ? 'Pesquisando' : 'Executando'}</span>
-                <span className="px-1.5 py-0.2 rounded bg-[#d97757]/25 text-[#f3efe6] text-[9px] border border-[#d97757]/40">
+                <span className="px-1.5 py-0.2 rounded bg-[#d97757]/25 text-[color:var(--c-fg-f3efe6)] text-[9px] border border-[#d97757]/40">
                   {isImageGen
                     ? 'Criando a imagem…'
                     : isEditingFile
@@ -388,27 +388,27 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 </span>
               </span>
             ) : isAwaitingCompletion ? (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#d97757]/15 text-[#f09a7d] border border-[#d97757]/30 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#d97757]/15 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 shadow-2xs">
                 <ThinkingOrb state="working" size={20} theme="dark" speed={1.5} aria-label="Aguardando…" />
                 <span>Aguardando</span>
-                <span className="px-1.5 py-0.2 rounded bg-[#d97757]/25 text-[#f3efe6] text-[9px] border border-[#d97757]/40">
+                <span className="px-1.5 py-0.2 rounded bg-[#d97757]/25 text-[color:var(--c-fg-f3efe6)] text-[9px] border border-[#d97757]/40">
                   Concluindo serviço…
                 </span>
               </span>
             ) : isConnecting ? (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#d97757]/15 text-[#f09a7d] border border-[#d97757]/30 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#d97757]/15 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 shadow-2xs">
                 <ThinkingOrb state="working" size={20} theme="dark" speed={1.5} aria-label="Conectando…" />
                 <span>Conectando…</span>
               </span>
             ) : isStreaming ? (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#d97757]/15 text-[#f09a7d] border border-[#d97757]/30 shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#d97757]/15 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 shadow-2xs">
                 <ThinkingOrb state="working" size={20} theme="dark" speed={1.5} aria-label="Pensando…" />
                 <span>Pensando…</span>
               </span>
             ) : null}
             {message.isPlanMode && (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#d97757]/15 text-[#f09a7d] border border-[#d97757]/30 shadow-xs">
-                <ListTodo className="w-3.5 h-3.5 text-[#d97757]" />
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[#d97757]/15 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 shadow-xs">
+                <ListTodo className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                 <span>Plano Estratégico</span>
               </span>
             )}
@@ -416,19 +416,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
           {/* Thinking Process Accordion (Dynamic label reflecting selected mode: low / high / max) */}
           {thinkingContent && (
-            <div className="w-full mb-3 rounded-xl border border-[#38352e] bg-[#24221e] overflow-hidden">
+            <div className="w-full mb-3 rounded-xl border border-[color:var(--c-bg-38352e)] bg-[color:var(--c-bg-24221e)] overflow-hidden">
               <button
                 type="button"
                 onClick={() => setShowReasoning(!showReasoning)}
-                className="w-full px-3.5 py-2 flex items-center justify-between text-xs text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#2c2925] transition-colors cursor-pointer"
+                className="w-full px-3.5 py-2 flex items-center justify-between text-xs text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2c2925)] transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2 font-mono flex-wrap">
                   {showReasoning ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-[#d97757] flex-shrink-0" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-[#d97757] flex-shrink-0" />
+                    <ChevronRight className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
                   )}
-                  <span className="font-medium text-[#c4bfb6]">
+                  <span className="font-medium text-[color:var(--c-fg-c4bfb6)]">
                     {message.reasoningEffort === 'low'
                       ? 'Pensamento rápido'
                       : message.reasoningEffort === 'high'
@@ -442,33 +442,33 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   <span
                     className={`px-1.5 py-0.2 rounded text-[10px] font-mono uppercase font-bold border ${
                       message.reasoningEffort === 'max'
-                        ? 'bg-[#d97757]/20 text-[#f09a7d] border-[#d97757]/40'
+                        ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border-[#d97757]/40'
                         : message.reasoningEffort === 'high'
-                        ? 'bg-[#38332a] text-[#e0a96d] border-[#4d4536]'
-                        : 'bg-[#292723] text-[#a8a296] border-[#3d3a33]'
+                        ? 'bg-[color:var(--c-bg-38332a)] text-[color:var(--c-fg-e0a96d)] border-[color:var(--c-bg-4d4536)]'
+                        : 'bg-[color:var(--c-bg-292723)] text-[color:var(--c-fg-a8a296)] border-[color:var(--c-bg-3d3a33)]'
                     }`}
                   >
                     {message.reasoningEffort ? `Modo ${message.reasoningEffort}` : 'Raciocínio'}
                   </span>
 
                   {message.isPlanMode && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/30 font-medium">
-                      <ListTodo className="w-2.5 h-2.5 text-[#d97757]" />
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 font-medium">
+                      <ListTodo className="w-2.5 h-2.5 text-[color:var(--c-fg-d97757)]" />
                       Modo Plano
                     </span>
                   )}
 
-                  <span className="text-[11px] text-[#736e65]">
+                  <span className="text-[11px] text-[color:var(--c-fg-736e65)]">
                     ({thinkingContent.length.toLocaleString()} caracteres)
                   </span>
                 </span>
-                <span className="text-[10px] text-[#736e65] font-mono flex-shrink-0 ml-2">
+                <span className="text-[10px] text-[color:var(--c-fg-736e65)] font-mono flex-shrink-0 ml-2">
                   {showReasoning ? 'Ocultar' : 'Ver processo'}
                 </span>
               </button>
 
               {showReasoning && (
-                <div className="px-3.5 py-2.5 text-xs text-[#b8b2a5] font-mono border-t border-[#312f2a] bg-[#1d1b18] leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
+                <div className="px-3.5 py-2.5 text-xs text-[color:var(--c-fg-b8b2a5)] font-mono border-t border-[color:var(--c-bg-312f2a)] bg-[color:var(--c-bg-1d1b18)] leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
                   {thinkingContent}
                 </div>
               )}
@@ -553,7 +553,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#24211d] border border-[#d97757]/40 shadow-xs"
+                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-[color:var(--c-bg-24211d)] border border-[#d97757]/40 shadow-xs"
                     >
                       <ThinkingOrb
                         state={orbState}
@@ -564,19 +564,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       />
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-[#f3efe6]">
+                          <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">
                             {actionTitle}
                           </span>
-                          <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-md bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/35">
+                          <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-md bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/35">
                             {actionBadge}
                           </span>
                         </div>
                         {targetParam && (
-                          <span className="text-[11px] text-[#f09a7d] font-mono mt-0.5 truncate max-w-[260px] sm:max-w-[420px]">
+                          <span className="text-[11px] text-[color:var(--c-fg-f09a7d)] font-mono mt-0.5 truncate max-w-[260px] sm:max-w-[420px]">
                             {isThisWebSearch || isThisImageGen ? `"${targetParam}"` : targetParam}
                           </span>
                         )}
-                        <span className="text-[10px] text-[#8c867a] mt-1 font-sans">
+                        <span className="text-[10px] text-[color:var(--c-fg-8c867a)] mt-1 font-sans">
                           {actionDescription}
                         </span>
                       </div>
@@ -588,7 +588,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#24211d] border border-[#d97757]/40 shadow-xs"
+                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-[color:var(--c-bg-24211d)] border border-[#d97757]/40 shadow-xs"
                     >
                       <ThinkingOrb
                         state="working"
@@ -599,19 +599,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       />
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-[#f3efe6]">
+                          <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">
                             Aguardando
                           </span>
-                          <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-md bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/35">
+                          <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-md bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/35">
                             Aguardando conclusão…
                           </span>
                         </div>
                         {targetParam && (
-                          <span className="text-[11px] text-[#f09a7d] font-mono mt-0.5 truncate max-w-[260px] sm:max-w-[420px]">
+                          <span className="text-[11px] text-[color:var(--c-fg-f09a7d)] font-mono mt-0.5 truncate max-w-[260px] sm:max-w-[420px]">
                             {targetParam}
                           </span>
                         )}
-                        <span className="text-[10px] text-[#8c867a] mt-1 font-sans">
+                        <span className="text-[10px] text-[color:var(--c-fg-8c867a)] mt-1 font-sans">
                           Aguardando ferramenta em segundo plano para confirmar o serviço concluído…
                         </span>
                       </div>
@@ -633,13 +633,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="rounded-xl overflow-hidden border border-[#3e392f] bg-[#141310] shadow-sm my-1.5 font-mono text-xs w-full"
+                      className="rounded-xl overflow-hidden border border-[color:var(--c-bg-3e392f)] bg-[color:var(--c-bg-141310)] shadow-sm my-1.5 font-mono text-xs w-full"
                     >
-                      <div className="flex items-center justify-between px-3 py-2 bg-[#1f1d19] border-b border-[#2d2a23]">
+                      <div className="flex items-center justify-between px-3 py-2 bg-[color:var(--c-bg-1f1d19)] border-b border-[color:var(--c-bg-2d2a23)]">
                         <div className="flex items-center gap-2 truncate">
-                          <Terminal className="w-3.5 h-3.5 text-[#d97757] shrink-0" />
-                          <span className="text-[#d97757] font-bold select-none">$</span>
-                          <span className="text-[#f3efe6] font-semibold truncate">{cmd}</span>
+                          <Terminal className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] shrink-0" />
+                          <span className="text-[color:var(--c-fg-d97757)] font-bold select-none">$</span>
+                          <span className="text-[color:var(--c-fg-f3efe6)] font-semibold truncate">{cmd}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-2">
                           {exitCode === 0 ? (
@@ -656,7 +656,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                               type="button"
                               onClick={onOpenTerminal}
                               title="Abrir no Terminal interativo"
-                              className="text-[10px] text-[#8c867a] hover:text-[#f09a7d] px-2 py-0.5 rounded bg-[#292620] hover:bg-[#343028] transition cursor-pointer"
+                              className="text-[10px] text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f09a7d)] px-2 py-0.5 rounded bg-[color:var(--c-bg-292620)] hover:bg-[color:var(--c-bg-343028)] transition cursor-pointer"
                             >
                               Abrir Terminal
                             </button>
@@ -665,9 +665,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       </div>
 
                       {(stdout || stderr) && (
-                        <div className="p-3 max-h-56 overflow-y-auto space-y-1.5 text-[11px] leading-relaxed bg-[#11100d]">
+                        <div className="p-3 max-h-56 overflow-y-auto space-y-1.5 text-[11px] leading-relaxed bg-[color:var(--c-bg-11100d)]">
                           {stdout && (
-                            <pre className="text-[#d8d3c9] whitespace-pre-wrap break-words">
+                            <pre className="text-[color:var(--c-fg-d8d3c9)] whitespace-pre-wrap break-words">
                               {stdout}
                             </pre>
                           )}
@@ -692,22 +692,22 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#24211d] border border-[#383329] text-xs font-mono text-[#c4bfb6] shadow-2xs"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[color:var(--c-bg-24211d)] border border-[color:var(--c-bg-383329)] text-xs font-mono text-[color:var(--c-fg-c4bfb6)] shadow-2xs"
                     >
                       {tc.status === 'error' ? (
                         <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
                       ) : (
                         <Globe className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                       )}
-                      <span className="font-semibold text-[#f3efe6]">
+                      <span className="font-semibold text-[color:var(--c-fg-f3efe6)]">
                         {pageTitle ? `Página: ${pageTitle}` : 'fetch_url'}
                       </span>
                       {targetParam && (
-                        <span className="text-[#a39d93] truncate max-w-[220px] sm:max-w-[360px]" title={targetParam}>
+                        <span className="text-[color:var(--c-fg-a39d93)] truncate max-w-[220px] sm:max-w-[360px]" title={targetParam}>
                           ({targetParam})
                         </span>
                       )}
-                      <span className="ml-auto text-[10px] text-[#787268] shrink-0 font-sans">
+                      <span className="ml-auto text-[10px] text-[color:var(--c-fg-787268)] shrink-0 font-sans">
                         {tc.status === 'error' ? 'falhou' : isTruncated ? 'lida (truncada)' : 'lida com sucesso'}
                       </span>
                     </div>
@@ -728,14 +728,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="rounded-xl overflow-hidden border border-[#3e392f] bg-[#141310] shadow-sm my-2 font-mono text-xs w-full"
+                      className="rounded-xl overflow-hidden border border-[color:var(--c-bg-3e392f)] bg-[color:var(--c-bg-141310)] shadow-sm my-2 font-mono text-xs w-full"
                     >
-                      <div className="flex items-center justify-between px-3 py-2 bg-[#1f1d19] border-b border-[#2d2a23]">
+                      <div className="flex items-center justify-between px-3 py-2 bg-[color:var(--c-bg-1f1d19)] border-b border-[color:var(--c-bg-2d2a23)]">
                         <div className="flex items-center gap-2 truncate">
                           <Terminal className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          <span className="text-[#f3efe6] font-semibold">Python 3 (WASM)</span>
+                          <span className="text-[color:var(--c-fg-f3efe6)] font-semibold">Python 3 (WASM)</span>
                           {executionTimeMs !== undefined && (
-                            <span className="text-[10px] text-[#8c867a]">
+                            <span className="text-[10px] text-[color:var(--c-fg-8c867a)]">
                               ({executionTimeMs}ms)
                             </span>
                           )}
@@ -754,15 +754,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       </div>
 
                       {codeContent && (
-                        <div className="p-3 bg-[#171612] border-b border-[#24211a] max-h-40 overflow-y-auto">
-                          <pre className="text-[#e2dcce] whitespace-pre-wrap break-words leading-relaxed">
+                        <div className="p-3 bg-[color:var(--c-bg-171612)] border-b border-[color:var(--c-bg-24211a)] max-h-40 overflow-y-auto">
+                          <pre className="text-[color:var(--c-fg-e2dcce)] whitespace-pre-wrap break-words leading-relaxed">
                             {codeContent}
                           </pre>
                         </div>
                       )}
 
                       {(stdout || stderr) && (
-                        <div className="p-3 max-h-56 overflow-y-auto space-y-1.5 text-[11px] leading-relaxed bg-[#11100d]">
+                        <div className="p-3 max-h-56 overflow-y-auto space-y-1.5 text-[11px] leading-relaxed bg-[color:var(--c-bg-11100d)]">
                           {stdout && (
                             <pre className="text-emerald-300 whitespace-pre-wrap break-words">
                               {stdout}
@@ -813,22 +813,22 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="rounded-2xl p-3.5 my-2.5 bg-[#201e1a] border border-[#3e392f] shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full"
+                      className="rounded-2xl p-3.5 my-2.5 bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-3e392f)] shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2.5 rounded-xl bg-[#141310] border border-[#2d2a23]">
+                        <div className="p-2.5 rounded-xl bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-2d2a23)]">
                           {iconElement}
                         </div>
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-[#f3efe6] truncate">
+                            <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
                               {title}
                             </span>
                             <span className={`text-[10px] font-sans font-bold px-1.5 py-0.5 rounded border ${badgeBg}`}>
                               {typeLabel}
                             </span>
                           </div>
-                          <span className="text-[11px] text-[#a39d93] font-mono mt-0.5 truncate">
+                          <span className="text-[11px] text-[color:var(--c-fg-a39d93)] font-mono mt-0.5 truncate">
                             {filename} {sizeBytes > 0 && `• ${formatFileSize(sizeBytes)}`}
                           </span>
                         </div>
@@ -866,7 +866,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="rounded-2xl p-3 my-2 bg-[#1b1e24] border border-sky-500/30 shadow-xs flex items-center justify-between gap-3 w-full"
+                      className="rounded-2xl p-3 my-2 bg-[color:var(--c-bg-1b1e24)] border border-sky-500/30 shadow-xs flex items-center justify-between gap-3 w-full"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
@@ -881,12 +881,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                               {category}
                             </span>
                             {memId && (
-                              <span className="text-[10px] text-[#6b655b] font-mono">
+                              <span className="text-[10px] text-[color:var(--c-fg-6b655b)] font-mono">
                                 {memId}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-[#dcd7cb] leading-snug truncate max-w-xl">
+                          <p className="text-xs text-[color:var(--c-fg-dcd7cb)] leading-snug truncate max-w-xl">
                             {factText}
                           </p>
                         </div>
@@ -909,17 +909,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="rounded-2xl p-3 my-2 bg-[#201e1a] border border-[#3e392f] shadow-xs flex items-center justify-between gap-3 w-full"
+                      className="rounded-2xl p-3 my-2 bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-3e392f)] shadow-xs flex items-center justify-between gap-3 w-full"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="p-2 rounded-xl bg-[#141310] border border-[#2d2a23] text-amber-400 shrink-0">
+                        <div className="p-2 rounded-xl bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-2d2a23)] text-amber-400 shrink-0">
                           <Brain className="w-4 h-4" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-[11px] font-semibold text-[#f3efe6]">
+                          <span className="text-[11px] font-semibold text-[color:var(--c-fg-f3efe6)]">
                             Memória Atualizada
                           </span>
-                          <p className="text-xs text-[#8c867a] leading-snug">
+                          <p className="text-xs text-[color:var(--c-fg-8c867a)] leading-snug">
                             {instruction}
                           </p>
                         </div>
@@ -934,20 +934,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 return (
                   <div
                     key={tc.id}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#24211d] border border-[#383329] text-xs font-mono text-[#c4bfb6] shadow-2xs"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[color:var(--c-bg-24211d)] border border-[color:var(--c-bg-383329)] text-xs font-mono text-[color:var(--c-fg-c4bfb6)] shadow-2xs"
                   >
                     {tc.status === 'error' ? (
                       <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
                     ) : (
                       <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     )}
-                    <span className="font-semibold text-[#f3efe6]">{tc.name}</span>
+                    <span className="font-semibold text-[color:var(--c-fg-f3efe6)]">{tc.name}</span>
                     {targetParam && (
-                      <span className="text-[#a39d93] truncate max-w-[260px] sm:max-w-[400px]">
+                      <span className="text-[color:var(--c-fg-a39d93)] truncate max-w-[260px] sm:max-w-[400px]">
                         {targetParam}
                       </span>
                     )}
-                    <span className="ml-auto text-[10px] text-[#787268] shrink-0 font-sans">
+                    <span className="ml-auto text-[10px] text-[color:var(--c-fg-787268)] shrink-0 font-sans">
                       {tc.status === 'error' ? 'falhou' : 'concluído'}
                     </span>
                   </div>
@@ -961,23 +961,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             <div className="w-full mb-3 space-y-2">
               {/* If multiple files were edited or batchRefactor is present: Show prominent Batch Refactor Card */}
               {(message.batchRefactor || message.editedFiles.length >= 2) ? (
-                <div className="rounded-2xl bg-[#201e1a] border border-[#484133] shadow-md overflow-hidden">
+                <div className="rounded-2xl bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-484133)] shadow-md overflow-hidden">
                   {/* Card Header */}
-                  <div className="p-3.5 bg-[#27241f] border-b border-[#3b362b] flex items-center justify-between gap-3">
+                  <div className="p-3.5 bg-[color:var(--c-bg-27241f)] border-b border-[color:var(--c-bg-3b362b)] flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-xl bg-[#d97757]/20 border border-[#d97757]/40 flex items-center justify-center text-[#f09a7d] shrink-0">
-                        <Layers className="w-4 h-4 text-[#d97757]" />
+                      <div className="w-8 h-8 rounded-xl bg-[#d97757]/20 border border-[#d97757]/40 flex items-center justify-center text-[color:var(--c-fg-f09a7d)] shrink-0">
+                        <Layers className="w-4 h-4 text-[color:var(--c-fg-d97757)]" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-[#f3efe6] truncate">
+                          <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
                             {message.batchRefactor?.summary || 'Refatoração Multi-arquivo'}
                           </span>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40 shrink-0">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shrink-0">
                             {message.editedFiles.length} arquivos
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#8c867a] mt-0.5 truncate">
+                        <p className="text-[11px] text-[color:var(--c-fg-8c867a)] mt-0.5 truncate">
                           Alterações aplicadas e sincronizadas no Source Control
                         </p>
                       </div>
@@ -997,11 +997,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   </div>
 
                   {/* Files List in Batch */}
-                  <div className="divide-y divide-[#2d2a23]">
+                  <div className="divide-y divide-[color:var(--c-bg-2d2a23)]">
                     {message.editedFiles.map((file, idx) => (
                       <div
                         key={idx}
-                        className="p-2.5 px-3.5 hover:bg-[#25221d] transition flex items-center justify-between gap-3 text-xs"
+                        className="p-2.5 px-3.5 hover:bg-[color:var(--c-bg-25221d)] transition flex items-center justify-between gap-3 text-xs"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <span
@@ -1015,7 +1015,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           >
                             {file.type === 'modified' ? 'Modificado' : file.type === 'added' ? 'Novo' : 'Excluído'}
                           </span>
-                          <span className="text-[#f3efe6] font-mono text-xs truncate">
+                          <span className="text-[color:var(--c-fg-f3efe6)] font-mono text-xs truncate">
                             {file.path}
                           </span>
                         </div>
@@ -1024,10 +1024,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           <button
                             type="button"
                             onClick={() => onViewDiff(file.path)}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#2e2a22] hover:bg-[#3d372c] text-[#d8d3c9] hover:text-white text-[11px] font-medium border border-[#3e382d] transition cursor-pointer shrink-0"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[color:var(--c-bg-2e2a22)] hover:bg-[color:var(--c-bg-3d372c)] text-[color:var(--c-fg-d8d3c9)] hover:text-[color:var(--c-on-strong)] text-[11px] font-medium border border-[color:var(--c-bg-3e382d)] transition cursor-pointer shrink-0"
                           >
                             <span>Diff</span>
-                            <ExternalLink className="w-3 h-3 text-[#d97757]" />
+                            <ExternalLink className="w-3 h-3 text-[color:var(--c-fg-d97757)]" />
                           </button>
                         )}
                       </div>
@@ -1039,15 +1039,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 message.editedFiles.map((file, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl bg-[#23201c] border border-[#3e392f] flex items-center justify-between gap-3 text-xs shadow-xs"
+                    className="p-3 rounded-xl bg-[color:var(--c-bg-23201c)] border border-[color:var(--c-bg-3e392f)] flex items-center justify-between gap-3 text-xs shadow-xs"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-[#2e2a22] flex items-center justify-center text-[#d97757] shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-[color:var(--c-bg-2e2a22)] flex items-center justify-center text-[color:var(--c-fg-d97757)] shrink-0">
                         <FileCode className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[#f3efe6] font-mono font-medium truncate">
+                          <span className="text-[color:var(--c-fg-f3efe6)] font-mono font-medium truncate">
                             {file.path}
                           </span>
                           <span
@@ -1062,7 +1062,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                             {file.type === 'modified' ? 'Editado' : file.type === 'added' ? 'Criado' : 'Removido'}
                           </span>
                         </div>
-                        <p className="text-[10px] text-[#8c867a] mt-0.5">
+                        <p className="text-[10px] text-[color:var(--c-fg-8c867a)] mt-0.5">
                           Alteração pronta para revisão no Source Control
                         </p>
                       </div>
@@ -1073,10 +1073,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                         <button
                           type="button"
                           onClick={() => onViewDiff(file.path)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2f2b23] hover:bg-[#3d372c] text-[#f3efe6] text-xs font-medium border border-[#484133] transition cursor-pointer shadow-xs"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[color:var(--c-bg-2f2b23)] hover:bg-[color:var(--c-bg-3d372c)] text-[color:var(--c-fg-f3efe6)] text-xs font-medium border border-[color:var(--c-bg-484133)] transition cursor-pointer shadow-xs"
                         >
                           <span>Ver diff</span>
-                          <ExternalLink className="w-3.5 h-3.5 text-[#d97757]" />
+                          <ExternalLink className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                         </button>
                       )}
                     </div>
@@ -1097,7 +1097,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
           )}
 
           {/* Assistant Rendered Markdown */}
-          <div className="w-full prose prose-invert max-w-none text-[15px] sm:text-[16px] text-[#f3efe6] leading-relaxed break-words font-sans">
+          <div className="w-full prose prose-invert max-w-none text-[15px] sm:text-[16px] text-[color:var(--c-fg-f3efe6)] leading-relaxed break-words font-sans">
             {displayContent ? (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -1108,7 +1108,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     if (isInline) {
                       return (
                         <code
-                          className="bg-[#2a2824] text-[#f09a7d] px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-[#3b3831]"
+                          className="bg-[color:var(--c-bg-2a2824)] text-[color:var(--c-fg-f09a7d)] px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-[color:var(--c-bg-3b3831)]"
                           {...props}
                         >
                           {children}
@@ -1124,8 +1124,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   },
                   table({ children }) {
                     return (
-                      <div className="my-3 overflow-x-auto rounded-xl border border-[#3b3831]">
-                        <table className="min-w-full divide-y divide-[#3b3831] text-left text-sm">
+                      <div className="my-3 overflow-x-auto rounded-xl border border-[color:var(--c-bg-3b3831)]">
+                        <table className="min-w-full divide-y divide-[color:var(--c-bg-3b3831)] text-left text-sm">
                           {children}
                         </table>
                       </div>
@@ -1133,14 +1133,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   },
                   th({ children }) {
                     return (
-                      <th className="bg-[#24221e] px-4 py-2 font-semibold text-[#f3efe6]">
+                      <th className="bg-[color:var(--c-bg-24221e)] px-4 py-2 font-semibold text-[color:var(--c-fg-f3efe6)]">
                         {children}
                       </th>
                     );
                   },
                   td({ children }) {
                     return (
-                      <td className="px-4 py-2 text-[#d1cbc0] border-t border-[#312f2a]">
+                      <td className="px-4 py-2 text-[color:var(--c-fg-d1cbc0)] border-t border-[color:var(--c-bg-312f2a)]">
                         {children}
                       </td>
                     );
@@ -1157,7 +1157,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                         href={href}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[#d97757] hover:text-[#f09a7d] underline underline-offset-2"
+                        className="text-[color:var(--c-fg-d97757)] hover:text-[color:var(--c-fg-f09a7d)] underline underline-offset-2"
                       >
                         {children}
                       </a>
@@ -1175,7 +1175,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               </ReactMarkdown>
             ) : isStreaming && !hasRunningTool ? (
               <div className="flex flex-col items-start gap-3 py-3 my-1">
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#24211d] border border-[#3a352a] shadow-xs">
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[color:var(--c-bg-24211d)] border border-[color:var(--c-bg-3a352a)] shadow-xs">
                   <ThinkingOrb
                     state="working"
                     size={64}
@@ -1190,7 +1190,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     }
                   />
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-[#f3efe6] flex items-center gap-1.5 font-sans">
+                    <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] flex items-center gap-1.5 font-sans">
                       <span>
                         {isAwaitingCompletion
                           ? 'Aguardando…'
@@ -1198,11 +1198,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           ? 'Conectando…'
                           : 'Pensando…'}
                       </span>
-                      <span className="inline-flex gap-1 text-[#d97757]">
+                      <span className="inline-flex gap-1 text-[color:var(--c-fg-d97757)]">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#d97757] animate-pulse" />
                       </span>
                     </span>
-                    <span className="text-[11px] text-[#9c9589] font-mono mt-0.5">
+                    <span className="text-[11px] text-[color:var(--c-fg-9c9589)] font-mono mt-0.5">
                       {isAwaitingCompletion
                         ? 'Aguardando ferramenta em segundo plano para confirmar o serviço concluído…'
                         : isConnecting
@@ -1221,13 +1221,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
           {/* Action Bar (Claude style subtle bottom icons) */}
           {displayContent && !isStreaming && (
-            <div className="flex items-center gap-1 mt-3 pt-2 text-[#8c867a]">
+            <div className="flex items-center gap-1 mt-3 pt-2 text-[color:var(--c-fg-8c867a)]">
               <button
                 type="button"
                 onClick={handleCopy}
                 aria-label="Copiar mensagem"
                 title="Copiar texto"
-                className="p-1.5 rounded-lg hover:text-[#f3efe6] hover:bg-[#282622] transition-colors cursor-pointer flex items-center gap-1 text-xs"
+                className="p-1.5 rounded-lg hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition-colors cursor-pointer flex items-center gap-1 text-xs"
               >
                 {copied ? (
                   <>
@@ -1250,25 +1250,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     type="button"
                     onClick={() => setShowTokenDetails((prev) => !prev)}
                     title="Clique para ver detalhamento do consumo de tokens"
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1e1c18] border border-[#312f2a] hover:border-[#d97757]/50 shadow-inner cursor-pointer text-[#c4bcaa] hover:text-[#f3efe6] transition-colors group select-none"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[color:var(--c-bg-1e1c18)] border border-[color:var(--c-bg-312f2a)] hover:border-[#d97757]/50 shadow-inner cursor-pointer text-[color:var(--c-fg-c4bcaa)] hover:text-[color:var(--c-fg-f3efe6)] transition-colors group select-none"
                   >
-                    <Zap className="w-3 h-3 text-[#d97757] group-hover:scale-110 transition-transform" />
+                    <Zap className="w-3 h-3 text-[color:var(--c-fg-d97757)] group-hover:scale-110 transition-transform" />
                     <span className="text-[11px] font-medium font-mono">
                       {message.tokenUsage.totalTokens.toLocaleString()}{' '}
-                      <span className="text-[10px] text-[#8c867a]">tokens</span>
+                      <span className="text-[10px] text-[color:var(--c-fg-8c867a)]">tokens</span>
                     </span>
                   </button>
 
                   {/* Tooltip / Modal popover on hover or click */}
                   <div
-                    className={`absolute bottom-full right-0 mb-2 w-52 sm:w-56 p-3 rounded-xl bg-[#1e1c18]/95 backdrop-blur-md border border-[#3b3831] shadow-2xl transition-all duration-200 z-30 flex flex-col gap-1.5 ${
+                    className={`absolute bottom-full right-0 mb-2 w-52 sm:w-56 p-3 rounded-xl bg-[color:var(--c-bg-1e1c18)]/95 backdrop-blur-md border border-[color:var(--c-bg-3b3831)] shadow-2xl transition-all duration-200 z-30 flex flex-col gap-1.5 ${
                       showTokenDetails
                         ? 'opacity-100 visible translate-y-0'
                         : 'opacity-0 invisible pointer-events-none translate-y-1'
                     }`}
                   >
-                    <div className="flex items-center justify-between border-b border-[#312f2a] pb-1.5 mb-0.5">
-                      <div className="text-[10px] uppercase tracking-wider text-[#d97757] font-semibold flex items-center gap-1">
+                    <div className="flex items-center justify-between border-b border-[color:var(--c-bg-312f2a)] pb-1.5 mb-0.5">
+                      <div className="text-[10px] uppercase tracking-wider text-[color:var(--c-fg-d97757)] font-semibold flex items-center gap-1">
                         <Zap className="w-3 h-3" />
                         <span>Consumo de Tokens</span>
                       </div>
@@ -1278,25 +1278,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           e.stopPropagation();
                           setShowTokenDetails(false);
                         }}
-                        className="text-[#736e63] hover:text-[#f3efe6] text-xs px-1"
+                        className="text-[color:var(--c-fg-736e63)] hover:text-[color:var(--c-fg-f3efe6)] text-xs px-1"
                       >
                         ✕
                       </button>
                     </div>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-[#9c9589]">Prompt (Entrada)</span>
-                      <span className="text-[#f3efe6] font-mono">{message.tokenUsage.promptTokens.toLocaleString()}</span>
+                      <span className="text-[color:var(--c-fg-9c9589)]">Prompt (Entrada)</span>
+                      <span className="text-[color:var(--c-fg-f3efe6)] font-mono">{message.tokenUsage.promptTokens.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-[#9c9589]">Resposta (Saída)</span>
-                      <span className="text-[#f3efe6] font-mono">{message.tokenUsage.completionTokens.toLocaleString()}</span>
+                      <span className="text-[color:var(--c-fg-9c9589)]">Resposta (Saída)</span>
+                      <span className="text-[color:var(--c-fg-f3efe6)] font-mono">{message.tokenUsage.completionTokens.toLocaleString()}</span>
                     </div>
-                    <div className="w-full h-px bg-[#312f2a] my-0.5" />
+                    <div className="w-full h-px bg-[color:var(--c-bg-312f2a)] my-0.5" />
                     <div className="flex justify-between items-center text-xs font-medium">
-                      <span className="text-[#d97757]">Total Consumido</span>
-                      <span className="text-[#d97757] font-mono">{message.tokenUsage.totalTokens.toLocaleString()}</span>
+                      <span className="text-[color:var(--c-fg-d97757)]">Total Consumido</span>
+                      <span className="text-[color:var(--c-fg-d97757)] font-mono">{message.tokenUsage.totalTokens.toLocaleString()}</span>
                     </div>
-                    <div className="text-[9px] text-[#736e63] mt-1 pt-1 border-t border-[#2a2822]">
+                    <div className="text-[9px] text-[color:var(--c-fg-736e63)] mt-1 pt-1 border-t border-[color:var(--c-bg-2a2822)]">
                       Limite por requisição: 8.192 tokens
                     </div>
                   </div>

@@ -133,16 +133,16 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#181714] text-[#f3efe6]">
+    <div className="flex-1 flex flex-col min-h-0 bg-[color:var(--c-bg-181714)] text-[color:var(--c-fg-f3efe6)]">
       {/* Sub-tab Navigation */}
-      <div className="px-3 pt-2 pb-1.5 flex items-center gap-1.5 border-b border-[#2d2a25] bg-[#161512]">
+      <div className="px-3 pt-2 pb-1.5 flex items-center gap-1.5 border-b border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-161512)]">
         <button
           type="button"
           onClick={() => setSubTab('skills')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
             subTab === 'skills'
-              ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
-              : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+              ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
+              : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
           }`}
         >
           <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
@@ -159,8 +159,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
           onClick={() => setSubTab('mcp')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
             subTab === 'mcp'
-              ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
-              : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+              ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
+              : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
           }`}
         >
           <Server className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -177,8 +177,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
           onClick={() => setSubTab('memories')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
             subTab === 'memories'
-              ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
-              : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+              ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
+              : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
           }`}
         >
           <Brain className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -198,15 +198,15 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             {/* Header / Add Button */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[#f3efe6]">Habilidades Comportamentais</h3>
-                <p className="text-[10px] text-[#8c867a]">Injetam regras e fluxos especializados no chat</p>
+                <h3 className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">Habilidades Comportamentais</h3>
+                <p className="text-[10px] text-[color:var(--c-fg-8c867a)]">Injetam regras e fluxos especializados no chat</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddSkillOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#2b2823] hover:bg-[#38342e] border border-[#3e3b33] text-xs font-medium text-[#f3efe6] transition cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[color:var(--c-bg-2b2823)] hover:bg-[color:var(--c-bg-38342e)] border border-[color:var(--c-bg-3e3b33)] text-xs font-medium text-[color:var(--c-fg-f3efe6)] transition cursor-pointer"
               >
-                <Plus className="w-3 h-3 text-[#d97757]" />
+                <Plus className="w-3 h-3 text-[color:var(--c-fg-d97757)]" />
                 <span>Nova</span>
               </button>
             </div>
@@ -218,25 +218,25 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   key={skill.id}
                   className={`p-3 rounded-xl border transition-all ${
                     skill.enabled
-                      ? 'bg-[#23211d] border-purple-500/30 shadow-sm'
-                      : 'bg-[#1e1c18] border-[#2d2a25] opacity-80 hover:opacity-100'
+                      ? 'bg-[color:var(--c-bg-23211d)] border-purple-500/30 shadow-sm'
+                      : 'bg-[color:var(--c-bg-1e1c18)] border-[color:var(--c-bg-2d2a25)] opacity-80 hover:opacity-100'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-[#181714] border border-[#2d2a25]">
+                      <div className="p-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-2d2a25)]">
                         {renderSkillIcon(skill.icon)}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-medium text-[#f3efe6]">{skill.name}</span>
+                          <span className="text-xs font-medium text-[color:var(--c-fg-f3efe6)]">{skill.name}</span>
                           {skill.isBuiltin && (
                             <span className="text-[9px] px-1 py-0.2 rounded bg-zinc-800 text-zinc-400 font-mono">
                               Nativa
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-[#a39d93] leading-tight mt-0.5">{skill.description}</p>
+                        <p className="text-[11px] text-[color:var(--c-fg-a39d93)] leading-tight mt-0.5">{skill.description}</p>
                       </div>
                     </div>
 
@@ -276,13 +276,13 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             {/* MCP Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[#f3efe6]">Conexões MCP Externas</h3>
-                <p className="text-[10px] text-[#8c867a]">Ferramentas via Model Context Protocol</p>
+                <h3 className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">Conexões MCP Externas</h3>
+                <p className="text-[10px] text-[color:var(--c-fg-8c867a)]">Ferramentas via Model Context Protocol</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddMcpOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#2b2823] hover:bg-[#38342e] border border-[#3e3b33] text-xs font-medium text-[#f3efe6] transition cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[color:var(--c-bg-2b2823)] hover:bg-[color:var(--c-bg-38342e)] border border-[color:var(--c-bg-3e3b33)] text-xs font-medium text-[color:var(--c-fg-f3efe6)] transition cursor-pointer"
               >
                 <Plus className="w-3 h-3 text-emerald-400" />
                 <span>Conectar</span>
@@ -291,10 +291,10 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
 
             {/* MCP Server List */}
             {mcpServers.length === 0 ? (
-              <div className="p-4 rounded-xl border border-dashed border-[#2d2a25] text-center space-y-2">
-                <Server className="w-6 h-6 text-[#8c867a] mx-auto opacity-50" />
-                <p className="text-xs text-[#a39d93]">Nenhum servidor MCP conectado.</p>
-                <p className="text-[11px] text-[#8c867a]">
+              <div className="p-4 rounded-xl border border-dashed border-[color:var(--c-bg-2d2a25)] text-center space-y-2">
+                <Server className="w-6 h-6 text-[color:var(--c-fg-8c867a)] mx-auto opacity-50" />
+                <p className="text-xs text-[color:var(--c-fg-a39d93)]">Nenhum servidor MCP conectado.</p>
+                <p className="text-[11px] text-[color:var(--c-fg-8c867a)]">
                   Conecte servidores locais ou remotos para expor bancos de dados, APIs ou serviços à IA.
                 </p>
               </div>
@@ -308,7 +308,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   return (
                     <div
                       key={server.id}
-                      className="p-3 rounded-xl border border-[#2d2a25] bg-[#1e1c18] space-y-2 transition-all"
+                      className="p-3 rounded-xl border border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-1e1c18)] space-y-2 transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
@@ -322,8 +322,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                             }`}
                           />
                           <div>
-                            <span className="text-xs font-medium text-[#f3efe6]">{server.name}</span>
-                            <p className="text-[10px] text-[#8c867a] font-mono truncate max-w-[160px]">
+                            <span className="text-xs font-medium text-[color:var(--c-fg-f3efe6)]">{server.name}</span>
+                            <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono truncate max-w-[160px]">
                               {server.url}
                             </p>
                           </div>
@@ -334,7 +334,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                             type="button"
                             onClick={() => onTestMcpServer(server.id)}
                             disabled={isTesting}
-                            className="p-1 rounded text-zinc-400 hover:text-[#f3efe6] hover:bg-[#282622] transition cursor-pointer"
+                            className="p-1 rounded text-zinc-400 hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition cursor-pointer"
                             title="Atualizar / Testar conexão"
                           >
                             <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin text-emerald-400' : ''}`} />
@@ -364,8 +364,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                       </div>
 
                       {/* Tool count & expand tools */}
-                      <div className="flex items-center justify-between pt-1 border-t border-[#2d2a25]/60 text-[11px]">
-                        <span className="text-[#a39d93]">
+                      <div className="flex items-center justify-between pt-1 border-t border-[color:var(--c-bg-2d2a25)]/60 text-[11px]">
+                        <span className="text-[color:var(--c-fg-a39d93)]">
                           {server.tools.length > 0
                             ? `${server.tools.length} ferramenta(s) disponível(is)`
                             : 'Nenhuma ferramenta listada'}
@@ -374,7 +374,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                           <button
                             type="button"
                             onClick={() => setExpandedMcpId(isExpanded ? null : server.id)}
-                            className="text-[#d97757] hover:underline flex items-center gap-0.5 cursor-pointer"
+                            className="text-[color:var(--c-fg-d97757)] hover:underline flex items-center gap-0.5 cursor-pointer"
                           >
                             <span>{isExpanded ? 'Recolher' : 'Ver ferramentas'}</span>
                             {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -394,11 +394,11 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                           {server.tools.map((t) => (
                             <div
                               key={t.name}
-                              className="p-2 rounded-lg bg-[#141311] border border-[#2d2a25] text-xs space-y-0.5"
+                              className="p-2 rounded-lg bg-[color:var(--c-bg-141311)] border border-[color:var(--c-bg-2d2a25)] text-xs space-y-0.5"
                             >
                               <div className="font-mono text-emerald-400 font-semibold">{t.name}</div>
                               {t.description && (
-                                <p className="text-[11px] text-[#8c867a] leading-tight">{t.description}</p>
+                                <p className="text-[11px] text-[color:var(--c-fg-8c867a)] leading-tight">{t.description}</p>
                               )}
                             </div>
                           ))}
@@ -415,8 +415,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             {/* Header / Clear Button */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[#f3efe6]">Base de Conhecimento</h3>
-                <p className="text-[10px] text-[#8c867a]">Fatos permanentes ativos em todas as conversas</p>
+                <h3 className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">Base de Conhecimento</h3>
+                <p className="text-[10px] text-[color:var(--c-fg-8c867a)]">Fatos permanentes ativos em todas as conversas</p>
               </div>
               {knowledgeFacts.length > 0 && (
                 <button
@@ -443,22 +443,22 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                 onAddKnowledgeFact(newFactText.trim(), newFactCategory);
                 setNewFactText('');
               }}
-              className="p-2.5 rounded-xl bg-[#201e1a] border border-[#2d2a25] space-y-2"
+              className="p-2.5 rounded-xl bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-2d2a25)] space-y-2"
             >
-              <div className="text-[11px] font-medium text-[#c4bfb6]">Adicionar Novo Fato</div>
+              <div className="text-[11px] font-medium text-[color:var(--c-fg-c4bfb6)]">Adicionar Novo Fato</div>
               <input
                 type="text"
                 required
                 placeholder="Ex: O projeto usa Vercel Hobby e Tailwind CSS v4"
                 value={newFactText}
                 onChange={(e) => setNewFactText(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-[#141311] border border-[#2d2a25] text-xs text-[#f3efe6] placeholder-[#6b655b] focus:outline-none focus:border-sky-400"
+                className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-141311)] border border-[color:var(--c-bg-2d2a25)] text-xs text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-6b655b)] focus:outline-none focus:border-sky-400"
               />
               <div className="flex items-center gap-2">
                 <select
                   value={newFactCategory}
                   onChange={(e) => setNewFactCategory(e.target.value as KnowledgeCategory)}
-                  className="px-2 py-1 rounded-lg bg-[#141311] border border-[#2d2a25] text-[11px] text-[#c4bfb6] focus:outline-none focus:border-sky-400"
+                  className="px-2 py-1 rounded-lg bg-[color:var(--c-bg-141311)] border border-[color:var(--c-bg-2d2a25)] text-[11px] text-[color:var(--c-fg-c4bfb6)] focus:outline-none focus:border-sky-400"
                 >
                   <option value="stack">Stack Técnica</option>
                   <option value="preference">Preferência</option>
@@ -477,10 +477,10 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
 
             {/* Facts List */}
             {knowledgeFacts.length === 0 ? (
-              <div className="p-6 text-center space-y-2 rounded-xl bg-[#201e1a] border border-[#2d2a25]">
+              <div className="p-6 text-center space-y-2 rounded-xl bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-2d2a25)]">
                 <Brain className="w-8 h-8 text-sky-400/40 mx-auto" />
-                <p className="text-xs text-[#c4bfb6] font-medium">Nenhum fato gravado ainda</p>
-                <p className="text-[11px] text-[#8c867a] leading-relaxed">
+                <p className="text-xs text-[color:var(--c-fg-c4bfb6)] font-medium">Nenhum fato gravado ainda</p>
+                <p className="text-[11px] text-[color:var(--c-fg-8c867a)] leading-relaxed">
                   A IA aprenderá fatos automaticamente com a ferramenta <code className="text-sky-300">save_memory</code> ou você pode cadastrar manualmente acima.
                 </p>
               </div>
@@ -503,24 +503,24 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   return (
                     <div
                       key={item.id}
-                      className="p-3 rounded-xl bg-[#201e1a] border border-[#2d2a25] hover:border-[#3e3b33] transition space-y-2 group"
+                      className="p-3 rounded-xl bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-2d2a25)] hover:border-[color:var(--c-bg-3e3b33)] transition space-y-2 group"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {getCategoryBadge(item.category)}
-                          <span className="text-[10px] text-[#6b655b] font-mono">{item.id}</span>
+                          <span className="text-[10px] text-[color:var(--c-fg-6b655b)] font-mono">{item.id}</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => onDeleteKnowledgeFact(item.id)}
-                          className="opacity-70 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 text-[#8c867a] hover:text-rose-400 transition cursor-pointer"
+                          className="opacity-70 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 text-[color:var(--c-fg-8c867a)] hover:text-rose-400 transition cursor-pointer"
                           title="Esquecer este fato"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      <p className="text-xs text-[#f3efe6] leading-relaxed break-words">{item.fact}</p>
-                      <div className="text-[10px] text-[#6b655b]">
+                      <p className="text-xs text-[color:var(--c-fg-f3efe6)] leading-relaxed break-words">{item.fact}</p>
+                      <div className="text-[10px] text-[color:var(--c-fg-6b655b)]">
                         Salvo em {new Date(item.createdAt).toLocaleDateString('pt-BR')}
                       </div>
                     </div>
@@ -535,16 +535,16 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
       {/* Modal Criar Nova Skill */}
       {isAddSkillOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-[#23211d] border border-[#3b3831] p-4 space-y-3 shadow-2xl text-xs">
-            <div className="flex items-center justify-between pb-2 border-b border-[#3b3831]">
-              <span className="font-semibold text-[#f3efe6] flex items-center gap-1.5">
+          <div className="w-full max-w-sm rounded-2xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3b3831)] p-4 space-y-3 shadow-2xl text-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-[color:var(--c-bg-3b3831)]">
+              <span className="font-semibold text-[color:var(--c-fg-f3efe6)] flex items-center gap-1.5">
                 <Blocks className="w-4 h-4 text-purple-400" />
                 Nova Habilidade Customizada
               </span>
               <button
                 type="button"
                 onClick={() => setIsAddSkillOpen(false)}
-                className="text-zinc-400 hover:text-white"
+                className="text-zinc-400 hover:text-[color:var(--c-on-strong)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -552,37 +552,37 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
 
             <form onSubmit={handleCreateSkill} className="space-y-3">
               <div>
-                <label className="block text-[11px] text-[#a39d93] mb-1">Nome da Habilidade</label>
+                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Nome da Habilidade</label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Auditor de Acessibilidade"
                   value={newSkillName}
                   onChange={(e) => setNewSkillName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[#181714] border border-[#3b3831] text-[#f3efe6] focus:outline-none focus:border-purple-400"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-purple-400"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#a39d93] mb-1">Descrição</label>
+                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Descrição</label>
                 <input
                   type="text"
                   placeholder="Ex: Audita tags ARIA, contraste e navegação por teclado"
                   value={newSkillDesc}
                   onChange={(e) => setNewSkillDesc(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[#181714] border border-[#3b3831] text-[#f3efe6] focus:outline-none focus:border-purple-400"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-purple-400"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#a39d93] mb-1">Prompt de Instrução do Sistema</label>
+                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Prompt de Instrução do Sistema</label>
                 <textarea
                   required
                   rows={4}
                   placeholder="Escreva as diretrizes comportamentais e regras obrigatórias que a IA deve obedecer..."
                   value={newSkillPrompt}
                   onChange={(e) => setNewSkillPrompt(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[#181714] border border-[#3b3831] text-[#f3efe6] focus:outline-none focus:border-purple-400 text-[11px]"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-purple-400 text-[11px]"
                 />
               </div>
 
@@ -590,7 +590,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddSkillOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white"
+                  className="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-[color:var(--c-on-strong)]"
                 >
                   Cancelar
                 </button>
@@ -609,16 +609,16 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
       {/* Modal Conectar Servidor MCP */}
       {isAddMcpOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-[#23211d] border border-[#3b3831] p-4 space-y-3 shadow-2xl text-xs">
-            <div className="flex items-center justify-between pb-2 border-b border-[#3b3831]">
-              <span className="font-semibold text-[#f3efe6] flex items-center gap-1.5">
+          <div className="w-full max-w-sm rounded-2xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3b3831)] p-4 space-y-3 shadow-2xl text-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-[color:var(--c-bg-3b3831)]">
+              <span className="font-semibold text-[color:var(--c-fg-f3efe6)] flex items-center gap-1.5">
                 <Server className="w-4 h-4 text-emerald-400" />
                 Conectar Servidor MCP
               </span>
               <button
                 type="button"
                 onClick={() => setIsAddMcpOpen(false)}
-                className="text-zinc-400 hover:text-white"
+                className="text-zinc-400 hover:text-[color:var(--c-on-strong)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -626,37 +626,37 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
 
             <form onSubmit={handleCreateMcp} className="space-y-3">
               <div>
-                <label className="block text-[11px] text-[#a39d93] mb-1">Nome da Conexão</label>
+                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Nome da Conexão</label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Servidor de Dados Local"
                   value={newMcpName}
                   onChange={(e) => setNewMcpName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[#181714] border border-[#3b3831] text-[#f3efe6] focus:outline-none focus:border-emerald-400"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-emerald-400"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#a39d93] mb-1">URL do Endpoint MCP</label>
+                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">URL do Endpoint MCP</label>
                 <input
                   type="url"
                   required
                   placeholder="https://meu-mcp.com/rpc ou http://localhost:3001"
                   value={newMcpUrl}
                   onChange={(e) => setNewMcpUrl(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[#181714] border border-[#3b3831] text-[#f3efe6] focus:outline-none focus:border-emerald-400 font-mono text-[11px]"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-emerald-400 font-mono text-[11px]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] text-[#a39d93] mb-1">Token de Autorização / API Key (Opcional)</label>
+                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Token de Autorização / API Key (Opcional)</label>
                 <input
                   type="password"
                   placeholder="Bearer token..."
                   value={newMcpApiKey}
                   onChange={(e) => setNewMcpApiKey(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[#181714] border border-[#3b3831] text-[#f3efe6] focus:outline-none focus:border-emerald-400"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-emerald-400"
                 />
               </div>
 
@@ -664,7 +664,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddMcpOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white"
+                  className="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-[color:var(--c-on-strong)]"
                 >
                   Cancelar
                 </button>

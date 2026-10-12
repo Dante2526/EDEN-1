@@ -468,17 +468,17 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#181714] text-[#f3efe6] select-none overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-[color:var(--c-bg-181714)] text-[color:var(--c-fg-f3efe6)] select-none overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b border-[#2d2a25] bg-[#1d1b18] flex items-center justify-between">
+      <div className="p-3 border-b border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-1d1b18)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <GitBranch className="w-4 h-4 text-emerald-400 shrink-0" />
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#c4bfb6]">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[color:var(--c-fg-c4bfb6)]">
             Source Control
           </h2>
         </div>
         {activeRepo && repoChanges.length > 0 && (
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40">
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40">
             {repoChanges.length} pendente(s)
           </span>
         )}
@@ -487,10 +487,10 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
       {/* Active Repo Selector or Empty State */}
       {!activeRepo ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-3">
-          <FolderGit2 className="w-10 h-10 text-[#544f45]" />
+          <FolderGit2 className="w-10 h-10 text-[color:var(--c-fg-544f45)]" />
           <div>
-            <h3 className="text-sm font-medium text-[#f3efe6]">Nenhum repositório neste chat</h3>
-            <p className="text-xs text-[#8c867a] mt-1 max-w-xs">
+            <h3 className="text-sm font-medium text-[color:var(--c-fg-f3efe6)]">Nenhum repositório neste chat</h3>
+            <p className="text-xs text-[color:var(--c-fg-8c867a)] mt-1 max-w-xs">
               Vincule um repositório GitHub a esta conversa para usar o Source Control, criar branches e commitar.
             </p>
           </div>
@@ -505,16 +505,16 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
       ) : (
         <div className="flex-1 flex flex-col overflow-y-auto">
           {/* Active Repo Info Card with New Branch button */}
-          <div className="p-3 bg-[#201e1a] border-b border-[#2d2a25] flex flex-col gap-2">
+          <div className="p-3 bg-[color:var(--c-bg-201e1a)] border-b border-[color:var(--c-bg-2d2a25)] flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-[#f3efe6] truncate">
-                  <FolderGit2 className="w-3.5 h-3.5 text-[#d97757] shrink-0" />
+                <div className="flex items-center gap-1.5 text-xs font-medium text-[color:var(--c-fg-f3efe6)] truncate">
+                  <FolderGit2 className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] shrink-0" />
                   <span className="truncate">{activeRepo.fullName}</span>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-mono text-[#8c867a] mt-0.5">
-                  <GitBranch className="w-3 h-3 text-[#d97757]" />
-                  <span className="text-[#d8d3c9] font-semibold">{activeRepo.branch}</span>
+                <div className="flex items-center gap-1 text-[11px] font-mono text-[color:var(--c-fg-8c867a)] mt-0.5">
+                  <GitBranch className="w-3 h-3 text-[color:var(--c-fg-d97757)]" />
+                  <span className="text-[color:var(--c-fg-d8d3c9)] font-semibold">{activeRepo.branch}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -522,7 +522,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                   type="button"
                   onClick={() => setIsCreatingBranch((prev) => !prev)}
                   title="Criar nova branch a partir desta"
-                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-[#2d2a23] hover:bg-[#3b362c] text-[#f09a7d] hover:text-white border border-[#484133] text-[11px] font-medium transition cursor-pointer shadow-2xs"
+                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-[color:var(--c-bg-2d2a23)] hover:bg-[color:var(--c-bg-3b362c)] text-[color:var(--c-fg-f09a7d)] hover:text-[color:var(--c-on-strong)] border border-[color:var(--c-bg-484133)] text-[11px] font-medium transition cursor-pointer shadow-2xs"
                 >
                   <GitFork className="w-3 h-3" />
                   <span>+ Branch</span>
@@ -530,7 +530,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                 <button
                   type="button"
                   onClick={onOpenRepoList}
-                  className="text-[11px] text-[#8c867a] hover:text-[#d97757] hover:underline cursor-pointer"
+                  className="text-[11px] text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-d97757)] hover:underline cursor-pointer"
                 >
                   Trocar
                 </button>
@@ -541,13 +541,13 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
             {isCreatingBranch && (
               <form
                 onSubmit={handleCreateBranch}
-                className="mt-1 p-2.5 rounded-xl bg-[#171613] border border-[#3e392f] space-y-2"
+                className="mt-1 p-2.5 rounded-xl bg-[color:var(--c-bg-171613)] border border-[color:var(--c-bg-3e392f)] space-y-2"
               >
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-medium text-[#f3efe6] flex items-center gap-1">
-                    <GitFork className="w-3 h-3 text-[#d97757]" /> Nova Branch
+                  <span className="font-medium text-[color:var(--c-fg-f3efe6)] flex items-center gap-1">
+                    <GitFork className="w-3 h-3 text-[color:var(--c-fg-d97757)]" /> Nova Branch
                   </span>
-                  <span className="text-[10px] text-[#8c867a] font-mono">
+                  <span className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono">
                     de: {activeRepo.branch}
                   </span>
                 </div>
@@ -558,7 +558,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                   placeholder="ex: feature/melhorias-ui"
                   autoFocus
                   disabled={isBranchLoading}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[#201e1a] border border-[#3f3b33] text-xs text-[#f3efe6] placeholder-[#6b665c] font-mono focus:outline-hidden focus:border-[#d97757]"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-3f3b33)] text-xs text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-6b665c)] font-mono focus:outline-hidden focus:border-[#d97757]"
                 />
                 {branchError && (
                   <p className="text-[10px] text-rose-400 leading-tight">{branchError}</p>
@@ -571,7 +571,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                       setBranchError(null);
                     }}
                     disabled={isBranchLoading}
-                    className="px-2.5 py-1 rounded text-[11px] text-[#8c867a] hover:text-[#f3efe6] cursor-pointer"
+                    className="px-2.5 py-1 rounded text-[11px] text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -595,9 +595,9 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
             )}
 
             {/* Remote Sync Bar (Fetch / Pull Status) */}
-            <div className="flex items-center justify-between pt-1.5 border-t border-[#2d2a25] text-[11px]">
+            <div className="flex items-center justify-between pt-1.5 border-t border-[color:var(--c-bg-2d2a25)] text-[11px]">
               <div className="flex items-center gap-1.5">
-                <span className="text-[#8c867a]">GitHub Remoto:</span>
+                <span className="text-[color:var(--c-fg-8c867a)]">GitHub Remoto:</span>
                 {incomingCommits.length > 0 ? (
                   <span className="text-amber-400 font-medium flex items-center gap-1">
                     <ArrowDownCircle className="w-3 h-3 text-amber-400" />
@@ -627,7 +627,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                   onClick={() => checkRemoteChanges(false)}
                   disabled={isCheckingRemote}
                   title="Verificar se há novos commits no GitHub"
-                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#25231e] hover:bg-[#312e27] text-[#a39d93] hover:text-[#f3efe6] border border-[#3a362e] text-[10px] transition cursor-pointer"
+                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-[color:var(--c-bg-25231e)] hover:bg-[color:var(--c-bg-312e27)] text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3a362e)] text-[10px] transition cursor-pointer"
                 >
                   <RefreshCw className={`w-2.5 h-2.5 ${isCheckingRemote ? 'animate-spin' : ''}`} />
                   <span>{isCheckingRemote ? 'Buscando...' : 'Fetch'}</span>
@@ -642,7 +642,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <ArrowDownCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-xs font-semibold text-[#f3efe6]">
+                  <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">
                     {incomingCommits.length} alteração(ões) no GitHub para puxar (Pull)
                   </span>
                 </div>
@@ -651,7 +651,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                 </span>
               </div>
 
-              <p className="text-[11px] text-[#c4bcaa] leading-relaxed">
+              <p className="text-[11px] text-[color:var(--c-fg-c4bcaa)] leading-relaxed">
                 Você enviou commits para a branch <strong>{activeRepo.branch}</strong> em outro lugar. Clique abaixo para sincronizar para o seu ambiente local.
               </p>
 
@@ -673,7 +673,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowIncomingDetails(!showIncomingDetails)}
-                  className="py-1.5 px-2.5 rounded-lg bg-[#25231e] hover:bg-[#312e27] border border-[#3f3b33] text-[11px] text-[#c4bcaa] hover:text-white transition cursor-pointer"
+                  className="py-1.5 px-2.5 rounded-lg bg-[color:var(--c-bg-25231e)] hover:bg-[color:var(--c-bg-312e27)] border border-[color:var(--c-bg-3f3b33)] text-[11px] text-[color:var(--c-fg-c4bcaa)] hover:text-[color:var(--c-on-strong)] transition cursor-pointer"
                 >
                   {showIncomingDetails ? 'Ocultar' : 'Ver Detalhes'}
                 </button>
@@ -684,11 +684,11 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                   {incomingCommits.map((c) => (
                     <div
                       key={c.sha}
-                      className="text-[11px] p-2 rounded bg-[#171612] border border-[#2e2a23] flex items-start justify-between gap-2"
+                      className="text-[11px] p-2 rounded bg-[color:var(--c-bg-171612)] border border-[color:var(--c-bg-2e2a23)] flex items-start justify-between gap-2"
                     >
                       <div className="min-w-0">
-                        <div className="font-medium text-[#f3efe6] truncate">{c.message}</div>
-                        <div className="text-[10px] text-[#8c867a] font-mono mt-0.5">
+                        <div className="font-medium text-[color:var(--c-fg-f3efe6)] truncate">{c.message}</div>
+                        <div className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono mt-0.5">
                           {c.author.name} • {c.short_sha}
                         </div>
                       </div>
@@ -707,20 +707,20 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
           )}
 
           {/* Subtab navigation: Alterações vs Histórico */}
-          <div className="flex items-center border-b border-[#2d2a25] bg-[#1a1815] px-2">
+          <div className="flex items-center border-b border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-1a1815)] px-2">
             <button
               type="button"
               onClick={() => setActiveTab('changes')}
               className={`flex-1 py-2 text-xs font-medium text-center border-b-2 transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === 'changes'
-                  ? 'border-[#d97757] text-[#f3efe6] font-semibold'
-                  : 'border-transparent text-[#8c867a] hover:text-[#c4bfb6]'
+                  ? 'border-[#d97757] text-[color:var(--c-fg-f3efe6)] font-semibold'
+                  : 'border-transparent text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)]'
               }`}
             >
               <GitCommit className="w-3.5 h-3.5" />
               <span>Alterações</span>
               {repoChanges.length > 0 && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#d97757]/20 text-[#f09a7d] font-mono">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] font-mono">
                   {repoChanges.length}
                 </span>
               )}
@@ -730,8 +730,8 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
               onClick={() => setActiveTab('history')}
               className={`flex-1 py-2 text-xs font-medium text-center border-b-2 transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 activeTab === 'history'
-                  ? 'border-[#d97757] text-[#f3efe6] font-semibold'
-                  : 'border-transparent text-[#8c867a] hover:text-[#c4bfb6]'
+                  ? 'border-[#d97757] text-[color:var(--c-fg-f3efe6)] font-semibold'
+                  : 'border-transparent text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)]'
               }`}
             >
               <History className="w-3.5 h-3.5" />
@@ -743,9 +743,9 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
           {activeTab === 'changes' && (
             <div className="flex-1 flex flex-col">
               {/* Commit Message Box */}
-              <div className="p-3 border-b border-[#2d2a25] space-y-2 bg-dark-bg">
+              <div className="p-3 border-b border-[color:var(--c-bg-2d2a25)] space-y-2 bg-dark-bg">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-medium text-[#c4bfb6]">Mensagem de Commit</span>
+                  <span className="font-medium text-[color:var(--c-fg-c4bfb6)]">Mensagem de Commit</span>
                   <button
                     type="button"
                     onClick={handleGenerateCommitMessage}
@@ -780,7 +780,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                       }
                     }}
                     disabled={isCommitting || isGeneratingCommitMsg || repoChanges.length === 0}
-                    className="w-full p-2.5 rounded-xl bg-[#131210] border border-[#3b3831] text-xs text-[#f3efe6] placeholder-[#6b665c] focus:outline-hidden focus:border-[#d97757] resize-none disabled:opacity-50"
+                    className="w-full p-2.5 rounded-xl bg-[color:var(--c-bg-131210)] border border-[color:var(--c-bg-3b3831)] text-xs text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-6b665c)] focus:outline-hidden focus:border-[#d97757] resize-none disabled:opacity-50"
                   />
                 </div>
 
@@ -827,7 +827,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                           <button
                             type="button"
                             onClick={() => setConfirmDiscardAll(false)}
-                            className="px-2 py-1.5 rounded-lg bg-[#2e2a22] text-[#c4bfb6] text-[11px] hover:bg-[#38332a] cursor-pointer"
+                            className="px-2 py-1.5 rounded-lg bg-[color:var(--c-bg-2e2a22)] text-[color:var(--c-fg-c4bfb6)] text-[11px] hover:bg-[color:var(--c-bg-38332a)] cursor-pointer"
                           >
                             Não
                           </button>
@@ -837,7 +837,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                           type="button"
                           onClick={() => setConfirmDiscardAll(true)}
                           title="Descartar todas as alterações"
-                          className="p-1.5 rounded-lg bg-[#24211d] hover:bg-rose-950/40 text-[#8c867a] hover:text-rose-400 border border-[#3b3831] hover:border-rose-900/40 transition cursor-pointer"
+                          className="p-1.5 rounded-lg bg-[color:var(--c-bg-24211d)] hover:bg-rose-950/40 text-[color:var(--c-fg-8c867a)] hover:text-rose-400 border border-[color:var(--c-bg-3b3831)] hover:border-rose-900/40 transition cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -848,7 +848,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
 
                 {/* Staging helper buttons */}
                 {repoChanges.length > 0 && (
-                  <div className="flex items-center justify-between text-[11px] text-[#8c867a] pt-1">
+                  <div className="flex items-center justify-between text-[11px] text-[color:var(--c-fg-8c867a)] pt-1">
                     <span>
                       {stagedChanges.length} em stage, {unstagedChanges.length} pendente(s)
                     </span>
@@ -857,7 +857,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => stageAll(activeRepo.fullName, activeRepo.branch)}
-                          className="hover:text-[#f3efe6] cursor-pointer"
+                          className="hover:text-[color:var(--c-fg-f3efe6)] cursor-pointer"
                         >
                           Stage tudo
                         </button>
@@ -866,7 +866,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => unstageAll(activeRepo.fullName, activeRepo.branch)}
-                          className="hover:text-[#f3efe6] cursor-pointer"
+                          className="hover:text-[color:var(--c-fg-f3efe6)] cursor-pointer"
                         >
                           Unstage tudo
                         </button>
@@ -907,19 +907,19 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
 
               {/* Staged Changes Section */}
               {stagedChanges.length > 0 && (
-                <div className="border-b border-[#2d2a25]">
-                  <div className="px-3 py-1.5 bg-[#1f1d19] flex items-center justify-between text-[11px] font-mono font-medium text-[#b8b3a8]">
+                <div className="border-b border-[color:var(--c-bg-2d2a25)]">
+                  <div className="px-3 py-1.5 bg-[color:var(--c-bg-1f1d19)] flex items-center justify-between text-[11px] font-mono font-medium text-[color:var(--c-fg-b8b3a8)]">
                     <span>STAGED CHANGES ({stagedChanges.length})</span>
                     <button
                       type="button"
                       onClick={() => unstageAll(activeRepo.fullName, activeRepo.branch)}
                       title="Unstage all"
-                      className="p-0.5 hover:text-white text-[#8c867a] cursor-pointer"
+                      className="p-0.5 hover:text-[color:var(--c-on-strong)] text-[color:var(--c-fg-8c867a)] cursor-pointer"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
                   </div>
-                  <div className="divide-y divide-[#262420]">
+                  <div className="divide-y divide-[color:var(--c-bg-262420)]">
                     {stagedChanges.map((change) => (
                       <ChangeRow
                         key={change.id}
@@ -935,14 +935,14 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
 
               {/* Unstaged Changes Section */}
               <div>
-                <div className="px-3 py-1.5 bg-[#1f1d19] flex items-center justify-between text-[11px] font-mono font-medium text-[#b8b3a8]">
+                <div className="px-3 py-1.5 bg-[color:var(--c-bg-1f1d19)] flex items-center justify-between text-[11px] font-mono font-medium text-[color:var(--c-fg-b8b3a8)]">
                   <span>CHANGES ({unstagedChanges.length})</span>
                   {unstagedChanges.length > 0 && (
                     <button
                       type="button"
                       onClick={() => stageAll(activeRepo.fullName, activeRepo.branch)}
                       title="Stage all"
-                      className="p-0.5 hover:text-white text-[#8c867a] cursor-pointer"
+                      className="p-0.5 hover:text-[color:var(--c-on-strong)] text-[color:var(--c-fg-8c867a)] cursor-pointer"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
@@ -950,14 +950,14 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                 </div>
 
                 {unstagedChanges.length === 0 && stagedChanges.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#8c867a]">
+                  <div className="p-6 text-center text-xs text-[color:var(--c-fg-8c867a)]">
                     <p>Nenhuma mudança pendente.</p>
-                    <p className="mt-1 text-[11px] text-[#6b665c]">
+                    <p className="mt-1 text-[11px] text-[color:var(--c-fg-6b665c)]">
                       Peça à IA para editar ou criar arquivos no chat — as alterações aparecerão aqui para revisão.
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-[#262420]">
+                  <div className="divide-y divide-[color:var(--c-bg-262420)]">
                     {unstagedChanges.map((change) => (
                       <ChangeRow
                         key={change.id}
@@ -976,26 +976,26 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
           {/* TAB 2: HISTÓRICO DE COMMITS */}
           {activeTab === 'history' && (
             <div className="flex-1 flex flex-col">
-              <div className="p-2.5 bg-[#1f1d19] border-b border-[#2d2a25] flex items-center justify-between text-xs">
-                <span className="text-[#8c867a] flex items-center gap-1.5 font-medium">
-                  <History className="w-3.5 h-3.5 text-[#d97757]" />
+              <div className="p-2.5 bg-[color:var(--c-bg-1f1d19)] border-b border-[color:var(--c-bg-2d2a25)] flex items-center justify-between text-xs">
+                <span className="text-[color:var(--c-fg-8c867a)] flex items-center gap-1.5 font-medium">
+                  <History className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                   <span>Commits recentes em </span>
-                  <span className="font-mono text-[#f3efe6] font-semibold">{activeRepo.branch}</span>
+                  <span className="font-mono text-[color:var(--c-fg-f3efe6)] font-semibold">{activeRepo.branch}</span>
                 </span>
                 <button
                   type="button"
                   onClick={loadCommits}
                   disabled={isLoadingCommits}
                   title="Atualizar commits"
-                  className="p-1 rounded text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#2b2823] transition cursor-pointer"
+                  className="p-1 rounded text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2b2823)] transition cursor-pointer"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingCommits ? 'animate-spin text-[#d97757]' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingCommits ? 'animate-spin text-[color:var(--c-fg-d97757)]' : ''}`} />
                 </button>
               </div>
 
               {isLoadingCommits ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-2 text-[#8c867a]">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#d97757]" />
+                <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-2 text-[color:var(--c-fg-8c867a)]">
+                  <Loader2 className="w-6 h-6 animate-spin text-[color:var(--c-fg-d97757)]" />
                   <span className="text-xs">Buscando histórico no GitHub…</span>
                 </div>
               ) : commitsError ? (
@@ -1008,18 +1008,18 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                   <button
                     type="button"
                     onClick={loadCommits}
-                    className="px-2.5 py-1 rounded bg-[#2e2a22] hover:bg-[#3d372c] text-white text-[11px] font-medium transition cursor-pointer"
+                    className="px-2.5 py-1 rounded bg-[color:var(--c-bg-2e2a22)] hover:bg-[color:var(--c-bg-3d372c)] text-[color:var(--c-on-strong)] text-[11px] font-medium transition cursor-pointer"
                   >
                     Tentar novamente
                   </button>
                 </div>
               ) : commits.length === 0 ? (
-                <div className="p-6 text-center text-xs text-[#8c867a]">
-                  <History className="w-8 h-8 text-[#544f45] mx-auto mb-2" />
+                <div className="p-6 text-center text-xs text-[color:var(--c-fg-8c867a)]">
+                  <History className="w-8 h-8 text-[color:var(--c-fg-544f45)] mx-auto mb-2" />
                   <p>Nenhum commit encontrado para esta branch.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-[#262420] overflow-y-auto">
+                <div className="divide-y divide-[color:var(--c-bg-262420)] overflow-y-auto">
                   {commits.map((c) => {
                     const firstLine = c.message.split('\n')[0];
                     const hasMore = c.message.trim().split('\n').length > 1;
@@ -1027,15 +1027,15 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                     return (
                       <div
                         key={c.sha}
-                        className="p-3 hover:bg-[#211f1b] transition space-y-1.5 group"
+                        className="p-3 hover:bg-[color:var(--c-bg-211f1b)] transition space-y-1.5 group"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-medium text-[#f3efe6] leading-snug break-words">
+                            <p className="text-xs font-medium text-[color:var(--c-fg-f3efe6)] leading-snug break-words">
                               {firstLine}
                             </p>
                             {hasMore && (
-                              <p className="text-[11px] text-[#8c867a] mt-0.5 line-clamp-2">
+                              <p className="text-[11px] text-[color:var(--c-fg-8c867a)] mt-0.5 line-clamp-2">
                                 {c.message.trim().split('\n').slice(1).join(' ').trim()}
                               </p>
                             )}
@@ -1046,7 +1046,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                               type="button"
                               onClick={() => handleCopySha(c.sha)}
                               title="Copiar SHA completo"
-                              className="px-1.5 py-0.5 rounded font-mono text-[10px] bg-[#2a2721] hover:bg-[#38332a] text-[#f09a7d] border border-[#3e392f] transition cursor-pointer flex items-center gap-1"
+                              className="px-1.5 py-0.5 rounded font-mono text-[10px] bg-[color:var(--c-bg-2a2721)] hover:bg-[color:var(--c-bg-38332a)] text-[color:var(--c-fg-f09a7d)] border border-[color:var(--c-bg-3e392f)] transition cursor-pointer flex items-center gap-1"
                             >
                               {copiedSha === c.sha ? (
                                 <>
@@ -1066,7 +1066,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                               target="_blank"
                               rel="noreferrer"
                               title="Ver commit no GitHub"
-                              className="p-1 rounded text-[#8c867a] hover:text-[#d97757] hover:bg-[#2b2823] transition"
+                              className="p-1 rounded text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-d97757)] hover:bg-[color:var(--c-bg-2b2823)] transition"
                             >
                               <ExternalLink className="w-3 h-3" />
                             </a>
@@ -1074,7 +1074,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                         </div>
 
                         {/* Author & Date metadata */}
-                        <div className="flex items-center justify-between text-[11px] text-[#736e65]">
+                        <div className="flex items-center justify-between text-[11px] text-[color:var(--c-fg-736e65)]">
                           <div className="flex items-center gap-1.5 min-w-0">
                             {c.author.avatar_url ? (
                               <img
@@ -1083,11 +1083,11 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                                 className="w-3.5 h-3.5 rounded-full object-cover shrink-0"
                               />
                             ) : (
-                              <div className="w-3.5 h-3.5 rounded-full bg-[#353128] text-[#d97757] text-[8px] flex items-center justify-center font-bold">
+                              <div className="w-3.5 h-3.5 rounded-full bg-[color:var(--c-bg-353128)] text-[color:var(--c-fg-d97757)] text-[8px] flex items-center justify-center font-bold">
                                 {c.author.name.charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <span className="truncate text-[#a39d93]">{c.author.name}</span>
+                            <span className="truncate text-[color:var(--c-fg-a39d93)]">{c.author.name}</span>
                           </div>
 
                           <div className="flex items-center gap-1 shrink-0 text-[10px]">
@@ -1137,7 +1137,7 @@ const ChangeRow: React.FC<ChangeRowProps> = ({
   return (
     <div
       onClick={onViewDiff}
-      className="group px-3 py-2 flex items-center justify-between text-xs hover:bg-[#25231f] transition cursor-pointer"
+      className="group px-3 py-2 flex items-center justify-between text-xs hover:bg-[color:var(--c-bg-25231f)] transition cursor-pointer"
     >
       <div className="flex items-center gap-2 min-w-0 pr-2">
         {/* Status letter M / A / D */}
@@ -1154,7 +1154,7 @@ const ChangeRow: React.FC<ChangeRowProps> = ({
         </span>
 
         {/* Path */}
-        <span className="font-mono text-xs text-[#f3efe6] truncate group-hover:text-white">
+        <span className="font-mono text-xs text-[color:var(--c-fg-f3efe6)] truncate group-hover:text-[color:var(--c-on-strong)]">
           {change.path}
         </span>
       </div>
@@ -1168,7 +1168,7 @@ const ChangeRow: React.FC<ChangeRowProps> = ({
           type="button"
           onClick={onViewDiff}
           title="Ver Diff"
-          className="p-1 rounded text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#322f28] transition cursor-pointer"
+          className="p-1 rounded text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-322f28)] transition cursor-pointer"
         >
           <Eye className="w-3.5 h-3.5" />
         </button>
@@ -1177,7 +1177,7 @@ const ChangeRow: React.FC<ChangeRowProps> = ({
           type="button"
           onClick={onDiscard}
           title="Descartar alteração"
-          className="p-1 rounded text-[#a39d93] hover:text-rose-400 hover:bg-[#322f28] transition cursor-pointer"
+          className="p-1 rounded text-[color:var(--c-fg-a39d93)] hover:text-rose-400 hover:bg-[color:var(--c-bg-322f28)] transition cursor-pointer"
         >
           <Undo2 className="w-3.5 h-3.5" />
         </button>
@@ -1186,7 +1186,7 @@ const ChangeRow: React.FC<ChangeRowProps> = ({
           type="button"
           onClick={onToggleStage}
           title={change.staged ? 'Unstage' : 'Stage'}
-          className="p-1 rounded text-[#a39d93] hover:text-emerald-400 hover:bg-[#322f28] transition cursor-pointer"
+          className="p-1 rounded text-[color:var(--c-fg-a39d93)] hover:text-emerald-400 hover:bg-[color:var(--c-bg-322f28)] transition cursor-pointer"
         >
           {change.staged ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
         </button>

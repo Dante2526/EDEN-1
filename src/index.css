@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
+@import "./theme-vars.generated.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
+
+:root { --c-page-bg: #ffffff; --c-page-fg: #1c1b19; }
+.dark { --c-page-bg: #1b1a17; --c-page-fg: #f3efe6; }
 
 @theme {
   --color-dark-bg: #111217;
@@ -14,8 +19,8 @@
 
 @layer base {
   body {
-    background-color: var(--color-dark-bg, #111217);
-    color: var(--color-dark-text, #f7fafc);
+    background-color: var(--c-page-bg);
+    color: var(--c-page-fg);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -25,14 +30,24 @@
 
   ::selection {
     background-color: rgba(217, 119, 87, 0.35);
-    color: #ffffff;
+    color: inherit;
   }
 }
 
-/* Barra de Rolagem (Scrollbar) no Modo Escuro */
+/* Barra de Rolagem (Scrollbar) — segue o tema */
+:root {
+  --sb-track: #e5e7eb;
+  --sb-thumb: #b4b8c0;
+  --sb-thumb-hover: #8f949e;
+}
+.dark {
+  --sb-track: #1E293B;
+  --sb-thumb: #475569;
+  --sb-thumb-hover: #64748B;
+}
 * {
   scrollbar-width: thin;
-  scrollbar-color: #475569 #1E293B;
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
 }
 
 ::-webkit-scrollbar {
@@ -40,14 +55,26 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #1E293B;
+  background: var(--sb-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: var(--sb-thumb);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: var(--sb-thumb-hover);
+}
+
+/* Modo claro: inverte as escalas slate/zinc do Tailwind (valores literais para evitar ciclos de var()) */
+:root:not(.dark) {
+  --color-slate-50: #020617; --color-slate-100: #0f172a; --color-slate-200: #1e293b;
+  --color-slate-300: #334155; --color-slate-400: #475569; --color-slate-500: #64748b;
+  --color-slate-600: #94a3b8; --color-slate-700: #cbd5e1; --color-slate-800: #e2e8f0;
+  --color-slate-900: #f1f5f9; --color-slate-950: #f8fafc;
+  --color-zinc-50: #09090b; --color-zinc-100: #18181b; --color-zinc-200: #27272a;
+  --color-zinc-300: #3f3f46; --color-zinc-400: #52525b; --color-zinc-500: #71717a;
+  --color-zinc-600: #a1a1aa; --color-zinc-700: #d4d4d8; --color-zinc-800: #e4e4e7;
+  --color-zinc-900: #f4f4f5; --color-zinc-950: #fafafa;
 }
 
 /* Transição de Tela Circular (View Transition API) */

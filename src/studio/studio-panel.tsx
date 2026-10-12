@@ -45,11 +45,11 @@ const ACTOR_CONFIG: Record<
   TimelineActor,
   { icon: React.FC<{ className?: string }>; color: string; bg: string; label: string }
 > = {
-  user: { icon: User, color: 'text-[#f3efe6]', bg: 'bg-[#25231e]', label: 'Você' },
+  user: { icon: User, color: 'text-[color:var(--c-fg-f3efe6)]', bg: 'bg-[color:var(--c-bg-25231e)]', label: 'Você' },
   planner: { icon: Brain, color: 'text-amber-400', bg: 'bg-amber-950/40', label: 'Planner (Kimi K3)' },
   reviewer: { icon: Search, color: 'text-sky-400', bg: 'bg-sky-950/40', label: 'Reviewer (GLM-5.3)' },
   implementer: { icon: Zap, color: 'text-violet-400', bg: 'bg-violet-950/40', label: 'Implementer' },
-  system: { icon: Bot, color: 'text-[#d97757]', bg: 'bg-[#d97757]/15', label: 'Sistema' },
+  system: { icon: Bot, color: 'text-[color:var(--c-fg-d97757)]', bg: 'bg-[#d97757]/15', label: 'Sistema' },
 };
 
 export const StudioPanel: React.FC<Props> = ({
@@ -449,30 +449,30 @@ export const StudioPanel: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0e0d0b]">
+    <div className="flex-1 flex flex-col h-full bg-[color:var(--c-bg-0e0d0b)]">
       {/* Top Session Bar */}
-      <div className="h-11 px-3 sm:px-6 border-b border-[#1f1d18] bg-[#12110e] flex items-center justify-between text-xs font-mono text-[#8c867a]">
+      <div className="h-11 px-3 sm:px-6 border-b border-[color:var(--c-bg-1f1d18)] bg-[color:var(--c-bg-12110e)] flex items-center justify-between text-xs font-mono text-[color:var(--c-fg-8c867a)]">
         <div className="flex items-center gap-2.5 truncate">
           {onBackToChat && (
             <button
               type="button"
               onClick={onBackToChat}
               title="Retornar para a conversa de Chat"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#23211d] hover:bg-[#2d2a24] border border-[#3e3b33] text-xs font-sans font-medium text-[#f3efe6] hover:text-white transition cursor-pointer shrink-0 shadow-xs active:scale-95"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[color:var(--c-bg-23211d)] hover:bg-[color:var(--c-bg-2d2a24)] border border-[color:var(--c-bg-3e3b33)] text-xs font-sans font-medium text-[color:var(--c-fg-f3efe6)] hover:text-[color:var(--c-on-strong)] transition cursor-pointer shrink-0 shadow-xs active:scale-95"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#d97757]" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
               <span>Voltar ao Chat</span>
             </button>
           )}
 
-          <div className="hidden sm:flex items-center gap-2 text-[#a39d93] truncate">
+          <div className="hidden sm:flex items-center gap-2 text-[color:var(--c-fg-a39d93)] truncate">
             <span className="inline-flex w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span className="text-[#f3efe6] font-medium font-sans">Studio</span>
+            <span className="text-[color:var(--c-fg-f3efe6)] font-medium font-sans">Studio</span>
             {activeRepo ? (
               <>
                 <span className="text-[#3e3b33]">|</span>
-                <span className="text-[#a39d93] truncate max-w-[160px]">{activeRepo.fullName}</span>
-                <span className="text-[#6d685e]">({activeRepo.branch})</span>
+                <span className="text-[color:var(--c-fg-a39d93)] truncate max-w-[160px]">{activeRepo.fullName}</span>
+                <span className="text-[color:var(--c-fg-6d685e)]">({activeRepo.branch})</span>
               </>
             ) : (
               <span className="text-amber-400/80 font-sans">Nenhum repositório conectado</span>
@@ -502,7 +502,7 @@ export const StudioPanel: React.FC<Props> = ({
               onClick={resetForNewTask}
               disabled={isWorking}
               title="Nova Tarefa"
-              className="text-[#8c867a] hover:text-[#f3efe6] p-1 rounded hover:bg-[#1a1916] transition-colors cursor-pointer disabled:opacity-40"
+              className="text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] p-1 rounded hover:bg-[color:var(--c-bg-1a1916)] transition-colors cursor-pointer disabled:opacity-40"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -516,11 +516,11 @@ export const StudioPanel: React.FC<Props> = ({
           // ============ EMPTY STATE HERO & SUGESTÕES ============
           <div className="flex flex-col items-center justify-center px-4 sm:px-6 py-10 max-w-3xl mx-auto w-full min-h-full">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#d97757]/20 via-[#1e1c17] to-amber-500/20 border border-[#d97757]/30 mb-4 shadow-xl">
-                <Bot className="w-8 h-8 text-[#d97757]" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#d97757]/20 via-[color:var(--c-bg-1e1c17)] to-amber-500/20 border border-[#d97757]/30 mb-4 shadow-xl">
+                <Bot className="w-8 h-8 text-[color:var(--c-fg-d97757)]" />
               </div>
-              <h1 className="text-3xl font-serif text-[#f3efe6] mb-2 tracking-tight">Studio</h1>
-              <p className="text-sm text-[#8c867a] max-w-md mx-auto leading-relaxed">
+              <h1 className="text-3xl font-serif text-[color:var(--c-fg-f3efe6)] mb-2 tracking-tight">Studio</h1>
+              <p className="text-sm text-[color:var(--c-fg-8c867a)] max-w-md mx-auto leading-relaxed">
                 Três agentes IA trabalham em sequência:{' '}
                 <span className="text-amber-400 font-medium">Kimi K3</span> planeja,{' '}
                 <span className="text-sky-400 font-medium">GLM-5.3</span> revisa e o{' '}
@@ -533,19 +533,19 @@ export const StudioPanel: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={onBackToChat}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#23211d] hover:bg-[#2d2a24] border border-[#3e3b33] text-xs font-sans text-[#f3efe6] transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--c-bg-23211d)] hover:bg-[color:var(--c-bg-2d2a24)] border border-[color:var(--c-bg-3e3b33)] text-xs font-sans text-[color:var(--c-fg-f3efe6)] transition cursor-pointer"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 text-[#d97757]" />
+                    <MessageSquare className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                     <span>Ir para o Chat</span>
                   </button>
                 )}
                 {activeRepo ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#181714] border border-[#2d2b26] text-xs font-mono text-[#c4bfb6]">
-                    <FolderGit2 className="w-3.5 h-3.5 text-[#d97757]" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-2d2b26)] text-xs font-mono text-[color:var(--c-fg-c4bfb6)]">
+                    <FolderGit2 className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                     <span>{activeRepo.fullName}</span>
-                    <span className="text-[#6d685e]">·</span>
-                    <GitBranch className="w-3 h-3 text-[#8c867a]" />
-                    <span className="text-[#8c867a]">{activeRepo.branch}</span>
+                    <span className="text-[color:var(--c-fg-6d685e)]">·</span>
+                    <GitBranch className="w-3 h-3 text-[color:var(--c-fg-8c867a)]" />
+                    <span className="text-[color:var(--c-fg-8c867a)]">{activeRepo.branch}</span>
                   </div>
                 ) : (
                   <button
@@ -592,11 +592,11 @@ export const StudioPanel: React.FC<Props> = ({
                     textareaRef.current?.focus();
                   }}
                   disabled={!activeRepo}
-                  className="text-left p-4 rounded-xl border border-[#2d2b26] bg-[#181714] hover:bg-[#1f1d18] hover:border-[#3b3831] transition-all disabled:opacity-40 disabled:cursor-not-allowed group cursor-pointer"
+                  className="text-left p-4 rounded-xl border border-[color:var(--c-bg-2d2b26)] bg-[color:var(--c-bg-181714)] hover:bg-[color:var(--c-bg-1f1d18)] hover:border-[color:var(--c-bg-3b3831)] transition-all disabled:opacity-40 disabled:cursor-not-allowed group cursor-pointer"
                 >
-                  <s.icon className="w-5 h-5 text-[#d97757] mb-2 group-hover:scale-110 transition-transform" />
-                  <div className="text-sm font-medium text-[#f3efe6]">{s.title}</div>
-                  <div className="text-xs text-[#8c867a] mt-1 line-clamp-2 leading-relaxed">
+                  <s.icon className="w-5 h-5 text-[color:var(--c-fg-d97757)] mb-2 group-hover:scale-110 transition-transform" />
+                  <div className="text-sm font-medium text-[color:var(--c-fg-f3efe6)]">{s.title}</div>
+                  <div className="text-xs text-[color:var(--c-fg-8c867a)] mt-1 line-clamp-2 leading-relaxed">
                     {s.desc}
                   </div>
                 </button>
@@ -618,7 +618,7 @@ export const StudioPanel: React.FC<Props> = ({
 
             {/* Caixa de feedback para refazer plano */}
             {refactorPromptOpen && (
-              <div className="rounded-xl border border-amber-500/40 bg-[#1e1c18] p-4 animate-in fade-in duration-200 space-y-3">
+              <div className="rounded-xl border border-amber-500/40 bg-[color:var(--c-bg-1e1c18)] p-4 animate-in fade-in duration-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-medium text-amber-300">
                     <AlertTriangle className="w-4 h-4 text-amber-400" />
@@ -627,7 +627,7 @@ export const StudioPanel: React.FC<Props> = ({
                   <button
                     type="button"
                     onClick={() => setRefactorPromptOpen(false)}
-                    className="text-[#8c867a] hover:text-white"
+                    className="text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-on-strong)]"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -638,14 +638,14 @@ export const StudioPanel: React.FC<Props> = ({
                   onChange={(e) => setRefactorFeedback(e.target.value)}
                   placeholder="Ex: Mantenha retrocompatibilidade em utils.ts, adicione validação de entrada e use TypeScript estrito..."
                   rows={2}
-                  className="w-full bg-[#141310] border border-[#3b3831] rounded-lg px-3 py-2 text-xs text-[#f3efe6] placeholder-[#5c5851] focus:outline-none focus:border-amber-400/50"
+                  className="w-full bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-3b3831)] rounded-lg px-3 py-2 text-xs text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-5c5851)] focus:outline-none focus:border-amber-400/50"
                 />
 
                 <div className="flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setRefactorPromptOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-xs text-[#a39d93] hover:text-white hover:bg-[#282621] cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-xs text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-on-strong)] hover:bg-[color:var(--c-bg-282621)] cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -668,7 +668,7 @@ export const StudioPanel: React.FC<Props> = ({
       </div>
 
       {/* Input fixo no rodapé com Microfone, Anexos, Iniciar e Enviar */}
-      <div className="border-t border-[#1f1d18] bg-[#0e0d0b] px-3 sm:px-6 py-3 sm:py-4">
+      <div className="border-t border-[color:var(--c-bg-1f1d18)] bg-[color:var(--c-bg-0e0d0b)] px-3 sm:px-6 py-3 sm:py-4">
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -684,7 +684,7 @@ export const StudioPanel: React.FC<Props> = ({
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            className="rounded-2xl border border-[#3b3831] bg-[#181714] focus-within:border-[#d97757]/50 focus-within:ring-1 focus-within:ring-[#d97757]/30 transition-all shadow-xl overflow-hidden"
+            className="rounded-2xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-181714)] focus-within:border-[#d97757]/50 focus-within:ring-1 focus-within:ring-[#d97757]/30 transition-all shadow-xl overflow-hidden"
           >
             {/* Previews de arquivos e imagens anexadas */}
             {(images.length > 0 || documents.length > 0) && (
@@ -700,7 +700,7 @@ export const StudioPanel: React.FC<Props> = ({
             <div className="p-3 sm:p-3.5">
               <textarea
                 ref={textareaRef}
-                className="w-full bg-transparent text-sm sm:text-base text-[#f3efe6] placeholder-[#5c5851] resize-none border-0 focus:outline-none leading-relaxed font-sans"
+                className="w-full bg-transparent text-sm sm:text-base text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-5c5851)] resize-none border-0 focus:outline-none leading-relaxed font-sans"
                 rows={2}
                 placeholder={
                   isWorking
@@ -723,7 +723,7 @@ export const StudioPanel: React.FC<Props> = ({
               />
 
               {/* Toolbar inferior com ferramentas e botões */}
-              <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-[#23211c]">
+              <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-[color:var(--c-bg-23211c)]">
                 {/* Ferramentas esquerdas: Anexar arquivo e Microfone */}
                 <div className="flex items-center gap-1 sm:gap-1.5">
                   {/* Botão Anexar Arquivos */}
@@ -738,12 +738,12 @@ export const StudioPanel: React.FC<Props> = ({
                     className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
                       isWorking
                         ? 'text-[#48453f] cursor-not-allowed opacity-40'
-                        : 'text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#25231e]'
+                        : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
                     }`}
                   >
                     <Paperclip className="w-4 h-4" />
                     {(images.length > 0 || documents.length > 0) && (
-                      <span className="text-[11px] font-mono text-[#d97757] font-medium">
+                      <span className="text-[11px] font-mono text-[color:var(--c-fg-d97757)] font-medium">
                         {images.length + documents.length}
                       </span>
                     )}
@@ -772,7 +772,7 @@ export const StudioPanel: React.FC<Props> = ({
                     className={`px-4 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm cursor-pointer ${
                       canSubmit && !isWorking && activeRepo
                         ? 'bg-[#d97757] hover:bg-[#c96442] text-white shadow-md active:scale-95'
-                        : 'bg-[#25231e] text-[#6b675e] border border-[#3b3831] opacity-50 cursor-not-allowed'
+                        : 'bg-[color:var(--c-bg-25231e)] text-[color:var(--c-fg-6b675e)] border border-[color:var(--c-bg-3b3831)] opacity-50 cursor-not-allowed'
                     }`}
                   >
                     {isWorking ? (
@@ -818,7 +818,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
         <div
-          className={`w-6 h-6 rounded-lg ${actor.bg} border border-[#2d2b26] flex items-center justify-center overflow-hidden`}
+          className={`w-6 h-6 rounded-lg ${actor.bg} border border-[color:var(--c-bg-2d2b26)] flex items-center justify-center overflow-hidden`}
         >
           {entry.status === 'info' && entry.actor !== 'user' ? (
             <ThinkingOrb 
@@ -831,8 +831,8 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
             <actor.icon className={`w-3.5 h-3.5 ${actor.color} ${entry.status === 'success' ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]' : ''}`} />
           )}
         </div>
-        <span className="text-xs font-medium text-[#c4bfb6]">{actor.label}</span>
-        <span className="text-[10px] text-[#5c5851] font-mono">
+        <span className="text-xs font-medium text-[color:var(--c-fg-c4bfb6)]">{actor.label}</span>
+        <span className="text-[10px] text-[color:var(--c-fg-5c5851)] font-mono">
           {new Date(entry.timestamp).toLocaleTimeString('pt-BR', {
             hour: '2-digit',
             minute: '2-digit',
@@ -841,15 +841,15 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
       </div>
 
       {/* Card content */}
-      <div className="rounded-xl bg-[#181714] border border-[#2d2b26] overflow-hidden shadow-sm">
+      <div className="rounded-xl bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-2d2b26)] overflow-hidden shadow-sm">
         {entry.title && (
-          <div className="px-3.5 sm:px-4 py-2.5 text-xs font-medium text-[#c4bfb6] border-b border-[#2d2b26]/60 flex items-center justify-between bg-[#141310]">
+          <div className="px-3.5 sm:px-4 py-2.5 text-xs font-medium text-[color:var(--c-fg-c4bfb6)] border-b border-[color:var(--c-bg-2d2b26)]/60 flex items-center justify-between bg-[color:var(--c-bg-141310)]">
             <span className="truncate pr-2">{entry.title}</span>
             {entry.steps && entry.steps.length > 0 && (
               <button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
-                className="text-[#5c5851] hover:text-[#8c867a] transition-colors p-1 cursor-pointer"
+                className="text-[color:var(--c-fg-5c5851)] hover:text-[color:var(--c-fg-8c867a)] transition-colors p-1 cursor-pointer"
                 aria-label={expanded ? 'Recolher passos' : 'Expandir passos'}
               >
                 <ChevronDown
@@ -866,7 +866,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
           <div className="p-3.5 sm:p-4 space-y-3">
             {/* Conteúdo textual */}
             {entry.content && (
-              <p className="text-xs sm:text-sm text-[#c4bfb6] leading-relaxed whitespace-pre-wrap font-sans">
+              <p className="text-xs sm:text-sm text-[color:var(--c-fg-c4bfb6)] leading-relaxed whitespace-pre-wrap font-sans">
                 {entry.content}
               </p>
             )}
@@ -874,7 +874,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
             {/* Arquivos e Imagens anexados pelo usuário */}
             {((entry.images && entry.images.length > 0) ||
               (entry.documents && entry.documents.length > 0)) && (
-              <div className="pt-2 border-t border-[#23211c]">
+              <div className="pt-2 border-t border-[color:var(--c-bg-23211c)]">
                 <FileAttachmentPreviews
                   images={entry.images || []}
                   documents={entry.documents || []}
@@ -889,18 +889,18 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
                 {entry.steps.map((step) => (
                   <li
                     key={step.id}
-                    className="flex items-start gap-2.5 text-xs sm:text-sm p-2 rounded-lg bg-[#141310] border border-[#26241e]"
+                    className="flex items-start gap-2.5 text-xs sm:text-sm p-2 rounded-lg bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-26241e)]"
                   >
                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-mono font-bold flex-shrink-0 mt-0.5">
                       {step.index}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[#f3efe6] font-medium leading-snug">
+                      <div className="text-[color:var(--c-fg-f3efe6)] font-medium leading-snug">
                         {step.description}
                       </div>
                       {step.targetFile && (
-                        <div className="text-[11px] text-[#8c867a] font-mono mt-1 flex items-center gap-1.5 flex-wrap">
-                          <span className="px-1.5 py-0.5 rounded bg-[#201e19] text-emerald-400 text-[10px] uppercase font-bold">
+                        <div className="text-[11px] text-[color:var(--c-fg-8c867a)] font-mono mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className="px-1.5 py-0.5 rounded bg-[color:var(--c-bg-201e19)] text-emerald-400 text-[10px] uppercase font-bold">
                             {step.action}
                           </span>
                           <span className="truncate">{step.targetFile}</span>
@@ -918,7 +918,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
                 {entry.steps.map((step) => (
                   <div
                     key={step.id}
-                    className="flex items-start gap-2.5 text-xs sm:text-sm p-2 rounded-lg bg-[#141310] border border-[#26241e]"
+                    className="flex items-start gap-2.5 text-xs sm:text-sm p-2 rounded-lg bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-26241e)]"
                   >
                     <span className="flex-shrink-0 mt-0.5">
                       {step.status === 'completed' ? (
@@ -930,21 +930,21 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
                       ) : step.status === 'failed' ? (
                         <X className="w-4 h-4 text-rose-400" />
                       ) : (
-                        <div className="w-4 h-4 rounded-full border border-[#3b3831]" />
+                        <div className="w-4 h-4 rounded-full border border-[color:var(--c-bg-3b3831)]" />
                       )}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div
                         className={`leading-snug ${
                           step.status === 'completed'
-                            ? 'text-[#8c867a] line-through'
-                            : 'text-[#f3efe6] font-medium'
+                            ? 'text-[color:var(--c-fg-8c867a)] line-through'
+                            : 'text-[color:var(--c-fg-f3efe6)] font-medium'
                         }`}
                       >
                         {step.description}
                       </div>
                       {step.result && (
-                        <div className="text-[11px] text-[#a39d93] mt-1 font-mono">{step.result}</div>
+                        <div className="text-[11px] text-[color:var(--c-fg-a39d93)] mt-1 font-mono">{step.result}</div>
                       )}
                     </div>
                   </div>
@@ -954,14 +954,14 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
 
             {/* Observações do Revisor */}
             {entry.observations && entry.observations.length > 0 && (
-              <div className="space-y-1.5 mt-2 pt-2 border-t border-[#26241e]">
-                <div className="text-[11px] font-mono uppercase text-[#8c867a] tracking-wider mb-1">
+              <div className="space-y-1.5 mt-2 pt-2 border-t border-[color:var(--c-bg-26241e)]">
+                <div className="text-[11px] font-mono uppercase text-[color:var(--c-fg-8c867a)] tracking-wider mb-1">
                   Observações do Revisor
                 </div>
                 {entry.observations.map((obs, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-2 text-xs p-2 rounded bg-[#141310] border border-[#26241e]"
+                    className="flex items-start gap-2 text-xs p-2 rounded bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-26241e)]"
                   >
                     {obs.type === 'warning' && (
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -975,7 +975,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
                     {obs.type === 'approval' && (
                       <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                     )}
-                    <span className="text-[#c4bfb6] leading-relaxed">
+                    <span className="text-[color:var(--c-fg-c4bfb6)] leading-relaxed">
                       {obs.step && (
                         <span className="font-mono text-emerald-400 mr-1.5 font-bold">
                           [Passo {obs.step}]
@@ -990,7 +990,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
 
             {/* Ações interativas (ex: botões de Aprovar / Refazer / Cancelar) */}
             {entry.actions && entry.actions.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[#26241e]">
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[color:var(--c-bg-26241e)]">
                 {entry.actions.map((act, idx) => (
                   <button
                     key={idx}
@@ -1001,7 +1001,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
                         ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40'
                         : act.variant === 'danger'
                         ? 'bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40'
-                        : 'bg-[#201e19] hover:bg-[#2a2821] text-[#c4bfb6] border border-[#3b3831]'
+                        : 'bg-[color:var(--c-bg-201e19)] hover:bg-[color:var(--c-bg-2a2821)] text-[color:var(--c-fg-c4bfb6)] border border-[color:var(--c-bg-3b3831)]'
                     }`}
                   >
                     {act.label}

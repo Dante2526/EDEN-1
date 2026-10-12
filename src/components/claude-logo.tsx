@@ -8,7 +8,7 @@ interface ClaudeLogoProps {
 /**
  * Claude.ai's iconic 8-pointed starburst / asterisk glyph
  */
-export const ClaudeLogo: React.FC<ClaudeLogoProps> = ({ className = 'w-5 h-5 text-[#d97757]', size }) => {
+export const ClaudeLogo: React.FC<ClaudeLogoProps> = ({ className = 'w-5 h-5 text-[color:var(--c-fg-d97757)]', size }) => {
   return (
     <svg
       viewBox="0 0 24 24"

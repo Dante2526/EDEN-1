@@ -205,12 +205,12 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
 
       {/* Floating Notification */}
       {notification && (
-        <div className="mb-2 px-3 py-1.5 rounded-xl bg-[#2e2318] border border-[#d97757]/40 text-[#f09a7d] text-xs flex items-center justify-between shadow-md animate-in fade-in duration-200">
+        <div className="mb-2 px-3 py-1.5 rounded-xl bg-[color:var(--c-bg-2e2318)] border border-[#d97757]/40 text-[color:var(--c-fg-f09a7d)] text-xs flex items-center justify-between shadow-md animate-in fade-in duration-200">
           <span>{notification}</span>
           <button
             type="button"
             onClick={() => setNotification(null)}
-            className="text-[#d97757] hover:text-white ml-2 text-xs"
+            className="text-[color:var(--c-fg-d97757)] hover:text-[color:var(--c-on-strong)] ml-2 text-xs"
           >
             ✕
           </button>
@@ -221,7 +221,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        className="relative rounded-2xl border border-[#3b3831] bg-[#24221e] shadow-xl transition-all focus-within:border-[#5a554a] focus-within:ring-1 focus-within:ring-[#5a554a]/30"
+        className="relative rounded-2xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-24221e)] shadow-xl transition-all focus-within:border-[color:var(--c-bg-5a554a)] focus-within:ring-1 focus-within:ring-[color:var(--c-bg-5a554a)]/30"
       >
         {/* Previews for attached images and documents */}
         <FileAttachmentPreviews
@@ -244,7 +244,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 ? 'Escreva uma mensagem para criar um Plano Estruturado...'
                 : 'Escreva uma mensagem...'
             }
-            className="w-full max-h-[160px] sm:max-h-[220px] py-1 px-1 text-sm sm:text-base text-[#f3efe6] placeholder-[#857f75] bg-transparent resize-none border-0 focus:outline-none focus:ring-0 leading-relaxed font-sans"
+            className="w-full max-h-[160px] sm:max-h-[220px] py-1 px-1 text-sm sm:text-base text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-857f75)] bg-transparent resize-none border-0 focus:outline-none focus:ring-0 leading-relaxed font-sans"
           />
 
           {/* Claude Bottom Toolbar */}
@@ -263,15 +263,15 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 title="Anexar imagens, documentos, PDFs ou código"
                 className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
                   isLoading
-                    ? 'text-[#5a554d] cursor-not-allowed opacity-40'
-                    : 'text-[#a39d93] hover:text-[#f3efe6] hover:bg-[#302d27]'
+                    ? 'text-[color:var(--c-fg-5a554d)] cursor-not-allowed opacity-40'
+                    : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
                 }`}
               >
                 <Paperclip className="w-4 h-4" />
               </button>
 
               {(images.length > 0 || documents.length > 0) && (
-                <span className="text-[11px] font-mono text-[#8c867a]">
+                <span className="text-[11px] font-mono text-[color:var(--c-fg-8c867a)]">
                   {images.length + documents.length} anexo(s)
                 </span>
               )}
@@ -305,7 +305,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                   className={`w-8 h-8 rounded-lg transition-all flex items-center justify-center ${
                     canSend
                       ? 'bg-[#d97757] hover:bg-[#c96442] text-white shadow-sm active:scale-95 cursor-pointer'
-                      : 'bg-[#312f2a] text-[#6b675e] cursor-not-allowed opacity-60'
+                      : 'bg-[color:var(--c-bg-312f2a)] text-[color:var(--c-fg-6b675e)] cursor-not-allowed opacity-60'
                   }`}
                 >
                   <ArrowUp className="w-4 h-4 stroke-[2.5]" />

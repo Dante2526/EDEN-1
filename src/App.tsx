@@ -2088,10 +2088,10 @@ function AppContent() {
   };
 
   return (
-    <div className="flex h-screen h-[100dvh] max-h-[100dvh] w-full bg-dark-bg text-[#f3efe6] overflow-hidden font-sans">
+    <div className="flex h-screen h-[100dvh] max-h-[100dvh] w-full bg-dark-bg text-[color:var(--c-fg-f3efe6)] overflow-hidden font-sans">
       {/* Offline Alert Bar */}
       {!isOnline && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-[#8c4a2f] text-white text-xs py-1.5 px-4 flex items-center justify-center gap-2 shadow-md">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-[#8c4a2f] text-[color:var(--c-on-strong)] text-xs py-1.5 px-4 flex items-center justify-center gap-2 shadow-md">
           <WifiOff className="w-3.5 h-3.5" />
           <span>Modo Offline — Você pode visualizar conversas salvas no histórico.</span>
         </div>
@@ -2099,10 +2099,10 @@ function AppContent() {
 
       {/* Toast notification for AI edits */}
       {toastNotification && (
-        <div className="fixed bottom-24 right-4 z-50 max-w-sm p-3 rounded-xl bg-[#23211d] border border-[#d97757]/50 shadow-2xl flex items-center justify-between gap-3 text-xs animate-in slide-in-from-bottom-2 fade-in">
+        <div className="fixed bottom-24 right-4 z-50 max-w-sm p-3 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[#d97757]/50 shadow-2xl flex items-center justify-between gap-3 text-xs animate-in slide-in-from-bottom-2 fade-in">
           <div className="flex items-center gap-2">
-            <FileCode className="w-4 h-4 text-[#d97757] shrink-0" />
-            <span className="text-[#f3efe6] font-medium leading-tight">
+            <FileCode className="w-4 h-4 text-[color:var(--c-fg-d97757)] shrink-0" />
+            <span className="text-[color:var(--c-fg-f3efe6)] font-medium leading-tight">
               {toastNotification.message}
             </span>
           </div>
@@ -2127,6 +2127,8 @@ function AppContent() {
         onDeleteConversation={handleDeleteConversation}
         onRenameConversation={handleRenameConversation}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         activeRepo={activeRepo}
@@ -2177,20 +2179,18 @@ function AppContent() {
           onToggleStudioMode={setIsStudioMode}
           errorCount={errorHistory.length}
           onOpenErrors={() => setIsErrorModalOpen(true)}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
         />
 
         {/* Global Error Banner */}
         {errorMessage && (
-          <div className="mx-3 sm:mx-6 mt-3 p-3 rounded-xl bg-[#2e1d1a] border border-[#7a3429] text-[#f4ada3] text-xs flex items-center justify-between shadow-md">
+          <div className="mx-3 sm:mx-6 mt-3 p-3 rounded-xl bg-[color:var(--c-bg-2e1d1a)] border border-[color:var(--c-bg-7a3429)] text-[color:var(--c-fg-f4ada3)] text-xs flex items-center justify-between shadow-md">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-[#d97757] flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
               <span>{errorMessage}</span>
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="p-1 hover:text-white text-[#f4ada3] cursor-pointer"
+              className="p-1 hover:text-[color:var(--c-on-strong)] text-[color:var(--c-fg-f4ada3)] cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -2222,19 +2222,19 @@ function AppContent() {
           {!activeConversation || activeConversation.messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center px-4 sm:px-6 max-w-2xl mx-auto text-center py-4 sm:py-8 relative">
               <div className="mb-3 sm:mb-4 flex items-center justify-center">
-                <ClaudeLogo className="w-10 h-10 sm:w-12 sm:h-12 text-[#d97757]" />
+                <ClaudeLogo className="w-10 h-10 sm:w-12 sm:h-12 text-[color:var(--c-fg-d97757)]" />
               </div>
 
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[#f3efe6] tracking-tight mb-2">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[color:var(--c-fg-f3efe6)] tracking-tight mb-2">
                 {getGreeting()}, como posso ajudar?
               </h2>
-              <p className="text-xs sm:text-sm text-[#a39d93] max-w-md px-2 leading-relaxed">
-                Synap com modelos <span className="text-[#f3efe6] font-medium">GLM-5.3</span> e{' '}
-                <span className="text-[#f3efe6] font-medium">Flash</span>. Source Control Git e Modo Plano integrados.
+              <p className="text-xs sm:text-sm text-[color:var(--c-fg-a39d93)] max-w-md px-2 leading-relaxed">
+                Synap com modelos <span className="text-[color:var(--c-fg-f3efe6)] font-medium">GLM-5.3</span> e{' '}
+                <span className="text-[color:var(--c-fg-f3efe6)] font-medium">Flash</span>. Source Control Git e Modo Plano integrados.
               </p>
             </div>
           ) : (
-            <div className="py-4 divide-y divide-[#2d2a24]/60">
+            <div className="py-4 divide-y divide-[color:var(--c-bg-2d2a24)]/60">
               {activeConversation.messages.map((msg, index) => {
                 const prevMsg = index > 0 ? activeConversation.messages[index - 1] : null;
                 const showCompactionMarker =

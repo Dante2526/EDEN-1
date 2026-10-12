@@ -10,6 +10,8 @@ import {
   GitBranch,
   FolderGit2,
   Blocks,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { Conversation, ActiveRepoState, Skill, McpServer, KnowledgeFact, KnowledgeCategory } from '../lib/types';
 import { formatDate } from '../lib/utils';
@@ -28,6 +30,8 @@ interface ChatSidebarProps {
   onDeleteConversation: (id: string) => void;
   onRenameConversation: (id: string, newTitle: string) => void;
   onOpenSettings: () => void;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: (e: React.MouseEvent) => void;
   isOpen: boolean;
   onClose: () => void;
   // GitHub & Source Control props
@@ -63,6 +67,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
   onDeleteConversation,
   onRenameConversation,
   onOpenSettings,
+  theme = 'dark',
+  onToggleTheme,
   isOpen,
   onClose,
   activeRepo,
@@ -133,38 +139,38 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
 
       {/* Claude.ai Sidebar container */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-40 w-72 sm:w-80 bg-[#181714] border-r border-[#2d2a25] flex flex-col transition-transform duration-200 ease-in-out ${
+        className={`fixed md:static inset-y-0 left-0 z-40 w-72 sm:w-80 bg-[color:var(--c-bg-181714)] border-r border-[color:var(--c-bg-2d2a25)] flex flex-col transition-transform duration-200 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Top Header / App branding */}
-        <div className="p-4 border-b border-[#2d2a25] flex items-center justify-between">
+        <div className="p-4 border-b border-[color:var(--c-bg-2d2a25)] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <ClaudeLogo className="w-6 h-6 text-[#d97757]" />
+            <ClaudeLogo className="w-6 h-6 text-[color:var(--c-fg-d97757)]" />
             <div>
-              <h1 className="font-serif text-base font-medium text-[#f3efe6] tracking-tight">Synap</h1>
-              <p className="text-[10px] text-[#8c867a] font-mono">Claude Design System</p>
+              <h1 className="font-serif text-base font-medium text-[color:var(--c-fg-f3efe6)] tracking-tight">Synap</h1>
+              <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono">Claude Design System</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
             aria-label="Fechar menu"
-            className="p-1 rounded-lg text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622] md:hidden cursor-pointer"
+            className="p-1 rounded-lg text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] md:hidden cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Navigation Tabs (Chats / Repos / Source Control) */}
-        <div className="px-3 pt-2 pb-1.5 flex items-center gap-1.5 border-b border-[#2d2a25] bg-[#161512]">
+        <div className="px-3 pt-2 pb-1.5 flex items-center gap-1.5 border-b border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-161512)]">
           <button
             type="button"
             onClick={() => onChangeTab('chats')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
               sidebarTab === 'chats'
-                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
-                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
+                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -176,8 +182,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             onClick={() => onChangeTab('repos')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
               sidebarTab === 'repos'
-                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
-                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
+                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
             }`}
           >
             <FolderGit2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -189,8 +195,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             onClick={() => onChangeTab('source-control')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
               sidebarTab === 'source-control'
-                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
-                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
+                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
             }`}
           >
             <GitBranch className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -207,8 +213,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             onClick={() => onChangeTab('skills')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
               sidebarTab === 'skills'
-                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33] shadow-xs'
-                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a]'
+                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
+                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
             }`}
           >
             <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
@@ -272,21 +278,21 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
               onNewChat();
               if (window.innerWidth < 768) onClose();
             }}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#3b3831] bg-[#22201d] hover:bg-[#2b2924] active:scale-[0.99] text-[#f3efe6] font-medium text-xs sm:text-sm transition-colors cursor-pointer group shadow-xs"
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2b2924)] active:scale-[0.99] text-[color:var(--c-fg-f3efe6)] font-medium text-xs sm:text-sm transition-colors cursor-pointer group shadow-xs"
           >
             <span className="font-medium">Iniciar novo chat</span>
-            <Plus className="w-4 h-4 text-[#d97757] group-hover:rotate-90 transition-transform duration-200" />
+            <Plus className="w-4 h-4 text-[color:var(--c-fg-d97757)] group-hover:rotate-90 transition-transform duration-200" />
           </button>
         </div>
 
         {/* Conversation list */}
         <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
-          <div className="text-[10px] font-semibold text-[#736e65] px-3 py-1.5 uppercase tracking-wider font-mono">
+          <div className="text-[10px] font-semibold text-[color:var(--c-fg-736e65)] px-3 py-1.5 uppercase tracking-wider font-mono">
             Recentes ({conversations.length})
           </div>
 
           {conversations.length === 0 ? (
-            <div className="text-center py-12 px-4 text-[#736e65] text-xs">
+            <div className="text-center py-12 px-4 text-[color:var(--c-fg-736e65)] text-xs">
               Nenhuma conversa ainda.<br />
               Comece uma nova conversa acima!
             </div>
@@ -305,12 +311,12 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                   }}
                   className={`group relative flex items-center justify-between px-3 py-2 rounded-lg text-xs sm:text-sm cursor-pointer transition-colors ${
                     isActive
-                      ? 'bg-[#282622] text-[#f3efe6] font-medium border border-[#3b3831]'
-                      : 'text-[#b8b3a8] hover:bg-[#22201d] hover:text-[#f3efe6]'
+                      ? 'bg-[color:var(--c-bg-282622)] text-[color:var(--c-fg-f3efe6)] font-medium border border-[color:var(--c-bg-3b3831)]'
+                      : 'text-[color:var(--c-fg-b8b3a8)] hover:bg-[color:var(--c-bg-22201d)] hover:text-[color:var(--c-fg-f3efe6)]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <MessageSquare className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-[#d97757]' : 'text-[#736e65]'}`} />
+                    <MessageSquare className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-[color:var(--c-fg-d97757)]' : 'text-[color:var(--c-fg-736e65)]'}`} />
 
                     {isEditing ? (
                       <form
@@ -323,7 +329,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                           autoFocus
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
-                          className="w-full bg-dark-bg border border-[#d97757] rounded-md px-2 py-0.5 text-xs text-white focus:outline-none"
+                          className="w-full bg-dark-bg border border-[#d97757] rounded-md px-2 py-0.5 text-xs text-[color:var(--c-on-strong)] focus:outline-none"
                         />
                         <button
                           type="submit"
@@ -347,19 +353,19 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                           <span className="truncate">{conv.title}</span>
                           {conv.activeRepo && (
                             <span
-                              className="flex-shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[#2a261f] text-[#d97757] border border-[#d97757]/30 font-mono font-medium truncate max-w-[80px]"
+                              className="flex-shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[color:var(--c-bg-2a261f)] text-[color:var(--c-fg-d97757)] border border-[#d97757]/30 font-mono font-medium truncate max-w-[80px]"
                               title={`Repositório exclusivo deste chat: ${conv.activeRepo.fullName} (${conv.activeRepo.branch})`}
                             >
                               {conv.activeRepo.repo}
                             </span>
                           )}
                           {(conv.isPlanMode || conv.messages?.some((m) => m.isPlanMode)) && (
-                            <span className="flex-shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/35 font-mono font-medium">
+                            <span className="flex-shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/35 font-mono font-medium">
                               Plano
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-[#736e65] font-normal">
+                        <div className="text-[10px] text-[color:var(--c-fg-736e65)] font-normal">
                           {formatDate(conv.updatedAt)}
                         </div>
                       </div>
@@ -371,14 +377,14 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
                       {isDeleting ? (
                         <div
-                          className="flex items-center gap-1 bg-[#3a1d1d] border border-rose-800 rounded-md px-1.5 py-0.5"
+                          className="flex items-center gap-1 bg-[color:var(--c-bg-3a1d1d)] border border-rose-800 rounded-md px-1.5 py-0.5"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <span className="text-[10px] text-rose-300">Apagar?</span>
                           <button
                             onClick={(e) => executeDelete(conv.id, e)}
                             aria-label="Confirmar exclusão"
-                            className="p-0.5 text-rose-400 hover:text-white"
+                            className="p-0.5 text-rose-400 hover:text-[color:var(--c-on-strong)]"
                           >
                             <Check className="w-3 h-3" />
                           </button>
@@ -388,7 +394,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                               setDeleteConfirmId(null);
                             }}
                             aria-label="Cancelar exclusão"
-                            className="p-0.5 text-zinc-400 hover:text-white"
+                            className="p-0.5 text-zinc-400 hover:text-[color:var(--c-on-strong)]"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -399,7 +405,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                             type="button"
                             onClick={(e) => startRename(conv, e)}
                             aria-label="Renomear conversa"
-                            className="p-1 text-[#736e65] hover:text-[#f3efe6] hover:bg-[#302d28] rounded-md transition"
+                            className="p-1 text-[color:var(--c-fg-736e65)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -407,7 +413,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                             type="button"
                             onClick={(e) => confirmDelete(conv.id, e)}
                             aria-label="Deletar conversa"
-                            className="p-1 text-[#736e65] hover:text-rose-400 hover:bg-[#302d28] rounded-md transition"
+                            className="p-1 text-[color:var(--c-fg-736e65)] hover:text-rose-400 hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -424,17 +430,34 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
         )}
 
         {/* Bottom actions (Claude style) */}
-        <div className="p-3 border-t border-[#2d2a25] space-y-2">
+        <div className="p-3 border-t border-[color:var(--c-bg-2d2a25)] space-y-2">
           <PWAInstallButton />
 
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[#b8b3a8] hover:text-[#f3efe6] hover:bg-[#25231f] text-xs font-medium transition cursor-pointer"
-          >
-            <Settings className="w-4 h-4 text-[#d97757]" />
-            <span>Configurações</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="flex-1 min-w-0 flex items-center gap-2.5 px-3 py-2 rounded-lg text-[color:var(--c-fg-b8b3a8)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231f)] text-xs font-medium transition cursor-pointer"
+            >
+              <Settings className="w-4 h-4 shrink-0 text-[color:var(--c-fg-d97757)]" />
+              <span className="truncate">Configurações</span>
+            </button>
+            {onToggleTheme && (
+              <button
+                type="button"
+                onClick={(e) => onToggleTheme(e)}
+                aria-label={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
+                title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+                className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-[color:var(--c-fg-b8b3a8)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231f)] transition cursor-pointer group"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
+                ) : (
+                  <Moon className="w-4 h-4 text-indigo-500 group-hover:-rotate-12 transition-transform duration-300" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </aside>
     </>

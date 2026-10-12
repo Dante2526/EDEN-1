@@ -174,16 +174,16 @@ export const SpeakButton: React.FC<SpeakButtonProps> = ({ text }) => {
         }
         className={`px-2 py-1 rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer ${
           isPlaying
-            ? 'bg-[#d97757]/20 text-[#f09a7d] border border-[#d97757]/40'
+            ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40'
             : isLoading
-            ? 'bg-[#282622] text-[#d97757] border border-[#3d3a33]'
-            : 'text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622]'
+            ? 'bg-[color:var(--c-bg-282622)] text-[color:var(--c-fg-d97757)] border border-[color:var(--c-bg-3d3a33)]'
+            : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)]'
         }`}
       >
         {isLoading ? (
           <>
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#d97757]" />
-            <span className="text-[11px] font-medium text-[#f09a7d]">Gerando voz neural...</span>
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[color:var(--c-fg-d97757)]" />
+            <span className="text-[11px] font-medium text-[color:var(--c-fg-f09a7d)]">Gerando voz neural...</span>
           </>
         ) : isPlaying ? (
           <>
@@ -192,8 +192,8 @@ export const SpeakButton: React.FC<SpeakButtonProps> = ({ text }) => {
               <span className="w-0.5 h-3 bg-[#f09a7d] animate-pulse" style={{ animationDelay: '150ms' }} />
               <span className="w-0.5 h-1.5 bg-[#d97757] animate-pulse" style={{ animationDelay: '300ms' }} />
             </span>
-            <VolumeX className="w-3.5 h-3.5 text-[#d97757]" />
-            <span className="text-[11px] font-medium text-[#f09a7d]">Parar</span>
+            <VolumeX className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
+            <span className="text-[11px] font-medium text-[color:var(--c-fg-f09a7d)]">Parar</span>
           </>
         ) : (
           <>
@@ -205,8 +205,8 @@ export const SpeakButton: React.FC<SpeakButtonProps> = ({ text }) => {
 
       {/* Warning / status tooltip when fallback is active */}
       {notice && (
-        <div className="absolute bottom-full left-0 mb-1.5 z-20 w-64 p-2 rounded-lg bg-[#1f1d19] border border-[#443e33] text-[11px] text-[#e0a96d] shadow-xl flex items-start gap-1.5 animate-in fade-in slide-in-from-bottom-1">
-          <Info className="w-3.5 h-3.5 text-[#d97757] shrink-0 mt-0.5" />
+        <div className="absolute bottom-full left-0 mb-1.5 z-20 w-64 p-2 rounded-lg bg-[color:var(--c-bg-1f1d19)] border border-[color:var(--c-bg-443e33)] text-[11px] text-[color:var(--c-fg-e0a96d)] shadow-xl flex items-start gap-1.5 animate-in fade-in slide-in-from-bottom-1">
+          <Info className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] shrink-0 mt-0.5" />
           <span className="leading-tight">{notice}</span>
         </div>
       )}
