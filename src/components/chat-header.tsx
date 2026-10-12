@@ -70,18 +70,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           <PanelLeft className="w-5 h-5" />
         </button>
 
-        <button
-          type="button"
-          onClick={onNewChat}
-          aria-label="Nova conversa"
-          title="Nova conversa"
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[color:var(--c-fg-c2bcb0)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] text-xs sm:text-sm font-medium transition-colors cursor-pointer"
-        >
-          <Plus className="w-4 h-4 text-[color:var(--c-fg-d97757)]" />
-          <span>Nova conversa</span>
-        </button>
-
-        {activeRepo ? (
+        {activeRepo && (
           <div className="hidden xl:flex items-center gap-1.5 p-1 px-2.5 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b33)] text-xs font-mono min-w-0 shadow-xs ml-1">
             <button
               type="button"
@@ -108,15 +97,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
                 <span>●{pendingChangesCount}</span>
               </button>
             )}
-          </div>
-        ) : (
-          <div className="hidden lg:flex items-center gap-2.5 ml-1">
-            <div className="flex items-center gap-2">
-              <ClaudeLogo className="w-5 h-5 text-[color:var(--c-fg-d97757)]" />
-              <span className="font-serif text-base sm:text-lg text-[color:var(--c-fg-f3efe6)] tracking-tight font-normal">
-                Synap
-              </span>
-            </div>
           </div>
         )}
       </div>
