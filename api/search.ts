@@ -1,5 +1,7 @@
+import { checkAuthAndRateLimit } from './_security.js';
+
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
 };
 
 interface SearchResult {
@@ -8,10 +10,62 @@ interface SearchResult {
   link: string;
 }
 
-import { checkAuthAndRateLimit } from '../lib/server/_security';
+function sanitizeSnippetForAi(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/data:/gi, '')
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+    .replace(/[\r\n\t]+/g, ' ')
+    .trim();
+}
+
+async function searchDuckDuckGoHtml(query: string): Promise<SearchResult[]> {
+  const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+    },
+    signal: AbortSignal.timeout(5000),
+  });
+
+  if (!res.ok) return [];
+
+  const html = await res.text();
+  const results: SearchResult[] = [];
+
+  try {
+    const resultBlocks = html.split('<div class="result ');
+    for (let i = 1; i < resultBlocks.length && results.length < 5; i++) {
+      const block = resultBlocks[i];
+      const titleMatch = block.match(/<a class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/);
+      const snippetMatch = block.match(/<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/);
+
+      if (titleMatch) {
+        let link = titleMatch[1];
+        if (link.includes('uddg=')) {
+          const match = link.match(/uddg=([^&]+)/);
+          if (match) link = decodeURIComponent(match[1]);
+        }
+        const title = sanitizeSnippetForAi(titleMatch[2]);
+        const snippet = snippetMatch ? sanitizeSnippetForAi(snippetMatch[1]) : '';
+
+        if (title && link.startsWith('http')) {
+          results.push({ title, snippet, link });
+        }
+      }
+    }
+  } catch (parseErr) {
+    console.warn('Failed to parse DDG HTML:', parseErr);
+  }
+  return results;
+}
 
 export default async function handler(req: Request): Promise<Response> {
-  const securityResponse = checkAuthAndRateLimit(req);
+  const securityResponse = await checkAuthAndRateLimit(req);
   if (securityResponse) return securityResponse;
 
   const url = new URL(req.url);
@@ -24,97 +78,20 @@ export default async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const query = q.trim();
-  const results: SearchResult[] = [];
-
   try {
-    const promises = [
-      // 1. DuckDuckGo Instant Answer API (rápido para definições e tópicos diretos)
-      fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Synap/1.0' },
-        signal: AbortSignal.timeout(3500),
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error('DDG failed');
-          return res.json();
-        })
-        .then((data) => {
-          const localResults: SearchResult[] = [];
-          if (data.AbstractText) {
-            localResults.push({
-              title: data.Heading || query,
-              snippet: data.AbstractText,
-              link: data.AbstractURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
-            });
-          }
-          if (Array.isArray(data.RelatedTopics)) {
-            for (const topic of data.RelatedTopics.slice(0, 4)) {
-              if (topic.Text && topic.FirstURL) {
-                localResults.push({
-                  title: topic.Text.split(' - ')[0] || query,
-                  snippet: topic.Text,
-                  link: topic.FirstURL,
-                });
-              }
-            }
-          }
-          return localResults;
-        }),
-
-      // 2. Wikipedia Query Search API (substitui o OpenSearch que retorna descrições vazias)
-      fetch(
-        `https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-          query
-        )}&utf8=&format=json&srlimit=4`,
-        {
-          headers: { 'User-Agent': 'SynapApp/1.0' },
-          signal: AbortSignal.timeout(3500),
-        }
-      )
-        .then((res) => {
-          if (!res.ok) throw new Error('Wiki failed');
-          return res.json();
-        })
-        .then((data) => {
-          const localResults: SearchResult[] = [];
-          const searchItems = data?.query?.search || [];
-          for (const item of searchItems) {
-            if (item.title && item.snippet) {
-              localResults.push({
-                title: item.title,
-                snippet: item.snippet.replace(/<[^>]*>?/gm, ''), // Remove tags HTML como <span class="searchmatch">
-                link: `https://pt.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
-              });
-            }
-          }
-          return localResults;
-        }),
-    ];
-
-    const settled = await Promise.allSettled(promises);
-
-    for (const outcome of settled) {
-      if (outcome.status === 'fulfilled' && outcome.value) {
-        for (const item of outcome.value) {
-          if (!results.some((r) => r.link === item.link)) {
-            results.push(item);
-          }
-        }
-      }
-    }
-
-    return new Response(JSON.stringify(results.slice(0, 7)), {
+    const results = await searchDuckDuckGoHtml(q);
+    return new Response(JSON.stringify(results), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60',
+      },
+    });
+  } catch (error: any) {
+    console.error('Search error:', error);
+    return new Response(JSON.stringify([]), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (err: any) {
-    console.error('Search error:', err);
-    return new Response(
-      JSON.stringify({ error: `Falha na busca web: ${err.message}` }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
   }
 }

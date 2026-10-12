@@ -1,8 +1,13 @@
+import { checkAuthAndRateLimit } from './_security.js';
+
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
 };
 
-export default async function handler() {
+export default async function handler(req: Request) {
+  const securityResponse = await checkAuthAndRateLimit(req);
+  if (securityResponse) return securityResponse;
+
   const rawKey = process.env.NVIDIA_API_KEY || '';
   const isPlaceholder = rawKey === 'sua_key_aqui' || rawKey === 'nvapi-your-key-here' || rawKey.trim() === '';
 
