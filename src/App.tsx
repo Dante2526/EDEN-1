@@ -1639,26 +1639,36 @@ function AppContent() {
         });
 
         if (!response.ok) {
-          let errMessage = `Erro na requisição (${response.status})`;
+          let rawText = '';
+          let errMessage = `Erro HTTP ${response.status} na requisição ao servidor`;
           try {
-            // Tenta ler como texto primeiro (Vercel pode retornar HTML em erros 500/502)
-            const text = await response.text();
+            rawText = await response.text();
             try {
-              const errData = JSON.parse(text);
+              const errData = JSON.parse(rawText);
               if (errData.error) errMessage = errData.error;
               else if (errData.message) errMessage = errData.message;
             } catch {
-              // Não é JSON — provavelmente é HTML de erro da Vercel
-              if (text && text.length < 500) {
-                errMessage = `Erro ${response.status}: ${text.substring(0, 200)}`;
-              } else if (response.status === 500) {
-                errMessage = 'Erro interno do servidor (500). Verifique os logs da Vercel em vercel.com/dashboard. Pode ser problema de build ou variável de ambiente faltando.';
-              } else if (response.status === 502) {
-                errMessage = 'Erro de gateway (502). A função serverless demorou demais ou caiu. Tente novamente.';
+              if (rawText && rawText.trim()) {
+                const trimmed = rawText.trim();
+                if (trimmed.includes('FUNCTION_INVOCATION_FAILED')) {
+                  errMessage = `Erro 500 Vercel (FUNCTION_INVOCATION_FAILED): A Serverless Function falhou na inicialização. Verifique se a variável NVIDIA_API_KEY foi adicionada nas Environment Variables da Vercel.`;
+                } else if (trimmed.includes('FUNCTION_INVOCATION_TIMEOUT')) {
+                  errMessage = `Erro 504 Vercel (FUNCTION_INVOCATION_TIMEOUT): A execução excedeu 60 segundos. Alterne para o modelo z-ai/glm-5.3-flash ou reduza o nível de raciocínio nas configurações.`;
+                } else if (trimmed.length < 500) {
+                  errMessage = `Erro ${response.status}: ${trimmed}`;
+                } else if (response.status === 500) {
+                  errMessage = 'Erro interno do servidor (500). Verifique os logs da Vercel em vercel.com/dashboard.';
+                } else if (response.status === 502) {
+                  errMessage = 'Erro de gateway (502). A função serverless demorou demais ou caiu na Vercel.';
+                }
               }
             }
           } catch {}
-          throw new Error(errMessage);
+
+          const customErr: any = new Error(errMessage);
+          customErr.status = response.status;
+          customErr.rawResponse = rawText || errMessage;
+          throw customErr;
         }
 
         if (!response.body) {
@@ -2051,9 +2061,10 @@ function AppContent() {
           setErrorMessage(errMsg || 'Falha ao processar resposta da IA.');
         }
         reportAppError('Erro na Geração de IA', errMsg || 'Falha ao processar resposta da IA', {
+          status: err?.status || (errMsg.includes('500') ? 500 : errMsg.includes('504') ? 504 : undefined),
           endpoint: '/api/chat',
+          rawResponse: err?.rawResponse || errMsg,
           stack: err?.stack,
-          rawResponse: err?.toString(),
         });
       }
     } finally {

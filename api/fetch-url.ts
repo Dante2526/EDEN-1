@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { checkAuthAndRateLimit } from './_security.js';
 import { extractCleanContent } from '../src/lib/html-extractor';
 
 export const config = {
@@ -41,7 +41,7 @@ function isLocalOrPrivateUrl(urlStr: string): boolean {
 }
 
 export default async function handler(req: Request): Promise<Response> {
-  const securityResponse = checkAuthAndRateLimit(req);
+  const securityResponse = await checkAuthAndRateLimit(req);
   if (securityResponse) return securityResponse;
 
   const reqUrl = new URL(req.url);

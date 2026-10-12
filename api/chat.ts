@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit, ALLOWED_MODELS } from '../lib/server/_security';
+import { checkAuthAndRateLimit, ALLOWED_MODELS } from './_security.js';
 
 export const config = {
   runtime: 'edge',
@@ -6,7 +6,7 @@ export const config = {
 
 export default async function handler(req: Request) {
   try {
-    const securityResponse = checkAuthAndRateLimit(req);
+    const securityResponse = await checkAuthAndRateLimit(req);
     if (securityResponse) return securityResponse;
   } catch (secErr: any) {
     console.error('Security check error:', secErr);

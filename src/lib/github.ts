@@ -18,13 +18,11 @@ export function removeGitHubPat(): void {
 }
 
 /**
- * Lazy loads Octokit dynamically on demand to prevent bloating the main bundle.
+ * Octokit removido - agora usamos fetch nativo via /api/github proxy.
+ * Esta função é mantida apenas para compatibilidade mas não faz nada.
  */
-export async function getLazyOctokit(customPat?: string) {
-  const { Octokit } = await import('@octokit/rest');
-  const token = customPat || getGitHubPat();
-  if (!token) return null;
-  return new Octokit({ auth: token });
+export async function getLazyOctokit(_customPat?: string) {
+  return null;
 }
 
 export interface GitHubUser {

@@ -185,7 +185,7 @@ ${item.stack ? `Stack Trace:\n${item.stack}` : ''}`;
                       <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
                         <span>Resposta Bruta / Log do Servidor:</span>
                       </div>
-                      <div className="bg-black/80 border border-slate-800 rounded-xl p-4 font-mono text-xs text-red-200 overflow-x-auto max-h-48 whitespace-pre-wrap">
+                      <div className="bg-black/80 border border-slate-800 rounded-xl p-4 font-mono text-xs text-red-200 overflow-x-auto max-h-48 whitespace-pre-wrap select-all">
                         {current.rawResponse}
                       </div>
                     </div>
@@ -203,17 +203,33 @@ ${item.stack ? `Stack Trace:\n${item.stack}` : ''}`;
                     </div>
                   )}
 
-                  {/* Recommendations */}
-                  <div className="bg-blue-950/30 border border-blue-500/30 rounded-xl p-4 text-xs text-blue-200 space-y-2">
-                    <p className="font-semibold text-blue-300 flex items-center gap-1.5">
-                      <Bug className="w-4 h-4" />
-                      <span>Dica de Resolução:</span>
+                  {/* Detailed Vercel Diagnosis Checklist */}
+                  <div className="bg-amber-950/40 border border-amber-500/40 rounded-xl p-4 text-xs text-amber-200 space-y-3">
+                    <p className="font-bold text-amber-300 flex items-center gap-1.5 text-sm">
+                      <Bug className="w-4 h-4 text-amber-400" />
+                      <span>Diagnóstico Preciso do Erro (Vercel Serverless Function):</span>
                     </p>
-                    <ul className="list-disc list-inside space-y-1 text-blue-200/90">
-                      <li>Se o erro for <code className="bg-blue-950 px-1 py-0.5 rounded font-mono text-blue-300">FUNCTION_INVOCATION_FAILED</code> ou 500, verifique se a <code className="bg-blue-950 px-1 py-0.5 rounded font-mono text-blue-300">NVIDIA_API_KEY</code> está configurada corretamente nas Environment Variables.</li>
-                      <li>Verifique se o modelo selecionado suporta a requisição atual ou se houve rate limit (429).</li>
-                      <li>Clique em <strong className="text-white">Copiar Detalhes</strong> para colar o relatório completo ao reportar o bug.</li>
-                    </ul>
+                    
+                    <div className="space-y-2 text-amber-100/90 leading-relaxed font-sans">
+                      <p>
+                        O erro <code className="bg-amber-900/60 px-1.5 py-0.5 rounded font-mono text-amber-300 font-bold">FUNCTION_INVOCATION_FAILED</code> ou <code className="bg-amber-900/60 px-1.5 py-0.5 rounded font-mono text-amber-300 font-bold">500</code> significa que a Serverless Function da Vercel falhou ao iniciar no servidor em nuvem.
+                      </p>
+
+                      <div className="bg-slate-900/80 p-3 rounded-lg border border-amber-500/30 space-y-2 font-mono text-[11px]">
+                        <p className="font-bold text-amber-300 uppercase tracking-wider">Causa Principal #1: Variável NVIDIA_API_KEY Não Configurada na Vercel</p>
+                        <p className="text-slate-300">Em produção na Vercel, o arquivo <code className="text-amber-300">.env.local</code> local NÃO é enviado por segurança. A chave da API precisa ser cadastrada no painel da Vercel.</p>
+                      </div>
+
+                      <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-700 space-y-1.5 text-slate-300 font-sans">
+                        <p className="font-bold text-white text-xs">Passo a Passo Rápido para Resolver:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-slate-300">
+                          <li>Acesse <a href="https://vercel.com/dashboard" target="_blank" rel="noreferrer" className="text-amber-400 underline font-mono">vercel.com/dashboard</a> e selecione seu projeto.</li>
+                          <li>Vá em <strong>Settings</strong> &rarr; <strong>Environment Variables</strong>.</li>
+                          <li>Adicione a variável <code className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-300 font-mono font-bold">NVIDIA_API_KEY</code> com a sua chave (ex: <code className="text-slate-400 font-mono">nvapi-...</code>).</li>
+                          <li>Vá na aba <strong>Deployments</strong>, toque nos 3 pontinhos do último deploy e clique em <strong>Redeploy</strong> (para aplicar as novas variáveis).</li>
+                        </ol>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (
