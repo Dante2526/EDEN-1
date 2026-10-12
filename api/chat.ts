@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit, ALLOWED_MODELS } from './_security.js';
+import { checkAuthAndRateLimit, ALLOWED_MODELS } from '../lib/server/_security';
 
 export const config = {
   runtime: 'edge',

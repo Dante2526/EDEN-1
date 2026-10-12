@@ -1,8 +1,7 @@
-import { checkAuthAndRateLimit } from './_security.js';
-import { extractCleanContent } from '../src/lib/html-extractor';
+import { checkAuthAndRateLimit } from '../lib/server/_security';
 
 export const config = {
-  runtime: 'nodejs',
+  runtime: 'edge',
 };
 
 function isLocalOrPrivateUrl(urlStr: string): boolean {
@@ -24,7 +23,6 @@ function isLocalOrPrivateUrl(urlStr: string): boolean {
       return true;
     }
 
-    // Bloqueia faixas privadas IPv4 (10.*, 192.168.*, 172.16-31.*)
     if (/^10\./.test(hostname) || /^192\.168\./.test(hostname)) {
       return true;
     }
@@ -38,6 +36,51 @@ function isLocalOrPrivateUrl(urlStr: string): boolean {
   } catch {
     return true;
   }
+}
+
+// Extração de texto simples sem cheerio (funciona em Edge Runtime)
+function extractTextFromHtml(html: string): { title: string; content: string; length: number; truncated: boolean } {
+  // Extrai título
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? titleMatch[1].trim() : 'Sem título';
+
+  // Remove tags script, style, nav, footer, header, noscript, svg, iframe
+  let clean = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[\s\S]*?<\/nav>/gi, '')
+    .replace(/<footer[\s\S]*?<\/footer>/gi, '')
+    .replace(/<header[\s\S]*?<\/header>/gi, '')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+
+  // Remove todas as tags HTML restantes
+  clean = clean.replace(/<[^>]*>/g, ' ');
+
+  // Decodifica entidades HTML básicas
+  clean = clean
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/');
+
+  // Limpa espaços múltiplos e quebras de linha
+  clean = clean.replace(/\s+/g, ' ').trim();
+
+  // Limita a 10000 caracteres
+  const maxChars = 10000;
+  const truncated = clean.length > maxChars;
+  if (truncated) {
+    clean = clean.substring(0, maxChars) + '...';
+  }
+
+  return { title, content: clean, length: clean.length, truncated };
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -57,10 +100,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (isLocalOrPrivateUrl(targetUrl)) {
     return new Response(
       JSON.stringify({ error: 'Acesso a URLs locais ou IPs privados é proibido por segurança.' }),
-      {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -99,15 +139,12 @@ export default async function handler(req: Request): Promise<Response> {
         JSON.stringify({
           error: `O recurso em ${targetUrl} não é legível como texto (Content-Type: ${contentType}).`,
         }),
-        {
-          status: 415,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        { status: 415, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const html = await response.text();
-    const extracted = extractCleanContent(html, 10000);
+    const extracted = extractTextFromHtml(html);
 
     return new Response(
       JSON.stringify({
@@ -117,10 +154,7 @@ export default async function handler(req: Request): Promise<Response> {
         length: extracted.length,
         truncated: extracted.truncated,
       }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {
     const isTimeout = err?.name === 'TimeoutError' || err?.message?.includes('timeout');
@@ -130,10 +164,7 @@ export default async function handler(req: Request): Promise<Response> {
           ? `Tempo limite de 8s esgotado ao tentar ler ${targetUrl}.`
           : `Erro ao baixar página: ${err?.message || 'Falha desconhecida.'}`,
       }),
-      {
-        status: 504,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 504, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }

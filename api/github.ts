@@ -1,7 +1,7 @@
-import { checkAuthAndRateLimit } from './_security.js';
+import { checkAuthAndRateLimit } from '../lib/server/_security';
 
 export const config = {
-  runtime: 'nodejs',
+  runtime: 'edge',
 };
 
 function getEffectiveToken(req: Request): string | null {

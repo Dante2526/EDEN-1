@@ -77,12 +77,14 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
           }
         }
 
-        sessionFinalRef.current = currentFinal;
-        const currentFull = (
-          accumulatedRef.current +
-          currentFinal +
-          interim
-        ).trim();
+        // Se temos texto final nesta rodada, acumula UMA VEZ
+        if (currentFinal) {
+          accumulatedRef.current += currentFinal;
+          sessionFinalRef.current = ''; // Limpa pra próxima rodada
+        }
+
+        // Monta o texto completo: acumulado + interim atual
+        const currentFull = (accumulatedRef.current + interim).trim();
 
         if (currentFull) {
           onTranscript(currentFull, Boolean(interim));
