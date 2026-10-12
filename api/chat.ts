@@ -143,7 +143,7 @@ export default async function handler(req: Request) {
 
     let payload = createPayload(true, true);
 
-    let nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+    const firstFetch = fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -151,6 +151,58 @@ export default async function handler(req: Request) {
       },
       body: JSON.stringify(payload),
     });
+
+    // O Edge exige o primeiro byte em ~25s. Se a NVIDIA demorar, respondemos já
+    // com keepalives SSE e fazemos o pipe quando a resposta chegar.
+    const early = await Promise.race([
+      firstFetch,
+      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 15000)),
+    ]);
+
+    if (early === 'slow') {
+      const enc = new TextEncoder();
+      const slowStream = new ReadableStream({
+        async start(controller) {
+          const timer = setInterval(() => {
+            try { controller.enqueue(enc.encode(': keepalive\n\n')); } catch { /* fechado */ }
+          }, 8000);
+          try {
+            controller.enqueue(enc.encode(': keepalive\n\n'));
+            const res = await firstFetch;
+            if (!res.ok || !res.body) {
+              const t = await res.text().catch(() => '');
+              controller.enqueue(
+                enc.encode(`data: ${JSON.stringify({ error: `Erro da API NVIDIA (${res.status}) ${t.slice(0, 200)}` })}\n\n`)
+              );
+            } else {
+              const reader = res.body.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                controller.enqueue(value);
+              }
+            }
+          } catch (e: any) {
+            try {
+              controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: `Stream interrupted: ${e?.message || 'unknown'}` })}\n\n`));
+            } catch { /* fechado */ }
+          } finally {
+            clearInterval(timer);
+            try { controller.close(); } catch { /* fechado */ }
+          }
+        },
+      });
+      return new Response(slowStream, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          'X-Accel-Buffering': 'no',
+        },
+      });
+    }
+
+    let nvidiaRes = early;
 
     let fallbackType = 'none';
 
