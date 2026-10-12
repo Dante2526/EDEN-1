@@ -1,6 +1,7 @@
 // api/chat.ts — COMPLETAMENTE SELF-CONTAINED (sem imports externos)
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
+  maxDuration: 60,
 };
 
 const ALLOWED_MODELS = ['z-ai/glm-5.3', 'z-ai/glm-5.3-flash', 'moonshotai/kimi-k3'];
