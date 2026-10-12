@@ -182,17 +182,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           </button>
         )}
 
-        {onOpenSettings && (
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            aria-label="Configurações"
-            title="Configurações"
-            className="p-1.5 rounded-lg text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition-colors cursor-pointer"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-        )}
       </div>
     </header>
   );

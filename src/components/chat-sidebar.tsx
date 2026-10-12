@@ -139,87 +139,91 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
 
       {/* Claude.ai Sidebar container */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-40 w-72 sm:w-80 bg-[color:var(--c-bg-181714)] md:my-2 md:ml-2 md:rounded-2xl border border-[color:var(--c-bg-2d2a25)] shadow-xl flex flex-col overflow-hidden transition-transform duration-200 ease-in-out ${
+        className={`fixed md:static inset-y-0 left-0 z-40 w-72 sm:w-80 bg-dark-bg md:my-2 md:ml-2 md:rounded-2xl border border-gray-800/40 dark:border-white/5 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Top Header / App branding */}
-        <div className="p-4 border-b border-[color:var(--c-bg-2d2a25)] flex items-center justify-between">
+        <div className="px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <ClaudeLogo className="w-6 h-6 text-[color:var(--c-fg-d97757)]" />
+            <div className="w-7 h-7 rounded-lg bg-[#d97757]/15 flex items-center justify-center">
+              <ClaudeLogo className="w-4 h-4 text-[#d97757]" />
+            </div>
             <div>
-              <h1 className="font-serif text-base font-medium text-[color:var(--c-fg-f3efe6)] tracking-tight">Synap</h1>
-              <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono">Claude Design System</p>
+              <h1 className="font-sans text-sm font-semibold text-[color:var(--c-fg-f3efe6)] tracking-tight">Synap</h1>
+              <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono tracking-tight">IA Workspace</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
             aria-label="Fechar menu"
-            className="p-1 rounded-lg text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] md:hidden cursor-pointer"
+            className="p-1.5 rounded-lg text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-dark-hover md:hidden transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Navigation Tabs (Chats / Repos / Source Control) */}
-        <div className="px-3 pt-2 pb-1.5 flex items-center gap-1.5 border-b border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-161512)]">
-          <button
-            type="button"
-            onClick={() => onChangeTab('chats')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              sidebarTab === 'chats'
-                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
-                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span>Chat</span>
-          </button>
+        {/* Navigation Tabs (Chats / Repos / Source Control) - Pilled Segmented Control */}
+        <div className="px-3 pb-2">
+          <div className="p-1 rounded-xl bg-dark-bg-secondary border border-gray-800/50 dark:border-white/5 flex items-center gap-1 shadow-inner">
+            <button
+              type="button"
+              onClick={() => onChangeTab('chats')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                sidebarTab === 'chats'
+                  ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
+                  : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span>Chat</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => onChangeTab('repos')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              sidebarTab === 'repos'
-                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
-                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
-            }`}
-          >
-            <FolderGit2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>Repos</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => onChangeTab('repos')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                sidebarTab === 'repos'
+                  ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
+                  : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
+              }`}
+            >
+              <FolderGit2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>Repos</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => onChangeTab('source-control')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
-              sidebarTab === 'source-control'
-                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
-                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
-            }`}
-          >
-            <GitBranch className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>Git</span>
-            {pendingChangesCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-[#d97757] text-white text-[9px] font-bold flex items-center justify-center">
-                {pendingChangesCount}
-              </span>
-            )}
-          </button>
+            <button
+              type="button"
+              onClick={() => onChangeTab('source-control')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
+                sidebarTab === 'source-control'
+                  ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
+                  : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
+              }`}
+            >
+              <GitBranch className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Git</span>
+              {pendingChangesCount > 0 && (
+                <span className="w-3.5 h-3.5 rounded-full bg-[#d97757] text-white text-[8px] font-bold flex items-center justify-center">
+                  {pendingChangesCount}
+                </span>
+              )}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => onChangeTab('skills')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
-              sidebarTab === 'skills'
-                ? 'bg-[color:var(--c-bg-2b2823)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b33)] shadow-xs'
-                : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
-            }`}
-          >
-            <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span>Skills</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => onChangeTab('skills')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
+                sidebarTab === 'skills'
+                  ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
+                  : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
+              }`}
+            >
+              <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <span>Skills</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -270,29 +274,31 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
           />
         ) : (
           <>
-        {/* New Chat Button (Claude style) */}
-        <div className="p-3">
+        {/* New Chat Button (Modern DSS Pill) */}
+        <div className="px-3 py-2">
           <button
             type="button"
             onClick={() => {
               onNewChat();
               if (window.innerWidth < 768) onClose();
             }}
-            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2b2924)] active:scale-[0.99] text-[color:var(--c-fg-f3efe6)] font-medium text-xs sm:text-sm transition-colors cursor-pointer group shadow-xs"
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-dark-bg-secondary to-dark-hover hover:from-dark-hover hover:to-dark-card border border-gray-800/60 dark:border-white/5 active:scale-[0.99] text-[color:var(--c-fg-f3efe6)] font-medium text-xs sm:text-sm transition-all duration-200 cursor-pointer group shadow-sm hover:border-[#d97757]/30"
           >
-            <span className="font-medium">Iniciar novo chat</span>
-            <Plus className="w-4 h-4 text-[color:var(--c-fg-d97757)] group-hover:rotate-90 transition-transform duration-200" />
+            <span className="font-medium tracking-tight">Iniciar novo chat</span>
+            <div className="w-6 h-6 rounded-lg bg-[#d97757]/15 flex items-center justify-center group-hover:bg-[#d97757]/25 transition-colors">
+              <Plus className="w-3.5 h-3.5 text-[#d97757] group-hover:rotate-90 transition-transform duration-200" />
+            </div>
           </button>
         </div>
 
         {/* Conversation list */}
-        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
-          <div className="text-[10px] font-semibold text-[color:var(--c-fg-736e65)] px-3 py-1.5 uppercase tracking-wider font-mono">
+        <div className="flex-1 overflow-y-auto px-2.5 py-1 space-y-1">
+          <div className="text-[10px] font-bold text-[color:var(--c-fg-8c867a)] px-2.5 py-1 uppercase tracking-wider font-mono">
             Recentes ({conversations.length})
           </div>
 
           {conversations.length === 0 ? (
-            <div className="text-center py-12 px-4 text-[color:var(--c-fg-736e65)] text-xs">
+            <div className="text-center py-12 px-4 text-[color:var(--c-fg-8c867a)] text-xs">
               Nenhuma conversa ainda.<br />
               Comece uma nova conversa acima!
             </div>
@@ -309,14 +315,14 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                     onSelectConversation(conv.id);
                     if (window.innerWidth < 768) onClose();
                   }}
-                  className={`group relative flex items-center justify-between px-3 py-2 rounded-lg text-xs sm:text-sm cursor-pointer transition-colors ${
+                  className={`group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition-all duration-150 ${
                     isActive
-                      ? 'bg-[color:var(--c-bg-282622)] text-[color:var(--c-fg-f3efe6)] font-medium border border-[color:var(--c-bg-3b3831)]'
-                      : 'text-[color:var(--c-fg-b8b3a8)] hover:bg-[color:var(--c-bg-22201d)] hover:text-[color:var(--c-fg-f3efe6)]'
+                      ? 'bg-dark-card text-[color:var(--c-fg-f3efe6)] font-medium border-l-2 border-l-[#d97757] border-y border-r border-gray-800/40 dark:border-white/5 shadow-xs'
+                      : 'text-[color:var(--c-fg-a0aec0)] hover:bg-dark-bg-secondary hover:text-[color:var(--c-fg-f3efe6)]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <MessageSquare className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-[color:var(--c-fg-d97757)]' : 'text-[color:var(--c-fg-736e65)]'}`} />
+                    <MessageSquare className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-[#d97757]' : 'text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)]'}`} />
 
                     {isEditing ? (
                       <form
@@ -429,17 +435,19 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
           </>
         )}
 
-        {/* Bottom actions (Claude style) */}
-        <div className="p-3 border-t border-[color:var(--c-bg-2d2a25)] space-y-2">
+        {/* Bottom actions (Modern DSS style) */}
+        <div className="p-3 border-t border-gray-800/40 dark:border-white/5 space-y-2 bg-dark-bg/60">
           <PWAInstallButton />
 
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={onOpenSettings}
-              className="flex-1 min-w-0 flex items-center gap-2.5 px-3 py-2 rounded-lg text-[color:var(--c-fg-b8b3a8)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231f)] text-xs font-medium transition cursor-pointer"
+              className="flex-1 min-w-0 flex items-center gap-2.5 px-3 py-2 rounded-xl text-[color:var(--c-fg-a0aec0)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-dark-hover text-xs font-medium transition-all duration-150 cursor-pointer"
             >
-              <Settings className="w-4 h-4 shrink-0 text-[color:var(--c-fg-d97757)]" />
+              <div className="w-5 h-5 rounded-md bg-[#d97757]/15 flex items-center justify-center shrink-0">
+                <Settings className="w-3.5 h-3.5 text-[#d97757]" />
+              </div>
               <span className="truncate">Configurações</span>
             </button>
             {onToggleTheme && (
@@ -448,12 +456,12 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                 onClick={(e) => onToggleTheme(e)}
                 aria-label={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
                 title={theme === 'dark' ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
-                className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-[color:var(--c-fg-b8b3a8)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231f)] transition cursor-pointer group"
+                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-xl text-[color:var(--c-fg-a0aec0)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-dark-hover transition-all duration-150 cursor-pointer group"
               >
                 {theme === 'dark' ? (
                   <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
                 ) : (
-                  <Moon className="w-4 h-4 text-indigo-500 group-hover:-rotate-12 transition-transform duration-300" />
+                  <Moon className="w-4 h-4 text-indigo-400 group-hover:-rotate-12 transition-transform duration-300" />
                 )}
               </button>
             )}
