@@ -5,16 +5,27 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root { --c-page-bg: #ffffff; --c-page-fg: #1c1b19; }
-.dark { --c-page-bg: #1b1a17; --c-page-fg: #f3efe6; }
+.dark { --c-page-bg: #000000; --c-page-fg: #ececec; }
+
+/* Tokens dark-* (ex.: bg-dark-bg) seguem o tema: valores claros quando fora de .dark */
+:root:not(.dark) {
+  --color-dark-bg: #ffffff;
+  --color-dark-bg-secondary: #f5f5f5;
+  --color-dark-card: #f5f5f5;
+  --color-dark-header: #fafafa;
+  --color-dark-hover: #ececec;
+  --color-dark-text: #1c1b19;
+  --color-dark-text-secondary: #5f6368;
+}
 
 @theme {
-  --color-dark-bg: #111217;
-  --color-dark-bg-secondary: #1E2029;
-  --color-dark-card: #1E2029;
-  --color-dark-header: #15171E;
-  --color-dark-hover: #252836;
-  --color-dark-text: #F7FAFC;
-  --color-dark-text-secondary: #A0AEC0;
+  --color-dark-bg: #000000;
+  --color-dark-bg-secondary: #121212;
+  --color-dark-card: #121212;
+  --color-dark-header: #0a0a0a;
+  --color-dark-hover: #1f1f1f;
+  --color-dark-text: #ececec;
+  --color-dark-text-secondary: #9b9b9b;
 }
 
 @layer base {
@@ -41,9 +52,9 @@
   --sb-thumb-hover: #8f949e;
 }
 .dark {
-  --sb-track: #1E293B;
-  --sb-thumb: #475569;
-  --sb-thumb-hover: #64748B;
+  --sb-track: #0a0a0a;
+  --sb-thumb: #3a3a3a;
+  --sb-thumb-hover: #555555;
 }
 * {
   scrollbar-width: thin;
