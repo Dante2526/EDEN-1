@@ -4,6 +4,12 @@ export const config = {
   runtime: 'edge',
 };
 
+function maxTokensFor(effort: string): number {
+  if (effort === 'max') return 24576;
+  if (effort === 'high' || effort === 'medium') return 16384;
+  return 8192;
+}
+
 export default async function handler(req: Request) {
   try {
     const securityResponse = await checkAuthAndRateLimit(req);
@@ -45,10 +51,10 @@ export default async function handler(req: Request) {
       });
     }
 
-    if (messages.length > 40) {
-      // Retém o system prompt (se for o primeiro) + as últimas 39 mensagens
+    if (messages.length > 80) {
+      // Retém o system prompt (se for o primeiro) + as últimas 79 mensagens
       const sys = messages[0]?.role === 'system' ? [messages[0]] : [];
-      messages = [...sys, ...messages.slice(-39)];
+      messages = [...sys, ...messages.slice(-79)];
     }
 
     const selectedModel = model || 'z-ai/glm-5.3';
@@ -129,7 +135,7 @@ export default async function handler(req: Request) {
         messages: formattedMessages,
         stream: true,
         stream_options: { include_usage: true },
-        max_tokens: 4096, // Reduzido de 8192 pra diminuir over-thinking e acelerar resposta
+        max_tokens: maxTokensFor(selectedEffort), // Tokens de raciocínio contam aqui; escala com o nível
       };
       if (includeReasoning && selectedEffort && selectedEffort !== 'none' && selectedEffort !== 'default') {
         p.reasoning_effort = selectedEffort;

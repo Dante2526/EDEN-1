@@ -491,16 +491,23 @@ function AppContent() {
   // Check backend server status
   useEffect(() => {
     fetch('/api/status', { headers: { 'x-api-key': import.meta.env.VITE_API_SECRET || '' } })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         setHasApiKey(Boolean(data.hasApiKey));
         setHasGeminiKey(Boolean(data.hasGeminiKey));
         setHasGitHubToken(Boolean(data.hasGitHubToken));
       })
       .catch((err) => {
+        // Falha na checagem não significa chave ausente: o /api/chat reporta o erro real.
         console.warn('Could not verify server status:', err);
-        setHasApiKey(false);
-        setHasGitHubToken(false);
+        if (import.meta.env.PROD) setHasApiKey(true);
+        else {
+          setHasApiKey(false);
+          setHasGitHubToken(false);
+        }
       });
   }, []);
 
