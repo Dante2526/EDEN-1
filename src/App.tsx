@@ -2905,6 +2905,7 @@ function AppContent() {
           onOpenTerminal={handleOpenTerminal}
           isContinuousVoiceActive={continuousVoiceActive}
           onToggleContinuousVoice={handleContinuousVoiceToggle}
+          onContinuousVoiceTranscript={handleContinuousVoiceTranscript}
         />
           </>
         )}
