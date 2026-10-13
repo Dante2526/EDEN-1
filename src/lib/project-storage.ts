@@ -11,6 +11,8 @@ interface ProjectIndexItem {
   conversationId?: string;
   updatedAt: number;
   fileCount: number;
+  sourceRepoFullName?: string;
+  sourceRepoBranch?: string;
 }
 
 export async function loadProjectIndex(): Promise<ProjectIndexItem[]> {
@@ -33,6 +35,8 @@ async function updateProjectIndex(project: SynapProject): Promise<void> {
     conversationId: project.conversationId,
     updatedAt: project.updatedAt,
     fileCount: Object.keys(project.files).length,
+    sourceRepoFullName: project.sourceRepoFullName,
+    sourceRepoBranch: project.sourceRepoBranch,
   });
   await set(PROJECTS_INDEX_KEY, filtered.slice(0, 100));
 }

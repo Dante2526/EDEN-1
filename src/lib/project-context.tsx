@@ -18,6 +18,8 @@ interface ProjectContextType {
     conversationId?: string;
     updatedAt: number;
     fileCount: number;
+    sourceRepoFullName?: string;
+    sourceRepoBranch?: string;
   }>;
   loading: boolean;
   /** Abre um projeto no workspace */
@@ -44,6 +46,26 @@ interface ProjectContextType {
   renameProject: (id: string, newName: string) => Promise<void>;
   /** Recarrega o index de projetos */
   refreshIndex: () => Promise<void>;
+  /**
+   * Sincroniza um repo GitHub como projeto Sandpack.
+   * - Busca arquivos do repo
+   * - Detecta template (react-ts, react, static, vanilla)
+   * - Se já existe projeto com sourceRepoFullName+branch, reutiliza
+   * - Caso contrário, cria novo projeto com os arquivos web do repo
+   * - Abre o projeto automaticamente no workspace
+   *
+   * @returns { ok: boolean; reason?: string; project?: SynapProject }
+   *   ok=true: projeto criado/reutilizado e aberto
+   *   ok=false reason='not_web': repo não tem package.json nem index.html
+   *   ok=false reason='fetch_error': erro ao buscar arquivos
+   */
+  syncRepoToProject: (params: {
+    repoFullName: string;
+    owner: string;
+    repo: string;
+    branch: string;
+    conversationId?: string;
+  }) => Promise<{ ok: boolean; reason?: string; project?: SynapProject }>;
 }
 
 const ProjectContext = createContext<ProjectContextType | null>(null);
@@ -222,6 +244,177 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     [activeProject, refreshIndex]
   );
 
+  /**
+   * Sincroniza um repo GitHub como projeto Sandpack.
+   * Faz fetch dos arquivos via /api/github e cria um projeto.
+   */
+  const syncRepoToProject = useCallback<ProjectContextType['syncRepoToProject']>(
+    async (params) => {
+      try {
+        // Importa dinamicamente pra evitar circular dep
+        const { callGitHubApi } = await import('./github');
+
+        // 1. Busca a árvore de arquivos do repo
+        const treeData: any = await callGitHubApi('files', {
+          owner: params.owner,
+          repo: params.repo,
+          branch: params.branch,
+        });
+
+        const allFiles = Array.isArray(treeData?.tree) ? treeData.tree : [];
+
+        // 2. Detecta se é web: package.json OU index.html na raiz
+        const hasPackageJson = allFiles.some(
+          (f: any) => f.path === 'package.json' || f.path === '/package.json'
+        );
+        const hasIndexHtml = allFiles.some(
+          (f: any) => f.path === 'index.html' || f.path === '/index.html'
+        );
+
+        if (!hasPackageJson && !hasIndexHtml) {
+          return { ok: false, reason: 'not_web' };
+        }
+
+        // 3. Determina template
+        let template: ProjectTemplate = 'static';
+        const hasTsx = allFiles.some(
+          (f: any) =>
+            f.path === 'src/App.tsx' ||
+            f.path === '/src/App.tsx' ||
+            f.path?.endsWith('App.tsx')
+        );
+        const hasJsx = allFiles.some(
+          (f: any) =>
+            f.path === 'src/App.js' ||
+            f.path === '/src/App.js' ||
+            f.path?.endsWith('App.js')
+        );
+        if (hasPackageJson && hasTsx) template = 'react-ts';
+        else if (hasPackageJson && hasJsx) template = 'react';
+        else if (hasPackageJson) template = 'vanilla';
+        else if (hasIndexHtml) template = 'static';
+
+        // 4. Filtra arquivos web relevantes (limite ~30 arquivos pra não estourar)
+        const WEB_EXTENSIONS = [
+          '.tsx', '.ts', '.jsx', '.js', '.html', '.css', '.scss',
+          '.json', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp',
+          '.md',
+        ];
+        const SKIP_PATHS = [
+          'node_modules/', 'dist/', 'build/', '.git/', '.next/',
+          'coverage/', '.cache/', '.vscode/', '.idea/',
+        ];
+        const webFiles = allFiles
+          .filter((f: any) => {
+            if (f.type === 'tree') return false;
+            const path = (f.path || '').replace(/^\//, '');
+            if (SKIP_PATHS.some((s) => path.startsWith(s))) return false;
+            return WEB_EXTENSIONS.some((ext) => path.endsWith(ext));
+          })
+          .slice(0, 40);
+
+        // 5. Verifica se já existe projeto pra este repo+branch
+        const existing = projectsIndex.find(
+          (p: any) =>
+            p.sourceRepoFullName === params.repoFullName &&
+            p.sourceRepoBranch === params.branch
+        );
+
+        let projectId: string;
+        let projectName: string;
+        let projectFiles: Record<string, ProjectFile> = {};
+
+        if (existing) {
+          // Reutiliza o projeto existente — só recarrega do storage
+          const loaded = await loadProject(existing.id);
+          if (loaded) {
+            await openProject(existing.id);
+            return { ok: true, project: loaded };
+          }
+          // Se não carregou, cria novo
+          projectId = existing.id;
+          projectName = existing.name;
+        } else {
+          projectId = generateProjectId();
+          projectName = params.repo; // nome do repo
+        }
+
+        // 6. Busca conteúdo de cada arquivo (em paralelo, limite 5 por vez)
+        const fetchFileContent = async (filePath: string): Promise<string> => {
+          try {
+            const res: any = await callGitHubApi('file_content', {
+              owner: params.owner,
+              repo: params.repo,
+              path: filePath,
+              branch: params.branch,
+            });
+            if (res.content) {
+              // GitHub API retorna base64
+              try {
+                return atob(res.content.replace(/\n/g, ''));
+              } catch {
+                return res.content;
+              }
+            }
+            return '';
+          } catch {
+            return '';
+          }
+        };
+
+        // Processa em batches de 5 pra não estourar rate limit
+        const batchSize = 5;
+        const filePaths = webFiles.map((f: any) => (f.path || '').replace(/^\//, ''));
+        for (let i = 0; i < filePaths.length; i += batchSize) {
+          const batch = filePaths.slice(i, i + batchSize);
+          const contents = await Promise.all(batch.map(fetchFileContent));
+          batch.forEach((path: string, idx: number) => {
+            const content = contents[idx];
+            if (content !== undefined) {
+              const isActive =
+                path === 'src/App.tsx' ||
+                path === 'src/App.js' ||
+                path === 'index.html' ||
+                path.endsWith('App.tsx') ||
+                path.endsWith('App.js');
+              projectFiles[path] = { path, content, active: isActive };
+            }
+          });
+        }
+
+        // Se não veio nenhum arquivo web, falha graciosamente
+        if (Object.keys(projectFiles).length === 0) {
+          return { ok: false, reason: 'not_web' };
+        }
+
+        // 7. Cria/atualiza o projeto
+        const now = Date.now();
+        const project: SynapProject = {
+          id: projectId,
+          conversationId: params.conversationId,
+          name: projectName,
+          description: `Sincronizado de ${params.repoFullName} (${params.branch})`,
+          template,
+          files: projectFiles,
+          createdAt: now,
+          updatedAt: now,
+          sourceRepoFullName: params.repoFullName,
+          sourceRepoBranch: params.branch,
+        };
+
+        await saveProject(project);
+        await refreshIndex();
+        await openProject(projectId);
+
+        return { ok: true, project };
+      } catch (err: any) {
+        console.error('syncRepoToProject error:', err);
+        return { ok: false, reason: 'fetch_error' };
+      }
+    },
+    [projectsIndex, openProject, refreshIndex]
+  );
+
   return (
     <ProjectContext.Provider
       value={{
@@ -236,6 +429,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         removeProject,
         renameProject,
         refreshIndex,
+        syncRepoToProject,
       }}
     >
       {children}

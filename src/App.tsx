@@ -560,6 +560,7 @@ function AppContent() {
     openProject,
     updateProjectFiles,
     projectsIndex,
+    syncRepoToProject,
   } = useProjects();
   const [showProjectWorkspace, setShowProjectWorkspace] = useState(false);
 
@@ -981,7 +982,30 @@ function AppContent() {
         )
       );
     }
-  }, [activeId]);
+
+    // Sincroniza o repo como projeto Sandpack (se for web)
+    // Dispara em background — não bloqueia o resto da UI
+    syncRepoToProject({
+      repoFullName: repo.fullName,
+      owner: repo.owner,
+      repo: repo.repo,
+      branch: repo.branch,
+      conversationId: activeId || undefined,
+    })
+      .then((result) => {
+        if (result.ok) {
+          console.log(`[Synap] Projeto Sandpack criado/reutilizado para ${repo.fullName}`);
+        } else if (result.reason === 'not_web') {
+          console.log(`[Synap] Repo ${repo.fullName} não é web (sem package.json/index.html). Preview não disponível.`);
+          // Não mostra erro — só fica sem preview, comportamento normal
+        } else if (result.reason === 'fetch_error') {
+          console.warn(`[Synap] Erro ao buscar arquivos do repo ${repo.fullName}. Preview não criado.`);
+        }
+      })
+      .catch((err) => {
+        console.warn('[Synap] Falha ao sincronizar repo como projeto:', err);
+      });
+  }, [activeId, syncRepoToProject]);
 
   const handleCloseRepo = useCallback(() => {
     setActiveRepo(null);

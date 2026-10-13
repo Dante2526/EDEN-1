@@ -39,6 +39,14 @@ export interface SynapProject {
   /** createdAt / updatedAt (epoch ms) */
   createdAt: number;
   updatedAt: number;
+  /**
+   * Se este projeto foi criado a partir de um repo GitHub vinculado,
+   * guarda o full_name (owner/repo) pra evitar duplicação e permitir
+   * re-sincronizar quando o repo muda.
+   */
+  sourceRepoFullName?: string;
+  /** Branch do repo de onde veio (pra re-sincronizar) */
+  sourceRepoBranch?: string;
 }
 
 export interface AttachedDocument {
