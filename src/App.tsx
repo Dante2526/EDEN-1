@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check } from 'lucide-react';
+import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check, Eye, RefreshCw } from 'lucide-react';
 import {
   Conversation,
   Message,
@@ -1227,11 +1227,38 @@ function AppContent() {
         setIsPlanMode(false);
       }
       setActiveRepo(target.activeRepo || null);
+
+      // Se o chat tem repo vinculado, procura um projeto Sandpack
+      // que foi sincronizado desse repo e abre automaticamente.
+      // Isso resolve o bug de "preview preto" quando você volta pra
+      // um chat que já tinha repo vinculado de uma sessão anterior.
+      if (target.activeRepo) {
+        const matchingProject = projectsIndex.find(
+          (p: any) =>
+            p.sourceRepoFullName === target.activeRepo!.fullName &&
+            p.sourceRepoBranch === target.activeRepo!.branch
+        );
+        if (matchingProject) {
+          // Projeto existe — abre sem re-buscar arquivos
+          openProject(matchingProject.id);
+        } else {
+          // Projeto não existe — sincroniza do repo (cria novo)
+          syncRepoToProject({
+            repoFullName: target.activeRepo.fullName,
+            owner: target.activeRepo.owner,
+            repo: target.activeRepo.repo,
+            branch: target.activeRepo.branch,
+            conversationId: id,
+          }).catch((err) => {
+            console.warn('[Synap] Auto-sync falhou ao abrir chat:', err);
+          });
+        }
+      }
     }
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
-  }, [conversations]);
+  }, [conversations, projectsIndex, openProject, syncRepoToProject]);
 
   const handleDeleteConversation = useCallback((id: string) => {
     setConversations((prev) => prev.filter((c) => c.id !== id));
@@ -2725,6 +2752,63 @@ function AppContent() {
               setMainViewTab('chat');
             }}
           />
+        ) : mainViewTab === 'preview' && !activeProject ? (
+          /* Preview selecionado mas nenhum projeto ativo — mostra mensagem em vez de tela preta */
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center bg-dark-bg">
+            <div className="w-16 h-16 rounded-2xl bg-[#22201d] border border-[#3b3831] flex items-center justify-center">
+              <Eye className="w-8 h-8 text-[#5e5a52]" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-medium text-[#f3efe6]">Nenhum projeto aberto</h3>
+              <p className="text-xs text-[#8c867a] max-w-sm leading-relaxed">
+                {activeRepo
+                  ? `O repositório ${activeRepo.fullName} está vinculado a este chat, mas o preview ainda não foi carregado. Tente vincular novamente ou aguarde a sincronização.`
+                  : 'Vincule um repositório ao chat (aba Repos) ou peça pra IA criar um projeto para ver o preview ao vivo.'}
+              </p>
+            </div>
+            {activeRepo && (
+              <button
+                type="button"
+                onClick={() => {
+                  syncRepoToProject({
+                    repoFullName: activeRepo.fullName,
+                    owner: activeRepo.owner,
+                    repo: activeRepo.repo,
+                    branch: activeRepo.branch,
+                    conversationId: activeId || undefined,
+                  }).then((result) => {
+                    if (!result.ok && result.reason === 'fetch_error') {
+                      reportAppError(
+                        'Falha ao sincronizar repositório',
+                        `Não foi possível buscar os arquivos de ${activeRepo.fullName}.`,
+                        { endpoint: activeRepo.fullName }
+                      );
+                    }
+                  }).catch((err) => {
+                    reportAppError(
+                      'Erro ao sincronizar',
+                      err?.message || 'Erro desconhecido',
+                      { stack: err?.stack }
+                    );
+                  });
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#d97757] hover:bg-[#c4663f] text-white text-xs font-medium transition cursor-pointer shadow-md"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Sincronizar repositório agora
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSidebarTab('projects');
+                setIsSidebarOpen(true);
+              }}
+              className="text-xs text-[#d97757] hover:underline"
+            >
+              Ver lista de projetos
+            </button>
+          </div>
         ) : mainViewTab === 'preview' && activeProject && showProjectWorkspace ? (
           <div className="flex-1 flex flex-col min-h-0 bg-dark-bg overflow-hidden">
             <React.Suspense
