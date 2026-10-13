@@ -569,6 +569,9 @@ function AppContent() {
       setShowProjectWorkspace(true);
       // Quando abre um projeto, pula pra aba Preview
       setMainViewTab('preview');
+      // Volta a sidebar pra aba Chat (pra usuário ver a lista de conversas
+      // e poder pedir alterações à IA enquanto vê o preview)
+      setSidebarTab('chats');
     } else {
       setShowProjectWorkspace(false);
       // Se fechou o projeto e estava em Preview, volta pra Chat
