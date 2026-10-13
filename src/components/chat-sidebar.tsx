@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import {
   Plus,
   MessageSquare,
@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
   Download,
+  FileCode,
 } from 'lucide-react';
 import { Conversation, ActiveRepoState, Skill, McpServer, KnowledgeFact, KnowledgeCategory } from '../lib/types';
 import { formatDate } from '../lib/utils';
@@ -23,6 +24,10 @@ import { FileExplorer } from './github/file-explorer';
 import { SourceControlPanel } from './source-control/source-control-panel';
 import { ExtensionsPanel } from './extensions/extensions-panel';
 import { DownloaderPanel } from './downloader/downloader-panel';
+// Lazy load ProjectsPanel (Sandpack é pesado, só carrega quando usuário abre a aba)
+const ProjectsPanel = React.lazy(() =>
+  import('./project-workspace/projects-panel').then((m) => ({ default: m.ProjectsPanel }))
+);
 
 interface ChatSidebarProps {
   conversations: Conversation[];
@@ -38,8 +43,8 @@ interface ChatSidebarProps {
   onClose: () => void;
   // GitHub & Source Control props
   activeRepo: ActiveRepoState | null;
-  sidebarTab: 'chats' | 'repos' | 'source-control' | 'skills';
-  onChangeTab: (tab: 'chats' | 'repos' | 'source-control' | 'skills') => void;
+  sidebarTab: 'chats' | 'repos' | 'source-control' | 'skills' | 'projects';
+  onChangeTab: (tab: 'chats' | 'repos' | 'source-control' | 'skills' | 'projects') => void;
   onSelectRepo: (repo: ActiveRepoState) => void;
   onCloseRepo: () => void;
   onChangeBranch: (branch: string) => void;
@@ -226,6 +231,20 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
               <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <span>Skills</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => onChangeTab('projects')}
+              title="Projetos (preview ao vivo)"
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                sidebarTab === 'projects'
+                  ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
+                  : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
+              }`}
+            >
+              <FileCode className="w-3.5 h-3.5 text-[#d97757] shrink-0" />
+              <span>Projs</span>
+            </button>
           </div>
         </div>
 
@@ -275,6 +294,17 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             onDeleteKnowledgeFact={onDeleteKnowledgeFact}
             onClearKnowledgeFacts={onClearKnowledgeFacts}
           />
+        ) : sidebarTab === 'projects' ? (
+          <Suspense
+            fallback={
+              <div className="flex-1 flex flex-col items-center justify-center gap-2 text-[#8c867a]">
+                <div className="w-6 h-6 border-2 border-[#d97757]/30 border-t-[#d97757] rounded-full animate-spin" />
+                <span className="text-xs">Carregando projetos...</span>
+              </div>
+            }
+          >
+            <ProjectsPanel />
+          </Suspense>
         ) : (
           <>
         {/* Downloader Button (above New Chat) */}

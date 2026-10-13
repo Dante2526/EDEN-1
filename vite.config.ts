@@ -55,6 +55,10 @@ export default defineConfig(() => {
             if (id.includes('node_modules/motion/')) {
               return 'vendor-motion';
             }
+            // Sandpack (CodeSandbox) — biblioteca pesada, separar em chunk próprio
+            if (id.includes('node_modules/@codesandbox/sandpack-react') || id.includes('node_modules/@codemirror/')) {
+              return 'sandpack';
+            }
           },
         },
       },

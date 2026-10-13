@@ -1,5 +1,46 @@
 export type Role = 'user' | 'assistant' | 'system' | 'tool';
 
+// ====================================================================
+// Sandpack Project Types — projetos criados pela IA com preview ao vivo
+// ====================================================================
+
+export type ProjectTemplate =
+  | 'react-ts'
+  | 'react'
+  | 'vite-react-ts'
+  | 'vanilla-ts'
+  | 'vanilla'
+  | 'vue'
+  | 'static' // HTML/CSS/JS puro (sem bundler)
+  | 'node';
+
+export interface ProjectFile {
+  /** Caminho relativo do arquivo, ex: "src/App.tsx", "index.html", "package.json" */
+  path: string;
+  /** Conteúdo do arquivo (string) */
+  content: string;
+  /** Se true, este arquivo é oculto da lista de arquivos mas ainda é enviado pro bundler */
+  hidden?: boolean;
+  /** Se true, este arquivo é marcado como ativo no editor quando o projeto abre */
+  active?: boolean;
+}
+
+export interface SynapProject {
+  id: string;
+  /** ID do chat onde o projeto foi criado (para vincular ao histórico) */
+  conversationId?: string;
+  name: string;
+  description?: string;
+  template: ProjectTemplate;
+  /** Arquivos do projeto (key = path, value = ProjectFile) */
+  files: Record<string, ProjectFile>;
+  /** Dependências extras (além das que vêm no template) */
+  dependencies?: Record<string, string>;
+  /** createdAt / updatedAt (epoch ms) */
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface AttachedDocument {
   id: string;
   name: string;

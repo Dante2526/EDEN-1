@@ -35,11 +35,19 @@ import { formatKnowledgePrompt, createKnowledgeFact } from './lib/knowledge-base
 import { generateId, generateTitleFromMessage, formatFileSize } from './lib/utils';
 import { ChatHeader } from './components/chat-header';
 import { ChatSidebar } from './components/chat-sidebar';
+// Lazy load Sandpack components (só baixa quando usuário abre projetos)
+const ProjectWorkspace = React.lazy(() =>
+  import('./components/project-workspace/project-workspace').then((m) => ({ default: m.ProjectWorkspace }))
+);
+const ProjectsPanel = React.lazy(() =>
+  import('./components/project-workspace/projects-panel').then((m) => ({ default: m.ProjectsPanel }))
+);
 import { ChatMessage } from './components/chat-message';
 import { ChatInput } from './components/chat-input';
 import { SettingsModal } from './components/settings-modal';
 import { ClaudeLogo } from './components/claude-logo';
 import { PendingChangesProvider, usePendingChanges } from './lib/pending-changes';
+import { ProjectProvider, useProjects } from './lib/project-context';
 import { DiffViewer } from './components/source-control/diff-viewer';
 import { fetchFileContent, fetchRepoContents, searchCode } from './lib/github';
 import { TerminalPanel, TerminalEntry } from './components/terminal-panel';
@@ -384,7 +392,9 @@ const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_G
 export default function App() {
   return (
     <PendingChangesProvider>
-      <AppContent />
+      <ProjectProvider>
+        <AppContent />
+      </ProjectProvider>
     </PendingChangesProvider>
   );
 }
@@ -434,10 +444,23 @@ function AppContent() {
   // Settings
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
-  // GitHub, Source Control & Extensions state
-  const [sidebarTab, setSidebarTab] = useState<'chats' | 'repos' | 'source-control' | 'skills'>('chats');
+  // GitHub, Source Control, Extensions & Projects state
+  const [sidebarTab, setSidebarTab] = useState<'chats' | 'repos' | 'source-control' | 'skills' | 'projects'>('chats');
   const [activeRepo, setActiveRepo] = useState<ActiveRepoState | null>(null);
   const [isStudioMode, setIsStudioMode] = useState<boolean>(false);
+
+  // Projects (Sandpack workspace) state
+  const { activeProject, closeProject, removeProject, renameProject, updateFileContent } = useProjects();
+  const [showProjectWorkspace, setShowProjectWorkspace] = useState(false);
+
+  // Abre o workspace automaticamente quando um projeto é selecionado
+  useEffect(() => {
+    if (activeProject) {
+      setShowProjectWorkspace(true);
+    } else {
+      setShowProjectWorkspace(false);
+    }
+  }, [activeProject?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Skills & MCP state
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -2358,6 +2381,33 @@ function AppContent() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden bg-dark-bg">
+        {/* Project Workspace overlay (Sandpack) — sobrepõe o chat quando um projeto está aberto */}
+        {activeProject && showProjectWorkspace && (
+          <div className="absolute inset-0 z-30 bg-dark-bg">
+            <React.Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-[#8c867a]">
+                  <div className="w-8 h-8 border-2 border-[#d97757]/30 border-t-[#d97757] rounded-full animate-spin" />
+                  <span className="text-xs">Carregando editor Sandpack...</span>
+                </div>
+              }
+            >
+              <ProjectWorkspace
+                project={activeProject}
+                onClose={() => {
+                  setShowProjectWorkspace(false);
+                  closeProject();
+                }}
+                onDelete={() => {
+                  removeProject(activeProject.id);
+                }}
+                onRename={(newName) => renameProject(activeProject.id, newName)}
+                onFileChange={(path, content) => updateFileContent(path, content)}
+              />
+            </React.Suspense>
+          </div>
+        )}
+
         {/* Header */}
         <ChatHeader
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
