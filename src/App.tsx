@@ -654,6 +654,8 @@ function AppContent() {
   const [continuousVoiceActive, setContinuousVoiceActive] = useState(false);
   const continuousVoiceTranscriptRef = useRef<string>('');
   const continuousVoiceListeningRef = useRef<boolean>(false);
+  // Ref pra armazenar o Audio element do TTS — pra poder interromper quando usuário fala
+  const currentTTSAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleContinuousVoiceToggle = useCallback(() => {
     setContinuousVoiceActive(prev => {
@@ -721,8 +723,11 @@ function AppContent() {
           const blob = await res.blob();
           const url = URL.createObjectURL(blob);
           const audio = new Audio(url);
+          // Armazena no ref pra poder interromper
+          currentTTSAudioRef.current = audio;
           audio.onended = () => {
             URL.revokeObjectURL(url);
+            currentTTSAudioRef.current = null;
             // Reativa o microfone depois de falar
             if (continuousVoiceActive) {
               continuousVoiceListeningRef.current = true;
@@ -2585,16 +2590,29 @@ function AppContent() {
     if (!continuousVoiceActive) return;
     continuousVoiceTranscriptRef.current = text;
 
-    // Se a IA tá falando, interrompe
+    // INTERROMPE a IA falando (3 camadas):
+    // 1. Para o Audio element do TTS (/api/tts)
+    if (currentTTSAudioRef.current) {
+      try {
+        currentTTSAudioRef.current.pause();
+        currentTTSAudioRef.current.currentTime = 0;
+        currentTTSAudioRef.current = null;
+      } catch {}
+    }
+    // 2. Cancela o Web Speech API (fallback TTS)
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
+    }
+    // 3. Para o streaming da resposta (IA para de gerar texto)
+    if (isStreaming) {
+      handleStopGeneration();
     }
 
     // Envia a mensagem
     if (text.trim()) {
       handleSendMessage(text);
     }
-  }, [continuousVoiceActive, handleSendMessage]);
+  }, [continuousVoiceActive, isStreaming, handleSendMessage, handleStopGeneration]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
