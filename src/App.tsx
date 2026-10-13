@@ -58,6 +58,7 @@ import {
 } from './lib/mcp-client';
 import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } from './lib/theme';
 import { useContinuousVoice } from './lib/use-continuous-voice';
+import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -506,8 +507,12 @@ function AppContent() {
   const handleContinuousVoiceToggle = useCallback(() => {
     setContinuousVoiceActive(prev => {
       const next = !prev;
-      if (!next) {
+      if (next) {
+        // Ligando
+        playVoiceModeOnSound();
+      } else {
         // Desligando — para tudo
+        playVoiceModeOffSound();
         continuousVoiceListeningRef.current = false;
         if (typeof window !== 'undefined' && window.speechSynthesis) {
           window.speechSynthesis.cancel();
@@ -550,6 +555,8 @@ function AppContent() {
 
     // Tenta TTS neural do backend
     const speak = async () => {
+      // Som de "tô pronto pra falar"
+      playSpeakingStartSound();
       try {
         const settings = JSON.parse(localStorage.getItem('synap_settings_v1') || '{}');
         const preferredVoice = settings.speechVoice || 'pt-BR-FranciscaNeural';
@@ -1715,6 +1722,10 @@ function AppContent() {
     );
 
     setIsStreaming(true);
+    // Se modo contínuo ativo, toca som de "entendi, pensando..."
+    if (continuousVoiceActive) {
+      playThinkingSound();
+    }
     setTimeout(() => scrollToBottom(true, true), 50);
 
     // Injetar contexto de repositório apenas se vinculado a esta conversa

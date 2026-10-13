@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, Paperclip, Phone, PhoneOff } from 'lucide-react';
+import { ArrowUp, Square, Paperclip, AudioLines } from 'lucide-react';
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
@@ -300,10 +300,10 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                   {isContinuousVoiceActive ? (
                     <>
                       <span className="absolute inset-0 rounded-lg bg-emerald-500/20 animate-ping opacity-75" />
-                      <PhoneOff className="w-4 h-4 relative z-10" />
+                      <AudioLines className="w-4 h-4 relative z-10" />
                     </>
                   ) : (
-                    <Phone className="w-4 h-4" />
+                    <AudioLines className="w-4 h-4" />
                   )}
                 </button>
               )}
