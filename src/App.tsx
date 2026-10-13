@@ -435,7 +435,7 @@ function AppContent() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   // GitHub, Source Control & Extensions state
-  const [sidebarTab, setSidebarTab] = useState<'chats' | 'repos' | 'source-control' | 'skills' | 'downloader'>('chats');
+  const [sidebarTab, setSidebarTab] = useState<'chats' | 'repos' | 'source-control' | 'skills'>('chats');
   const [activeRepo, setActiveRepo] = useState<ActiveRepoState | null>(null);
   const [isStudioMode, setIsStudioMode] = useState<boolean>(false);
 

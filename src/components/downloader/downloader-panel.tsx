@@ -16,6 +16,7 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
+  X,
 } from 'lucide-react';
 
 interface PickerItem {
@@ -70,7 +71,7 @@ const SUPPORTED_PLATFORMS = [
   'Telegram',
 ];
 
-export const DownloaderPanel: React.FC = () => {
+export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const [inputUrl, setInputUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DownloadResult | null>(null);
@@ -185,10 +186,20 @@ export const DownloaderPanel: React.FC = () => {
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#d97757]/20 to-[#d97757]/5 border border-[#d97757]/30 flex items-center justify-center">
             <Download className="w-4 h-4 text-[#d97757]" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h2 className="text-sm font-medium text-[#f3efe6] font-serif">Downloader</h2>
             <p className="text-[10px] text-[#736e65] font-mono">Cole o link • Baixe o vídeo</p>
           </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fechar"
+              className="p-1.5 rounded-lg text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622] transition-colors cursor-pointer shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <p className="text-[11px] text-[#8c867a] leading-relaxed mt-1.5">
@@ -396,11 +407,11 @@ export const DownloaderPanel: React.FC = () => {
 
       {/* Plataformas suportadas */}
       <div className="px-4 py-2.5 border-b border-[#2d2a25]">
-        <div className="flex items-center gap-1 text-[10px] text-[#736e65] mb-1.5 font-mono uppercase tracking-wider">
+        <div className="flex items-center justify-center gap-1 text-[10px] text-[#736e65] mb-1.5 font-mono uppercase tracking-wider">
           <Sparkles className="w-3 h-3 text-[#d97757]" />
           Plataformas suportadas
         </div>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 justify-center">
           {SUPPORTED_PLATFORMS.map((p) => {
             const Icon = PLATFORM_ICONS[p];
             return (
@@ -485,22 +496,6 @@ export const DownloaderPanel: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Footer com dica */}
-      <div className="mt-auto px-4 py-2 border-t border-[#2d2a25] bg-[#161512]">
-        <p className="text-[9px] text-[#5e5a52] text-center leading-relaxed">
-          Powered by{' '}
-          <a
-            href="https://github.com/imputnet/cobalt"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#736e65] hover:text-[#d97757] underline underline-offset-2"
-          >
-            cobalt
-          </a>{' '}
-          · Use apenas com conteúdo que você tem direito de baixar.
-        </p>
-      </div>
     </div>
   );
 };
