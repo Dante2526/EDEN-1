@@ -2582,35 +2582,12 @@ function AppContent() {
         onClearKnowledgeFacts={handleClearKnowledgeFacts}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden bg-dark-bg">
-        {/* Project Workspace overlay (Sandpack) — sobrepõe o chat quando um projeto está aberto */}
-        {activeProject && showProjectWorkspace && (
-          <div className="absolute inset-0 z-30 bg-dark-bg">
-            <React.Suspense
-              fallback={
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-[#8c867a]">
-                  <div className="w-8 h-8 border-2 border-[#d97757]/30 border-t-[#d97757] rounded-full animate-spin" />
-                  <span className="text-xs">Carregando editor Sandpack...</span>
-                </div>
-              }
-            >
-              <ProjectWorkspace
-                project={activeProject}
-                onClose={() => {
-                  setShowProjectWorkspace(false);
-                  closeProject();
-                }}
-                onDelete={() => {
-                  removeProject(activeProject.id);
-                }}
-                onRename={(newName) => renameProject(activeProject.id, newName)}
-                onFileChange={(path, content) => updateFileContent(path, content)}
-              />
-            </React.Suspense>
-          </div>
-        )}
-
+      {/* Main Content Area — split layout when project workspace is open */}
+      <div className="flex-1 flex min-w-0 h-full relative overflow-hidden bg-dark-bg">
+        {/* Chat Column — fica com 50% quando workspace está aberto no desktop */}
+        <div className={`flex flex-col min-w-0 h-full relative overflow-hidden bg-dark-bg ${
+          activeProject && showProjectWorkspace ? 'hidden md:flex md:w-1/2 lg:w-[45%] xl:w-[40%]' : 'flex-1'
+        }`}>
         {/* Header */}
         <ChatHeader
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -2740,7 +2717,7 @@ function AppContent() {
           </>
         )}
 
-        {/* Terminal Drawer Panel (Hardware-accelerated smooth slide drawer) */}
+        {/* Terminal Drawer Panel (Hardware-accelerated smooth drawer) */}
         <TerminalPanel
           isOpen={isTerminalOpen}
           onClose={() => setIsTerminalOpen(false)}
@@ -2749,6 +2726,44 @@ function AppContent() {
           onClear={handleClearTerminal}
           isRunning={isTerminalRunning}
         />
+        </div>{/* fim Chat Column */}
+
+        {/* Project Workspace Column — lado a lado no desktop, overlay no mobile */}
+        {activeProject && showProjectWorkspace && (
+          <>
+            {/* Mobile backdrop */}
+            <div
+              onClick={() => {
+                setShowProjectWorkspace(false);
+                closeProject();
+              }}
+              className="md:hidden fixed inset-0 z-30 bg-black/70 backdrop-blur-sm"
+            />
+            <div className="fixed md:relative inset-0 md:inset-auto z-40 md:z-auto md:flex-1 min-w-0 h-full bg-dark-bg md:border-l border-[#2d2a25] flex flex-col animate-in fade-in slide-in-from-right duration-200">
+              <React.Suspense
+                fallback={
+                  <div className="flex flex-col items-center justify-center h-full gap-2 text-[#8c867a]">
+                    <div className="w-8 h-8 border-2 border-[#d97757]/30 border-t-[#d97757] rounded-full animate-spin" />
+                    <span className="text-xs">Carregando editor Sandpack...</span>
+                  </div>
+                }
+              >
+                <ProjectWorkspace
+                  project={activeProject}
+                  onClose={() => {
+                    setShowProjectWorkspace(false);
+                    closeProject();
+                  }}
+                  onDelete={() => {
+                    removeProject(activeProject.id);
+                  }}
+                  onRename={(newName) => renameProject(activeProject.id, newName)}
+                  onFileChange={(path, content) => updateFileContent(path, content)}
+                />
+              </React.Suspense>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Diff Viewer Modal triggered from chat or direct action */}
