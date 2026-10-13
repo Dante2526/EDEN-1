@@ -155,6 +155,42 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
 
   const sandpackFiles = useMemo(() => projectToSandpackFiles(project), [project]);
 
+  // Diagnóstico: verifica se o projeto tem conteúdo visível
+  const diagnosticInfo = useMemo(() => {
+    const files = Object.keys(project.files || {});
+    const appTsx = project.files['src/App.tsx'] || project.files['src/App.js'];
+    const mainTsx = project.files['src/main.tsx'] || project.files['src/main.js'];
+    const indexHtml = project.files['index.html'];
+    const pkgJson = project.files['package.json'];
+
+    let appContent = '';
+    if (appTsx) {
+      appContent = typeof appTsx === 'string' ? appTsx : appTsx.content || '';
+    }
+
+    // Heurísticas pra detectar App vazio
+    const appIsEmpty = !appContent.trim() ||
+      appContent.includes('return null') ||
+      appContent.includes('return <></>') ||
+      appContent.includes('return (<></>)') ||
+      appContent.match(/return\s*\(\s*\)/);
+
+    return {
+      totalFiles: files.length,
+      hasApp: !!appTsx,
+      hasMain: !!mainTsx,
+      hasIndexHtml: !!indexHtml,
+      hasPkgJson: !!pkgJson,
+      appIsEmpty,
+      appLineCount: appContent.split('\n').length,
+      appPreview: appContent.slice(0, 200),
+      deps: project.dependencies ? Object.keys(project.dependencies) : [],
+      template: project.template,
+    };
+  }, [project]);
+
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+
   // Atualiza nome quando projeto muda externamente
   useEffect(() => {
     setNameInput(project.name);
@@ -298,6 +334,20 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
             <Files className="w-4 h-4" />
           </button>
 
+          {/* Botão Diagnóstico (debug) */}
+          <button
+            type="button"
+            onClick={() => setShowDiagnostic((v) => !v)}
+            title="Diagnóstico do preview"
+            className={`p-1.5 rounded-lg transition cursor-pointer ${
+              showDiagnostic
+                ? 'text-amber-400 bg-[#282622]'
+                : 'text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622]'
+            }`}
+          >
+            <AlertCircle className="w-4 h-4" />
+          </button>
+
           {showDeleteConfirm ? (
             <div className="flex items-center gap-1 bg-rose-950/40 border border-rose-800/40 rounded-lg px-1.5 py-0.5">
               <span className="text-[10px] text-rose-300">Apagar?</span>
@@ -412,6 +462,89 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
                   <div className="absolute top-2 right-2 z-10">
                     <OpenInNewTabButton />
                   </div>
+
+                  {/* Overlay de Diagnóstico */}
+                  {showDiagnostic && (
+                    <div className="absolute inset-0 z-20 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-3 text-[#f3efe6] text-xs">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <AlertCircle className="w-4 h-4 text-amber-400" />
+                          <span>Diagnóstico do Preview</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowDiagnostic(false)}
+                          className="p-1 hover:bg-[#282622] rounded"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {/* Status dos arquivos */}
+                        <div className="bg-[#22201d] border border-[#3b3831] rounded-lg p-2.5 space-y-1.5">
+                          <div className="text-[10px] uppercase font-bold text-[#8c867a] tracking-wider mb-1">Arquivos do projeto</div>
+                          <div className="flex justify-between"><span className="text-[#8c867a]">Total de arquivos:</span><span className="font-mono">{diagnosticInfo.totalFiles}</span></div>
+                          <div className="flex justify-between"><span className="text-[#8c867a]">src/App.tsx:</span><span className={diagnosticInfo.hasApp ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>{diagnosticInfo.hasApp ? `✓ ${diagnosticInfo.appLineCount} linhas` : '✕ ausente'}</span></div>
+                          <div className="flex justify-between"><span className="text-[#8c867a]">src/main.tsx:</span><span className={diagnosticInfo.hasMain ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>{diagnosticInfo.hasMain ? '✓' : '✕ ausente'}</span></div>
+                          <div className="flex justify-between"><span className="text-[#8c867a]">index.html:</span><span className={diagnosticInfo.hasIndexHtml ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>{diagnosticInfo.hasIndexHtml ? '✓' : '✕ ausente'}</span></div>
+                          <div className="flex justify-between"><span className="text-[#8c867a]">package.json:</span><span className={diagnosticInfo.hasPkgJson ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>{diagnosticInfo.hasPkgJson ? '✓' : '✕ ausente'}</span></div>
+                          <div className="flex justify-between"><span className="text-[#8c867a]">Template:</span><span className="font-mono">{diagnosticInfo.template}</span></div>
+                        </div>
+
+                        {/* Aviso App vazio */}
+                        {diagnosticInfo.appIsEmpty && (
+                          <div className="bg-amber-950/40 border border-amber-500/40 rounded-lg p-2.5 text-amber-200">
+                            <div className="font-bold text-amber-300 text-[11px] mb-1">⚠ App.tsx parece estar vazio</div>
+                            <div className="text-[10px] leading-relaxed">
+                              O App.tsx não retorna nada visível. Edite o arquivo (aba Código) pra retornar JSX com conteúdo.
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Dependencies */}
+                        <div className="bg-[#22201d] border border-[#3b3831] rounded-lg p-2.5">
+                          <div className="text-[10px] uppercase font-bold text-[#8c867a] tracking-wider mb-1.5">Dependencies ({diagnosticInfo.deps.length})</div>
+                          {diagnosticInfo.deps.length === 0 ? (
+                            <div className="text-[10px] text-[#5e5a52]">Nenhuma dependency extra (só as do template)</div>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {diagnosticInfo.deps.map((d) => (
+                                <span key={d} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#0d0c0a] text-[#a39d93] border border-[#3b3831]">{d}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Preview do App.tsx */}
+                        {diagnosticInfo.hasApp && (
+                          <div className="bg-[#22201d] border border-[#3b3831] rounded-lg p-2.5">
+                            <div className="text-[10px] uppercase font-bold text-[#8c867a] tracking-wider mb-1.5">Início do App.tsx (200 chars)</div>
+                            <pre className="text-[10px] text-[#a39d93] font-mono whitespace-pre-wrap break-all bg-[#0d0c0a] p-2 rounded border border-[#2d2a25] max-h-32 overflow-y-auto">{diagnosticInfo.appPreview || '(vazio)'}</pre>
+                          </div>
+                        )}
+
+                        {/* Dicas */}
+                        <div className="bg-[#0d0c0a] border border-[#2d2a25] rounded-lg p-2.5 text-[10px] text-[#8c867a] leading-relaxed space-y-1">
+                          <div className="font-bold text-[#c4bfb6] text-[11px] mb-1">💡 Se o preview estiver branco:</div>
+                          <div>1. Abra o Console (abaixo) e procure erros em vermelho</div>
+                          <div>2. Clique em "Código" e verifique se App.tsx retorna JSX válido</div>
+                          <div>3. Verifique se faltam imports ou dependencies no package.json</div>
+                          <div>4. Clique no ↗ pra abrir em nova aba e veja o erro no DevTools (F12)</div>
+                        </div>
+
+                        {/* Lista de arquivos */}
+                        <div className="bg-[#22201d] border border-[#3b3831] rounded-lg p-2.5">
+                          <div className="text-[10px] uppercase font-bold text-[#8c867a] tracking-wider mb-1.5">Todos os arquivos</div>
+                          <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                            {Object.keys(project.files).map((p) => (
+                              <span key={p} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#0d0c0a] text-[#5e5a52] border border-[#2d2a25]">{p}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Console — colapsável, fechado por padrão */}
