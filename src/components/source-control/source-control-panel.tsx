@@ -687,9 +687,9 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                       className="text-[11px] p-2 rounded bg-[color:var(--c-bg-171612)] border border-[color:var(--c-bg-2e2a23)] flex items-start justify-between gap-2"
                     >
                       <div className="min-w-0">
-                        <div className="font-medium text-[color:var(--c-fg-f3efe6)] truncate">{c.message}</div>
+                        <div className="font-medium text-[color:var(--c-fg-f3efe6)] truncate">{c.message || '(sem mensagem)'}</div>
                         <div className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono mt-0.5">
-                          {c.author.name} • {c.short_sha}
+                          {c.author?.name || 'Unknown'} • {c.short_sha || (c.sha || '').slice(0, 7)}
                         </div>
                       </div>
                     </div>
@@ -1021,12 +1021,14 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
               ) : (
                 <div className="divide-y divide-[color:var(--c-bg-262420)] overflow-y-auto">
                   {commits.map((c) => {
-                    const firstLine = c.message.split('\n')[0];
-                    const hasMore = c.message.trim().split('\n').length > 1;
+                    // Defesa: garante que message é string (pode vir undefined em cache antigo)
+                    const message = typeof c.message === 'string' ? c.message : '';
+                    const firstLine = message.split('\n')[0] || '(sem mensagem)';
+                    const hasMore = message.trim().split('\n').length > 1;
 
                     return (
                       <div
-                        key={c.sha}
+                        key={c.sha || Math.random()}
                         className="p-3 hover:bg-[color:var(--c-bg-211f1b)] transition space-y-1.5 group"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -1036,7 +1038,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                             </p>
                             {hasMore && (
                               <p className="text-[11px] text-[color:var(--c-fg-8c867a)] mt-0.5 line-clamp-2">
-                                {c.message.trim().split('\n').slice(1).join(' ').trim()}
+                                {message.trim().split('\n').slice(1).join(' ').trim()}
                               </p>
                             )}
                           </div>

@@ -63,7 +63,22 @@ export default async function handler(req: Request): Promise<Response> {
 
     if (action === 'commits') {
       const data = await ghFetch(`/repos/${owner}/${repo}/commits?sha=${branch}&per_page=20`, token);
-      return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      // Normaliza pro formato que o frontend espera:
+      // { sha, short_sha, message, author: { name, login, avatar_url, date }, html_url }
+      // GitHub API retorna: { sha, commit: { message, author: { name, date } }, author: { login, avatar_url }, html_url }
+      const commits = (Array.isArray(data) ? data : []).map((c: any) => ({
+        sha: c.sha || '',
+        short_sha: (c.sha || '').slice(0, 7),
+        message: c.commit?.message || c.message || '',
+        author: {
+          name: c.commit?.author?.name || c.author?.login || 'Unknown',
+          login: c.author?.login,
+          avatar_url: c.author?.avatar_url,
+          date: c.commit?.author?.date || null,
+        },
+        html_url: c.html_url || `https://github.com/${owner}/${repo}/commit/${c.sha || ''}`,
+      }));
+      return new Response(JSON.stringify(commits), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     if (action === 'branches') {
