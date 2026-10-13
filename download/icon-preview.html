@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synap — Preview de Ícones</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #111217;
+      color: #f3efe6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #a39d93;
+    }
+    .icon-row {
+      display: flex;
+      gap: 60px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .icon-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+      border-radius: 16px;
+      background: #181714;
+      border: 1px solid #2d2b26;
+      min-width: 140px;
+    }
+    .icon-card h3 {
+      font-size: 0.8rem;
+      color: #8c867a;
+      font-weight: 500;
+    }
+    .icon-pair {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .off {
+      background: transparent;
+      color: #a39d93;
+      border: 1px solid transparent;
+    }
+    .off:hover {
+      background: #302d27;
+      color: #f3efe6;
+    }
+    .on {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+    .on::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: rgba(16, 185, 129, 0.2);
+      animation: ping 1.5s infinite;
+    }
+    @keyframes ping {
+      0% { transform: scale(1); opacity: 0.75; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    .on svg {
+      position: relative;
+      z-index: 1;
+    }
+    .label {
+      font-size: 0.65rem;
+      color: #5c5851;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .label.active { color: #34d399; }
+    .divider {
+      width: 1px;
+      height: 24px;
+      background: #3b3831;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Synap — Preview de Ícones (Modo Voz Contínua)</h1>
+
+  <div class="icon-row">
+
+    <div class="icon-card">
+      <h3>AudioLines</h3>
+      <div class="icon-pair">
+        <div>
+          <button class="icon-btn off" onclick="toggleIcon(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/>
+            </svg>
+          </button>
+          <div class="label">Off</div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <button class="icon-btn on" onclick="toggleIcon(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/>
+            </svg>
+          </button>
+          <div class="label active">On</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="icon-card">
+      <h3>Mic (com glow)</h3>
+      <div class="icon-pair">
+        <div>
+          <button class="icon-btn off" onclick="toggleIcon(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </button>
+          <div class="label">Off</div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <button class="icon-btn on" onclick="toggleIcon(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </button>
+          <div class="label active">On</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="icon-card">
+      <h3>Waves</h3>
+      <div class="icon-pair">
+        <div>
+          <button class="icon-btn off" onclick="toggleIcon(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+              <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+              <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+            </svg>
+          </button>
+          <div class="label">Off</div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <button class="icon-btn on" onclick="toggleIcon(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+              <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+              <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+            </svg>
+          </button>
+          <div class="label active">On</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="color: #5c5851; font-size: 0.75rem;">Clique nos ícones pra alternar entre Off / On</p>
+
+  <script>
+    function toggleIcon(btn) {
+      if (btn.classList.contains('on')) {
+        btn.classList.remove('on');
+        btn.classList.add('off');
+        btn.nextElementSibling.classList.remove('active');
+        btn.nextElementSibling.textContent = 'Off';
+      } else {
+        btn.classList.remove('off');
+        btn.classList.add('on');
+        btn.nextElementSibling.classList.add('active');
+        btn.nextElementSibling.textContent = 'On';
+      }
+    }
+  </script>
+
+</body>
+</html>
