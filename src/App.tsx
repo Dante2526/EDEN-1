@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check, MessageSquare, Eye, Blocks } from 'lucide-react';
+import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check } from 'lucide-react';
 import {
   Conversation,
   Message,
@@ -2619,6 +2619,27 @@ function AppContent() {
           isTerminalOpen={isTerminalOpen}
           isStudioMode={isStudioMode}
           onToggleStudioMode={setIsStudioMode}
+          mainViewTab={mainViewTab}
+          onChangeMainViewTab={(tab) => {
+            setMainViewTab(tab);
+            if (tab === 'chat') {
+              setIsStudioMode(false);
+              if (activeProject) setShowProjectWorkspace(false);
+            } else if (tab === 'preview') {
+              if (!activeProject) {
+                setSidebarTab('projects');
+                setIsSidebarOpen(true);
+                setMainViewTab('chat');
+                return;
+              }
+              setIsStudioMode(false);
+              setShowProjectWorkspace(true);
+            } else if (tab === 'agentes') {
+              setIsStudioMode(true);
+              if (activeProject) setShowProjectWorkspace(false);
+            }
+          }}
+          activeProjectName={activeProject?.name ?? null}
           errorCount={errorHistory.length}
           onOpenErrors={() => setIsErrorModalOpen(true)}
         />
@@ -2638,75 +2659,6 @@ function AppContent() {
             </button>
           </div>
         )}
-
-        {/* Main View Tabs (Chat / Preview / Agentes) — estilo Google AI Studio */}
-        <div className="px-3 sm:px-6 pt-2 pb-1 flex items-center gap-1 border-b border-[#2d2a25] bg-[#1d1b18]">
-          <button
-            type="button"
-            onClick={() => {
-              setMainViewTab('chat');
-              setIsStudioMode(false);
-              if (activeProject) setShowProjectWorkspace(false);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              mainViewTab === 'chat'
-                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33]'
-                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a] border border-transparent'
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span>Chat</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (!activeProject) {
-                // Sem projeto ativo → abre aba de projetos na sidebar
-                setSidebarTab('projects');
-                setIsSidebarOpen(true);
-                return;
-              }
-              setMainViewTab('preview');
-              setIsStudioMode(false);
-              setShowProjectWorkspace(true);
-            }}
-            disabled={!activeProject}
-            title={activeProject ? `Preview de ${activeProject.name}` : 'Nenhum projeto aberto — clique pra abrir a lista'}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              mainViewTab === 'preview'
-                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33]'
-                : activeProject
-                ? 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a] border border-transparent'
-                : 'text-[#5e5a52] border border-transparent cursor-not-allowed opacity-60'
-            }`}
-          >
-            <Eye className={`w-3.5 h-3.5 shrink-0 ${activeProject ? 'text-[#d97757]' : 'text-[#5e5a52]'}`} />
-            <span>Preview</span>
-            {activeProject && (
-              <span className="hidden sm:inline text-[9px] text-[#5e5a52] font-mono truncate max-w-[80px]">
-                · {activeProject.name}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setMainViewTab('agentes');
-              setIsStudioMode(true);
-              if (activeProject) setShowProjectWorkspace(false);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-              mainViewTab === 'agentes'
-                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33]'
-                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a] border border-transparent'
-            }`}
-          >
-            <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span>Agentes</span>
-          </button>
-        </div>
 
         {/* Conditional render based on mainViewTab */}
         {mainViewTab === 'agentes' || isStudioMode ? (

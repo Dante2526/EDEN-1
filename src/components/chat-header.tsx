@@ -14,6 +14,7 @@ import {
   Bot,
   Sun,
   Moon,
+  Eye,
 } from 'lucide-react';
 import { ClaudeLogo } from './claude-logo';
 import { ActiveRepoState } from '../lib/types';
@@ -32,6 +33,11 @@ interface ChatHeaderProps {
   isTerminalOpen?: boolean;
   isStudioMode?: boolean;
   onToggleStudioMode?: (isStudio: boolean) => void;
+  /** Aba ativa no main view: 'chat' | 'preview' | 'agentes' (Agentes == Studio Mode) */
+  mainViewTab?: 'chat' | 'preview' | 'agentes';
+  onChangeMainViewTab?: (tab: 'chat' | 'preview' | 'agentes') => void;
+  /** Nome do projeto ativo (mostrado no botão Preview). Se null, Preview fica desabilitado. */
+  activeProjectName?: string | null;
   errorCount?: number;
   onOpenErrors?: () => void;
   theme?: 'dark' | 'light';
@@ -52,6 +58,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
   isTerminalOpen = false,
   isStudioMode = false,
   onToggleStudioMode,
+  mainViewTab = 'chat',
+  onChangeMainViewTab,
+  activeProjectName = null,
   errorCount = 0,
   onOpenErrors,
   theme = 'dark',
@@ -101,33 +110,64 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
         )}
       </div>
 
-      {/* Center: Exactly Centered Chat / Studio Switcher */}
-      {onToggleStudioMode && (
+      {/* Center: Chat / Preview / Studio Switcher */}
+      {onToggleStudioMode && onChangeMainViewTab && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto z-20">
           <div className="flex bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-2d2b26)] rounded-xl p-1 shadow-md">
+            {/* Chat */}
             <button
               type="button"
-              onClick={() => onToggleStudioMode(false)}
-              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
-                !isStudioMode
+              onClick={() => {
+                onChangeMainViewTab('chat');
+                onToggleStudioMode(false);
+              }}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
+                mainViewTab === 'chat'
                   ? 'bg-[#d97757] text-white shadow-sm font-semibold'
                   : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
               <MessageSquare className="w-4 h-4 shrink-0" />
-              <span>Chat</span>
+              <span className="hidden sm:inline">Chat</span>
             </button>
+
+            {/* Preview */}
             <button
               type="button"
-              onClick={() => onToggleStudioMode(true)}
-              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
-                isStudioMode
+              onClick={() => {
+                if (!activeProjectName) return;
+                onChangeMainViewTab('preview');
+                onToggleStudioMode(false);
+              }}
+              disabled={!activeProjectName}
+              title={activeProjectName ? `Preview de ${activeProjectName}` : 'Nenhum projeto aberto'}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
+                mainViewTab === 'preview'
+                  ? 'bg-[#d97757] text-white shadow-sm font-semibold cursor-pointer'
+                  : activeProjectName
+                  ? 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)] cursor-pointer'
+                  : 'text-[color:var(--c-fg-5e5a52)] opacity-50 cursor-not-allowed'
+              }`}
+            >
+              <Eye className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Preview</span>
+            </button>
+
+            {/* Studio (Agentes) */}
+            <button
+              type="button"
+              onClick={() => {
+                onChangeMainViewTab('agentes');
+                onToggleStudioMode(true);
+              }}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
+                mainViewTab === 'agentes'
                   ? 'bg-[#d97757] text-white shadow-sm font-semibold'
                   : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
               <Bot className="w-4 h-4 shrink-0" />
-              <span>Studio</span>
+              <span className="hidden sm:inline">Studio</span>
             </button>
           </div>
         </div>
