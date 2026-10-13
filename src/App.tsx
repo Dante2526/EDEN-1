@@ -725,6 +725,9 @@ function AppContent() {
           const audio = new Audio(url);
           // Armazena no ref pra poder interromper
           currentTTSAudioRef.current = audio;
+          // FORÇA o microfone a reativar imediatamente (pra permitir interromper)
+          // O VoiceButton vai ignorar o próprio áudio da IA (continuous=false só captura frases novas)
+          window.dispatchEvent(new CustomEvent('synap:force-start-listening'));
           audio.onended = () => {
             URL.revokeObjectURL(url);
             currentTTSAudioRef.current = null;

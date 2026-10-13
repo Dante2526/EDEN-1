@@ -53,23 +53,42 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     if (!continuousMode) return;
 
     const handleResume = () => {
-      if (!isManuallyStoppedRef.current && isListeningRef.current) {
-        try {
-          if (recognitionRef.current) {
-            recognitionRef.current.start();
-          } else {
-            startListening();
-          }
-        } catch {
-          setTimeout(() => {
-            try { startListening(); } catch {}
-          }, 200);
+      // No modo contínuo, sempre reativa o microfone (mesmo se já estava ouvindo)
+      // Isso garante que o usuário pode interromper a IA falando a qualquer momento
+      try {
+        if (recognitionRef.current && !isListeningRef.current) {
+          recognitionRef.current.start();
+        } else if (!recognitionRef.current) {
+          startListening();
         }
+      } catch {
+        // Se já está ouvindo, ignora o erro
+        setTimeout(() => {
+          try {
+            if (!isListeningRef.current) startListening();
+          } catch {}
+        }, 200);
       }
     };
 
+    // Também escuta evento pra FORÇAR start do microfone (quando IA começa a falar)
+    const handleForceStart = () => {
+      try {
+        if (recognitionRef.current) {
+          try { recognitionRef.current.abort(); } catch {}
+        }
+        setTimeout(() => {
+          if (!isListeningRef.current) startListening();
+        }, 100);
+      } catch {}
+    };
+
     window.addEventListener('synap:resume-listening', handleResume);
-    return () => window.removeEventListener('synap:resume-listening', handleResume);
+    window.addEventListener('synap:force-start-listening', handleForceStart);
+    return () => {
+      window.removeEventListener('synap:resume-listening', handleResume);
+      window.removeEventListener('synap:force-start-listening', handleForceStart);
+    };
   }, [continuousMode]);
 
   // No modo contínuo, não desabilita o botão durante streaming
@@ -140,13 +159,27 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
 
     recognition.onend = () => {
       // Com continuous=false, onend dispara após cada frase
-      // Se o usuário não parou manualmente, reinicia pra capturar a próxima
+      // No modo contínuo, SEMPRE reinicia (mesmo durante TTS)
+      // pra permitir interromper a IA falando
+      if (continuousMode && !isManuallyStoppedRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          setTimeout(() => {
+            if (!isManuallyStoppedRef.current) {
+              try { recognition.start(); } catch {}
+            }
+          }, 100);
+        }
+        return;
+      }
+      // Modo normal: só reinicia se ainda ativo
       if (!isManuallyStoppedRef.current && isListeningRef.current) {
         try {
           recognition.start();
           return;
         } catch {
-          // Se falhar ao reiniciar rapidamente, tenta novamente em 100ms
           setTimeout(() => {
             if (!isManuallyStoppedRef.current && isListeningRef.current) {
               try { recognition.start(); } catch {}
