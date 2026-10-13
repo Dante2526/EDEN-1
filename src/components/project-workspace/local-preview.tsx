@@ -141,6 +141,20 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     #root { min-height: 100vh; }
     ${customStyles}
+    #synap-loading {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: #181714; color: #8c867a; font-family: sans-serif; font-size: 12px;
+      z-index: 9999;
+    }
+    .synap-spinner {
+      width: 24px; height: 24px;
+      border: 2px solid rgba(217, 119, 87, 0.3);
+      border-top-color: #d97757;
+      border-radius: 50%;
+      animation: synap-spin 0.8s linear infinite;
+    }
+    @keyframes synap-spin { to { transform: rotate(360deg); } }
   </style>
   <script type="importmap">
   ${JSON.stringify({ imports: importMap }, null, 2)}
@@ -149,21 +163,101 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 </head>
 <body>
   <div id="root"></div>
+  <div id="synap-loading">
+    <div class="synap-spinner"></div>
+    <div>Compilando preview...</div>
+  </div>
   <script>
+    // Sinaliza pro parent que o iframe carregou
+    window.addEventListener('load', function() {
+      window.parent.postMessage({ type: 'synap-preview-iframe-loaded' }, '*');
+    });
+
+    // Captura erros de runtime e mostra no iframe + manda pro parent
     window.onerror = function(msg, url, line, col, err) {
-      const root = document.getElementById('root');
-      root.innerHTML = '<div style="padding:20px;font-family:monospace;color:#ef4444;background:#1a0d0d;min-height:100vh"><h3>❌ Erro de runtime</h3><pre style="white-space:pre-wrap;word-break:break-all">' + (err && err.stack ? err.stack : msg) + '</pre></div>';
+      var errorHtml = '<div style="padding:20px;font-family:monospace;color:#ef4444;background:#1a0d0d;min-height:100vh"><h3>❌ Erro de runtime</h3><pre style="white-space:pre-wrap;word-break:break-all">' + (err && err.stack ? err.stack : msg) + '</pre></div>';
+      var root = document.getElementById('root');
+      if (root) root.innerHTML = errorHtml;
+      var loading = document.getElementById('synap-loading');
+      if (loading) loading.style.display = 'none';
+      window.parent.postMessage({
+        type: 'synap-preview-error',
+        message: (err && err.stack ? err.stack : String(msg))
+      }, '*');
+      return false;
     };
     window.addEventListener('unhandledrejection', function(event) {
-      const root = document.getElementById('root');
-      root.innerHTML += '<div style="padding:10px;font-family:monospace;color:#ef4444;background:#1a0d0d"><strong>Promise rejeitada:</strong><pre style="white-space:pre-wrap">' + (event.reason && event.reason.stack ? event.reason.stack : String(event.reason)) + '</pre></div>';
+      var root = document.getElementById('root');
+      if (root) {
+        root.innerHTML += '<div style="padding:10px;font-family:monospace;color:#ef4444;background:#1a0d0d"><strong>Promise rejeitada:</strong><pre style="white-space:pre-wrap">' + (event.reason && event.reason.stack ? event.reason.stack : String(event.reason)) + '</pre></div>';
+      }
+      window.parent.postMessage({
+        type: 'synap-preview-error',
+        message: 'Promise rejeitada: ' + (event.reason && event.reason.message ? event.reason.message : String(event.reason))
+      }, '*');
     });
   </script>
-  <script type="text/babel" data-type="module" data-presets="react,typescript">
-  ${appContent}
-  </script>
-  <script type="text/babel" data-type="module" data-presets="react,typescript">
-  ${mainContent}
+  <script>
+    // Transpila e executa o App + main com Babel
+    // Usa fetch + Babel.transform pra garantir ordem de execução
+    window.addEventListener('load', function() {
+      try {
+        // Código do App
+        var appCode = ${JSON.stringify(appContent)};
+        // Código do main
+        var mainCode = ${JSON.stringify(mainContent)};
+
+        // Transpila App primeiro (exporta App)
+        var appTransformed = Babel.transform(appCode, {
+          presets: ['react', 'typescript'],
+          filename: 'App.tsx',
+          sourceMaps: 'inline',
+        }).code;
+
+        // Transpila main (importa App)
+        var mainTransformed = Babel.transform(mainCode, {
+          presets: ['react', 'typescript'],
+          filename: 'main.tsx',
+          sourceMaps: 'inline',
+        }).code;
+
+        // Substitui import do App por referência direta
+        // Pra evitar problemas com import maps pra arquivos locais
+        var combinedCode = '(function() {\\n';
+        combinedCode += 'var __synapExports = {};\\n';
+
+        // Wrap do App como module
+        combinedCode += 'try {\\n';
+        combinedCode += appTransformed.replace(/export\\s+default\\s+/g, '__synapExports.App = ').replace(/export\\s+/g, '__synapExports.');
+        combinedCode += '\\n} catch(e) { window.onerror(e.message, "", 0, 0, e); return; }\\n';
+
+        // Wrap do main, com App injetado
+        combinedCode += 'try {\\n';
+        combinedCode += mainTransformed
+          .replace(/import\\s+App\\s+from\\s+['"][\\.\\/]*App['"];?/g, 'var App = __synapExports.App || __synapExports.default;')
+          .replace(/import\\s+React\\s+from\\s+['"]react['"];?/g, '')
+          .replace(/import\\s+ReactDOM\\s+from\\s+['"]react-dom['"];?/g, '')
+          .replace(/import\\s+ReactDOM\\s+from\\s+['"]react-dom\\/client['"];?/g, '');
+        combinedCode += '\\n} catch(e) { window.onerror(e.message, "", 0, 0, e); }\\n';
+
+        combinedCode += '})();\\n';
+
+        // Cria script module com o código combinado
+        var script = document.createElement('script');
+        script.type = 'module';
+        script.textContent = combinedCode;
+        document.body.appendChild(script);
+
+        // Esconde loading depois de 500ms (deixa o React montar)
+        setTimeout(function() {
+          var loading = document.getElementById('synap-loading');
+          if (loading) loading.style.display = 'none';
+          window.parent.postMessage({ type: 'synap-preview-compiled' }, '*');
+        }, 500);
+      } catch(e) {
+        window.onerror(e.message, "", 0, 0, e);
+      }
+    });
   </script>
 </body>
 </html>`;
@@ -186,18 +280,32 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
     }
   }, [project, refreshKey]);
 
-  // Recebe mensagens de erro do iframe
+  // Recebe mensagens de erro/sucesso do iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'synap-preview-error') {
         setError(event.data.message);
-      } else if (event.data?.type === 'synap-preview-loaded') {
         setLoading(false);
+      } else if (event.data?.type === 'synap-preview-compiled') {
+        setLoading(false);
+      } else if (event.data?.type === 'synap-preview-iframe-loaded') {
+        // iframe carregou, mas ainda pode estar compilando
+        // Não muda loading aqui — espera 'synap-preview-compiled'
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Timeout: se não compilar em 25s, mostra erro
+  useEffect(() => {
+    if (!loading) return;
+    const timer = setTimeout(() => {
+      setError('Tempo limite excedido (25s). O Babel standalone pode estar lento pra carregar. Tente novamente, ou abra em nova aba.');
+      setLoading(false);
+    }, 25000);
+    return () => clearTimeout(timer);
+  }, [loading, refreshKey]);
 
   // Marca loading quando HTML muda
   useEffect(() => {
