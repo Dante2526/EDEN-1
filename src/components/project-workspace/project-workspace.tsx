@@ -19,8 +19,6 @@ import {
   FileCode,
   Eye,
   Terminal,
-  PanelRightClose,
-  PanelLeftClose,
   Files,
   AlertCircle,
   Sparkles,
@@ -90,8 +88,9 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
   const [nameInput, setNameInput] = useState(project.name);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [bottomPanel, setBottomPanel] = useState<BottomPanel>('preview');
-  const [showExplorer, setShowExplorer] = useState(true);
-  const [showRightPanel, setShowRightPanel] = useState(true);
+  const [showExplorer, setShowExplorer] = useState(false); // explorer oculto por padrão
+  const [showCode, setShowCode] = useState(false); // código oculto por padrão — só preview
+  const [showRightPanel, setShowRightPanel] = useState(true); // painel do preview sempre visível
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
 
@@ -157,15 +156,6 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-[#2d2a25] bg-[#1d1b18]">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={() => setShowExplorer((v) => !v)}
-            title={showExplorer ? 'Ocultar arquivos' : 'Mostrar arquivos'}
-            className="p-1.5 rounded-lg text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622] transition cursor-pointer shrink-0"
-          >
-            {showExplorer ? <PanelLeftClose className="w-4 h-4" /> : <Files className="w-4 h-4" />}
-          </button>
-
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#d97757]/20 to-[#d97757]/5 border border-[#d97757]/30 flex items-center justify-center shrink-0">
             <FileCode className="w-3.5 h-3.5 text-[#d97757]" />
           </div>
@@ -231,13 +221,52 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          {/* Toggle: Preview / Código — estilo Google AI Studio */}
+          <div className="flex bg-[#22201d] border border-[#3b3831] rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                setShowCode(false);
+                setShowRightPanel(true);
+              }}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
+                !showCode
+                  ? 'bg-[#d97757] text-white shadow-sm'
+                  : 'text-[#8c867a] hover:text-[#f3efe6]'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Preview</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCode(true);
+                setShowRightPanel(false);
+              }}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
+                showCode
+                  ? 'bg-[#d97757] text-white shadow-sm'
+                  : 'text-[#8c867a] hover:text-[#f3efe6]'
+              }`}
+            >
+              <FileCode className="w-3.5 h-3.5" />
+              <span>Código</span>
+            </button>
+          </div>
+
+          {/* Toggle Explorer (árvore de arquivos) */}
           <button
             type="button"
-            onClick={() => setShowRightPanel((v) => !v)}
-            title={showRightPanel ? 'Ocultar preview' : 'Mostrar preview'}
-            className="p-1.5 rounded-lg text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622] transition cursor-pointer"
+            onClick={() => setShowExplorer((v) => !v)}
+            title={showExplorer ? 'Ocultar arquivos' : 'Mostrar arquivos'}
+            className={`p-1.5 rounded-lg transition cursor-pointer ${
+              showExplorer
+                ? 'text-[#d97757] bg-[#282622]'
+                : 'text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622]'
+            }`}
           >
-            {showRightPanel ? <PanelRightClose className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            <Files className="w-4 h-4" />
           </button>
 
           {showDeleteConfirm ? (
@@ -325,13 +354,15 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
               <SandpackFileExplorer className="!w-[180px] shrink-0" />
             )}
 
-            <SandpackCodeEditor
-              showLineNumbers
-              showInlineErrors
-              showTabs
-              closableTabs
-              className="!flex-1 !min-w-0"
-            />
+            {showCode && (
+              <SandpackCodeEditor
+                showLineNumbers
+                showInlineErrors
+                showTabs
+                closableTabs
+                className="!flex-1 !min-w-0"
+              />
+            )}
 
             {/* Listener invisível que sincroniza mudanças do Sandpack com o storage do Synap */}
             <SandpackSyncListener
@@ -339,7 +370,7 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
               activeFile={activeFilePath}
             />
 
-            {showRightPanel && (
+            {showRightPanel && !showCode && (
               <div className="!flex-1 !min-w-0 flex flex-col bg-[#181714]">
                 {/* Tabs do painel direito */}
                 <div className="flex items-center justify-between border-b border-[#2d2a25] bg-[#1d1b18] px-2 py-1">
