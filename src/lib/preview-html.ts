@@ -132,10 +132,20 @@ export function rewriteImports(
 /**
  * Gera o HTML completo pro iframe do preview.
  * 
- * Usa um sistema de módulos CommonJS inline (sem blob URLs) pra evitar
- * o bug "Failed to resolve module specifier" com blob URLs + import maps.
+ * ABORDAGEM: Sistema de módulos CommonJS INLINE (sem blob URLs, sem import maps).
  * 
- * Apenas deps npm (react, lucide-react, etc.) usam import map → esm.sh.
+ * Por que não blob URLs + import maps?
+ * - Blob URLs não são hierárquicas → imports relativos (./App) falham
+ * - Import maps têm restrições de timing no browser (devem ser registradas
+ *   antes de qualquer module script, e em alguns browsers são ignoradas
+ *   se adicionadas dinamicamente após o load)
+ * 
+ * Como funciona:
+ * 1. Transpila cada arquivo .tsx/.ts com Babel → CommonJS (require/module.exports)
+ * 2. Registra cada módulo numa registry inline
+ * 3. Carrega deps npm (react, etc.) via import() dinâmico do esm.sh
+ * 4. Executa o entry point, que chama require() recursivamente
+ * 5. Tudo num único <script> inline — sem blob, sem import map
  */
 export function buildPreviewHtml(options: BuildPreviewHtmlOptions): string {
   const { files, dependencies } = options;
@@ -248,9 +258,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       z-index: 9999; white-space: pre-wrap; word-break: break-all;
     }
   </style>
-  <script type="importmap">
-  ${JSON.stringify({ imports: importMap }, null, 2)}
-  </script>
   <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"><\/script>
 </head>
 <body>
@@ -322,136 +329,138 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           throw new Error('Babel não carregou. Verifique CSP ou conexão.');
         }
 
-        // IMPORTANTE: usamos BARE specifiers (sem ./) pra todos os imports locais.
-        // Se usar ./ o browser tenta resolver relativo ao blob URL (que não é
-        // hierárquico) → erro "Failed to resolve module specifier".
-        // Bare specifiers são resolvidos direto no import map sem resolução de URL.
+        // ===== SISTEMA DE MÓDULOS COMMONJS INLINE =====
+        // Sem blob URLs, sem import maps. Tudo num único script.
+        var moduleRegistry = {};
+        var moduleCache = {};
 
-        var SYNAP_IMPORT_MAP = ${JSON.stringify(importMap)};
-        var localImportMap = { imports: {} };
-
-        // Copia deps npm pro import map
-        for (var depName in SYNAP_IMPORT_MAP) {
-          localImportMap.imports[depName] = SYNAP_IMPORT_MAP[depName];
-        }
-
-        // Transpila cada arquivo e cria blob URL
+        // Transpila cada arquivo pra CommonJS e registra
         for (var i = 0; i < SYNAP_FILES.length; i++) {
           var fileObj = SYNAP_FILES[i];
           try {
             var transformed = Babel.transform(fileObj.code, {
-              presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
+              presets: [
+                ['react'],
+                ['typescript', { isTSX: true, allExtensions: true }],
+              ],
+              plugins: ['transform-modules-commonjs'],
               filename: fileObj.path,
-              sourceMaps: 'inline',
             }).code;
 
-            // Reescreve imports relativos (./X, ../X) pra BARE specifiers
-            // Ex: ./App → synap:src/App.tsx (bare, resolve via import map)
-            //     ../components/Button → synap:src/components/Button.tsx
-            var rewritten = transformed.replace(/(from\s+|import\s+)['"]([^'"]+)['"]/g, function(match, prefix, importPath) {
-              if (importPath.startsWith('.')) {
-                var resolved = resolveImportPath(fileObj.path, importPath);
+            // Reescreve require() de imports relativos pra resolver paths
+            var rewritten = transformed.replace(/require\(\s*['"]([^'"]+)['"]\s*\)/g, function(match, reqPath) {
+              if (reqPath.startsWith('.')) {
+                var resolved = resolveImportPath(fileObj.path, reqPath);
                 if (resolved) {
                   var found = findFile(resolved);
-                  if (found) {
-                    // BARE specifier — sem ./ prefix
-                    return prefix + "'@synap/" + found + "'";
-                  }
+                  if (found) return "require('" + found + "')";
                 }
               }
-              if (importPath.startsWith('@/')) {
-                var aliased = importPath.substring(2);
+              if (reqPath.startsWith('@/')) {
+                var aliased = reqPath.substring(2);
                 var foundAlias = findFile(aliased);
-                if (foundAlias) return prefix + "'@synap/" + foundAlias + "'";
+                if (foundAlias) return "require('" + foundAlias + "')";
               }
-              return match;
+              // Bare specifier (npm dep) — mantém como string
+              // Vai ser resolvido pelo synapRequire via depCache
+              return "require('" + reqPath + "')";
             });
 
-            var blob = new Blob([rewritten], { type: 'application/javascript' });
-            var url = URL.createObjectURL(blob);
-
-            // Registra no import map com BARE specifier (sem ./)
-            localImportMap.imports['@synap/' + fileObj.path] = url;
-            // Variante sem extensão
-            var noExt = fileObj.path.replace(/\.(tsx|ts|jsx|js)$/, '');
-            localImportMap.imports['@synap/' + noExt] = url;
+            // Cria função do módulo (CommonJS wrapper)
+            moduleRegistry[fileObj.path] = new Function('exports', 'require', 'module', '__filename', '__dirname', rewritten);
           } catch (e) {
             throw new Error('Erro ao transpilar ' + fileObj.path + ': ' + (e.message || e));
           }
         }
 
-        // Cria entry script
-        var entryCode;
-        var entryFileObj = null;
-        if (SYNAP_ENTRY) {
-          for (var k = 0; k < SYNAP_FILES.length; k++) {
-            if (SYNAP_FILES[k].path === SYNAP_ENTRY) {
-              entryFileObj = SYNAP_FILES[k];
-              break;
+        // ===== CARREGA DEPS NPM VIA ESM (esm.sh) =====
+        var npmDeps = ${JSON.stringify(Object.keys(importMap))};
+        var depCache = {};
+
+        // Importa todas as deps npm via dynamic import()
+        var importPromises = npmDeps.map(function(depName) {
+          var depUrl = ${JSON.stringify(importMap)}[depName];
+          return import(depUrl).then(function(mod) {
+            depCache[depName] = mod;
+            // Se é react, também registra subpath exports
+            if (depName === 'react') {
+              depCache['react/jsx-runtime'] = mod.jsxRuntime || mod;
             }
+          }).catch(function(err) {
+            console.warn('Falha ao carregar dep:', depName, err);
+          });
+        });
+
+        Promise.all(importPromises).then(function() {
+          // ===== FUNÇÃO require() CUSTOMizada =====
+          function synapRequire(path) {
+            // 1. Deps npm (bare specifiers)
+            if (depCache[path]) return depCache[path];
+            
+            // 2. Subpath imports (react/jsx-runtime, etc.)
+            for (var depKey in depCache) {
+              if (path === depKey || path.startsWith(depKey + '/')) {
+                return depCache[depKey];
+              }
+            }
+
+            // 3. Módulos locais
+            if (moduleCache[path]) return moduleCache[path].exports;
+            if (!moduleRegistry[path]) {
+              // Tenta encontrar com extensões
+              var found = findFile(path);
+              if (found && moduleRegistry[found]) {
+                return synapRequire(found);
+              }
+              throw new Error('Módulo não encontrado: ' + path);
+            }
+
+            var module = { exports: {} };
+            moduleCache[path] = module;
+            try {
+              var dirname = path.indexOf('/') >= 0 ? path.substring(0, path.lastIndexOf('/')) : '';
+              moduleRegistry[path](module.exports, synapRequire, module, path, dirname);
+            } catch(e) {
+              delete moduleCache[path];
+              throw e;
+            }
+            return module.exports;
           }
-        }
-        if (entryFileObj) {
-          var entryTransformed = Babel.transform(entryFileObj.code, {
-            presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
-            filename: SYNAP_ENTRY,
-          }).code;
-          entryCode = entryTransformed.replace(/(from\s+|import\s+)['"]([^'"]+)['"]/g, function(match, prefix, importPath) {
-            if (importPath.startsWith('.')) {
-              var resolved = resolveImportPath(SYNAP_ENTRY, importPath);
-              if (resolved) {
-                var found = findFile(resolved);
-                if (found) return prefix + "'@synap/" + found + "'";
+
+          // ===== EXECUTA ENTRY POINT =====
+          var entry = SYNAP_ENTRY;
+          if (!entry || !moduleRegistry[entry]) {
+            // Cria entry default
+            var entryCode = Babel.transform(SYNAP_DEFAULT_ENTRY, {
+              presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
+              plugins: ['transform-modules-commonjs'],
+              filename: 'main.tsx',
+            }).code;
+            entryCode = entryCode.replace(/require\(\s*['"]([^'"]+)['"]\s*\)/g, function(match, reqPath) {
+              if (reqPath.startsWith('.')) {
+                var resolved = resolveImportPath('src/main.tsx', reqPath);
+                if (resolved) {
+                  var found = findFile(resolved);
+                  if (found) return "require('" + found + "')";
+                }
               }
-            }
-            if (importPath.startsWith('@/')) {
-              var aliased = importPath.substring(2);
-              var foundAlias = findFile(aliased);
-              if (foundAlias) return prefix + "'@synap/" + foundAlias + "'";
-            }
-            return match;
-          });
-        } else {
-          // Entry default
-          entryCode = Babel.transform(SYNAP_DEFAULT_ENTRY, {
-            presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
-            filename: 'main.tsx',
-          }).code;
-          entryCode = entryCode.replace(/(from\s+|import\s+)['"]([^'"]+)['"]/g, function(match, prefix, importPath) {
-            if (importPath.startsWith('.')) {
-              var resolved = resolveImportPath('src/main.tsx', importPath);
-              if (resolved) {
-                var found = findFile(resolved);
-                if (found) return prefix + "'@synap/" + found + "'";
-              }
-            }
-            return match;
-          });
-        }
+              return "require('" + reqPath + "')";
+            });
+            entry = '__synap_entry__';
+            moduleRegistry[entry] = new Function('exports', 'require', 'module', '__filename', '__dirname', entryCode);
+          }
 
-        // Injeta import map no documento
-        var importMapScript = document.createElement('script');
-        importMapScript.type = 'importmap';
-        importMapScript.textContent = JSON.stringify(localImportMap);
-        document.head.appendChild(importMapScript);
+          synapRequire(entry);
 
-        // Cria module script com o entry point (via blob URL)
-        var entryBlob = new Blob([entryCode], { type: 'application/javascript' });
-        var entryUrl = URL.createObjectURL(entryBlob);
-        var moduleScript = document.createElement('script');
-        moduleScript.type = 'module';
-        moduleScript.src = entryUrl;
-        moduleScript.onerror = function(e) {
-          window.onerror('Falha ao carregar módulo de entrada', entryUrl, 0, 0, e);
-        };
-        document.body.appendChild(moduleScript);
-
-        // Esconde loading depois de 1s
-        setTimeout(function() {
-          var loading = document.getElementById('synap-loading');
-          if (loading) loading.style.display = 'none';
-          window.parent.postMessage({ type: 'synap-preview-compiled' }, '*');
-        }, 1000);
+          // Esconde loading
+          setTimeout(function() {
+            var loading = document.getElementById('synap-loading');
+            if (loading) loading.style.display = 'none';
+            window.parent.postMessage({ type: 'synap-preview-compiled' }, '*');
+          }, 500);
+        }).catch(function(err) {
+          window.onerror('Erro ao carregar dependências: ' + (err.message || err), '', 0, 0, err);
+        });
       } catch (e) {
         window.onerror(e.message || String(e), '', 0, 0, e);
       }
