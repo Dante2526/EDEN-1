@@ -259,12 +259,12 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         aria-label={isListening ? 'Parar transcrição de voz' : 'Falar por microfone'}
         title={isListening ? 'Gravando em tempo real... Clique para parar' : 'Falar por voz (transcrição direta)'}
         className={`relative p-1.5 rounded-lg transition-all flex items-center justify-center cursor-pointer ${
-          isListening
+          isListening || continuousMode
             ? 'bg-[#d97757]/20 text-[#d97757] ring-1 ring-[#d97757]/60 shadow-sm'
             : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
         } ${effectiveDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       >
-        {isListening ? (
+        {isListening || continuousMode ? (
           <>
             <span className="absolute inset-0 rounded-lg bg-[#d97757]/30 animate-ping opacity-75" />
             <Mic className="w-4 h-4 text-[#d97757] relative z-10 animate-pulse" />
