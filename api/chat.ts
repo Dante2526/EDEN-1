@@ -1,7 +1,8 @@
 import { checkAuthAndRateLimit, ALLOWED_MODELS, isVisionModel } from '../lib/server/_security';
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'nodejs',
+  maxDuration: 60,
 };
 
 function maxTokensFor(effort: string): number {
