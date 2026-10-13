@@ -131,6 +131,11 @@ export function rewriteImports(
 
 /**
  * Gera o HTML completo pro iframe do preview.
+ * 
+ * Usa um sistema de módulos CommonJS inline (sem blob URLs) pra evitar
+ * o bug "Failed to resolve module specifier" com blob URLs + import maps.
+ * 
+ * Apenas deps npm (react, lucide-react, etc.) usam import map → esm.sh.
  */
 export function buildPreviewHtml(options: BuildPreviewHtmlOptions): string {
   const { files, dependencies } = options;
@@ -140,7 +145,7 @@ export function buildPreviewHtml(options: BuildPreviewHtmlOptions): string {
   const reactVersion = deps['react'] || '18.2.0';
   const reactDomVersion = deps['react-dom'] || reactVersion;
 
-  // Import map base (npm deps)
+  // Import map: só deps npm (não arquivos locais)
   const importMap: Record<string, string> = {
     react: `https://esm.sh/react@${reactVersion}`,
     'react-dom': `https://esm.sh/react-dom@${reactDomVersion}`,
@@ -199,7 +204,7 @@ export function buildPreviewHtml(options: BuildPreviewHtmlOptions): string {
     }
   }
 
-  // Escapa </script> nos códigos (pra não quebrar o HTML do iframe)
+  // Escapa </script> nos códigos
   const escapedFiles = filesToTranspile.map((f) => ({
     ...f,
     code: escapeScriptTags(f.code),
@@ -243,6 +248,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       z-index: 9999; white-space: pre-wrap; word-break: break-all;
     }
   </style>
+  <script type="importmap">
+  ${JSON.stringify({ imports: importMap }, null, 2)}
+  </script>
   <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"><\/script>
 </head>
 <body>
@@ -255,9 +263,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <script>
     window.onerror = function(msg, url, line, col, err) {
       var errorStack = err && err.stack ? err.stack : String(msg);
-      // Detecta erro de CSP especificamente
       if (errorStack.indexOf('Refused to load') >= 0 || errorStack.indexOf('Content Security Policy') >= 0) {
-        errorStack = 'BLOQUEADO POR CSP (Content Security Policy):\\n\\n' + errorStack + '\\n\\nVerifique o vercel.json — precisa liberar unpkg.com, esm.sh, cdn.jsdelivr.net e blob: no script-src.';
+        errorStack = 'BLOQUEADO POR CSP:\\n\\n' + errorStack + '\\n\\nVerifique o vercel.json.';
       }
       var loading = document.getElementById('synap-loading');
       if (loading) loading.style.display = 'none';
@@ -278,7 +285,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
     var SYNAP_FILES = ${JSON.stringify(escapedFiles)};
     var SYNAP_ENTRY = ${JSON.stringify(entryPath)};
-    var SYNAP_IMPORT_MAP = ${JSON.stringify(importMap)};
     var SYNAP_DEFAULT_ENTRY = ${JSON.stringify(escapeScriptTags(defaultEntry))};
 
     function resolveImportPath(importerPath, importPath) {
@@ -310,37 +316,26 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       return null;
     }
 
-    function rewriteImports(code, importerPath) {
-      return code.replace(/(from\\s+|import\\s+)['"]([^'"]+)['"]/g, function(match, prefix, importPath) {
-        if (importPath.startsWith('.')) {
-          var resolved = resolveImportPath(importerPath, importPath);
-          if (resolved) {
-            var found = findFile(resolved);
-            if (found) return prefix + "'./" + found + "'";
-          }
-          return match;
-        }
-        if (importPath.startsWith('@/')) {
-          var aliased = importPath.substring(2);
-          var foundAlias = findFile(aliased);
-          if (foundAlias) return prefix + "'./" + foundAlias + "'";
-        }
-        return match;
-      });
-    }
-
     function buildAndLoad() {
       try {
         if (typeof Babel === 'undefined') {
-          throw new Error('Babel não carregou. Pode ser bloqueio de CSP (verifique vercel.json) ou problema de conexão.');
+          throw new Error('Babel não carregou. Verifique CSP ou conexão.');
         }
 
-        var dataUrls = {};
-        var importMap = { imports: {} };
+        // IMPORTANTE: usamos BARE specifiers (sem ./) pra todos os imports locais.
+        // Se usar ./ o browser tenta resolver relativo ao blob URL (que não é
+        // hierárquico) → erro "Failed to resolve module specifier".
+        // Bare specifiers são resolvidos direto no import map sem resolução de URL.
+
+        var SYNAP_IMPORT_MAP = ${JSON.stringify(importMap)};
+        var localImportMap = { imports: {} };
+
+        // Copia deps npm pro import map
         for (var depName in SYNAP_IMPORT_MAP) {
-          importMap.imports[depName] = SYNAP_IMPORT_MAP[depName];
+          localImportMap.imports[depName] = SYNAP_IMPORT_MAP[depName];
         }
 
+        // Transpila cada arquivo e cria blob URL
         for (var i = 0; i < SYNAP_FILES.length; i++) {
           var fileObj = SYNAP_FILES[i];
           try {
@@ -349,47 +344,98 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               filename: fileObj.path,
               sourceMaps: 'inline',
             }).code;
-            var rewritten = rewriteImports(transformed, fileObj.path);
+
+            // Reescreve imports relativos (./X, ../X) pra BARE specifiers
+            // Ex: ./App → synap:src/App.tsx (bare, resolve via import map)
+            //     ../components/Button → synap:src/components/Button.tsx
+            var rewritten = transformed.replace(/(from\s+|import\s+)['"]([^'"]+)['"]/g, function(match, prefix, importPath) {
+              if (importPath.startsWith('.')) {
+                var resolved = resolveImportPath(fileObj.path, importPath);
+                if (resolved) {
+                  var found = findFile(resolved);
+                  if (found) {
+                    // BARE specifier — sem ./ prefix
+                    return prefix + "'@synap/" + found + "'";
+                  }
+                }
+              }
+              if (importPath.startsWith('@/')) {
+                var aliased = importPath.substring(2);
+                var foundAlias = findFile(aliased);
+                if (foundAlias) return prefix + "'@synap/" + foundAlias + "'";
+              }
+              return match;
+            });
+
             var blob = new Blob([rewritten], { type: 'application/javascript' });
             var url = URL.createObjectURL(blob);
-            dataUrls[fileObj.path] = url;
-            importMap.imports['./' + fileObj.path] = url;
-            importMap.imports[fileObj.path] = url;
-            var noExt = fileObj.path.replace(/\\.(tsx|ts|jsx|js)$/, '');
-            importMap.imports['./' + noExt] = url;
-            importMap.imports[noExt] = url;
+
+            // Registra no import map com BARE specifier (sem ./)
+            localImportMap.imports['@synap/' + fileObj.path] = url;
+            // Variante sem extensão
+            var noExt = fileObj.path.replace(/\.(tsx|ts|jsx|js)$/, '');
+            localImportMap.imports['@synap/' + noExt] = url;
           } catch (e) {
             throw new Error('Erro ao transpilar ' + fileObj.path + ': ' + (e.message || e));
           }
         }
 
+        // Cria entry script
         var entryCode;
+        var entryFileObj = null;
         if (SYNAP_ENTRY) {
-          var entryFile = null;
           for (var k = 0; k < SYNAP_FILES.length; k++) {
             if (SYNAP_FILES[k].path === SYNAP_ENTRY) {
-              entryFile = SYNAP_FILES[k];
+              entryFileObj = SYNAP_FILES[k];
               break;
             }
           }
-          if (entryFile) {
-            var entryTransformed = Babel.transform(entryFile.code, {
-              presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
-              filename: SYNAP_ENTRY,
-            }).code;
-            entryCode = rewriteImports(entryTransformed, SYNAP_ENTRY);
-          } else {
-            entryCode = SYNAP_DEFAULT_ENTRY;
-          }
+        }
+        if (entryFileObj) {
+          var entryTransformed = Babel.transform(entryFileObj.code, {
+            presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
+            filename: SYNAP_ENTRY,
+          }).code;
+          entryCode = entryTransformed.replace(/(from\s+|import\s+)['"]([^'"]+)['"]/g, function(match, prefix, importPath) {
+            if (importPath.startsWith('.')) {
+              var resolved = resolveImportPath(SYNAP_ENTRY, importPath);
+              if (resolved) {
+                var found = findFile(resolved);
+                if (found) return prefix + "'@synap/" + found + "'";
+              }
+            }
+            if (importPath.startsWith('@/')) {
+              var aliased = importPath.substring(2);
+              var foundAlias = findFile(aliased);
+              if (foundAlias) return prefix + "'@synap/" + foundAlias + "'";
+            }
+            return match;
+          });
         } else {
-          entryCode = SYNAP_DEFAULT_ENTRY;
+          // Entry default
+          entryCode = Babel.transform(SYNAP_DEFAULT_ENTRY, {
+            presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
+            filename: 'main.tsx',
+          }).code;
+          entryCode = entryCode.replace(/(from\s+|import\s+)['"]([^'"]+)['"]/g, function(match, prefix, importPath) {
+            if (importPath.startsWith('.')) {
+              var resolved = resolveImportPath('src/main.tsx', importPath);
+              if (resolved) {
+                var found = findFile(resolved);
+                if (found) return prefix + "'@synap/" + found + "'";
+              }
+            }
+            return match;
+          });
         }
 
+        // Injeta import map no documento
         var importMapScript = document.createElement('script');
         importMapScript.type = 'importmap';
-        importMapScript.textContent = JSON.stringify(importMap);
+        importMapScript.textContent = JSON.stringify(localImportMap);
         document.head.appendChild(importMapScript);
 
+        // Cria module script com o entry point (via blob URL)
         var entryBlob = new Blob([entryCode], { type: 'application/javascript' });
         var entryUrl = URL.createObjectURL(entryBlob);
         var moduleScript = document.createElement('script');
@@ -400,6 +446,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         };
         document.body.appendChild(moduleScript);
 
+        // Esconde loading depois de 1s
         setTimeout(function() {
           var loading = document.getElementById('synap-loading');
           if (loading) loading.style.display = 'none';
@@ -422,7 +469,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       setTimeout(function() {
         if (typeof Babel === 'undefined') {
           clearInterval(babelCheck);
-          window.onerror('Babel standalone não carregou em 15s. Provável bloqueio de CSP — verifique vercel.json.', '', 0, 0, null);
+          window.onerror('Babel não carregou em 15s. Verifique CSP.', '', 0, 0, null);
         }
       }, 15000);
     }
