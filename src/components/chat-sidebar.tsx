@@ -12,6 +12,7 @@ import {
   Blocks,
   Sun,
   Moon,
+  Download,
 } from 'lucide-react';
 import { Conversation, ActiveRepoState, Skill, McpServer, KnowledgeFact, KnowledgeCategory } from '../lib/types';
 import { formatDate } from '../lib/utils';
@@ -21,6 +22,7 @@ import { RepoList } from './github/repo-list';
 import { FileExplorer } from './github/file-explorer';
 import { SourceControlPanel } from './source-control/source-control-panel';
 import { ExtensionsPanel } from './extensions/extensions-panel';
+import { DownloaderPanel } from './downloader/downloader-panel';
 
 interface ChatSidebarProps {
   conversations: Conversation[];
@@ -36,8 +38,8 @@ interface ChatSidebarProps {
   onClose: () => void;
   // GitHub & Source Control props
   activeRepo: ActiveRepoState | null;
-  sidebarTab: 'chats' | 'repos' | 'source-control' | 'skills';
-  onChangeTab: (tab: 'chats' | 'repos' | 'source-control' | 'skills') => void;
+  sidebarTab: 'chats' | 'repos' | 'source-control' | 'skills' | 'downloader';
+  onChangeTab: (tab: 'chats' | 'repos' | 'source-control' | 'skills' | 'downloader') => void;
   onSelectRepo: (repo: ActiveRepoState) => void;
   onCloseRepo: () => void;
   onChangeBranch: (branch: string) => void;
@@ -164,13 +166,14 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
           </button>
         </div>
 
-        {/* Navigation Tabs (Chats / Repos / Source Control) - Pilled Segmented Control */}
+        {/* Navigation Tabs (Chats / Repos / Source Control / Skills / Downloader) - Pilled Segmented Control */}
         <div className="px-3 pb-2">
-          <div className="p-1 rounded-xl bg-dark-bg-secondary border border-gray-800/50 dark:border-white/5 flex items-center gap-1 shadow-inner">
+          <div className="p-1 rounded-xl bg-dark-bg-secondary border border-gray-800/50 dark:border-white/5 flex items-center gap-0.5 shadow-inner">
             <button
               type="button"
               onClick={() => onChangeTab('chats')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+              title="Conversas"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg text-[10px] font-medium transition cursor-pointer ${
                 sidebarTab === 'chats'
                   ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
                   : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
@@ -183,7 +186,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             <button
               type="button"
               onClick={() => onChangeTab('repos')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+              title="Repositórios GitHub"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg text-[10px] font-medium transition cursor-pointer ${
                 sidebarTab === 'repos'
                   ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
                   : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
@@ -196,7 +200,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             <button
               type="button"
               onClick={() => onChangeTab('source-control')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
+              title="Source Control"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg text-[10px] font-medium transition cursor-pointer relative ${
                 sidebarTab === 'source-control'
                   ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
                   : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
@@ -205,7 +210,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
               <GitBranch className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Git</span>
               {pendingChangesCount > 0 && (
-                <span className="w-3.5 h-3.5 rounded-full bg-[#d97757] text-white text-[8px] font-bold flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#d97757] text-white text-[8px] font-bold flex items-center justify-center">
                   {pendingChangesCount}
                 </span>
               )}
@@ -214,7 +219,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             <button
               type="button"
               onClick={() => onChangeTab('skills')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer relative ${
+              title="Skills & Extensões"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg text-[10px] font-medium transition cursor-pointer ${
                 sidebarTab === 'skills'
                   ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
                   : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
@@ -222,6 +228,20 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             >
               <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <span>Skills</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onChangeTab('downloader')}
+              title="Downloader de Vídeos"
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg text-[10px] font-medium transition cursor-pointer ${
+                sidebarTab === 'downloader'
+                  ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
+                  : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
+              }`}
+            >
+              <Download className="w-3.5 h-3.5 text-[#d97757] shrink-0" />
+              <span>Baixar</span>
             </button>
           </div>
         </div>
@@ -272,6 +292,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             onDeleteKnowledgeFact={onDeleteKnowledgeFact}
             onClearKnowledgeFacts={onClearKnowledgeFacts}
           />
+        ) : sidebarTab === 'downloader' ? (
+          <DownloaderPanel />
         ) : (
           <>
         {/* New Chat Button (Modern DSS Pill) */}
