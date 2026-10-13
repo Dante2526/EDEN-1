@@ -616,7 +616,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3') return saved;
+      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3' || saved === 'google/gemini-3.1-pro') return saved;
     }
     return 'z-ai/glm-5.3-flash'; // Default mais rápido (Flash) - GLM-5.3 full demora muito pra responder
   });
@@ -1968,7 +1968,7 @@ function AppContent() {
     const activePlan = overridePlanMode !== undefined ? overridePlanMode : isPlanMode;
 
     let effectiveModel = selectedModel;
-    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3';
+    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'google/gemini-3.1-pro';
     if (images.length > 0 && !isVisionModel) {
       effectiveModel = 'z-ai/glm-5.3-flash';
       setSelectedModel('z-ai/glm-5.3-flash');
@@ -2915,7 +2915,7 @@ function AppContent() {
           onSendMessage={handleSendMessage}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3'}
+          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'google/gemini-3.1-pro'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}

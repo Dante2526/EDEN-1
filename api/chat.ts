@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit, ALLOWED_MODELS } from '../lib/server/_security';
+import { checkAuthAndRateLimit, ALLOWED_MODELS, isGoogleModel, isVisionModel } from '../lib/server/_security';
 
 export const config = {
   runtime: 'edge',
@@ -26,11 +26,21 @@ export default async function handler(req: Request) {
     });
   }
 
-  const apiKey = process.env.NVIDIA_API_KEY;
-  if (!apiKey || apiKey === 'sua_key_aqui' || apiKey === 'nvapi-your-key-here' || apiKey.trim() === '') {
+  // Determina qual API usar baseado no modelo
+  const useGoogleApi = isGoogleModel(model || 'z-ai/glm-5.3');
+
+  // Pega a API key correta baseado no provedor
+  const apiKey = useGoogleApi
+    ? process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
+    : process.env.NVIDIA_API_KEY;
+
+  const apiKeyPlaceholder = useGoogleApi ? 'AIzaSy-your-key-here' : 'nvapi-your-key-here';
+  const apiKeyName = useGoogleApi ? 'GOOGLE_API_KEY' : 'NVIDIA_API_KEY';
+
+  if (!apiKey || apiKey === apiKeyPlaceholder || apiKey.trim() === '') {
     return new Response(
       JSON.stringify({
-        error: 'NVIDIA_API_KEY não configurada. Por favor, adicione sua chave NVIDIA no arquivo .env.local ou nas Environment Variables da Vercel.',
+        error: `${apiKeyName} não configurada. Por favor, adicione sua chave ${useGoogleApi ? 'do Google AI Studio' : 'NVIDIA'} no arquivo .env.local ou nas Environment Variables da Vercel.`,
       }),
       {
         status: 401,
@@ -38,6 +48,11 @@ export default async function handler(req: Request) {
       }
     );
   }
+
+  // Endpoint baseado no provedor
+  const apiEndpoint = useGoogleApi
+    ? 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+    : 'https://integrate.api.nvidia.com/v1/chat/completions';
 
   try {
     const body = await req.json();
@@ -69,10 +84,10 @@ export default async function handler(req: Request) {
 
     // Verify multimodal support
     const hasImages = messages.some((m: any) => m.images && Array.isArray(m.images) && m.images.length > 0);
-    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3';
-    if (hasImages && !isVisionModel) {
+    const modelSupportsVision = isVisionModel(selectedModel);
+    if (hasImages && !modelSupportsVision) {
       return new Response(
-        JSON.stringify({ error: 'Este modelo não suporta imagens. Use o modelo GLM-5.3-Flash ou Kimi K3.' }),
+        JSON.stringify({ error: 'Este modelo não suporta imagens. Use o modelo GLM-5.3-Flash, Kimi K3 ou Gemini 3.1 Pro.' }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -149,7 +164,7 @@ export default async function handler(req: Request) {
 
     let payload = createPayload(true, true);
 
-    const firstFetch = fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+    const firstFetch = fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -216,7 +231,7 @@ export default async function handler(req: Request) {
     if (!nvidiaRes.ok && (nvidiaRes.status === 400 || nvidiaRes.status === 422) && payload.reasoning_effort) {
       await nvidiaRes.body?.cancel().catch(() => {});
       payload = createPayload(false, true);
-      nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      nvidiaRes = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -231,7 +246,7 @@ export default async function handler(req: Request) {
     if (!nvidiaRes.ok && (nvidiaRes.status === 400 || nvidiaRes.status === 422) && payload.tools) {
       await nvidiaRes.body?.cancel().catch(() => {});
       payload = createPayload(false, false);
-      nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      nvidiaRes = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -257,7 +272,7 @@ export default async function handler(req: Request) {
       }
 
       if (nvidiaRes.status === 401) {
-        errMsg = 'Chave NVIDIA_API_KEY inválida. Verifique sua chave nas Environment Variables da Vercel.';
+        errMsg = `Chave ${apiKeyName} inválida. Verifique sua chave ${useGoogleApi ? 'do Google AI Studio' : 'NVIDIA'} nas Environment Variables da Vercel.`;
       } else if (nvidiaRes.status === 429) {
         errMsg = 'Muitas requisições (Rate Limit). Espere um momento antes de tentar novamente.';
       }
