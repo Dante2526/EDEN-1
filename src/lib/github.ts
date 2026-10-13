@@ -195,3 +195,33 @@ export async function fetchRepoCommits(
   if (branch) params.branch = branch;
   return callGitHubApi<import('./types').GitHubCommitItem[]>('commits', params, 'GET', undefined, customPat);
 }
+
+/**
+ * Cria um novo repositório do zero na conta do usuário autenticado.
+ * Retorna o repo criado no formato GitHubRepo.
+ */
+export async function createRepo(
+  params: {
+    name: string;
+    description?: string;
+    private?: boolean;
+    autoInit?: boolean;
+  },
+  customPat?: string
+): Promise<GitHubRepo> {
+  if (!params.name || !/^[a-zA-Z0-9._-]+$/.test(params.name)) {
+    throw new Error('Nome inválido. Use apenas letras, números, ., _ e -');
+  }
+  return callGitHubApi<GitHubRepo>(
+    'create_repo',
+    {},
+    'POST',
+    {
+      name: params.name.trim(),
+      description: params.description?.trim() || '',
+      private: !!params.private,
+      autoInit: params.autoInit !== false,
+    },
+    customPat
+  );
+}

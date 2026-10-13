@@ -42,6 +42,18 @@ interface PendingChangesContextType {
   updateChangeContent: (id: string, newContent: string) => Promise<void>;
   clearCommitted: (committedChanges: PendingChange[]) => Promise<void>;
   getChangesForRepo: (repo: string, branch: string) => PendingChange[];
+  /**
+   * Migra alterações pendentes de um repo/branch antigo para um novo.
+   * Usado quando o usuário cria um repo novo e quer levar as alterações
+   * que vinha acumulando "sem repo" (ou de outro repo) para o novo.
+   * Atualiza repo + branch de cada change mantendo staged/content.
+   */
+  migrateChangesToRepo: (
+    fromRepoFullName: string | null,
+    fromBranch: string | null,
+    toRepoFullName: string,
+    toBranch: string
+  ) => Promise<number>;
 }
 
 const PendingChangesContext = createContext<PendingChangesContextType | null>(null);
@@ -194,6 +206,32 @@ export const PendingChangesProvider: React.FC<{ children: React.ReactNode }> = (
     [changes]
   );
 
+  const migrateChangesToRepo = useCallback(
+    async (
+      fromRepoFullName: string | null,
+      fromBranch: string | null,
+      toRepoFullName: string,
+      toBranch: string
+    ): Promise<number> => {
+      let migratedCount = 0;
+      persistAndSet((prev) => {
+        const next = prev.map((c) => {
+          // Se fromRepoFullName === null, migra TODAS as changes "órfãs" (sem repo ou com repo vazio)
+          // Caso contrário, só migra as que batem com fromRepoFullName + fromBranch
+          const matches =
+            (fromRepoFullName === null || c.repo === fromRepoFullName) &&
+            (fromBranch === null || c.branch === fromBranch);
+          if (!matches) return c;
+          migratedCount++;
+          return { ...c, repo: toRepoFullName, branch: toBranch };
+        });
+        return next;
+      });
+      return migratedCount;
+    },
+    [persistAndSet]
+  );
+
   return (
     <PendingChangesContext.Provider
       value={{
@@ -209,6 +247,7 @@ export const PendingChangesProvider: React.FC<{ children: React.ReactNode }> = (
         updateChangeContent,
         clearCommitted,
         getChangesForRepo,
+        migrateChangesToRepo,
       }}
     >
       {children}

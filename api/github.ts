@@ -108,6 +108,75 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // ==================== MUTAÇÕES (POST) ====================
+
+    // Criar novo repositório do zero (do chat)
+    if (action === 'create_repo' && req.method.toUpperCase() === 'POST') {
+      const body = await req.json();
+      const { name, description, private: isPrivate, autoInit } = body;
+      if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9._-]+$/.test(name) || name.length > 100) {
+        return new Response(JSON.stringify({ error: 'Nome do repositório inválido. Use apenas letras, números, ., _ e - (máx 100 chars).' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+      const payload: any = {
+        name,
+        description: typeof description === 'string' ? description.slice(0, 350) : '',
+        private: !!isPrivate,
+        auto_init: autoInit !== false, // default true (cria README)
+      };
+      const data = await ghFetch('/user/repos', token, 'POST', payload);
+      // Retorna o repo no mesmo formato que fetchUserRepos espera
+      const repo = {
+        id: data.id,
+        name: data.name,
+        full_name: data.full_name,
+        owner: { login: data.owner.login, avatar_url: data.owner.avatar_url },
+        description: data.description || '',
+        default_branch: data.default_branch || 'main',
+        language: data.language || null,
+        stargazers_count: data.stargazers_count || 0,
+        updated_at: data.updated_at,
+        private: data.private,
+        html_url: data.html_url,
+      };
+      return new Response(JSON.stringify(repo), { status: 201, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Commit atômico multi-arquivo usando Git Data Trees API
+    if (action === 'commit' && req.method.toUpperCase() === 'POST') {
+      const body = await req.json();
+      const { owner, repo, branch, message, changes } = body;
+      if (!owner || !repo || !branch || !message || !Array.isArray(changes)) return new Response(JSON.stringify({ error: 'Dados insuficientes.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+
+      const ref = await ghFetch(`/repos/${owner}/${repo}/git/ref/heads/${branch}`, token);
+      const lastCommit = await ghFetch(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, token);
+      const treeData = await ghFetch(`/repos/${owner}/${repo}/git/trees/${lastCommit.tree.sha}?recursive=true`, token);
+      const currentItems = treeData.tree;
+
+      const treeItems = await Promise.all(changes.map(async (change: any) => {
+        const existingItem = currentItems.find((i: any) => i.path === change.path);
+        const mode = (existingItem?.mode || '100644') as any;
+        if (change.type === 'deleted') return { path: change.path, mode: '100644' as any, type: 'blob' as const, sha: null };
+        const blob = await ghFetch(`/repos/${owner}/${repo}/git/blobs`, token, 'POST', { content: change.newContent || '', encoding: 'utf-8' });
+        return { path: change.path, mode, type: 'blob' as const, sha: blob.sha };
+      }));
+
+      const newTree = await ghFetch(`/repos/${owner}/${repo}/git/trees`, token, 'POST', { base_tree: lastCommit.tree.sha, tree: treeItems });
+      const newCommit = await ghFetch(`/repos/${owner}/${repo}/git/commits`, token, 'POST', { message, tree: newTree.sha, parents: [ref.object.sha] });
+      await ghFetch(`/repos/${owner}/${repo}/git/refs/heads/${branch}`, token, 'PATCH', { sha: newCommit.sha });
+
+      return new Response(JSON.stringify({ sha: newCommit.sha, html_url: `https://github.com/${owner}/${repo}/commit/${newCommit.sha}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Criar nova branch a partir de uma existente
+    if (action === 'create_branch' && req.method.toUpperCase() === 'POST') {
+      const body = await req.json();
+      const { owner, repo, branch, fromBranch } = body;
+      if (!owner || !repo || !branch) return new Response(JSON.stringify({ error: 'owner, repo e branch obrigatórios.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      const ref = await ghFetch(`/repos/${owner}/${repo}/git/ref/heads/${fromBranch || 'main'}`, token);
+      const newRef = await ghFetch(`/repos/${owner}/${repo}/git/refs`, token, 'POST', { ref: `refs/heads/${branch}`, sha: ref.object.sha });
+      return new Response(JSON.stringify({ branch: branch, ref: newRef.ref, sha: newRef.object.sha }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
     return new Response(JSON.stringify({ error: 'Ação não suportada.' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message || 'Erro GitHub API' }), {
