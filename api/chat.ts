@@ -1,9 +1,99 @@
-import { checkAuthAndRateLimit, ALLOWED_MODELS, isVisionModel } from '../lib/server/_security';
-
 export const config = {
   runtime: 'nodejs',
   maxDuration: 60,
 };
+
+// ===== INLINE: ALLOWED_MODELS e VISION_MODELS (zero imports externos) =====
+const ALLOWED_MODELS = [
+  'z-ai/glm-5.3',
+  'z-ai/glm-5.3-flash',
+  'moonshotai/kimi-k3',
+];
+
+const VISION_MODELS = [
+  'z-ai/glm-5.3-flash',
+  'moonshotai/kimi-k3',
+];
+
+function isVisionModel(model: string): boolean {
+  return VISION_MODELS.includes(model);
+}
+
+// ===== INLINE: rate limit + auth check (simplificado, sem Redis) =====
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const MAX_REQUESTS_PER_MINUTE = 120;
+
+function getHeader(req: any, name: string): string | null {
+  if (!req || !req.headers) return null;
+  if (typeof req.headers.get === 'function') {
+    return req.headers.get(name);
+  }
+  const lowerName = name.toLowerCase();
+  const val = req.headers[lowerName] ?? req.headers[name];
+  if (Array.isArray(val)) return val[0] || null;
+  return typeof val === 'string' ? val : null;
+}
+
+function getClientIp(req: Request | any): string {
+  const xForwardedFor = getHeader(req, 'x-forwarded-for');
+  if (xForwardedFor) {
+    const firstIp = xForwardedFor.split(',')[0].trim();
+    if (firstIp) return firstIp;
+  }
+  const realIp = getHeader(req, 'x-real-ip');
+  if (realIp && realIp.trim()) return realIp.trim();
+  if ((req as any)?.socket?.remoteAddress) {
+    return (req as any).socket.remoteAddress;
+  }
+  return 'unknown';
+}
+
+function timingSafeEqualStrings(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  if (aBytes.byteLength !== bBytes.byteLength) return false;
+  let result = 0;
+  for (let i = 0; i < aBytes.byteLength; i++) {
+    result |= aBytes[i] ^ bBytes[i];
+  }
+  return result === 0;
+}
+
+async function checkAuthAndRateLimit(req: Request): Promise<Response | null> {
+  const ip = getClientIp(req);
+  if (ip !== 'unknown') {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitMap.entries()) {
+      if (now > entry.resetAt) rateLimitMap.delete(key);
+    }
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now > entry.resetAt) {
+      rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
+    } else {
+      entry.count += 1;
+      if (entry.count > MAX_REQUESTS_PER_MINUTE) {
+        return new Response(JSON.stringify({ error: 'Too Many Requests' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+        });
+      }
+    }
+  }
+
+  // Auth opcional (só se SYNAP_API_SECRET estiver configurada)
+  const expectedSecret = process.env.SYNAP_API_SECRET?.trim();
+  if (expectedSecret) {
+    const providedKey = getHeader(req, 'x-api-key');
+    if (!providedKey || !timingSafeEqualStrings(providedKey, expectedSecret)) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+  return null;
+}
 
 function maxTokensFor(effort: string): number {
   if (effort === 'max') return 24576;
