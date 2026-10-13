@@ -53,12 +53,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       subtitle: 'Contexto longo e raciocínio avançado',
       badge: 'Contexto',
     },
-    {
-      id: 'google/gemini-3.1-pro',
-      title: 'Gemini 3.1 Pro',
-      subtitle: 'Google AI — raciocínio profundo + visão multimodal',
-      badge: 'Google',
-    },
   ];
 
   const reasoningLevels: Array<{
@@ -108,8 +102,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'GLM-5.3'
                 : selectedModel === 'moonshotai/kimi-k3'
                 ? 'Kimi K3'
-                : selectedModel === 'google/gemini-3.1-pro'
-                ? 'Gemini 3.1 Pro'
                 : 'GLM Flash'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
