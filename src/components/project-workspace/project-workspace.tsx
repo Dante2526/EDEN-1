@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Sparkles,
   Save,
+  ChevronDown,
 } from 'lucide-react';
 import { SynapProject, ProjectTemplate } from '../../lib/types';
 import { projectToSandpackFiles } from '../../lib/project-storage';
@@ -48,6 +49,37 @@ const TEMPLATE_LABELS: Record<ProjectTemplate, string> = {
 };
 
 type BottomPanel = 'preview' | 'console';
+
+/**
+ * Componente que abre o preview do Sandpack em nova aba (tela cheia).
+ * Vive dentro do SandpackProvider pra ter acesso ao bundler URL.
+ */
+const OpenInNewTabButton: React.FC = () => {
+  const { sandpack } = useSandpack();
+  const { status } = sandpack;
+
+  const handleOpen = () => {
+    // O Sandpack gera um sandbox URL quando compila
+    // Usamos o iframe do preview pra pegar a URL compilada
+    const iframe = document.querySelector('.sp-preview-iframe') as HTMLIFrameElement | null;
+    if (iframe?.src) {
+      window.open(iframe.src, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  if (status !== 'running') return null;
+
+  return (
+    <button
+      type="button"
+      onClick={handleOpen}
+      title="Abrir preview em tela cheia (nova aba)"
+      className="p-1.5 rounded-lg text-[#8c867a] hover:text-[#f3efe6] hover:bg-[#282622] transition cursor-pointer"
+    >
+      <ExternalLink className="w-3.5 h-3.5" />
+    </button>
+  );
+};
 
 /**
  * Componente invisível que vive dentro do SandpackProvider e observa
@@ -89,6 +121,7 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false); // explorer oculto por padrão
   const [showCode, setShowCode] = useState(false); // código oculto por padrão — só preview
+  const [showConsole, setShowConsole] = useState(false); // console colapsado por padrão
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
 
@@ -368,33 +401,44 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
 
             {!showCode && (
               <div className="!flex-1 !min-w-0 flex flex-col bg-[#181714] min-h-0">
-                {/* Preview — ocupa a maior parte */}
-                <div className="flex-1 min-h-0 overflow-hidden border-b border-[#2d2a25] relative">
+                {/* Preview — ocupa a maior parte (quase tudo) */}
+                <div className="flex-1 min-h-0 overflow-hidden relative">
                   <SandpackPreview
                     showOpenInCodeSandbox={false}
                     showRefreshButton
                     className="!h-full"
                   />
+                  {/* Botão flutuante: abrir em tela cheia (nova aba) */}
+                  <div className="absolute top-2 right-2 z-10">
+                    <OpenInNewTabButton />
+                  </div>
                 </div>
 
-                {/* Console — barra inferior fixa (mostra erros de compilação) */}
-                <div className="h-32 shrink-0 overflow-hidden bg-[#0d0c0a] border-t border-[#2d2a25]">
-                  <div className="flex items-center justify-between px-2 py-1 bg-[#1d1b18] border-b border-[#2d2a25]">
-                    <div className="flex items-center gap-1 text-[10px] text-[#8c867a] font-mono">
+                {/* Console — colapsável, fechado por padrão */}
+                <div className="shrink-0 bg-[#0d0c0a] border-t border-[#2d2a25]">
+                  <button
+                    type="button"
+                    onClick={() => setShowConsole((v) => !v)}
+                    className="w-full flex items-center justify-between px-2 py-1 bg-[#1d1b18] hover:bg-[#22201d] transition cursor-pointer"
+                  >
+                    <div className="flex items-center gap-1.5 text-[10px] text-[#8c867a] font-mono">
                       <Terminal className="w-3 h-3 text-[#d97757]" />
                       <span>Console</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform ${showConsole ? 'rotate-180' : ''}`} />
                     </div>
                     <span className="text-[9px] text-[#5e5a52] font-mono flex items-center gap-1">
                       <Sparkles className="w-2.5 h-2.5 text-[#d97757]" /> Live
                     </span>
-                  </div>
-                  <div className="h-[calc(100%-28px)] overflow-y-auto">
-                    <SandpackConsole
-                      showHeader={false}
-                      showSyntaxError
-                      className="!h-full !min-h-0"
-                    />
-                  </div>
+                  </button>
+                  {showConsole && (
+                    <div className="h-40 overflow-y-auto border-t border-[#2d2a25]">
+                      <SandpackConsole
+                        showHeader={false}
+                        showSyntaxError
+                        className="!h-full !min-h-0"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
