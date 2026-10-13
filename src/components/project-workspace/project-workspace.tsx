@@ -53,13 +53,16 @@ type BottomPanel = 'preview' | 'console';
 /**
  * Componente que detecta erros de compilação do Sandpack e mostra
  * automaticamente em overlay. Quando o preview fica preto, é porque
- * deu erro de compilação — esse componente pega o erro e mostra.
+ * deu erro de compilação ou o bundler não conectou — esse componente
+ * pega o erro e mostra.
  */
 const SandpackErrorWatcher: React.FC<{
   onError: (error: string | null) => void;
-}> = ({ onError }) => {
+  onConnectionFail?: () => void;
+}> = ({ onError, onConnectionFail }) => {
   const { sandpack } = useSandpack();
   const { error, status } = sandpack;
+  const initialTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Sandpack popula `error` quando há erro de compilação
@@ -72,7 +75,34 @@ const SandpackErrorWatcher: React.FC<{
       // Compilou sem erro — limpa
       onError(null);
     }
-  }, [error, status, onError]);
+
+    // Detecta "Couldn't connect to server" — status fica em 'initial' demais
+    // ou o erro contém "connect to server"
+    if (status === 'initial') {
+      // Se ficar em initial mais de 15s, provavelmente o bundler caiu
+      if (initialTimerRef.current) clearTimeout(initialTimerRef.current);
+      initialTimerRef.current = setTimeout(() => {
+        if (onConnectionFail) onConnectionFail();
+      }, 15000);
+    } else {
+      if (initialTimerRef.current) {
+        clearTimeout(initialTimerRef.current);
+        initialTimerRef.current = null;
+      }
+    }
+
+    // Erro explícito de conexão
+    const errorStr = typeof error === 'string' ? error : (error as any)?.message || '';
+    if (errorStr && errorStr.includes('connect to server')) {
+      if (onConnectionFail) onConnectionFail();
+    }
+  }, [error, status, onError, onConnectionFail]);
+
+  useEffect(() => {
+    return () => {
+      if (initialTimerRef.current) clearTimeout(initialTimerRef.current);
+    };
+  }, []);
 
   return null;
 };
@@ -107,6 +137,38 @@ const OpenInNewTabButton: React.FC = () => {
     </button>
   );
 };
+
+/**
+ * Gera um link pra CodeSandbox com os arquivos do projeto.
+ * CodeSandbox tem bundler próprio — não depende do servidor do Sandpack.
+ * Usado como fallback quando o Sandpack não conecta.
+ */
+function buildCodeSandboxUrl(
+  files: Record<string, { code: string }>,
+  template: string,
+  dependencies?: Record<string, string>
+): string {
+  // CodeSandbox API: POST pra /api/v1/sandboxes/define
+  // Mas pra simplicidade, usamos o formato GET com parameters JSON
+  const sandboxFiles: Record<string, { content: string }> = {};
+  for (const [path, file] of Object.entries(files)) {
+    sandboxFiles[path] = { content: file.code };
+  }
+
+  const parameters = {
+    files: sandboxFiles,
+    template: template === 'react-ts' ? 'create-react-app-typescript' : template,
+    dependencies: dependencies || {},
+  };
+
+  // CodeSandbox usa query param `parameters` com JSON comprimido
+  // Pra simplificar, usamos JSON direto (sem compressão lz-string)
+  // Formato: https://codesandbox.io/api/v1/sandboxes/define?parameters=ENCODED_JSON
+  const json = JSON.stringify(parameters);
+  // Base64 + URL encode
+  const encoded = btoa(unescape(encodeURIComponent(json)));
+  return `https://codesandbox.io/api/v1/sandboxes/define?parameters=${encodeURIComponent(encoded)}&embed=true&runonclick=1`;
+}
 
 /**
  * Componente invisível que vive dentro do SandpackProvider e observa
@@ -218,6 +280,7 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
 
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const [compileError, setCompileError] = useState<string | null>(null);
+  const [connectionFailed, setConnectionFailed] = useState(false);
 
   // Atualiza nome quando projeto muda externamente
   useEffect(() => {
@@ -432,7 +495,10 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
             />
 
             {/* Watcher de erros de compilação — mostra erro quando preview falha */}
-            <SandpackErrorWatcher onError={setCompileError} />
+            <SandpackErrorWatcher
+              onError={setCompileError}
+              onConnectionFail={() => setConnectionFailed(true)}
+            />
 
             {!showCode && (
               <div className="!flex-1 !min-w-0 bg-[#181714] min-h-0 relative">
@@ -446,6 +512,56 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
                 <div className="absolute top-2 right-2 z-10">
                   <OpenInNewTabButton />
                 </div>
+
+                {/* Overlay de FALLBACK — quando Sandpack não conecta ao bundler */}
+                {connectionFailed && !showDiagnostic && (
+                  <div className="absolute inset-0 z-30 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-4 text-[#f3efe6] flex flex-col items-center justify-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center shrink-0">
+                      <AlertCircle className="w-7 h-7 text-amber-400" />
+                    </div>
+                    <div className="text-center space-y-1.5 max-w-sm">
+                      <h3 className="text-sm font-medium text-[#f3efe6]">Servidor de preview indisponível</h3>
+                      <p className="text-xs text-[#8c867a] leading-relaxed">
+                        O Sandpack não conseguiu conectar ao bundler runtime.
+                        Isso é um problema de rede/servidor externo — não do seu código.
+                      </p>
+                    </div>
+
+                    {/* Botão: abrir no CodeSandbox (bundler próprio) */}
+                    <a
+                      href={buildCodeSandboxUrl(sandpackFiles, project.template, project.dependencies)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-[#d97757] to-[#c4663f] hover:from-[#e08368] hover:to-[#d97757] text-white text-xs font-medium transition-all shadow-md cursor-pointer"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Abrir no CodeSandbox
+                    </a>
+
+                    <div className="text-[10px] text-[#5e5a52] text-center max-w-xs leading-relaxed">
+                      CodeSandbox tem bundler próprio e não depende do mesmo servidor.
+                      Vai abrir numa nova aba com o projeto rodando.
+                    </div>
+
+                    {/* Botão: tentar de novo */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConnectionFailed(false);
+                        // Força reload do iframe
+                        const iframe = document.querySelector('.sp-preview-iframe') as HTMLIFrameElement | null;
+                        if (iframe) {
+                          const src = iframe.src;
+                          iframe.src = '';
+                          setTimeout(() => { iframe.src = src; }, 100);
+                        }
+                      }}
+                      className="text-xs text-[#d97757] hover:underline"
+                    >
+                      Tentar novamente
+                    </button>
+                  </div>
+                )}
 
                 {/* Overlay de ERRO de compilação — aparece automaticamente quando o preview falha */}
                 {compileError && !showDiagnostic && (
