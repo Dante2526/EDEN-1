@@ -572,6 +572,10 @@ function AppContent() {
       // Volta a sidebar pra aba Chat (pra usuário ver a lista de conversas
       // e poder pedir alterações à IA enquanto vê o preview)
       setSidebarTab('chats');
+      // No mobile, fecha a sidebar pra não tapar o preview
+      if (window.innerWidth < 768) {
+        setIsSidebarOpen(false);
+      }
     } else {
       setShowProjectWorkspace(false);
       // Se fechou o projeto e estava em Preview, volta pra Chat
