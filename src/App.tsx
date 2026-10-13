@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check } from 'lucide-react';
+import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check, MessageSquare, Eye, Blocks } from 'lucide-react';
 import {
   Conversation,
   Message,
@@ -545,6 +545,10 @@ function AppContent() {
   const [activeRepo, setActiveRepo] = useState<ActiveRepoState | null>(null);
   const [isStudioMode, setIsStudioMode] = useState<boolean>(false);
 
+  // Main view tabs (Chat / Preview / Agentes) — estilo Google AI Studio
+  type MainViewTab = 'chat' | 'preview' | 'agentes';
+  const [mainViewTab, setMainViewTab] = useState<MainViewTab>('chat');
+
   // Projects (Sandpack workspace) state
   const {
     activeProject,
@@ -563,10 +567,20 @@ function AppContent() {
   useEffect(() => {
     if (activeProject) {
       setShowProjectWorkspace(true);
+      // Quando abre um projeto, pula pra aba Preview
+      setMainViewTab('preview');
     } else {
       setShowProjectWorkspace(false);
+      // Se fechou o projeto e estava em Preview, volta pra Chat
+      setMainViewTab((curr) => (curr === 'preview' ? 'chat' : curr));
     }
   }, [activeProject?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Quando ativa/desativa Studio Mode, sincroniza com a aba Agentes
+  useEffect(() => {
+    if (isStudioMode) setMainViewTab('agentes');
+    else setMainViewTab((curr) => (curr === 'agentes' ? 'chat' : curr));
+  }, [isStudioMode]);
 
   // Skills & MCP state
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -2582,12 +2596,8 @@ function AppContent() {
         onClearKnowledgeFacts={handleClearKnowledgeFacts}
       />
 
-      {/* Main Content Area — split layout when project workspace is open */}
-      <div className="flex-1 flex min-w-0 h-full relative overflow-hidden bg-dark-bg">
-        {/* Chat Column — fica com 50% quando workspace está aberto no desktop */}
-        <div className={`flex flex-col min-w-0 h-full relative overflow-hidden bg-dark-bg ${
-          activeProject && showProjectWorkspace ? 'hidden md:flex md:w-1/2 lg:w-[45%] xl:w-[40%]' : 'flex-1'
-        }`}>
+      {/* Main Content Area — tabs no topo (Chat / Preview / Agentes) */}
+      <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden bg-dark-bg">
         {/* Header */}
         <ChatHeader
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -2629,7 +2639,77 @@ function AppContent() {
           </div>
         )}
 
-        {isStudioMode ? (
+        {/* Main View Tabs (Chat / Preview / Agentes) — estilo Google AI Studio */}
+        <div className="px-3 sm:px-6 pt-2 pb-1 flex items-center gap-1 border-b border-[#2d2a25] bg-[#1d1b18]">
+          <button
+            type="button"
+            onClick={() => {
+              setMainViewTab('chat');
+              setIsStudioMode(false);
+              if (activeProject) setShowProjectWorkspace(false);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+              mainViewTab === 'chat'
+                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33]'
+                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a] border border-transparent'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+            <span>Chat</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!activeProject) {
+                // Sem projeto ativo → abre aba de projetos na sidebar
+                setSidebarTab('projects');
+                setIsSidebarOpen(true);
+                return;
+              }
+              setMainViewTab('preview');
+              setIsStudioMode(false);
+              setShowProjectWorkspace(true);
+            }}
+            disabled={!activeProject}
+            title={activeProject ? `Preview de ${activeProject.name}` : 'Nenhum projeto aberto — clique pra abrir a lista'}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+              mainViewTab === 'preview'
+                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33]'
+                : activeProject
+                ? 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a] border border-transparent'
+                : 'text-[#5e5a52] border border-transparent cursor-not-allowed opacity-60'
+            }`}
+          >
+            <Eye className={`w-3.5 h-3.5 shrink-0 ${activeProject ? 'text-[#d97757]' : 'text-[#5e5a52]'}`} />
+            <span>Preview</span>
+            {activeProject && (
+              <span className="hidden sm:inline text-[9px] text-[#5e5a52] font-mono truncate max-w-[80px]">
+                · {activeProject.name}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMainViewTab('agentes');
+              setIsStudioMode(true);
+              if (activeProject) setShowProjectWorkspace(false);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+              mainViewTab === 'agentes'
+                ? 'bg-[#2b2823] text-[#f3efe6] border border-[#3e3b33]'
+                : 'text-[#8c867a] hover:text-[#c4bfb6] hover:bg-[#201e1a] border border-transparent'
+            }`}
+          >
+            <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+            <span>Agentes</span>
+          </button>
+        </div>
+
+        {/* Conditional render based on mainViewTab */}
+        {mainViewTab === 'agentes' || isStudioMode ? (
           <StudioPanel
             activeRepo={activeRepo}
             onOpenRepoSelector={() => {
@@ -2641,8 +2721,37 @@ function AppContent() {
               setIsSidebarOpen(true);
             }}
             onOpenSettings={() => setIsSettingsOpen(true)}
-            onBackToChat={() => setIsStudioMode(false)}
+            onBackToChat={() => {
+              setIsStudioMode(false);
+              setMainViewTab('chat');
+            }}
           />
+        ) : mainViewTab === 'preview' && activeProject && showProjectWorkspace ? (
+          <div className="flex-1 flex flex-col min-h-0 bg-dark-bg overflow-hidden">
+            <React.Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-[#8c867a]">
+                  <div className="w-8 h-8 border-2 border-[#d97757]/30 border-t-[#d97757] rounded-full animate-spin" />
+                  <span className="text-xs">Carregando editor Sandpack...</span>
+                </div>
+              }
+            >
+              <ProjectWorkspace
+                project={activeProject}
+                onClose={() => {
+                  setShowProjectWorkspace(false);
+                  closeProject();
+                  setMainViewTab('chat');
+                }}
+                onDelete={() => {
+                  removeProject(activeProject.id);
+                  setMainViewTab('chat');
+                }}
+                onRename={(newName) => renameProject(activeProject.id, newName)}
+                onFileChange={(path, content) => updateFileContent(path, content)}
+              />
+            </React.Suspense>
+          </div>
         ) : (
           <>
             {/* Messages or Empty State */}
@@ -2726,44 +2835,6 @@ function AppContent() {
           onClear={handleClearTerminal}
           isRunning={isTerminalRunning}
         />
-        </div>{/* fim Chat Column */}
-
-        {/* Project Workspace Column — lado a lado no desktop, overlay no mobile */}
-        {activeProject && showProjectWorkspace && (
-          <>
-            {/* Mobile backdrop */}
-            <div
-              onClick={() => {
-                setShowProjectWorkspace(false);
-                closeProject();
-              }}
-              className="md:hidden fixed inset-0 z-30 bg-black/70 backdrop-blur-sm"
-            />
-            <div className="fixed md:relative inset-0 md:inset-auto z-40 md:z-auto md:flex-1 min-w-0 h-full bg-dark-bg md:border-l border-[#2d2a25] flex flex-col animate-in fade-in slide-in-from-right duration-200">
-              <React.Suspense
-                fallback={
-                  <div className="flex flex-col items-center justify-center h-full gap-2 text-[#8c867a]">
-                    <div className="w-8 h-8 border-2 border-[#d97757]/30 border-t-[#d97757] rounded-full animate-spin" />
-                    <span className="text-xs">Carregando editor Sandpack...</span>
-                  </div>
-                }
-              >
-                <ProjectWorkspace
-                  project={activeProject}
-                  onClose={() => {
-                    setShowProjectWorkspace(false);
-                    closeProject();
-                  }}
-                  onDelete={() => {
-                    removeProject(activeProject.id);
-                  }}
-                  onRename={(newName) => renameProject(activeProject.id, newName)}
-                  onFileChange={(path, content) => updateFileContent(path, content)}
-                />
-              </React.Suspense>
-            </div>
-          </>
-        )}
       </div>
 
       {/* Diff Viewer Modal triggered from chat or direct action */}
