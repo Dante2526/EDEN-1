@@ -2168,7 +2168,7 @@ function AppContent() {
                 if (trimmed.includes('FUNCTION_INVOCATION_FAILED')) {
                   errMessage = `Erro 500 Vercel (FUNCTION_INVOCATION_FAILED): A Serverless Function falhou na inicialização. Verifique se a variável NVIDIA_API_KEY foi adicionada nas Environment Variables da Vercel.`;
                 } else if (trimmed.includes('FUNCTION_INVOCATION_TIMEOUT')) {
-                  errMessage = `Erro 504 Vercel (FUNCTION_INVOCATION_TIMEOUT): A execução excedeu 60 segundos. Alterne para o modelo z-ai/glm-5.3-flash ou reduza o nível de raciocínio nas configurações.`;
+                  errMessage = `Erro 504 Vercel (FUNCTION_INVOCATION_TIMEOUT): A execução excedeu 300 segundos (limite do plano Hobby da Vercel). Alterne para o modelo z-ai/glm-5.3-flash ou reduza o nível de raciocínio nas configurações.`;
                 } else if (trimmed.length < 500) {
                   errMessage = `Erro ${response.status}: ${trimmed}`;
                 } else if (response.status === 500) {
@@ -2204,6 +2204,7 @@ function AppContent() {
         const decoder = new TextDecoder('utf-8');
         let iterationText = '';
         let iterationReasoning = '';
+        let iterationFinishReason = '';
         let buffer = '';
         const toolCallsAccumulator: Record<number, { id: string; name: string; arguments: string }> = {};
         let iterationTokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined = undefined;
@@ -2228,6 +2229,7 @@ function AppContent() {
             try {
               const parsed = JSON.parse(dataStr);
               const choice = parsed.choices?.[0];
+              if (choice?.finish_reason) iterationFinishReason = choice.finish_reason;
               const delta = choice?.delta || choice?.message;
 
               if (parsed.usage) {
@@ -2501,6 +2503,23 @@ function AppContent() {
             },
             ...toolResultMessages,
           ];
+        } else if (
+          iterationFinishReason === 'length' &&
+          iterationText.trim() &&
+          loopCount < MAX_TOOL_ITERATIONS
+        ) {
+          // Resposta cortada por limite de tokens: pede pro modelo continuar de onde parou
+          console.log('[Synap] finish_reason=length — continuando resposta automaticamente');
+          currentMessagesForApi = [
+            ...currentMessagesForApi,
+            { role: 'assistant', content: iterationText },
+            {
+              role: 'user',
+              content:
+                'Sua resposta anterior foi cortada por limite de tamanho. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.',
+            },
+          ];
+          hasToolCallsToProcess = true;
         }
       }
 

@@ -1,6 +1,6 @@
 export const config = {
   runtime: 'nodejs',
-  maxDuration: 60,
+  maxDuration: 300,
 };
 
 // ===== INLINE: ALLOWED_MODELS e VISION_MODELS (zero imports externos) =====
