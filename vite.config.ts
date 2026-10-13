@@ -17,7 +17,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
-      chunkSizeWarningLimit: 1000, // Aumentado pra 1000kB (document libs são pesadas)
+      chunkSizeWarningLimit: 1500, // Aumentado pra 1500kB (exceljs é 929kB sozinho)
       rollupOptions: {
         output: {
           manualChunks(id: string) {
@@ -26,7 +26,7 @@ export default defineConfig(() => {
             if (id.includes('node_modules/exceljs/')) {
               return 'exceljs';
             }
-            if (id.includes('node_modules/jspdf') || id.includes('node_modules/canvg') || id.includes('node_modules/raf')) {
+            if (id.includes('node_modules/jspdf') || id.includes('node_modules/canvg') || id.includes('node_modules/raf') || id.includes('node_modules/html2canvas') || id.includes('node_modules/dompurify')) {
               return 'jspdf';
             }
             if (id.includes('node_modules/pptxgenjs/')) {
