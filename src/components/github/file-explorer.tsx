@@ -211,11 +211,16 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           onChange={(e) => onChangeBranch(e.target.value)}
           className="flex-1 bg-[color:var(--c-bg-13120f)] border border-[color:var(--c-bg-3b3831)] rounded-lg px-2 py-1 text-xs text-[color:var(--c-fg-f3efe6)] font-mono focus:outline-hidden focus:border-[#d97757] cursor-pointer"
         >
-          {branches.map((b) => (
-            <option key={b} value={b}>
-              {b}
-            </option>
-          ))}
+          {branches.map((b, idx) => {
+            // Defesa: se vier objeto do backend (bug antigo), extrai o name
+            const raw = b as unknown as { name?: string } | string;
+            const branchName = typeof raw === 'string' ? raw : (raw?.name || `branch-${idx}`);
+            return (
+              <option key={branchName} value={branchName}>
+                {branchName}
+              </option>
+            );
+          })}
         </select>
       </div>
 

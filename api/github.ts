@@ -67,8 +67,14 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     if (action === 'branches') {
-      const data = await ghFetch(`/repos/${owner}/${repo}/branches`, token);
-      return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      const data = await ghFetch(`/repos/${owner}/${repo}/branches?per_page=100`, token);
+      // GitHub API retorna array de objetos: [{ name, commit, protected }, ...]
+      // O frontend espera array de strings (só os nomes das branches)
+      // Se retornar os objetos, o React crasha ao tentar renderizar (error #31)
+      const branchNames = Array.isArray(data)
+        ? data.map((b: any) => (typeof b === 'string' ? b : b?.name || '')).filter(Boolean)
+        : [];
+      return new Response(JSON.stringify(branchNames), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     if (action === 'files') {
