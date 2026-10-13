@@ -386,8 +386,104 @@ const MEMORY_FORGET_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, ...GITHUB_TOOLS];
+// ===== Project Workspace tools (criar/editar projetos Sandpack) =====
+const CREATE_PROJECT_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'create_project',
+    description:
+      'Cria um novo projeto Sandpack (preview ao vivo) e abre no workspace. Use quando o usuário pedir pra criar um app/site/componente React/Vue/Vanilla. Templates: react-ts (default), react, vite-react-ts, vanilla-ts, vanilla, vue, static (HTML/CSS/JS), node.',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Nome do projeto (curto, sem espaços). Ex: "todo-app", "landing-page".',
+        },
+        template: {
+          type: 'string',
+          enum: ['react-ts', 'react', 'vite-react-ts', 'vanilla-ts', 'vanilla', 'vue', 'static', 'node'],
+          description: 'Template inicial. Default: react-ts. Use "static" para HTML/CSS/JS puro.',
+        },
+        description: {
+          type: 'string',
+          description: 'Descrição curta do projeto (opcional).',
+        },
+        files: {
+          type: 'object',
+          description:
+            'Arquivos iniciais do projeto (override do template). Chave = caminho (ex: "src/App.tsx"), valor = conteúdo. Ex: {"src/App.tsx": "export default () => <h1>Olá</h1>"}.',
+          additionalProperties: { type: 'string' },
+        },
+      },
+      required: ['name'],
+    },
+  },
+};
+
+const UPDATE_PROJECT_FILES_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'update_project_files',
+    description:
+      'Atualiza arquivos de um projeto Sandpack existente. Use para editar/ciar/deletar arquivos quando o usuário pedir alterações num projeto que já está aberto. Hot-reload é automático.',
+    parameters: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'string',
+          description:
+            'ID do projeto. Se omitido, usa o projeto atualmente ativo no workspace.',
+        },
+        updates: {
+          type: 'array',
+          description: 'Lista de alterações atômicas (multi-arquivo).',
+          items: {
+            type: 'object',
+            properties: {
+              path: {
+                type: 'string',
+                description: 'Caminho do arquivo. Ex: "src/App.tsx", "src/components/Button.tsx", "index.html".',
+              },
+              content: {
+                type: 'string',
+                description: 'Novo conteúdo do arquivo. Ignorado se action=delete.',
+              },
+              action: {
+                type: 'string',
+                enum: ['create', 'update', 'delete'],
+                description: 'create = novo arquivo, update = editar existente, delete = remover.',
+              },
+            },
+            required: ['path', 'action'],
+          },
+        },
+      },
+      required: ['updates'],
+    },
+  },
+};
+
+const OPEN_PROJECT_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'open_project',
+    description:
+      'Abre um projeto existente no workspace Sandpack. Use quando o usuário pedir pra abrir/continuar um projeto salvo.',
+    parameters: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'string',
+          description: 'ID do projeto. Se omitido, abre o primeiro projeto disponível.',
+        },
+      },
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -450,7 +546,17 @@ function AppContent() {
   const [isStudioMode, setIsStudioMode] = useState<boolean>(false);
 
   // Projects (Sandpack workspace) state
-  const { activeProject, closeProject, removeProject, renameProject, updateFileContent } = useProjects();
+  const {
+    activeProject,
+    closeProject,
+    removeProject,
+    renameProject,
+    updateFileContent,
+    createProject,
+    openProject,
+    updateProjectFiles,
+    projectsIndex,
+  } = useProjects();
   const [showProjectWorkspace, setShowProjectWorkspace] = useState(false);
 
   // Abre o workspace automaticamente quando um projeto é selecionado
@@ -1585,6 +1691,103 @@ function AppContent() {
         };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || `Erro na busca de código: ${args.query}` }) };
+      }
+    }
+
+    // ==================== Project Workspace tools (Sandpack) ====================
+    if (name === 'create_project') {
+      try {
+        const projName = (args.name || '').trim();
+        if (!projName) {
+          return { result: JSON.stringify({ error: 'Parâmetro "name" é obrigatório.' }) };
+        }
+        const template = (args.template || 'react-ts') as any;
+        const validTemplates = ['react-ts', 'react', 'vite-react-ts', 'vanilla-ts', 'vanilla', 'vue', 'static', 'node'];
+        if (!validTemplates.includes(template)) {
+          return { result: JSON.stringify({ error: `Template inválido: ${template}. Válidos: ${validTemplates.join(', ')}` }) };
+        }
+        const created = await createProject({
+          name: projName,
+          description: args.description?.trim() || undefined,
+          template,
+          files: args.files || undefined,
+          conversationId: activeId || undefined,
+        });
+        // Abre o workspace automaticamente
+        await openProject(created.id);
+        return {
+          result: JSON.stringify({
+            ok: true,
+            projectId: created.id,
+            name: created.name,
+            template: created.template,
+            fileCount: Object.keys(created.files || {}).length,
+            message: `Projeto "${created.name}" criado e aberto no workspace. O usuário já pode ver o preview ao vivo.`,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Erro ao criar projeto.' }) };
+      }
+    }
+
+    if (name === 'update_project_files') {
+      try {
+        const updates = Array.isArray(args.updates) ? args.updates : [];
+        if (updates.length === 0) {
+          return { result: JSON.stringify({ error: 'Nenhuma atualização fornecida.' }) };
+        }
+        // Se projectId foi fornecido e difere do ativo, abre primeiro
+        if (args.projectId && args.projectId !== activeProject?.id) {
+          await openProject(args.projectId);
+        }
+        if (!activeProject) {
+          return { result: JSON.stringify({ error: 'Nenhum projeto ativo. Crie um projeto primeiro com create_project.' }) };
+        }
+        // Valida cada update
+        for (const u of updates) {
+          if (!u.path || !u.action) {
+            return { result: JSON.stringify({ error: 'Cada update precisa de "path" e "action".' }) };
+          }
+          if (u.action !== 'delete' && typeof u.content !== 'string') {
+            return { result: JSON.stringify({ error: `Update em "${u.path}" precisa de "content" (string).` }) };
+          }
+        }
+        await updateProjectFiles(updates);
+        return {
+          result: JSON.stringify({
+            ok: true,
+            projectId: activeProject.id,
+            updatedCount: updates.length,
+            message: `${updates.length} arquivo(s) atualizado(s) no projeto "${activeProject.name}". Preview recarregado.`,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Erro ao atualizar arquivos.' }) };
+      }
+    }
+
+    if (name === 'open_project') {
+      try {
+        const targetId = args.projectId || projectsIndex[0]?.id;
+        if (!targetId) {
+          return { result: JSON.stringify({ error: 'Nenhum projeto salvo. Use create_project primeiro.' }) };
+        }
+        const target = projectsIndex.find((p: any) => p.id === targetId);
+        if (!target) {
+          return { result: JSON.stringify({ error: `Projeto não encontrado: ${targetId}` }) };
+        }
+        await openProject(targetId);
+        return {
+          result: JSON.stringify({
+            ok: true,
+            projectId: target.id,
+            name: target.name,
+            template: target.template,
+            message: `Projeto "${target.name}" aberto no workspace.`,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Erro ao abrir projeto.' }) };
       }
     }
 
