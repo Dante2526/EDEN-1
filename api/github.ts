@@ -76,9 +76,50 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
-    if (action === 'file_content') {
+    // Lista arquivos de um diretório (path vazio = raiz). Retorna array de items.
+    // GitHub API: GET /repos/{owner}/{repo}/contents/{path}?ref={branch}
+    // Se path é diretório (ou vazio), retorna array. Se é arquivo, retorna objeto.
+    if (action === 'contents') {
+      const cleanPath = path.replace(/^\/+/, ''); // remove leading slashes
+      const endpoint = cleanPath
+        ? `/repos/${owner}/${repo}/contents/${cleanPath}?ref=${branch}`
+        : `/repos/${owner}/${repo}/contents?ref=${branch}`;
+      const data = await ghFetch(endpoint, token);
+      // Garante que sempre retorna array (mesmo se a API retornar objeto único)
+      const items = Array.isArray(data) ? data : [data];
+      // Normaliza pro formato que o frontend espera
+      const normalized = items.map((item: any) => ({
+        name: item.name,
+        path: item.path,
+        sha: item.sha,
+        size: item.size || 0,
+        type: item.type === 'dir' ? 'dir' : 'file',
+      }));
+      return new Response(JSON.stringify(normalized), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Alias: 'file' = 'file_content' (busca conteúdo de um único arquivo)
+    // Retorna { content: base64, encoding, name, path, sha, ... }
+    if (action === 'file' || action === 'file_content') {
       const data = await ghFetch(`/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, token);
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Busca de código dentro de um repo (GitHub Code Search API)
+    if (action === 'search') {
+      const q = url.searchParams.get('q') || '';
+      if (!q.trim()) return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      // Monta query: se owner/repo fornecidos, restringe ao repo
+      let searchQuery = q.trim();
+      if (owner && repo) searchQuery = `${searchQuery} repo:${owner}/${repo}`;
+      const data = await ghFetch(`/search/code?q=${encodeURIComponent(searchQuery)}&per_page=20`, token);
+      const items = (data.items || []).map((item: any) => ({
+        name: item.name,
+        path: item.path,
+        html_url: item.html_url,
+        snippets: (item.text_matches || []).map((m: any) => m.fragment || ''),
+      }));
+      return new Response(JSON.stringify(items), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Buscar repositórios no GitHub por nome/descrição
