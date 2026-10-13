@@ -277,6 +277,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         // 3. Determina template
         let template: ProjectTemplate = 'static';
+        let detectedTemplate: string = 'static';
         const hasTsx = allFiles.some(
           (f: any) =>
             f.path === 'src/App.tsx' ||
@@ -289,10 +290,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             f.path === '/src/App.js' ||
             f.path?.endsWith('App.js')
         );
-        if (hasPackageJson && hasTsx) template = 'react-ts';
-        else if (hasPackageJson && hasJsx) template = 'react';
-        else if (hasPackageJson) template = 'vanilla';
-        else if (hasIndexHtml) template = 'static';
+        if (hasPackageJson && hasTsx) { template = 'react-ts'; detectedTemplate = 'react-ts'; }
+        else if (hasPackageJson && hasJsx) { template = 'react'; detectedTemplate = 'react'; }
+        else if (hasPackageJson) { template = 'vanilla'; detectedTemplate = 'vanilla'; }
+        else if (hasIndexHtml) { template = 'static'; detectedTemplate = 'static'; }
 
         // 4. Filtra arquivos web relevantes (limite ~30 arquivos pra não estourar)
         const WEB_EXTENSIONS = [
@@ -325,13 +326,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         let projectFiles: Record<string, ProjectFile> = {};
 
         if (existing) {
-          // Reutiliza o projeto existente — só recarrega do storage
-          const loaded = await loadProject(existing.id);
-          if (loaded) {
-            await openProject(existing.id);
-            return { ok: true, project: loaded };
-          }
-          // Se não carregou, cria novo
+          // Reutiliza o ID do projeto existente, mas sempre re-busca os arquivos
+          // (pra corrigir projetos bugados de versões anteriores e pegar mudanças do repo)
           projectId = existing.id;
           projectName = existing.name;
         } else {
@@ -340,6 +336,21 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         // 6. Busca conteúdo de cada arquivo (em paralelo, limite 5 por vez)
+        // Decodifica base64 com suporte UTF-8 correto (acentos, emojis)
+        const decodeBase64Utf8 = (b64: string): string => {
+          try {
+            const cleaned = b64.replace(/\n/g, '').replace(/\r/g, '');
+            const binary = atob(cleaned);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+            return new TextDecoder('utf-8').decode(bytes);
+          } catch {
+            return '';
+          }
+        };
+
         const fetchFileContent = async (filePath: string): Promise<string> => {
           try {
             const res: any = await callGitHubApi('file_content', {
@@ -348,13 +359,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
               path: filePath,
               branch: params.branch,
             });
-            if (res.content) {
-              // GitHub API retorna base64
-              try {
-                return atob(res.content.replace(/\n/g, ''));
-              } catch {
-                return res.content;
-              }
+            // GitHub API retorna { content: base64, encoding: 'base64' }
+            if (res.content && res.encoding === 'base64') {
+              return decodeBase64Utf8(res.content);
+            }
+            // Algumas respostas vêm como string direta
+            if (typeof res.content === 'string' && !res.encoding) {
+              return res.content;
             }
             return '';
           } catch {
@@ -370,7 +381,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const contents = await Promise.all(batch.map(fetchFileContent));
           batch.forEach((path: string, idx: number) => {
             const content = contents[idx];
-            if (content !== undefined) {
+            if (content !== undefined && content !== '') {
               const isActive =
                 path === 'src/App.tsx' ||
                 path === 'src/App.js' ||
@@ -387,7 +398,88 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return { ok: false, reason: 'not_web' };
         }
 
-        // 7. Cria/atualiza o projeto
+        // 6.5 Garante entry points mínimos pro Sandpack funcionar
+        // Sandpack react-ts precisa de /index.html e /src/main.tsx (ou App.tsx)
+        const isReactTemplate = detectedTemplate === 'react-ts' || detectedTemplate === 'react' || detectedTemplate === 'vite-react-ts';
+        if (isReactTemplate) {
+          const isTs = detectedTemplate === 'react-ts' || detectedTemplate === 'vite-react-ts';
+          const mainPath = isTs ? 'src/main.tsx' : 'src/main.js';
+          const appPath = isTs ? 'src/App.tsx' : 'src/App.js';
+
+          // Se não tem index.html, cria um mínimo
+          if (!projectFiles['index.html']) {
+            projectFiles['index.html'] = {
+              path: 'index.html',
+              content: `<!doctype html>\n<html lang="pt-br">\n  <body>\n    <div id="root"></div>\n    <script type="module" src="/${mainPath}"></script>\n  </body>\n</html>\n`,
+            };
+          } else {
+            // Garante que o index.html tem a div#root e o script pro main
+            const html = projectFiles['index.html'].content;
+            if (!html.includes('id="root"') && !html.includes("id='root'")) {
+              projectFiles['index.html'].content = html.replace(
+                '<body>',
+                '<body>\n    <div id="root"></div>'
+              );
+            }
+            if (!html.includes(mainPath)) {
+              projectFiles['index.html'].content = projectFiles['index.html'].content.replace(
+                '</body>',
+                `    <script type="module" src="/${mainPath}"></script>\n  </body>`
+              );
+            }
+          }
+
+          // Se não tem main.tsx/jsx, cria um mínimo que importa o App
+          if (!projectFiles[mainPath]) {
+            const importPath = `./${appPath.split('/').pop()?.replace(/\.(tsx|jsx?|js)$/, '') || 'App'}`;
+            projectFiles[mainPath] = {
+              path: mainPath,
+              content: isTs
+                ? `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from '${importPath}';\n\nReactDOM.createRoot(document.getElementById('root')!).render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>\n);\n`
+                : `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from '${importPath}';\n\nReactDOM.createRoot(document.getElementById('root')).render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>\n);\n`,
+            };
+          }
+
+          // Se não tem App.tsx/jsx, cria um placeholder
+          if (!projectFiles[appPath]) {
+            projectFiles[appPath] = {
+              path: appPath,
+              content: isTs
+                ? `export default function App() {\n  return (\n    <div style={{ padding: 20, fontFamily: 'sans-serif' }}>\n      <h1>${projectName}</h1>\n      <p>Edit ${appPath} and save to see changes.</p>\n    </div>\n  );\n}\n`
+                : `export default function App() {\n  return (\n    <div style={{ padding: 20, fontFamily: 'sans-serif' }}>\n      <h1>${projectName}</h1>\n      <p>Edit ${appPath} and save.</p>\n    </div>\n  );\n}\n`,
+              active: true,
+            };
+          }
+        }
+
+        // 7. Parseia package.json pra extrair dependencies (CRÍTICO pro Sandpack)
+        let dependencies: Record<string, string> = {};
+        const pkgJsonFile = projectFiles['package.json'];
+        if (pkgJsonFile) {
+          try {
+            const pkg = JSON.parse(pkgJsonFile.content);
+            dependencies = {
+              ...(pkg.dependencies || {}),
+              ...(pkg.devDependencies || {}),
+            };
+            // Remove dependencies que o Sandpack já inclui no template
+            delete dependencies['react'];
+            delete dependencies['react-dom'];
+            delete dependencies['react-scripts'];
+            // Remove test/dev tools que o Sandpack não precisa
+            delete dependencies['@types/react'];
+            delete dependencies['@types/react-dom'];
+            delete dependencies['@types/node'];
+            delete dependencies['typescript'];
+            delete dependencies['vite'];
+            delete dependencies['@vitejs/plugin-react'];
+          } catch {
+            // package.json inválido — deixa sem dependencies
+          }
+        }
+        const finalDependencies = Object.keys(dependencies).length > 0 ? dependencies : undefined;
+
+        // 8. Cria/atualiza o projeto
         const now = Date.now();
         const project: SynapProject = {
           id: projectId,
@@ -396,6 +488,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
           description: `Sincronizado de ${params.repoFullName} (${params.branch})`,
           template,
           files: projectFiles,
+          dependencies: finalDependencies,
           createdAt: now,
           updatedAt: now,
           sourceRepoFullName: params.repoFullName,
