@@ -984,7 +984,7 @@ function AppContent() {
     }
 
     // Sincroniza o repo como projeto Sandpack (se for web)
-    // Dispara em background — não bloqueia o resto da UI
+    // Reporta erros no ErrorModal ao invés de falhar silenciosamente
     syncRepoToProject({
       repoFullName: repo.fullName,
       owner: repo.owner,
@@ -996,16 +996,32 @@ function AppContent() {
         if (result.ok) {
           console.log(`[Synap] Projeto Sandpack criado/reutilizado para ${repo.fullName}`);
         } else if (result.reason === 'not_web') {
-          console.log(`[Synap] Repo ${repo.fullName} não é web (sem package.json/index.html). Preview não disponível.`);
-          // Não mostra erro — só fica sem preview, comportamento normal
+          // Repo não-web (Python, Go, etc.) — comportamento normal, não é erro
+          console.log(`[Synap] Repo ${repo.fullName} não é web. Preview não disponível.`);
         } else if (result.reason === 'fetch_error') {
-          console.warn(`[Synap] Erro ao buscar arquivos do repo ${repo.fullName}. Preview não criado.`);
+          // Erro real ao buscar arquivos — mostra no ErrorModal
+          reportAppError(
+            'Falha ao sincronizar repositório',
+            `Não foi possível buscar os arquivos do repositório ${repo.fullName} (branch ${repo.branch}). O Preview não pôde ser criado.`,
+            {
+              endpoint: `/api/github?action=files&owner=${repo.owner}&repo=${repo.repo}&branch=${repo.branch}`,
+              stack: `syncRepoToProject(${repo.fullName})`,
+            }
+          );
         }
       })
       .catch((err) => {
         console.warn('[Synap] Falha ao sincronizar repo como projeto:', err);
+        reportAppError(
+          'Erro ao vincular repositório',
+          `Erro inesperado ao sincronizar o repositório ${repo.fullName} como projeto Sandpack.\n\nDetalhe: ${err?.message || err}`,
+          {
+            endpoint: repo.fullName,
+            stack: err?.stack,
+          }
+        );
       });
-  }, [activeId, syncRepoToProject]);
+  }, [activeId, syncRepoToProject, reportAppError]);
 
   const handleCloseRepo = useCallback(() => {
     setActiveRepo(null);

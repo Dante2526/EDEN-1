@@ -359,6 +359,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
               path: filePath,
               branch: params.branch,
             });
+            // GitHub API retorna { content: base64, encoding: 'base64', size: number }
+            // Pula arquivos muito grandes (>500KB) que podem crashar o Sandpack
+            if (typeof res.size === 'number' && res.size > 500_000) {
+              return '';
+            }
             // GitHub API retorna { content: base64, encoding: 'base64' }
             if (res.content && res.encoding === 'base64') {
               return decodeBase64Utf8(res.content);
@@ -375,7 +380,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         // Processa em batches de 5 pra não estourar rate limit
         const batchSize = 5;
-        const filePaths = webFiles.map((f: any) => (f.path || '').replace(/^\//, ''));
+        const filePaths = webFiles
+          .map((f: any) => (f.path || '').replace(/^\//, ''))
+          // Pula arquivos muito grandes pelo size retornado pela tree
+          .filter((p: string) => {
+            const fileMeta = webFiles.find((f: any) => (f.path || '').replace(/^\//, '') === p);
+            return !fileMeta || typeof fileMeta.size !== 'number' || fileMeta.size <= 500_000;
+          });
         for (let i = 0; i < filePaths.length; i += batchSize) {
           const batch = filePaths.slice(i, i + batchSize);
           const contents = await Promise.all(batch.map(fetchFileContent));
