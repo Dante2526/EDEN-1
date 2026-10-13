@@ -51,6 +51,33 @@ const TEMPLATE_LABELS: Record<ProjectTemplate, string> = {
 type BottomPanel = 'preview' | 'console';
 
 /**
+ * Componente que detecta erros de compilação do Sandpack e mostra
+ * automaticamente em overlay. Quando o preview fica preto, é porque
+ * deu erro de compilação — esse componente pega o erro e mostra.
+ */
+const SandpackErrorWatcher: React.FC<{
+  onError: (error: string | null) => void;
+}> = ({ onError }) => {
+  const { sandpack } = useSandpack();
+  const { error, status } = sandpack;
+
+  useEffect(() => {
+    // Sandpack popula `error` quando há erro de compilação
+    if (error) {
+      const errorMsg = typeof error === 'string'
+        ? error
+        : (error as any)?.message || JSON.stringify(error);
+      onError(errorMsg);
+    } else if (status === 'running') {
+      // Compilou sem erro — limpa
+      onError(null);
+    }
+  }, [error, status, onError]);
+
+  return null;
+};
+
+/**
  * Componente que abre o preview do Sandpack em nova aba (tela cheia).
  * Vive dentro do SandpackProvider pra ter acesso ao bundler URL.
  */
@@ -190,6 +217,7 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
   }, [project]);
 
   const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [compileError, setCompileError] = useState<string | null>(null);
 
   // Atualiza nome quando projeto muda externamente
   useEffect(() => {
@@ -403,6 +431,9 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
               activeFile={activeFilePath}
             />
 
+            {/* Watcher de erros de compilação — mostra erro quando preview falha */}
+            <SandpackErrorWatcher onError={setCompileError} />
+
             {!showCode && (
               <div className="!flex-1 !min-w-0 bg-[#181714] min-h-0 relative">
                 {/* Preview — ocupa a tela TODA, só a página web */}
@@ -416,7 +447,40 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
                   <OpenInNewTabButton />
                 </div>
 
-                {/* Overlay de Diagnóstico (só se ativar manualmente) */}
+                {/* Overlay de ERRO de compilação — aparece automaticamente quando o preview falha */}
+                {compileError && !showDiagnostic && (
+                  <div className="absolute inset-0 z-30 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-3 text-[#f3efe6]">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-1.5 font-medium text-rose-400">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>Erro de compilação</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCompileError(null)}
+                        className="p-1 hover:bg-[#282622] rounded"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="bg-rose-950/40 border border-rose-500/40 rounded-lg p-3">
+                      <pre className="text-[10px] text-rose-200 font-mono whitespace-pre-wrap break-all overflow-x-auto">{compileError}</pre>
+                    </div>
+                    <div className="mt-3 text-[10px] text-[#8c867a] leading-relaxed space-y-1">
+                      <div className="font-bold text-[#c4bfb6] text-[11px] mb-1">💡 Possíveis causas:</div>
+                      <div>• Import de biblioteca que não está no package.json</div>
+                      <div>• Import de arquivo que não existe no projeto</div>
+                      <div>• Erro de sintaxe TypeScript</div>
+                      <div>• Dependency faltando (ex: lucide-react, framer-motion)</div>
+                    </div>
+                    <div className="mt-3 text-[10px] text-[#8c867a]">
+                      Copia o erro acima e pede pra IA corrigir no chat:
+                      <pre className="mt-1 bg-[#22201d] border border-[#3b3831] rounded p-2 text-[#a39d93] whitespace-pre-wrap">Corrige este erro no projeto: {compileError.slice(0, 200)}...</pre>
+                    </div>
+                  </div>
+                )}
+
+                {/* Overlay de Diagnóstico (manual, botão ⚠) */}
                 {showDiagnostic && (
                   <div className="absolute inset-0 z-20 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-3 text-[#f3efe6] text-xs">
                     <div className="flex items-center justify-between mb-3">
