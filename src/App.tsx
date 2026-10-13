@@ -57,6 +57,7 @@ import {
   executeMcpToolCall,
 } from './lib/mcp-client';
 import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } from './lib/theme';
+import { useContinuousVoice } from './lib/use-continuous-voice';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -496,6 +497,107 @@ function AppContent() {
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([]);
   const [isTerminalRunning, setIsTerminalRunning] = useState<boolean>(false);
   const [terminalCwd, setTerminalCwd] = useState<string>('/');
+
+  // Modo Voz Contínua
+  const [continuousVoiceActive, setContinuousVoiceActive] = useState(false);
+  const continuousVoiceTranscriptRef = useRef<string>('');
+  const continuousVoiceListeningRef = useRef<boolean>(false);
+
+  const handleContinuousVoiceToggle = useCallback(() => {
+    setContinuousVoiceActive(prev => {
+      const next = !prev;
+      if (!next) {
+        // Desligando — para tudo
+        continuousVoiceListeningRef.current = false;
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  // Quando o streaming termina e o modo contínuo tá ativo, fala a resposta
+  useEffect(() => {
+    if (!continuousVoiceActive || isStreaming) return;
+
+    // Pega a última resposta da IA
+    const conv = conversations.find(c => c.id === activeId);
+    if (!conv || conv.messages.length === 0) return;
+
+    const lastMsg = conv.messages[conv.messages.length - 1];
+    if (lastMsg.role !== 'assistant' || !lastMsg.content) return;
+
+    const textToSpeak = lastMsg.content;
+    if (!textToSpeak.trim()) return;
+
+    // Fala a resposta
+    const cleanText = textToSpeak
+      .replace(/<think>[\s\S]*?<\/think>/g, '')
+      .replace(/```[\s\S]*?```/g, ' Trecho de código omitido. ')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/\|[^\n]+\|/g, '')
+      .replace(/^[\s]*[-*+]\s+/gm, '')
+      .replace(/^[\s]*\d+\.\s+/gm, '')
+      .replace(/[*_~]{1,3}/g, '')
+      .replace(/\n+/g, '. ')
+      .trim()
+      .slice(0, 2000);
+
+    if (!cleanText) return;
+
+    // Tenta TTS neural do backend
+    const speak = async () => {
+      try {
+        const settings = JSON.parse(localStorage.getItem('synap_settings_v1') || '{}');
+        const preferredVoice = settings.speechVoice || 'pt-BR-FranciscaNeural';
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: cleanText, voice: preferredVoice }),
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            // Reativa o microfone depois de falar
+            if (continuousVoiceActive) {
+              continuousVoiceListeningRef.current = true;
+              // Dispara evento pra VoiceButton reativar
+              window.dispatchEvent(new CustomEvent('synap:resume-listening'));
+            }
+          };
+          audio.play();
+          return;
+        }
+      } catch {}
+
+      // Fallback: Web Speech API
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.05;
+        utterance.onend = () => {
+          if (continuousVoiceActive) {
+            continuousVoiceListeningRef.current = true;
+            window.dispatchEvent(new CustomEvent('synap:resume-listening'));
+          }
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+    };
+
+    speak();
+  }, [isStreaming, continuousVoiceActive, activeId, conversations]);
+
+  // Handler pra quando o usuário fala no modo contínuo (definido depois de handleSendMessage)
+  // Veja handleContinuousVoiceTranscript mais abaixo
 
   // Reset window scroll position when switching modes
   useEffect(() => {
@@ -2153,6 +2255,22 @@ function AppContent() {
     }
   }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
 
+  // Handler pra quando o usuário fala no modo contínuo
+  const handleContinuousVoiceTranscript = useCallback((text: string) => {
+    if (!continuousVoiceActive) return;
+    continuousVoiceTranscriptRef.current = text;
+
+    // Se a IA tá falando, interrompe
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
+    // Envia a mensagem
+    if (text.trim()) {
+      handleSendMessage(text);
+    }
+  }, [continuousVoiceActive, handleSendMessage]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bom dia';
@@ -2352,6 +2470,8 @@ function AppContent() {
           onTogglePlanMode={handleTogglePlanMode}
           conversationTokens={conversationTokens}
           onOpenTerminal={handleOpenTerminal}
+          isContinuousVoiceActive={continuousVoiceActive}
+          onToggleContinuousVoice={handleContinuousVoiceToggle}
         />
           </>
         )}

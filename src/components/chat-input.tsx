@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, Paperclip } from 'lucide-react';
+import { ArrowUp, Square, Paperclip, Phone, PhoneOff } from 'lucide-react';
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
@@ -23,6 +23,8 @@ interface ChatInputProps {
     totalTokens: number;
   };
   onOpenTerminal?: () => void;
+  isContinuousVoiceActive?: boolean;
+  onToggleContinuousVoice?: () => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = React.memo(({
@@ -38,6 +40,8 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   onTogglePlanMode,
   conversationTokens,
   onOpenTerminal,
+  isContinuousVoiceActive = false,
+  onToggleContinuousVoice,
 }) => {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -277,12 +281,39 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
               )}
             </div>
 
-            {/* Right Tools: Mic + Claude Terracotta Arrow Send Button */}
+            {/* Right Tools: Continuous Voice + Mic + Send */}
             <div className="flex items-center gap-1.5">
+              {/* Modo Voz Contínua — botão de telefone */}
+              {onToggleContinuousVoice && (
+                <button
+                  type="button"
+                  onClick={onToggleContinuousVoice}
+                  disabled={isLoading && !isContinuousVoiceActive}
+                  aria-label={isContinuousVoiceActive ? 'Desativar modo de voz contínua' : 'Ativar modo de voz contínua'}
+                  title={isContinuousVoiceActive ? 'Modo voz contínua ATIVO — clique para desligar' : 'Ativar modo voz contínua (conversa por voz sem clicar)'}
+                  className={`relative p-1.5 rounded-lg transition-all flex items-center justify-center cursor-pointer ${
+                    isContinuousVoiceActive
+                      ? 'bg-emerald-600/30 text-emerald-400 ring-1 ring-emerald-500/60 shadow-sm'
+                      : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
+                  } ${isLoading && !isContinuousVoiceActive ? 'opacity-40 cursor-not-allowed' : ''}`}
+                >
+                  {isContinuousVoiceActive ? (
+                    <>
+                      <span className="absolute inset-0 rounded-lg bg-emerald-500/20 animate-ping opacity-75" />
+                      <PhoneOff className="w-4 h-4 relative z-10" />
+                    </>
+                  ) : (
+                    <Phone className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+
               <VoiceButton
-                onTranscript={handleVoiceTranscript}
+                onTranscript={isContinuousVoiceActive ? undefined : handleVoiceTranscript}
                 onStateChange={handleVoiceStateChange}
-                disabled={isLoading}
+                disabled={isLoading && !isContinuousVoiceActive}
+                continuousMode={isContinuousVoiceActive}
+                onContinuousTranscript={isContinuousVoiceActive ? (text) => onSendMessage(text, [], []) : undefined}
               />
 
               {isLoading ? (

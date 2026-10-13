@@ -2,15 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Mic, AlertCircle } from 'lucide-react';
 
 interface VoiceButtonProps {
-  onTranscript: (text: string, isInterim?: boolean) => void;
+  onTranscript?: (text: string, isInterim?: boolean) => void;
   onStateChange?: (isListening: boolean) => void;
   disabled?: boolean;
+  continuousMode?: boolean;
+  onContinuousTranscript?: (text: string) => void;
 }
 
 export const VoiceButton: React.FC<VoiceButtonProps> = ({
   onTranscript,
   onStateChange,
   disabled = false,
+  continuousMode = false,
+  onContinuousTranscript,
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -34,6 +38,44 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     };
   }, []);
 
+  // No modo contínuo, inicia escuta automaticamente quando ativado
+  useEffect(() => {
+    if (continuousMode && !isListening && !isManuallyStoppedRef.current) {
+      startListening();
+    }
+    if (!continuousMode && isListening) {
+      stopListening();
+    }
+  }, [continuousMode]);
+
+  // Listener pra modo contínuo: quando a IA termina de falar, reativa o microfone
+  useEffect(() => {
+    if (!continuousMode) return;
+
+    const handleResume = () => {
+      if (!isManuallyStoppedRef.current && isListeningRef.current) {
+        try {
+          if (recognitionRef.current) {
+            recognitionRef.current.start();
+          } else {
+            startListening();
+          }
+        } catch {
+          setTimeout(() => {
+            try { startListening(); } catch {}
+          }, 200);
+        }
+      }
+    };
+
+    window.addEventListener('synap:resume-listening', handleResume);
+    return () => window.removeEventListener('synap:resume-listening', handleResume);
+  }, [continuousMode]);
+
+  // No modo contínuo, não desabilita o botão durante streaming
+  // (precisa poder interromper a IA falando)
+  const effectiveDisabled = continuousMode ? false : disabled;
+
   const createRecognition = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -52,8 +94,6 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     };
 
     recognition.onresult = (event: any) => {
-      // Com continuous=false, só temos 1 resultado por sessão
-      // event.results só tem o resultado atual, sem acumular
       let interim = '';
       let final = '';
 
@@ -71,10 +111,18 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         finalTextRef.current += final;
       }
 
-      // Mostra: acumulado + interim atual
       const fullText = (finalTextRef.current + interim).trim();
+
+      // No modo contínuo, envia texto final direto pro handler de contínuo
+      if (continuousMode && onContinuousTranscript && final) {
+        onContinuousTranscript(fullText);
+        finalTextRef.current = ''; // Limpa pra próxima frase
+        return;
+      }
+
+      // Modo normal (walkie-talkie)
       if (fullText) {
-        onTranscript(fullText, Boolean(interim));
+        onTranscript?.(fullText, Boolean(interim));
       }
     };
 
@@ -143,7 +191,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   };
 
   const toggleListening = () => {
-    if (disabled) return;
+    if (effectiveDisabled) return;
     if (isListening) {
       stopListening();
     } else {
@@ -174,14 +222,14 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       <button
         type="button"
         onClick={toggleListening}
-        disabled={disabled}
+        disabled={effectiveDisabled}
         aria-label={isListening ? 'Parar transcrição de voz' : 'Falar por microfone'}
         title={isListening ? 'Gravando em tempo real... Clique para parar' : 'Falar por voz (transcrição direta)'}
         className={`relative p-1.5 rounded-lg transition-all flex items-center justify-center cursor-pointer ${
           isListening
             ? 'bg-[#d97757]/20 text-[#d97757] ring-1 ring-[#d97757]/60 shadow-sm'
             : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
-        } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+        } ${effectiveDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       >
         {isListening ? (
           <>
