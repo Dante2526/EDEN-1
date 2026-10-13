@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { SynapProject, ProjectTemplate } from '../../lib/types';
 import { projectToSandpackFiles } from '../../lib/project-storage';
+import { LocalPreview } from './local-preview';
 
 interface ProjectWorkspaceProps {
   project: SynapProject;
@@ -501,104 +502,13 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
             />
 
             {!showCode && (
-              <div className="!flex-1 !min-w-0 bg-[#181714] min-h-0 relative">
-                {/* Preview — ocupa a tela TODA, só a página web */}
-                <SandpackPreview
-                  showOpenInCodeSandbox={false}
-                  showRefreshButton
-                  className="!h-full !w-full"
-                />
-                {/* Botão flutuante: abrir em tela cheia (nova aba) */}
-                <div className="absolute top-2 right-2 z-10">
-                  <OpenInNewTabButton />
-                </div>
-
-                {/* Overlay de FALLBACK — quando Sandpack não conecta ao bundler */}
-                {connectionFailed && !showDiagnostic && (
-                  <div className="absolute inset-0 z-30 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-4 text-[#f3efe6] flex flex-col items-center justify-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center shrink-0">
-                      <AlertCircle className="w-7 h-7 text-amber-400" />
-                    </div>
-                    <div className="text-center space-y-1.5 max-w-sm">
-                      <h3 className="text-sm font-medium text-[#f3efe6]">Servidor de preview indisponível</h3>
-                      <p className="text-xs text-[#8c867a] leading-relaxed">
-                        O Sandpack não conseguiu conectar ao bundler runtime.
-                        Isso é um problema de rede/servidor externo — não do seu código.
-                      </p>
-                    </div>
-
-                    {/* Botão: abrir no CodeSandbox (bundler próprio) */}
-                    <a
-                      href={buildCodeSandboxUrl(sandpackFiles, project.template, project.dependencies)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-br from-[#d97757] to-[#c4663f] hover:from-[#e08368] hover:to-[#d97757] text-white text-xs font-medium transition-all shadow-md cursor-pointer"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Abrir no CodeSandbox
-                    </a>
-
-                    <div className="text-[10px] text-[#5e5a52] text-center max-w-xs leading-relaxed">
-                      CodeSandbox tem bundler próprio e não depende do mesmo servidor.
-                      Vai abrir numa nova aba com o projeto rodando.
-                    </div>
-
-                    {/* Botão: tentar de novo */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setConnectionFailed(false);
-                        // Força reload do iframe
-                        const iframe = document.querySelector('.sp-preview-iframe') as HTMLIFrameElement | null;
-                        if (iframe) {
-                          const src = iframe.src;
-                          iframe.src = '';
-                          setTimeout(() => { iframe.src = src; }, 100);
-                        }
-                      }}
-                      className="text-xs text-[#d97757] hover:underline"
-                    >
-                      Tentar novamente
-                    </button>
-                  </div>
-                )}
-
-                {/* Overlay de ERRO de compilação — aparece automaticamente quando o preview falha */}
-                {compileError && !showDiagnostic && (
-                  <div className="absolute inset-0 z-30 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-3 text-[#f3efe6]">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-1.5 font-medium text-rose-400">
-                        <AlertCircle className="w-4 h-4" />
-                        <span>Erro de compilação</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setCompileError(null)}
-                        className="p-1 hover:bg-[#282622] rounded"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="bg-rose-950/40 border border-rose-500/40 rounded-lg p-3">
-                      <pre className="text-[10px] text-rose-200 font-mono whitespace-pre-wrap break-all overflow-x-auto">{compileError}</pre>
-                    </div>
-                    <div className="mt-3 text-[10px] text-[#8c867a] leading-relaxed space-y-1">
-                      <div className="font-bold text-[#c4bfb6] text-[11px] mb-1">💡 Possíveis causas:</div>
-                      <div>• Import de biblioteca que não está no package.json</div>
-                      <div>• Import de arquivo que não existe no projeto</div>
-                      <div>• Erro de sintaxe TypeScript</div>
-                      <div>• Dependency faltando (ex: lucide-react, framer-motion)</div>
-                    </div>
-                    <div className="mt-3 text-[10px] text-[#8c867a]">
-                      Copia o erro acima e pede pra IA corrigir no chat:
-                      <pre className="mt-1 bg-[#22201d] border border-[#3b3831] rounded p-2 text-[#a39d93] whitespace-pre-wrap">Corrige este erro no projeto: {compileError.slice(0, 200)}...</pre>
-                    </div>
-                  </div>
-                )}
+              <div className="!flex-1 !min-w-0 bg-white min-h-0 relative">
+                {/* LocalPreview — 100% no navegador, sem servidor externo */}
+                <LocalPreview project={project} />
 
                 {/* Overlay de Diagnóstico (manual, botão ⚠) */}
                 {showDiagnostic && (
-                  <div className="absolute inset-0 z-20 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-3 text-[#f3efe6] text-xs">
+                  <div className="absolute inset-0 z-40 bg-[#0d0c0a]/95 backdrop-blur-sm overflow-y-auto p-3 text-[#f3efe6] text-xs">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-1.5 font-medium">
                         <AlertCircle className="w-4 h-4 text-amber-400" />
