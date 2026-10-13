@@ -231,20 +231,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
               <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
               <span>Skills</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => onChangeTab('projects')}
-              title="Projetos (preview ao vivo)"
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
-                sidebarTab === 'projects'
-                  ? 'bg-dark-hover text-[color:var(--c-fg-f3efe6)] shadow-xs'
-                  : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
-              }`}
-            >
-              <FileCode className="w-3.5 h-3.5 text-[#d97757] shrink-0" />
-              <span>Projs</span>
-            </button>
           </div>
         </div>
 
@@ -307,8 +293,25 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
           </Suspense>
         ) : (
           <>
-        {/* Downloader Button (above New Chat) */}
+        {/* Projects Button (above Downloader) */}
         <div className="px-3 pt-2 pb-1">
+          <button
+            type="button"
+            onClick={() => onChangeTab('projects')}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#d97757]/15 to-[#d97757]/5 hover:from-[#d97757]/25 hover:to-[#d97757]/10 border border-[#d97757]/30 hover:border-[#d97757]/50 active:scale-[0.99] text-[#f3efe6] font-medium text-xs sm:text-sm transition-all duration-200 cursor-pointer group shadow-sm"
+          >
+            <span className="font-medium tracking-tight flex items-center gap-2">
+              <FileCode className="w-4 h-4 text-[#d97757] group-hover:scale-110 transition-transform" />
+              Projetos
+            </span>
+            <span className="text-[10px] text-[#d97757]/70 font-mono group-hover:text-[#d97757]">
+              live preview
+            </span>
+          </button>
+        </div>
+
+        {/* Downloader Button (above New Chat) */}
+        <div className="px-3 pb-1">
           <button
             type="button"
             onClick={() => setIsDownloaderOpen(true)}
