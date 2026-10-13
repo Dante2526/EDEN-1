@@ -87,10 +87,8 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [nameInput, setNameInput] = useState(project.name);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [bottomPanel, setBottomPanel] = useState<BottomPanel>('preview');
   const [showExplorer, setShowExplorer] = useState(false); // explorer oculto por padrão
   const [showCode, setShowCode] = useState(false); // código oculto por padrão — só preview
-  const [showRightPanel, setShowRightPanel] = useState(true); // painel do preview sempre visível
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
 
@@ -227,7 +225,6 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
               type="button"
               onClick={() => {
                 setShowCode(false);
-                setShowRightPanel(true);
               }}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
                 !showCode
@@ -242,7 +239,6 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
               type="button"
               onClick={() => {
                 setShowCode(true);
-                setShowRightPanel(false);
               }}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
                 showCode
@@ -370,55 +366,35 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
               activeFile={activeFilePath}
             />
 
-            {showRightPanel && !showCode && (
-              <div className="!flex-1 !min-w-0 flex flex-col bg-[#181714]">
-                {/* Tabs do painel direito */}
-                <div className="flex items-center justify-between border-b border-[#2d2a25] bg-[#1d1b18] px-2 py-1">
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setBottomPanel('preview')}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition cursor-pointer ${
-                        bottomPanel === 'preview'
-                          ? 'bg-[#282622] text-[#f3efe6]'
-                          : 'text-[#8c867a] hover:text-[#c4bfb6]'
-                      }`}
-                    >
-                      <Eye className="w-3 h-3" /> Preview
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBottomPanel('console')}
-                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium transition cursor-pointer ${
-                        bottomPanel === 'console'
-                          ? 'bg-[#282622] text-[#f3efe6]'
-                          : 'text-[#8c867a] hover:text-[#c4bfb6]'
-                      }`}
-                    >
-                      <Terminal className="w-3 h-3" /> Console
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1">
+            {!showCode && (
+              <div className="!flex-1 !min-w-0 flex flex-col bg-[#181714] min-h-0">
+                {/* Preview — ocupa a maior parte */}
+                <div className="flex-1 min-h-0 overflow-hidden border-b border-[#2d2a25] relative">
+                  <SandpackPreview
+                    showOpenInCodeSandbox={false}
+                    showRefreshButton
+                    className="!h-full"
+                  />
+                </div>
+
+                {/* Console — barra inferior fixa (mostra erros de compilação) */}
+                <div className="h-32 shrink-0 overflow-hidden bg-[#0d0c0a] border-t border-[#2d2a25]">
+                  <div className="flex items-center justify-between px-2 py-1 bg-[#1d1b18] border-b border-[#2d2a25]">
+                    <div className="flex items-center gap-1 text-[10px] text-[#8c867a] font-mono">
+                      <Terminal className="w-3 h-3 text-[#d97757]" />
+                      <span>Console</span>
+                    </div>
                     <span className="text-[9px] text-[#5e5a52] font-mono flex items-center gap-1">
                       <Sparkles className="w-2.5 h-2.5 text-[#d97757]" /> Live
                     </span>
                   </div>
-                </div>
-
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  {bottomPanel === 'preview' ? (
-                    <SandpackPreview
-                      showOpenInCodeSandbox={false}
-                      showRefreshButton
-                      className="!h-full"
-                    />
-                  ) : (
+                  <div className="h-[calc(100%-28px)] overflow-y-auto">
                     <SandpackConsole
                       showHeader={false}
                       showSyntaxError
-                      className="!h-full"
+                      className="!h-full !min-h-0"
                     />
-                  )}
+                  </div>
                 </div>
               </div>
             )}
