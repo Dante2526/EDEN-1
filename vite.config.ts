@@ -13,23 +13,33 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     build: {
-      chunkSizeWarningLimit: 600,
+      chunkSizeWarningLimit: 1000, // Aumentado pra 1000kB (document libs são pesadas)
       rollupOptions: {
         output: {
           manualChunks(id: string) {
+            // Document generation libs — carregadas via dynamic import
+            // Separar em chunks próprios pra não ir pro bundle principal
+            if (id.includes('node_modules/exceljs/')) {
+              return 'exceljs';
+            }
+            if (id.includes('node_modules/jspdf') || id.includes('node_modules/canvg') || id.includes('node_modules/raf')) {
+              return 'jspdf';
+            }
+            if (id.includes('node_modules/pptxgenjs/')) {
+              return 'pptxgenjs';
+            }
+            // React core
             if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
               return 'vendor-react';
             }
             if (id.includes('node_modules/lucide-react/')) {
               return 'vendor-lucide';
             }
+            // Markdown rendering
             if (
               id.includes('node_modules/react-markdown/') ||
               id.includes('node_modules/remark-') ||
