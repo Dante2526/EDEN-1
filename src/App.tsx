@@ -2426,6 +2426,11 @@ function AppContent() {
           }
         }
 
+        // Verifica se a IA retornou resposta vazia (sem erro, sem texto, sem tool calls)
+        if (!iterationText.trim() && !streamErrorMsg && Object.keys(toolCallsAccumulator).length === 0) {
+          iterationText = '⚠️ A IA não gerou nenhuma resposta. Pode ser que o modelo esteja sobrecarregado ou temporariamente indisponível. Tente novamente ou troque de modelo.';
+        }
+
         if (streamErrorMsg) {
           // Verifica se é erro de timeout do watchdog (NVIDIA não enviou dados a tempo)
           const isWatchdogTimeout = streamErrorMsg.includes('não enviou dados a tempo') ||

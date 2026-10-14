@@ -234,14 +234,23 @@ export default async function handler(req: Request) {
               );
             } else {
               nvidiaReader = res.body.getReader();
+              let receivedAnyData = false;
               while (true) {
                 const { done, value } = await nvidiaReader.read();
                 if (done) break;
+                receivedAnyData = true;
                 // Verifica se o chunk termina com \n\n (evento SSE completo)
                 if (value.length >= 2) {
                   lastChunkEndedWithNewline = value[value.length - 2] === 0x0A && value[value.length - 1] === 0x0A;
                 }
                 controller.enqueue(value);
+              }
+              // Se a resposta veio vazia (sem nenhum chunk de dados), avisa o cliente
+              if (!receivedAnyData) {
+                console.log('[chat] Resposta vazia do provedor', { model: selectedModel, status: res.status });
+                controller.enqueue(
+                  enc.encode(`data: ${JSON.stringify({ error: 'O provedor retornou uma resposta vazia. Tente novamente ou troque de modelo.' })}\n\n`)
+                );
               }
             }
           } catch (e: any) {
@@ -320,10 +329,18 @@ export default async function handler(req: Request) {
       async start(controller) {
         try {
           fastReader = nvidiaRes.body!.getReader();
+          let receivedAnyData = false;
           while (true) {
             const { done, value } = await fastReader.read();
             if (done) break;
+            receivedAnyData = true;
             controller.enqueue(value);
+          }
+          if (!receivedAnyData) {
+            console.log('[chat] Resposta vazia (fast mode)', { model: selectedModel, status: nvidiaRes.status });
+            controller.enqueue(
+              new TextEncoder().encode(`data: ${JSON.stringify({ error: 'O provedor retornou uma resposta vazia. Tente novamente ou troque de modelo.' })}\n\n`)
+            );
           }
           controller.close();
         } catch (streamErr: any) {
