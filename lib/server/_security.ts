@@ -13,7 +13,6 @@ function cleanupExpiredEntries(now: number): void {
 
 export const ALLOWED_MODELS = [
   'z-ai/glm-5.3',
-  'moonshotai/kimi-k3',
   'deepseek-ai/deepseek-v4.1-flash',
   '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
   '@cf/qwen/qwen2.5-coder-32b-instruct',
@@ -33,9 +32,7 @@ export function isCloudflareModel(model: string): boolean {
   return CLOUDFLARE_MODELS.includes(model);
 }
 
-export const VISION_MODELS = [
-  'moonshotai/kimi-k3',
-];
+export const VISION_MODELS: string[] = [];
 
 export function isVisionModel(model: string): boolean {
   return VISION_MODELS.includes(model);

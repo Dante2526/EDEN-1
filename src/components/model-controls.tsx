@@ -42,18 +42,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       badge: 'Pensar',
     },
     {
-      id: 'z-ai/glm-5.3-flash',
-      title: 'GLM-5.3 Flash',
-      subtitle: 'Mais rápido + Suporte multimodal a visão e fotos',
-      badge: 'Visão',
-    },
-    {
-      id: 'moonshotai/kimi-k3',
-      title: 'Kimi K3',
-      subtitle: 'Contexto longo e raciocínio avançado',
-      badge: 'Contexto',
-    },
-    {
       id: 'deepseek-ai/deepseek-v4.1-flash',
       title: 'DeepSeek V4.1 Flash',
       subtitle: 'Rápido e eficiente — ótimo custo-benefício',
@@ -118,15 +106,13 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             <span className="font-medium text-[color:var(--c-fg-f3efe6)]">
               {selectedModel === 'z-ai/glm-5.3'
                 ? 'GLM-5.3'
-                : selectedModel === 'moonshotai/kimi-k3'
-                ? 'Kimi K3'
                 : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
                 ? 'DeepSeek V4.1'
                 : selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
                 ? 'R1 Distill'
                 : selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'
                 ? 'Qwen Coder'
-                : 'GLM Flash'}
+                : 'GLM-5.3'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
           </button>
