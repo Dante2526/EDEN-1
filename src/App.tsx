@@ -905,6 +905,24 @@ function AppContent() {
   const userScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastRenderRef = useRef<number>(0);
+  // ====== RESUME-AFTER-SCREEN-OFF ======
+  // Quando a tela do celular apaga durante um streaming, o fetch é abortado
+  // pelo SO. Em vez de mostrar erro, salvamos o estado e tentamos retomar
+  // automaticamente quando a tela acender.
+  const userInitiatedAbortRef = useRef<boolean>(false);
+  const pendingResumeRef = useRef<{
+    conversationId: string;
+    assistantMessageId: string;
+    accumulatedText: string;
+    accumulatedReasoning: string;
+    timestamp: number;
+  } | null>(null);
+  // Snapshot do accumulatedText atualizado durante o streaming — necessário
+  // pra podermos salvar no pendingResumeRef quando o fetch é abortado.
+  const streamingAccumulatedTextRef = useRef<string>('');
+  const streamingAccumulatedReasoningRef = useRef<string>('');
+  const currentAssistantMessageIdRef = useRef<string>('');
+  const currentConversationIdRef = useRef<string>('');
 
   // Check backend server status
   useEffect(() => {
@@ -1424,6 +1442,8 @@ function AppContent() {
   }, []);
 
   const handleStopGeneration = useCallback(() => {
+    // Marca que foi o usuário que parou (não tela apagando) — pra não retomar
+    userInitiatedAbortRef.current = true;
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -2241,6 +2261,9 @@ function AppContent() {
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    // Reset: novo envio, abort ainda não foi iniciado pelo usuário
+    userInitiatedAbortRef.current = false;
+    pendingResumeRef.current = null;
 
     try {
       let currentMessagesForApi = [...contextMessages];
@@ -2252,6 +2275,11 @@ function AppContent() {
       let currentBatchRefactor: { summary: string; files: MessageEditedFile[] } | undefined = undefined;
       let accumulatedAssistantText = '';
       let accumulatedReasoningText = '';
+      // Inicializa refs de snapshot (usadas no catch pra salvar estado p/ retomar)
+      streamingAccumulatedTextRef.current = '';
+      streamingAccumulatedReasoningRef.current = '';
+      currentAssistantMessageIdRef.current = assistantMessageId;
+      currentConversationIdRef.current = currentConvId;
       // Variáveis de iteração (resetadas a cada loop)
       let iterationText = '';
       let iterationReasoning = '';
@@ -2549,6 +2577,7 @@ function AppContent() {
             accumulatedAssistantText = accumulatedAssistantText
               ? `${accumulatedAssistantText}\n\n${iterationText}`
               : iterationText;
+            streamingAccumulatedTextRef.current = accumulatedAssistantText;
             currentMessagesForApi = [
               ...currentMessagesForApi,
               { role: 'assistant', content: iterationText },
@@ -2618,11 +2647,13 @@ function AppContent() {
           accumulatedAssistantText = accumulatedAssistantText
             ? `${accumulatedAssistantText}\n\n${iterationText}`
             : iterationText;
+          streamingAccumulatedTextRef.current = accumulatedAssistantText;
         }
         if (iterationReasoning) {
           accumulatedReasoningText = accumulatedReasoningText
             ? `${accumulatedReasoningText}\n\n${iterationReasoning}`
             : iterationReasoning;
+          streamingAccumulatedReasoningRef.current = accumulatedReasoningText;
         }
 
         if (detectedCalls.length > 0) {
@@ -2840,8 +2871,80 @@ function AppContent() {
         return prev;
       });
     } catch (err: any) {
-      if (err.name === 'AbortError') {
-        console.log('Geração interrompida pelo usuário.');
+      const isAbort =
+        err?.name === 'AbortError' ||
+        (err?.message || '').includes('aborted') ||
+        (err?.message || '').includes('The operation was aborted');
+
+      if (isAbort) {
+        // Abort pode ser de 3 fontes:
+        // 1. Usuário clicou Stop (userInitiatedAbortRef = true)
+        // 2. Tela apagou / SO suspendeu (userInitiatedAbortRef = false)
+        // 3. Watchdog interno (já tratado em outro lugar)
+        if (userInitiatedAbortRef.current) {
+          console.log('[Synap] Geração interrompida pelo usuário.');
+          // Adiciona nota no rodapé da mensagem se tiver texto parcial
+          const partialText = streamingAccumulatedTextRef.current;
+          if (partialText && partialText.trim().length > 30) {
+            setConversations((prev) =>
+              prev.map((c) => {
+                if (c.id !== currentConversationIdRef.current) return c;
+                return {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === currentAssistantMessageIdRef.current
+                      ? {
+                          ...m,
+                          content: m.content
+                            ? `${m.content}\n\n---\n⏹️ Geração interrompida pelo usuário.`
+                            : m.content,
+                        }
+                      : m
+                  ),
+                };
+              })
+            );
+          }
+        } else {
+          // Tela apagou / SO suspendeu — salvar estado pra retomar quando voltar
+          const partialText = streamingAccumulatedTextRef.current;
+          const partialReasoning = streamingAccumulatedReasoningRef.current;
+          console.log('[Synap] Abort por tela apagada/OS suspend — salvando estado pra retomar. Texto parcial:', partialText.length, 'chars');
+
+          if (partialText && partialText.trim().length > 30) {
+            pendingResumeRef.current = {
+              conversationId: currentConversationIdRef.current,
+              assistantMessageId: currentAssistantMessageIdRef.current,
+              accumulatedText: partialText,
+              accumulatedReasoning: partialReasoning,
+              timestamp: Date.now(),
+            };
+            // Marca a mensagem com nota visual
+            setConversations((prev) =>
+              prev.map((c) => {
+                if (c.id !== currentConversationIdRef.current) return c;
+                return {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === currentAssistantMessageIdRef.current
+                      ? {
+                          ...m,
+                          content: m.content
+                            ? `${m.content}\n\n---\n⏸️ **Pausado (tela apagou)** — vou continuar de onde parei quando você voltar.`
+                            : m.content,
+                        }
+                      : m
+                  ),
+                };
+              })
+            );
+            // Não mostra erro — só loga silenciosamente
+          } else {
+            // Sem texto parcial — provavelmente estava esperando resposta inicial
+            // Não mostra erro, só loga
+            console.log('[Synap] Abort sem texto parcial — provavelmente TTFB interrompido por tela apagada.');
+          }
+        }
       } else {
         console.error('Chat generation error:', err);
         // Tratar erros de stream cortado / rede de forma mais amigável
@@ -2850,7 +2953,6 @@ function AppContent() {
           errMsg.includes('network') ||
           errMsg.includes('fetch') ||
           errMsg.includes('stream') ||
-          errMsg.includes('aborted') ||
           errMsg.includes('connection') ||
           err?.name === 'TypeError';
 
@@ -2876,8 +2978,49 @@ function AppContent() {
     } finally {
       setIsStreaming(false);
       abortControllerRef.current = null;
+      // Limpa refs de snapshot (mas preserva pendingResumeRef se foi setado)
+      streamingAccumulatedTextRef.current = '';
+      streamingAccumulatedReasoningRef.current = '';
+      currentAssistantMessageIdRef.current = '';
+      currentConversationIdRef.current = '';
     }
   }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
+
+  // ====== RESUME-AFTER-SCREEN-OFF: retoma quando a tela acender ======
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && pendingResumeRef.current) {
+        const pending = pendingResumeRef.current;
+        pendingResumeRef.current = null;
+        // Só retoma se foi há menos de 5 minutos (depois, contexto pode estar stale)
+        const ageMs = Date.now() - pending.timestamp;
+        if (ageMs > 5 * 60 * 1000) {
+          console.log('[Synap] Resume descartado — pausa foi há mais de 5min');
+          return;
+        }
+        // Só retoma se ainda tá na mesma conversa
+        if (pending.conversationId !== activeId) {
+          console.log('[Synap] Resume descartado — usuário trocou de conversa');
+          return;
+        }
+        // Evita retomar se já tem outro streaming em andamento
+        if (isStreaming) {
+          console.log('[Synap] Resume descartado — já tem streaming em andamento');
+          return;
+        }
+        console.log('[Synap] Tela voltou — retomando trabalho a partir de', pending.accumulatedText.length, 'chars');
+        // Dispara um novo handleSendMessage com continuation prompt
+        // usando o texto acumulado como se fosse a resposta anterior.
+        handleSendMessage(
+          'Continue exatamente de onde você parou. Não repita o que já fez, não inclua introdução. Apenas continue a resposta.',
+          [],
+          []
+        );
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [activeId, isStreaming, handleSendMessage]);
 
   // Usuário começou a falar (texto parcial) enquanto a IA fala: interrompe NA HORA,
   // sem esperar ele terminar a frase. Ignora eco da própria voz da IA.
