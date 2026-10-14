@@ -52,35 +52,34 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Timeout: 30s
+  // Timeout: 60s (Babel é 3MB, pode demorar em conexão lenta)
   useEffect(() => {
     if (!loading) return;
     const timer = setTimeout(() => {
-      setError('Tempo limite excedido (30s). Possíveis causas:\n\n1. CSP bloqueando unpkg.com/esm.sh (verifique vercel.json)\n2. Babel standalone não carregou\n3. Problema de conexão\n\nClique em ↗ pra abrir em nova aba e ver o erro no DevTools (F12).');
+      setError('Tempo limite excedido (60s). Possíveis causas:\n\n1. Babel standalone (3MB) demorando pra carregar do unpkg.com\n2. Deps do esm.sh demorando (firebase, etc)\n3. Problema de conexão\n\nClique em ↗ pra abrir em nova aba e ver o erro no DevTools (F12).');
       setLoading(false);
-    }, 30000);
+    }, 60000);
     return () => clearTimeout(timer);
   }, [loading, refreshKey]);
+
+  // Setar HTML no iframe via blob URL (não herda CSP da página pai)
+  useEffect(() => {
+    if (!iframeRef.current || !html) return;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    iframeRef.current.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [html, refreshKey]);
 
   useEffect(() => {
     setLoading(true);
   }, [html]);
 
-  // Refresh que REALMENTE recarrega o iframe (antes não funcionava)
+  // Refresh que REALMENTE recarrega o iframe
   const handleRefresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
     setLoading(true);
     setError(null);
-    // Força reload do iframe limpando e re-setando o srcDoc
-    if (iframeRef.current) {
-      const currentSrc = iframeRef.current.srcdoc;
-      iframeRef.current.srcdoc = '';
-      setTimeout(() => {
-        if (iframeRef.current) {
-          iframeRef.current.srcdoc = currentSrc;
-        }
-      }, 50);
-    }
   }, []);
 
   const handleOpenInNewTab = useCallback(() => {
@@ -140,7 +139,6 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
 
       <iframe
         ref={iframeRef}
-        srcDoc={html}
         title="Preview"
         className="w-full h-full border-0 bg-white"
         sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
