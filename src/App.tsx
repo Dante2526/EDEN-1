@@ -68,7 +68,6 @@ import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } fro
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
 import { looksLikeEcho } from './lib/echo-filter';
-import { keepScreenAlive, notifyCompletionIfHidden, requestNotificationPermission } from './lib/wake-lock';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -513,8 +512,6 @@ function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
-  // Wake lock: mantém a IA processando quando a tela apaga
-  const releaseWakeLockRef = useRef<(() => void) | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
   const [hasGeminiKey, setHasGeminiKey] = useState<boolean | null>(null);
@@ -543,11 +540,6 @@ function AppContent() {
 
   // Settings
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-
-  // Pede permissão de notificações (pra avisar quando IA terminar com tela apagada)
-  useEffect(() => {
-    requestNotificationPermission();
-  }, []);
 
   // GitHub, Source Control, Extensions & Projects state
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'repos' | 'source-control' | 'skills' | 'projects'>('chats');
@@ -625,7 +617,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3' || saved === 'claude-opus-5-5' || saved === 'claude-sonnet-5' || saved === 'claude-opus-5' || saved === 'claude-fabula-5-1' || saved === 'claude-opus-4-8') return saved;
+      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3') return saved;
     }
     return 'z-ai/glm-5.3-flash'; // Default mais rápido (Flash) - GLM-5.3 full demora muito pra responder
   });
@@ -1390,11 +1382,6 @@ function AppContent() {
       abortControllerRef.current = null;
     }
     setIsStreaming(false);
-    // Libera wake lock se parou manualmente
-    if (releaseWakeLockRef.current) {
-      releaseWakeLockRef.current();
-      releaseWakeLockRef.current = null;
-    }
   }, []);
 
   // Helper to execute client-side GitHub and web tools
@@ -2050,7 +2037,7 @@ function AppContent() {
     const activePlan = overridePlanMode !== undefined ? overridePlanMode : isPlanMode;
 
     let effectiveModel = selectedModel;
-    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'claude-opus-5-5' || selectedModel === 'claude-sonnet-5' || selectedModel === 'claude-opus-5' || selectedModel === 'claude-fabula-5-1' || selectedModel === 'claude-opus-4-8';
+    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3';
     if (images.length > 0 && !isVisionModel) {
       effectiveModel = 'z-ai/glm-5.3-flash';
       setSelectedModel('z-ai/glm-5.3-flash');
@@ -2126,12 +2113,6 @@ function AppContent() {
     );
 
     setIsStreaming(true);
-    // Wake lock: mantém a IA processando mesmo se a tela do celular apagar
-    if (!releaseWakeLockRef.current) {
-      keepScreenAlive().then(release => {
-        releaseWakeLockRef.current = release;
-      }).catch(() => {});
-    }
     // Nova mensagem (voz ou digitada): a IA para de falar a resposta anterior
     stopLiveSpeech();
     // Se modo contínuo ativo, toca som de "entendi, pensando..."
@@ -2325,11 +2306,8 @@ function AppContent() {
 
             try {
               const parsed = JSON.parse(dataStr);
-              // FIX 2: ignora "info" (aviso de 90s) — não é erro
-              if (parsed.info) {
-                console.log('[Synap] Info do servidor:', parsed.info);
-              } else if (parsed.error) {
-                // Erro enviado pelo servidor dentro do stream
+              if (parsed.error) {
+                // Erro enviado pelo servidor dentro do stream (ex.: NVIDIA sem resposta)
                 streamErrorMsg =
                   typeof parsed.error === 'string'
                     ? parsed.error
@@ -2424,11 +2402,6 @@ function AppContent() {
               }
             } catch {}
           }
-        }
-
-        // Verifica se a IA retornou resposta vazia (sem erro, sem texto, sem tool calls)
-        if (!iterationText.trim() && !streamErrorMsg && Object.keys(toolCallsAccumulator).length === 0) {
-          iterationText = '⚠️ A IA não gerou nenhuma resposta. Pode ser que o modelo esteja sobrecarregado ou temporariamente indisponível. Tente novamente ou troque de modelo.';
         }
 
         if (streamErrorMsg) {
@@ -2755,15 +2728,6 @@ function AppContent() {
     } finally {
       setIsStreaming(false);
       abortControllerRef.current = null;
-      // Libera wake lock: IA terminou, pode deixar tela apagar
-      if (releaseWakeLockRef.current) {
-        releaseWakeLockRef.current();
-        releaseWakeLockRef.current = null;
-      }
-      // Notifica se a tela estiver apagada/oculta
-      if (document.visibilityState === 'hidden') {
-        notifyCompletionIfHidden('Synap', 'IA terminou de responder ✓');
-      }
     }
   }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
 
@@ -3094,7 +3058,7 @@ function AppContent() {
           onSendMessage={handleSendMessage}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'claude-opus-5-5' || selectedModel === 'claude-sonnet-5' || selectedModel === 'claude-opus-5' || selectedModel === 'claude-fabula-5-1' || selectedModel === 'claude-opus-4-8'}
+          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}

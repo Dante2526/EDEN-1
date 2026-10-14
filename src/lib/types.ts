@@ -175,7 +175,7 @@ export interface Conversation {
   contextCompaction?: ContextCompaction;
 }
 
-export type ModelId = 'z-ai/glm-5.3' | 'z-ai/glm-5.3-flash' | 'moonshotai/kimi-k3' | 'claude-opus-5-5' | 'claude-sonnet-5' | 'claude-opus-5' | 'claude-fabula-5-1' | 'claude-opus-4-8';
+export type ModelId = 'z-ai/glm-5.3' | 'z-ai/glm-5.3-flash' | 'moonshotai/kimi-k3';
 export type ReasoningEffort = 'low' | 'high' | 'max';
 
 export interface AppSettings {
