@@ -137,12 +137,14 @@ export default async function handler(req: Request) {
         model: selectedModel,
         messages: formattedMessages,
         stream: true,
-        stream_options: { include_usage: true },
-        max_tokens: maxTokensFor(selectedEffort), // Tokens de raciocínio contam aqui; escala com o nível
+        max_tokens: maxTokensFor(selectedEffort),
       };
+      // stream_options só pra GLM-5.3 (outros modelos podem travar)
+      if (selectedModel === 'z-ai/glm-5.3') {
+        p.stream_options = { include_usage: true };
+      }
       if (includeReasoning && selectedEffort && selectedEffort !== 'none' && selectedEffort !== 'default') {
-        // reasoning_effort SÓ funciona no GLM-5.3 (modelo principal)
-        // Flash, Kimi K3 e DeepSeek não suportam esse parâmetro
+        // reasoning_effort SÓ funciona no GLM-5.3
         if (selectedModel === 'z-ai/glm-5.3') {
           p.reasoning_effort = selectedEffort;
         }
@@ -155,6 +157,9 @@ export default async function handler(req: Request) {
     };
 
     let payload = createPayload(true, true);
+
+    // Log pra debugar qual modelo e quantos tools
+    console.log(`[chat] modelo=${selectedModel} effort=${selectedEffort} tools=${payload.tools?.length || 0} stream_options=${!!payload.stream_options} reasoning=${!!payload.reasoning_effort}`);
 
     const firstFetch = fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
