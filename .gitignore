@@ -6,3 +6,20 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Cloudflare Wrangler / Pages local state
+.wrangler/
+.dev.vars
+.dev.vars.*
+.mf/
+.cache/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+
+# Tool results temporários
+tool-results/
