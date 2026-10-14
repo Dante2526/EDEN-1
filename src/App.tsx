@@ -2784,6 +2784,55 @@ function AppContent() {
             },
             ...toolResultMessages,
           ];
+
+          // ====== TRUNCAÇÃO INLINE DO currentMessagesForApi ======
+          // Durante o agentic loop (até 45 iterações), o currentMessagesForApi
+          // cresce sem parar: cada tool call adiciona 2 mensagens (assistant + tool).
+          // Se passar de ~80K tokens estimados, a NVIDIA corta o stream.
+          //
+          // Solução: quando passa de 60K tokens (margem de segurança), trunca
+          // as mensagens antigas preservando:
+          //   - Mensagens system (sempre mantidas)
+          //   - Últimas 10 mensagens (contexto recente)
+          //   - Tool calls antigas viram texto "[N tool calls anteriores omitidas]"
+          //
+          // Estimativa simples: ~4 chars = 1 token
+          const estimateTokensInline = (msgs: any[]): number => {
+            let total = 0;
+            for (const m of msgs) {
+              if (typeof m.content === 'string') total += m.content.length;
+              else if (Array.isArray(m.content)) {
+                for (const c of m.content) {
+                  if (typeof c?.text === 'string') total += c.text.length;
+                }
+              }
+              if (m.tool_calls) {
+                for (const tc of m.tool_calls) {
+                  if (tc?.function?.arguments) total += tc.function.arguments.length;
+                }
+              }
+            }
+            return Math.ceil(total / 4);
+          };
+
+          const currentTokensEstimate = estimateTokensInline(currentMessagesForApi);
+          const INLINE_TRUNCATE_THRESHOLD = 60000; // 60K tokens = margem segura
+          const INLINE_KEEP_RECENT = 10; // mantém últimas 10 mensagens
+
+          if (currentTokensEstimate > INLINE_TRUNCATE_THRESHOLD && currentMessagesForApi.length > INLINE_KEEP_RECENT + 2) {
+            // Encontra índice onde começam as mensagens recentes (preserva system iniciais)
+            const systemMessages = currentMessagesForApi.filter(m => m.role === 'system');
+            const nonSystemMessages = currentMessagesForApi.filter(m => m.role !== 'system');
+            const keptRecent = nonSystemMessages.slice(-INLINE_KEEP_RECENT);
+            const omittedCount = nonSystemMessages.length - keptRecent.length;
+            // Cria mensagem de sumário simples (não chama IA, só marca o corte)
+            const truncationMarker = {
+              role: 'system' as const,
+              content: `[CONTEXTO TRUNCADO — ${omittedCount} mensagens anteriores (tool calls e respostas parciais) foram omitidas para evitar estouro de contexto. Continue trabalhando com base nas mensagens recentes abaixo.]`,
+            };
+            currentMessagesForApi = [...systemMessages, truncationMarker, ...keptRecent];
+            console.log(`[Synap] Truncagem inline: ${currentTokensEstimate}K tokens → ${estimateTokensInline(currentMessagesForApi)}K tokens (${omittedCount} msgs omitidas)`);
+          }
         } else if (
           iterationFinishReason === 'length' &&
           iterationText.trim() &&
