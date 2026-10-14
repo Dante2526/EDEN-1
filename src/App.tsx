@@ -2205,6 +2205,7 @@ function AppContent() {
         let iterationText = '';
         let iterationReasoning = '';
         let iterationFinishReason = '';
+        let streamErrorMsg = '';
         let buffer = '';
         const toolCallsAccumulator: Record<number, { id: string; name: string; arguments: string }> = {};
         let iterationTokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined = undefined;
@@ -2228,6 +2229,13 @@ function AppContent() {
 
             try {
               const parsed = JSON.parse(dataStr);
+              if (parsed.error) {
+                // Erro enviado pelo servidor dentro do stream (ex.: NVIDIA sem resposta)
+                streamErrorMsg =
+                  typeof parsed.error === 'string'
+                    ? parsed.error
+                    : parsed.error.message || JSON.stringify(parsed.error);
+              }
               const choice = parsed.choices?.[0];
               if (choice?.finish_reason) iterationFinishReason = choice.finish_reason;
               const delta = choice?.delta || choice?.message;
@@ -2317,6 +2325,13 @@ function AppContent() {
               }
             } catch {}
           }
+        }
+
+        if (streamErrorMsg) {
+          if (!iterationText.trim() && Object.keys(toolCallsAccumulator).length === 0) {
+            throw new Error(streamErrorMsg);
+          }
+          iterationText += `\n\n⚠️ ${streamErrorMsg}`;
         }
 
         // Process tool calls if any were returned
