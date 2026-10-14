@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nim-chat-shell-v1';
+const CACHE_NAME = 'synap-shell-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -35,7 +35,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for navigation and static assets
+  // Navigation: network-first, fallback to cache
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -45,10 +45,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // JS/CSS modules: ALWAYS network-first (nunca servir cache antigo)
+  // Isso garante que novas versões do app sejam carregadas imediatamente
+  if (
+    event.request.destination === 'script' ||
+    event.request.destination === 'style' ||
+    url.pathname.startsWith('/assets/') ||
+    event.request.url.includes('.js') ||
+    event.request.url.includes('.css')
+  ) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, clone);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // Other assets: stale-while-revalidate (imagens, fontes, etc)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Return cache but update in background
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then((cache) => {
