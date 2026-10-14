@@ -65,12 +65,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       subtitle: 'Raciocínio profundo via Cloudflare Workers AI',
       badge: 'CF · R1',
     },
-    {
-      id: '@cf/zai-org/glm-5.3',
-      title: 'GLM-5.3 (Cloudflare)',
-      subtitle: 'Raciocínio analítico via Cloudflare Workers AI',
-      badge: 'CF · GLM',
-    },
   ];
 
   const reasoningLevels: Array<{
@@ -124,8 +118,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'DeepSeek V4.1'
                 : selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
                 ? 'R1 Distill'
-                : selectedModel === '@cf/zai-org/glm-5.3'
-                ? 'GLM-5.3 (CF)'
                 : 'GLM Flash'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />

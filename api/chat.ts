@@ -416,6 +416,8 @@ export default async function handler(req: Request, envArg?: Env) {
               errMsg = usingCloudflare
                 ? 'CLOUDFLARE_API_TOKEN inválido ou sem permissão de Workers AI.'
                 : 'Chave NVIDIA_API_KEY inválida.';
+            } else if (usingCloudflare && errText && errText.includes('not available on the Workers Free plan')) {
+              errMsg = `Este modelo (@cf) exige Workers Paid plan ($5/mês). Detalhe: ${errMsg}`;
             } else if (res.status === 429) {
               errMsg = 'Limite de requisições atingido (Rate Limit). Aguarde alguns segundos.';
             }
