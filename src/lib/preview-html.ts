@@ -358,12 +358,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         basePath + '.jsx', basePath + '.js',
         basePath + '/index.tsx', basePath + '/index.ts',
         basePath + '/index.jsx', basePath + '/index.js',
+        // Também tenta com /src/ prefix (caso o require seja ./App mas o arquivo tá em src/App)
+        'src/' + basePath, 'src/' + basePath + '.tsx', 'src/' + basePath + '.ts',
+        'src/' + basePath + '.jsx', 'src/' + basePath + '.js',
       ];
       for (var i = 0; i < candidates.length; i++) {
         for (var j = 0; j < SYNAP_FILES.length; j++) {
           if (SYNAP_FILES[j].path === candidates[i]) return candidates[i];
         }
       }
+      // Debug: lista arquivos disponíveis se não encontrou
+      console.warn('[Synap Preview] findFile não achou:', basePath, 'Arquivos disponíveis:', SYNAP_FILES.map(function(f) { return f.path; }));
       return null;
     }
 
@@ -467,27 +472,26 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               }
             }
 
-            // 3. Módulos locais
+            // 3. Módulos locais — tenta path direto, depois findFile
             if (moduleCache[path]) return moduleCache[path].exports;
-            if (!moduleRegistry[path]) {
-              // Tenta encontrar com extensões
-              var found = findFile(path);
-              if (found && moduleRegistry[found]) {
-                return synapRequire(found);
+            if (moduleRegistry[path]) {
+              var module = { exports: {} };
+              moduleCache[path] = module;
+              try {
+                var dirname = path.indexOf('/') >= 0 ? path.substring(0, path.lastIndexOf('/')) : '';
+                moduleRegistry[path](module.exports, synapRequire, module, path, dirname);
+              } catch(e) {
+                delete moduleCache[path];
+                throw e;
               }
-              throw new Error('Módulo não encontrado: ' + path);
+              return module.exports;
             }
-
-            var module = { exports: {} };
-            moduleCache[path] = module;
-            try {
-              var dirname = path.indexOf('/') >= 0 ? path.substring(0, path.lastIndexOf('/')) : '';
-              moduleRegistry[path](module.exports, synapRequire, module, path, dirname);
-            } catch(e) {
-              delete moduleCache[path];
-              throw e;
+            // Tenta encontrar com extensões
+            var found = findFile(path);
+            if (found && moduleRegistry[found]) {
+              return synapRequire(found);
             }
-            return module.exports;
+            throw new Error('Módulo não encontrado: ' + path + '. Arquivos disponíveis: ' + Object.keys(moduleRegistry).join(', '));
           }
 
           // ===== EXECUTA ENTRY POINT =====
