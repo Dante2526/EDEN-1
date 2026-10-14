@@ -923,6 +923,13 @@ function AppContent() {
   const streamingAccumulatedReasoningRef = useRef<string>('');
   const currentAssistantMessageIdRef = useRef<string>('');
   const currentConversationIdRef = useRef<string>('');
+  // Snapshot de info de debug — atualizado durante o loop, lido no catch
+  const debugInfoRef = useRef<{
+    requestStartTime: number;
+    loopCount: number;
+    maxIterations: number;
+    toolCallsExecuted: number;
+  }>({ requestStartTime: 0, loopCount: 0, maxIterations: 45, toolCallsExecuted: 0 });
 
   // Check backend server status
   useEffect(() => {
@@ -2266,7 +2273,15 @@ function AppContent() {
     pendingResumeRef.current = null;
 
     try {
+      const requestStartTime = Date.now(); // pra calcular "tempo até erro" no catch
+      debugInfoRef.current = {
+        requestStartTime,
+        loopCount: 0,
+        maxIterations: 45,
+        toolCallsExecuted: 0,
+      };
       let currentMessagesForApi = [...contextMessages];
+
       let hasToolCallsToProcess = true;
       const MAX_TOOL_ITERATIONS = 45;
       let loopCount = 0;
@@ -2275,6 +2290,46 @@ function AppContent() {
       let currentBatchRefactor: { summary: string; files: MessageEditedFile[] } | undefined = undefined;
       let accumulatedAssistantText = '';
       let accumulatedReasoningText = '';
+
+      // ====== TRUNCAÇÃO INICIAL — ANTES da primeira request ======
+      // Quando o usuário manda "continue" ou nova mensagem em chat longo,
+      // o contextMessages vem com TODO o histórico acumulado (incluindo
+      // tool calls de loops agentic anteriores). Se passar de 50K tokens
+      // estimados, trunca AGRESSIVAMENTE pra evitar stream cancelled.
+      const estimateTokensForTruncation = (msgs: any[]): number => {
+        let total = 0;
+        for (const m of msgs) {
+          if (typeof m.content === 'string') total += m.content.length;
+          else if (Array.isArray(m.content)) {
+            for (const c of m.content) {
+              if (typeof c?.text === 'string') total += c.text.length;
+            }
+          }
+          if (m.tool_calls) {
+            for (const tc of m.tool_calls) {
+              if (tc?.function?.arguments) total += tc.function.arguments.length;
+            }
+          }
+        }
+        return Math.ceil(total / 4);
+      };
+
+      const INITIAL_TRUNCATE_THRESHOLD = 50000; // 50K tokens = ~40% do limite
+      const INITIAL_KEEP_RECENT = 8; // mantém últimas 8 mensagens não-system
+
+      const initialTokensEstimate = estimateTokensForTruncation(currentMessagesForApi);
+      if (initialTokensEstimate > INITIAL_TRUNCATE_THRESHOLD) {
+        const systemMsgs = currentMessagesForApi.filter(m => m.role === 'system');
+        const nonSystemMsgs = currentMessagesForApi.filter(m => m.role !== 'system');
+        const keptRecent = nonSystemMsgs.slice(-INITIAL_KEEP_RECENT);
+        const omittedCount = nonSystemMsgs.length - keptRecent.length;
+        const truncationMarker = {
+          role: 'system' as const,
+          content: `[CONTEXTO TRUNCADO — ${omittedCount} mensagens anteriores foram omitidas para evitar estouro de contexto. Continue de onde parou com base nas mensagens recentes abaixo.]`,
+        };
+        currentMessagesForApi = [...systemMsgs, truncationMarker, ...keptRecent];
+        console.log(`[Synap] Truncagem inicial: ${initialTokensEstimate}K → ${estimateTokensForTruncation(currentMessagesForApi)}K tokens (${omittedCount} msgs omitidas)`);
+      }
       // Inicializa refs de snapshot (usadas no catch pra salvar estado p/ retomar)
       streamingAccumulatedTextRef.current = '';
       streamingAccumulatedReasoningRef.current = '';
@@ -2288,6 +2343,7 @@ function AppContent() {
 
       while (hasToolCallsToProcess && loopCount < MAX_TOOL_ITERATIONS) {
         loopCount++;
+        debugInfoRef.current.loopCount = loopCount;
         hasToolCallsToProcess = false;
         // Reset das variáveis de iteração (não acumular entre loops)
         iterationText = '';
@@ -2727,6 +2783,7 @@ function AppContent() {
               if (callEntry) {
                 callEntry.status = 'completed';
                 callEntry.result = result;
+                debugInfoRef.current.toolCallsExecuted++;
               }
             } catch (toolErr: any) {
               result = JSON.stringify({ error: toolErr?.message || 'Falha ao executar ferramenta.' });
@@ -3056,13 +3113,28 @@ function AppContent() {
             }
           }, 1500);
         } else {
-          // Sem texto parcial — mostra erro amigável sugerindo tentar de novo
+          // Sem texto parcial — mostra erro amigável com debug info visível
+          const elapsedMs = Date.now() - debugInfoRef.current.requestStartTime;
+          const elapsedSec = (elapsedMs / 1000).toFixed(1);
+          const debugInfo = [
+            `Modelo: ${selectedModel}`,
+            `Pensar: ${reasoningEffort}`,
+            `Iteração do loop: ${debugInfoRef.current.loopCount} de ${debugInfoRef.current.maxIterations}`,
+            `Tokens acumulados (chat): ${conversationTokens?.totalTokens?.toLocaleString() || '?'}`,
+            `Tool calls executadas: ${debugInfoRef.current.toolCallsExecuted}`,
+            `Tempo até erro: ${elapsedSec}s`,
+          ].join('\n');
           setErrorMessage(
-            'Streaming cortado pelo servidor (NVIDIA ou Cloudflare). Possíveis causas:\n' +
-            '• Rate limit temporário\n' +
-            '• Modelo sobrecarregado\n' +
-            '• CPU time do Worker excedido\n\n' +
-            'Tente novamente em alguns segundos. Se persistir, troque de modelo ou reduza o tamanho da mensagem.'
+            '⚠️ Stream cancelled pelo servidor.\n\n' +
+            'Prováveis causas:\n' +
+            '• NVIDIA demorou mais que o limite de wall-clock do Cloudflare Worker\n' +
+            '• GLM-5.3 com pensar alto demais (muda pra low/medium)\n' +
+            '• Rate limit temporário\n\n' +
+            'Dicas:\n' +
+            '• Troca "pensar" pra low ou medium\n' +
+            '• Troca modelo pra DeepSeek V4.1 Flash (mais rápido)\n' +
+            '• Começa uma conversa nova (chat atual acumulou muito contexto)\n\n' +
+            '── DEBUG INFO ──\n' + debugInfo
           );
         }
       } else {
