@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import { SynapProject } from '../../lib/types';
-import { buildPreviewHtmlFromProject } from '../../lib/preview-html';
+import { buildPreviewHtmlPreTranspiled, loadBabel, transpileCode } from '../../lib/preview-html';
 
 interface LocalPreviewProps {
   project: SynapProject;
@@ -27,15 +27,51 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Gera o HTML usando o módulo testável
-  const html = useMemo(() => {
-    try {
-      setError(null);
-      return buildPreviewHtmlFromProject(project);
-    } catch (err: any) {
-      setError(`Erro ao gerar preview: ${err?.message || err}`);
-      return '';
-    }
+  // Gera o HTML: transpila no parent (Babel carregado 1x) e manda pro iframe
+  const [html, setHtml] = useState('');
+  const [babelLoading, setBabelLoading] = useState(false);
+
+  // Carrega Babel na primeira vez
+  useEffect(() => {
+    loadBabel().then(() => setBabelLoading(false)).catch((err) => {
+      setError('Falha ao carregar Babel: ' + (err?.message || err));
+      setLoading(false);
+    });
+  }, []);
+
+  // Transpila e gera HTML quando projeto muda
+  useEffect(() => {
+    if (!project) return;
+    setLoading(true);
+    setError(null);
+
+    loadBabel().then(() => {
+      try {
+        // Transpila cada arquivo no parent
+        const transpiledFiles: Array<{ path: string; code: string }> = [];
+        for (const [path, file] of Object.entries(project.files)) {
+          if (path.endsWith('.tsx') || path.endsWith('.ts') || path.endsWith('.jsx') || path.endsWith('.js')) {
+            if (path === 'package.json' || path === 'index.html') continue;
+            try {
+              const transpiled = transpileCode(file.content, path);
+              transpiledFiles.push({ path, code: transpiled });
+            } catch (e: any) {
+              console.warn('[Preview] Erro ao transpilar', path, e);
+              // Mesmo com erro, inclui o arquivo original (vai falhar no require)
+              transpiledFiles.push({ path, code: `// Erro: ${e?.message}\nthrow new Error("Erro ao transpilar ${path}: ${e?.message}");` });
+            }
+          }
+        }
+        const generatedHtml = buildPreviewHtmlPreTranspiled(project, transpiledFiles);
+        setHtml(generatedHtml);
+      } catch (err: any) {
+        setError('Erro ao gerar preview: ' + (err?.message || err));
+        setLoading(false);
+      }
+    }).catch((err: any) => {
+      setError('Falha ao carregar Babel: ' + (err?.message || err));
+      setLoading(false);
+    });
   }, [project, refreshKey]);
 
   // Recebe mensagens do iframe

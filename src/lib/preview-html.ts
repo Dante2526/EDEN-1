@@ -1,5 +1,59 @@
 import { SynapProject } from './types';
 
+// Cache do Babel carregado no parent (só carrega 1 vez)
+let babelCache: any = null;
+let babelLoadingPromise: Promise<any> | null = null;
+
+/** Carrega Babel standalone no parent (síncrono após primeira carga) */
+export async function loadBabel(): Promise<any> {
+  if (babelCache) return babelCache;
+  if (babelLoadingPromise) return babelLoadingPromise;
+
+  babelLoadingPromise = (async () => {
+    // Carrega Babel via script tag
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@babel/standalone@7.24.0/babel.min.js';
+      script.onload = () => {
+        babelCache = (window as any).Babel;
+        resolve(babelCache);
+      };
+      script.onerror = () => reject(new Error('Falha ao carregar Babel'));
+      document.head.appendChild(script);
+    });
+  })();
+
+  return babelLoadingPromise;
+}
+
+/** Transpila código JSX/TSX pra CommonJS usando Babel */
+export function transpileCode(code: string, filename: string): string {
+  if (!babelCache) throw new Error('Babel não carregou. Chame loadBabel() primeiro.');
+  return babelCache.transform(code, {
+    presets: [
+      ['react'],
+      ['typescript', { isTSX: true, allExtensions: true }],
+    ],
+    plugins: ['transform-modules-commonjs'],
+    filename,
+  }).code;
+}
+
+// Deps que NÃO rodam no navegador (são build tools, server-side ou nativas)
+const BROWSER_INCOMPATIBLE_DEPS = [
+  '@tailwindcss/vite', '@tailwindcss/postcss', '@tailwindcss/oxide',
+  'tailwindcss', 'postcss', 'autoprefixer',
+  'tsx', 'ts-node', 'tsx-cli',
+  'express', 'fastify', 'koa', 'next', 'nuxt',
+  '@vitejs/plugin-react', 'vite', 'webpack', 'rollup', 'esbuild',
+  'typescript',
+  'firebase', 'firebase-admin', 'firebase-functions',
+  '@google/genai',
+  'mongoose', 'mysql2', 'pg', 'redis', 'ioredis',
+  'fs', 'path', 'os', 'child_process', 'crypto', 'http', 'https', 'net', 'url',
+  'dotenv',
+];
+
 /**
  * Gera o HTML completo pro preview do projeto (LocalPreview).
  * Módulo separado pra ser testável com `npm test`.
@@ -570,4 +624,155 @@ export function buildPreviewHtmlFromProject(project: SynapProject): string {
     template: project.template,
     dependencies: project.dependencies,
   });
+}
+
+/**
+ * Gera HTML do iframe com código JÁ TRANSPIALDO (CommonJS).
+ * O iframe NÃO carrega Babel — só carrega React do esm.sh.
+ * Bem mais rápido (esm.sh/react ~200KB vs Babel ~3MB).
+ */
+export function buildPreviewHtmlPreTranspiled(
+  project: SynapProject,
+  transpiledFiles: Array<{ path: string; code: string }>
+): string {
+  const deps = extractDeps(
+    Object.fromEntries(Object.entries(project.files).map(([k, v]) => [k, { content: v.content }])),
+    project.dependencies
+  );
+
+  const reactVersion = deps['react'] || '18.2.0';
+  const reactDomVersion = deps['react-dom'] || reactVersion;
+
+  // Import map: só deps npm
+  const importMap: Record<string, string> = {
+    react: `https://esm.sh/react@${reactVersion}`,
+    'react-dom': `https://esm.sh/react-dom@${reactDomVersion}`,
+    'react-dom/client': `https://esm.sh/react-dom@${reactDomVersion}/client`,
+    'react/jsx-runtime': `https://esm.sh/react@${reactVersion}/jsx-runtime`,
+  };
+
+  for (const [name, version] of Object.entries(deps)) {
+    if (name === 'react' || name === 'react-dom' || name === 'react-scripts') continue;
+    if (name.startsWith('@types/')) continue;
+    if (name === 'typescript' || name === 'vite' || name === '@vitejs/plugin-react') continue;
+    if (BROWSER_INCOMPATIBLE_DEPS.includes(name) || name.startsWith('@tailwindcss/') || name.includes('oxide')) continue;
+    importMap[name] = depToUrl(name, version);
+  }
+
+  // Entry point
+  const entryCandidates = ['src/main.tsx', 'src/main.ts', 'src/main.js', 'src/index.tsx', 'src/index.ts', 'src/index.js'];
+  let entryPath = entryCandidates.find((p) => project.files[p]);
+  if (!entryPath && transpiledFiles.length > 0) entryPath = transpiledFiles[0].path;
+
+  // Reescreve requires relativos nos arquivos transpilados
+  const processedFiles = transpiledFiles.map((f) => {
+    let rewritten = f.code;
+    // Reescreve require('./App') etc. pra paths completos
+    rewritten = rewritten.replace(/require\(\s*['"]([^'"]+)['"]\s*\)/g, (match, reqPath: string) => {
+      if (reqPath.startsWith('.')) {
+        const resolved = resolveImportPath(f.path, reqPath);
+        if (resolved) {
+          const clean = resolved.replace(/^\.?\//, '');
+          const found = findFile(
+            Object.fromEntries(transpiledFiles.map((tf) => [tf.path, { content: '' }])),
+            clean
+          );
+          if (found) return `require('${found}')`;
+          return `require('${clean}')`;
+        }
+      }
+      if (reqPath.startsWith('@/')) {
+        const aliased = reqPath.substring(2);
+        const found = findFile(
+          Object.fromEntries(transpiledFiles.map((tf) => [tf.path, { content: '' }])),
+          aliased
+        );
+        if (found) return `require('${found}')`;
+      }
+      return match;
+    });
+    return { path: f.path, code: escapeScriptTags(rewritten) };
+  });
+
+  // HTML sem Babel — só React do esm.sh
+  return `<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, sans-serif; }
+    #root { min-height: 100vh; }
+    #synap-loading { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:#181714; color:#8c867a; font-size:12px; z-index:9999; }
+    .synap-spinner { width:24px; height:24px; border:2px solid rgba(217,119,87,0.3); border-top-color:#d97757; border-radius:50%; animation:synap-spin 0.8s linear infinite; }
+    @keyframes synap-spin { to { transform: rotate(360deg); } }
+    #synap-error { position:fixed; inset:0; padding:16px; overflow-y:auto; background:#1a0d0d; color:#ef4444; font-family:monospace; font-size:11px; z-index:9999; white-space:pre-wrap; word-break:break-all; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="synap-loading"><div class="synap-spinner"></div><div>Carregando preview...</div></div>
+  <script>
+    window.onerror = function(msg,url,line,col,err) {
+      var s = err && err.stack ? err.stack : String(msg);
+      var l = document.getElementById('synap-loading'); if (l) l.style.display='none';
+      var e = document.getElementById('synap-error'); if (!e) { e=document.createElement('div'); e.id='synap-error'; document.body.appendChild(e); }
+      e.textContent = s;
+      window.parent.postMessage({type:'synap-preview-error',message:s},'*');
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(ev) {
+      var m = ev.reason && ev.reason.stack ? ev.reason.stack : String(ev.reason);
+      window.onerror('Promise: '+m,'',0,0,ev.reason);
+    });
+    var SYNAP_FILES = ${JSON.stringify(processedFiles)};
+    var SYNAP_ENTRY = ${JSON.stringify(entryPath)};
+    var SYNAP_IMPORT_MAP = ${JSON.stringify(importMap)};
+    function findFile(basePath) {
+      var c = [basePath,basePath+'.tsx',basePath+'.ts',basePath+'.jsx',basePath+'.js',basePath+'/index.tsx',basePath+'/index.ts',basePath+'/index.jsx',basePath+'/index.js','src/'+basePath,'src/'+basePath+'.tsx','src/'+basePath+'.ts','src/'+basePath+'.jsx','src/'+basePath+'.js'];
+      for (var i=0;i<c.length;i++) for (var j=0;j<SYNAP_FILES.length;j++) if (SYNAP_FILES[j].path===c[i]) return c[i];
+      return null;
+    }
+    var moduleRegistry = {};
+    var moduleCache = {};
+    for (var i=0;i<SYNAP_FILES.length;i++) {
+      moduleRegistry[SYNAP_FILES[i].path] = new Function('exports','require','module','__filename','__dirname',SYNAP_FILES[i].code);
+    }
+    var npmDeps = Object.keys(SYNAP_IMPORT_MAP);
+    var depCache = {};
+    Promise.all(npmDeps.map(function(d) {
+      return import(SYNAP_IMPORT_MAP[d]).then(function(m) {
+        depCache[d] = m;
+        if (d === 'react') depCache['react/jsx-runtime'] = m.jsxRuntime || m;
+      }).catch(function(e) { console.warn('Dep falhou:', d, e); });
+    })).then(function() {
+      function synapRequire(path) {
+        if (depCache[path]) return depCache[path];
+        for (var k in depCache) { if (path===k || path.startsWith(k+'/')) return depCache[k]; }
+        if (moduleCache[path]) return moduleCache[path].exports;
+        if (moduleRegistry[path]) {
+          var mod = {exports:{}};
+          moduleCache[path] = mod;
+          try { var dir = path.indexOf('/')>=0 ? path.substring(0,path.lastIndexOf('/')) : '';
+                moduleRegistry[path](mod.exports, synapRequire, mod, path, dir);
+          } catch(e) { delete moduleCache[path]; throw e; }
+          return mod.exports;
+        }
+        var cp = path.replace(/^\\.?\\//,'');
+        var f = findFile(cp);
+        if (f && moduleRegistry[f]) return synapRequire(f);
+        throw new Error('Módulo não encontrado: '+path+'. Disponíveis: '+Object.keys(moduleRegistry).join(', '));
+      }
+      synapRequire(SYNAP_ENTRY || 'src/main.tsx');
+      setTimeout(function() {
+        var l = document.getElementById('synap-loading'); if (l) l.style.display='none';
+        window.parent.postMessage({type:'synap-preview-compiled'},'*');
+      }, 500);
+    }).catch(function(err) {
+      window.onerror('Erro deps: '+(err.message||err),'',0,0,err);
+    });
+  <\/script>
+</body>
+</html>`;
 }
