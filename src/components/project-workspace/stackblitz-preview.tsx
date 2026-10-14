@@ -19,86 +19,114 @@ export const StackBlitzPreview: React.FC<StackBlitzPreviewProps> = ({ project })
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Converte projeto Synap pra formato do StackBlitz
   const buildStackBlitzProject = useCallback(() => {
-    // Pega dependências do package.json
+    // 1. Normaliza todos os paths removendo barra inicial ("/src/App.tsx" -> "src/App.tsx")
+    const files: Record<string, string> = {};
+    for (const [rawPath, file] of Object.entries(project.files)) {
+      const cleanPath = rawPath.replace(/^\/+/, '');
+      files[cleanPath] = file.content;
+    }
+
+    // 2. Lê dependências do package.json (já com path normalizado)
     let dependencies: Record<string, string> = {};
-    const pkgFile = project.files['package.json'];
-    if (pkgFile) {
+    const pkgContent = files['package.json'];
+    if (pkgContent) {
       try {
-        const pkg = JSON.parse(pkgFile.content);
-        dependencies = {
-          ...(pkg.dependencies || {}),
-          ...(pkg.devDependencies || {}),
-        };
+        const pkg = JSON.parse(pkgContent);
+        dependencies = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
       } catch {}
     }
 
-    // Converte arquivos: SynapProject.files → Record<string, string>
-    const files: Record<string, string> = {};
-    for (const [path, file] of Object.entries(project.files)) {
-      files[path] = file.content;
-    }
+    // 3. Detecta o entry point real do projeto (suporta Vite/GitHub e AI Studio)
+    const entryScript =
+      files['src/main.tsx'] ? '/src/main.tsx' :
+      files['src/index.tsx'] ? '/src/index.tsx' :
+      files['index.tsx'] ? '/index.tsx' :
+      files['src/main.jsx'] ? '/src/main.jsx' :
+      '/src/main.tsx';
 
-    // Garante que tem index.html (StackBlitz precisa)
     if (!files['index.html']) {
-      files['index.html'] = `<!doctype html>
-<html lang="pt-br">
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>`;
+      files['index.html'] = `<!doctype html>\n<html lang="pt-br">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>${project.name || 'Preview'}</title>\n  </head>\n  <body>\n    <div id="root"></div>\n    <script type="module" src="${entryScript}"></script>\n  </body>\n</html>`;
     }
 
-    // Determina template baseado no projeto
-    const hasPackageJson = !!pkgFile;
+    // 4. Detecta um arquivo válido para o openFile não quebrar
+    const candidateFiles = ['src/App.tsx', 'App.tsx', 'src/App.jsx', 'App.jsx', 'src/main.tsx', 'index.tsx'];
+    const openFile = candidateFiles.find((f) => !!files[f]) || Object.keys(files)[0] || 'index.html';
+
+    const hasPackageJson = !!pkgContent;
     const template: 'node' | 'create-react-app' = hasPackageJson ? 'node' : 'create-react-app';
 
     return {
-      title: project.name || 'Synap Preview',
-      description: project.description || '',
-      template,
-      files,
-      dependencies: template === 'node' ? undefined : dependencies,
+      sbProject: {
+        title: project.name || 'Synap Preview',
+        description: project.description || '',
+        template,
+        files,
+        dependencies: template === 'node' ? undefined : dependencies,
+      },
+      openFile,
     };
   }, [project]);
 
-  // Embed do StackBlitz quando projeto muda
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
+    let isCancelled = false;
     setLoading(true);
     setError(null);
 
+    // Limpa o container e cria um elemento filho descartável
+    // (pois o StackBlitzSDK.embedProject faz replaceChild no elemento alvo!)
+    container.innerHTML = '';
+    const mountTarget = document.createElement('div');
+    mountTarget.style.width = '100%';
+    mountTarget.style.height = '100%';
+    container.appendChild(mountTarget);
+
+    const fallbackTimer = setTimeout(() => {
+      if (!isCancelled) setLoading(false);
+    }, 4500);
+
     try {
-      const sbProject = buildStackBlitzProject();
+      const { sbProject, openFile } = buildStackBlitzProject();
 
-      // Limpa container anterior
-      containerRef.current.innerHTML = '';
-
-      // Embed do projeto
-      StackBlitzSDK.embedProject(containerRef.current, sbProject, {
-        openFile: 'src/App.tsx',
+      StackBlitzSDK.embedProject(mountTarget, sbProject, {
+        openFile,
         view: 'preview',
         theme: 'dark',
         hideExplorer: true,
+        hideNavigation: true,
         hideDevTools: false,
         devToolsHeight: 20,
         clickToLoad: false,
         forceEmbedLayout: true,
-      });
-
-      // StackBlitz não tem callback de "pronto", então espera um pouco
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
+        height: '100%',
+        crossOriginIsolated: true, // CRÍTICO: adiciona ?corp=1 e allow="cross-origin-isolated"
+      })
+        .then(() => {
+          if (!isCancelled) {
+            clearTimeout(fallbackTimer);
+            setLoading(false);
+          }
+        })
+        .catch((err: any) => {
+          if (!isCancelled) {
+            clearTimeout(fallbackTimer);
+            setError('Erro ao iniciar VM do StackBlitz: ' + (err?.message || err));
+            setLoading(false);
+          }
+        });
     } catch (err: any) {
+      clearTimeout(fallbackTimer);
       setError('Erro ao carregar StackBlitz: ' + (err?.message || err));
       setLoading(false);
     }
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(fallbackTimer);
+    };
   }, [project, refreshKey, buildStackBlitzProject]);
 
   const handleRefresh = useCallback(() => {
@@ -108,9 +136,9 @@ export const StackBlitzPreview: React.FC<StackBlitzPreviewProps> = ({ project })
   }, []);
 
   const handleOpenInNewTab = useCallback(() => {
-    const sbProject = buildStackBlitzProject();
+    const { sbProject, openFile } = buildStackBlitzProject();
     StackBlitzSDK.openProject(sbProject, {
-      openFile: 'src/App.tsx',
+      openFile,
       view: 'preview',
       theme: 'dark',
     });
@@ -154,10 +182,10 @@ export const StackBlitzPreview: React.FC<StackBlitzPreviewProps> = ({ project })
         </div>
       )}
 
-      {/* Container do StackBlitz */}
+      {/* Container do StackBlitz — [&>iframe] garante iframe 100% no mobile */}
       <div
         ref={containerRef}
-        className="w-full h-full"
+        className="w-full h-full flex-1 [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:border-0"
         style={{ minHeight: '400px' }}
       />
 
