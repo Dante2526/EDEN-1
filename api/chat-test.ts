@@ -56,9 +56,12 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     max_tokens: 50,
   };
 
+  // Pra Flash que tava dando timeout silencioso, aumentamos pra 60s
+  // pra ver se a NVIDIA eventualmente responde com erro.
+  const timeoutMs = 60000;
   try {
     const fetchCtrl = new AbortController();
-    const fetchTimer = setTimeout(() => fetchCtrl.abort(), 30000);
+    const fetchTimer = setTimeout(() => fetchCtrl.abort(), timeoutMs);
 
     const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
@@ -77,7 +80,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     totalMs = Date.now() - t0;
     clearTimeout(fetchTimer);
 
-    bodyPreview = text.slice(0, 500);
+    bodyPreview = text.slice(0, 800);
 
     if (!res.ok) {
       try {
@@ -90,7 +93,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   } catch (err: any) {
     totalMs = Date.now() - t0;
     errMsg = err?.name === 'AbortError'
-      ? `Timeout após 30s (AbortController)`
+      ? `Timeout após ${timeoutMs / 1000}s (AbortController) — NVIDIA ficou em silêncio total, nem erro retornou. Provável causa: quota excedida ou modelo em manutenção.`
       : (err?.message || String(err));
   }
 
@@ -112,6 +115,32 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
         : status === 200
         ? `🔴 Muito lento — ${totalMs}ms (pode dar timeout no frontend)`
         : `❌ Status ${status}`,
+      // Dicas extras para o caso do Flash
+      hints:
+        model === 'z-ai/glm-5.3-flash' && errMsg && errMsg.includes('Timeout')
+          ? [
+              '🚨 GLM-5.3 Flash em silêncio total (nem erro retornou).',
+              'Causas mais prováveis:',
+              '1. Quota do modelo Flash excedida na sua key NVIDIA',
+              '2. Modelo em manutenção temporária na NVIDIA',
+              '3. Sua key não tem permissão pro Flash',
+              '',
+              'Como confirmar:',
+              '- Acesse https://build.nvidia.com e tente usar GLM-5.3 Flash lá',
+              '- Se não funcionar lá também, é problema global da NVIDIA',
+              '- Se funcionar lá, é problema com sua key específica',
+              '',
+              'Soluções:',
+              '- Troque pro GLM-5.3 full (confirmado funcionando em 3.1s)',
+              '- Ou crie uma nova key NVIDIA',
+              '- Ou use os modelos @cf/* (Cloudflare) que estão funcionando',
+            ]
+          : model === 'z-ai/glm-5.3' && status === 200
+          ? [
+              '✅ GLM-5.3 full funcionando perfeitamente.',
+              'Recomendado: use este modelo como padrão.',
+            ]
+          : [],
     }, null, 2),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   );
