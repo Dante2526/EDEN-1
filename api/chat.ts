@@ -235,7 +235,7 @@ export default async function handler(req: Request) {
             } else {
               nvidiaReader = res.body.getReader();
               while (true) {
-                const { done, value } = await reader.read();
+                const { done, value } = await nvidiaReader.read();
                 if (done) break;
                 // Verifica se o chunk termina com \n\n (evento SSE completo)
                 if (value.length >= 2) {
@@ -321,7 +321,7 @@ export default async function handler(req: Request) {
         try {
           fastReader = nvidiaRes.body!.getReader();
           while (true) {
-            const { done, value } = await reader.read();
+            const { done, value } = await fastReader.read();
             if (done) break;
             controller.enqueue(value);
           }
