@@ -17,6 +17,17 @@ export default async function handler(_req: Request, envArg?: Env) {
   const isGitHubPlaceholder =
     rawGitHub === 'ghp_your_github_token_here' || rawGitHub.trim() === '';
 
+  // ====== DIAGNÓSTICO DAS VARS DA CLOUDFLARE (sem expor valores) ======
+  // Retorna true/false para cada var — isso nos diz se o Worker está recebendo
+  // o binding corretamente do dashboard do Pages.
+  const hasCfAccountId = Boolean(env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_ACCOUNT_ID.trim());
+  const hasCfApiToken = Boolean(env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_API_TOKEN.trim());
+  const hasSynapSecret = Boolean(env.SYNAP_API_SECRET && env.SYNAP_API_SECRET.trim());
+
+  // Lista de TODAS as chaves presentes no objeto env (sem valores) — útil pra
+  // debugar se o binding está chegando com outro nome ou se está vazio.
+  const envKeys = Object.keys(env || {}).filter((k) => k !== 'ASSETS');
+
   return new Response(
     JSON.stringify({
       status: 'ok',
@@ -24,7 +35,15 @@ export default async function handler(_req: Request, envArg?: Env) {
       hasGeminiKey: !isGeminiPlaceholder,
       hasGitHubToken: !isGitHubPlaceholder,
       hasEdgeTts: true,
-    }),
+      // ====== Debug Cloudflare ======
+      hasCfAccountId,
+      hasCfApiToken,
+      hasSynapSecret,
+      envKeys,
+      envKeysCount: envKeys.length,
+      // Indica se envArg foi recebido (true) ou se caiu pra process.env (false)
+      usingBindings: Boolean(envArg && typeof envArg === 'object'),
+    }, null, 2),
     {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
