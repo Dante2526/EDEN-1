@@ -2325,8 +2325,11 @@ function AppContent() {
 
             try {
               const parsed = JSON.parse(dataStr);
-              if (parsed.error) {
-                // Erro enviado pelo servidor dentro do stream (ex.: NVIDIA sem resposta)
+              // FIX 2: ignora "info" (aviso de 90s) — não é erro
+              if (parsed.info) {
+                console.log('[Synap] Info do servidor:', parsed.info);
+              } else if (parsed.error) {
+                // Erro enviado pelo servidor dentro do stream
                 streamErrorMsg =
                   typeof parsed.error === 'string'
                     ? parsed.error
