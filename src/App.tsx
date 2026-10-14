@@ -68,6 +68,7 @@ import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } fro
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
 import { looksLikeEcho } from './lib/echo-filter';
+import { keepScreenAlive, notifyCompletionIfHidden, requestNotificationPermission } from './lib/wake-lock';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -512,6 +513,8 @@ function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  // Wake lock: mantém a IA processando quando a tela apaga
+  const releaseWakeLockRef = useRef<(() => void) | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
   const [hasGeminiKey, setHasGeminiKey] = useState<boolean | null>(null);
@@ -540,6 +543,11 @@ function AppContent() {
 
   // Settings
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+
+  // Pede permissão de notificações (pra avisar quando IA terminar com tela apagada)
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   // GitHub, Source Control, Extensions & Projects state
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'repos' | 'source-control' | 'skills' | 'projects'>('chats');
@@ -1382,6 +1390,11 @@ function AppContent() {
       abortControllerRef.current = null;
     }
     setIsStreaming(false);
+    // Libera wake lock se parou manualmente
+    if (releaseWakeLockRef.current) {
+      releaseWakeLockRef.current();
+      releaseWakeLockRef.current = null;
+    }
   }, []);
 
   // Helper to execute client-side GitHub and web tools
@@ -2113,6 +2126,12 @@ function AppContent() {
     );
 
     setIsStreaming(true);
+    // Wake lock: mantém a IA processando mesmo se a tela do celular apagar
+    if (!releaseWakeLockRef.current) {
+      keepScreenAlive().then(release => {
+        releaseWakeLockRef.current = release;
+      }).catch(() => {});
+    }
     // Nova mensagem (voz ou digitada): a IA para de falar a resposta anterior
     stopLiveSpeech();
     // Se modo contínuo ativo, toca som de "entendi, pensando..."
@@ -2728,6 +2747,15 @@ function AppContent() {
     } finally {
       setIsStreaming(false);
       abortControllerRef.current = null;
+      // Libera wake lock: IA terminou, pode deixar tela apagar
+      if (releaseWakeLockRef.current) {
+        releaseWakeLockRef.current();
+        releaseWakeLockRef.current = null;
+      }
+      // Notifica se a tela estiver apagada/oculta
+      if (document.visibilityState === 'hidden') {
+        notifyCompletionIfHidden('Synap', 'IA terminou de responder ✓');
+      }
     }
   }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
 
