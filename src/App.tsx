@@ -72,6 +72,53 @@ import { looksLikeEcho } from './lib/echo-filter';
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
 
+// ============================================================================
+// AGENTIC LOOP — detecção de respostas incompletas
+// ============================================================================
+// Quando a IA responde mas o texto indica que ela ia continuar trabalhando
+// (ex.: "vou verificar", "deixa eu checar", "próximo passo"), o sistema
+// auto-injeta um continuation prompt pra ela continuar sem o usuário
+// precisar intervir.
+//
+// A detecção é conservadora pra não disparar em respostas legítimas. Só
+// dispara se o TEXTO FINAL da resposta (últimos 200 chars) casar com um
+// padrão claro de "trabalho pendente".
+// ============================================================================
+
+const INCOMPLETE_PATTERNS = [
+  // "vou verificar X", "deixa eu checar Y"
+  /(?:vou|vou agora|deixa eu|deixe-me|deixa-me)\s+(?:verificar|checar|analisar|examinar|investigar|procurar|ver|tentar)\b/i,
+  // "preciso verificar X", "preciso analisar Y"
+  /preciso\s+(?:verificar|checar|analisar|examinar|investigar|de\s+mais\s+coisas)\b/i,
+  // "para resolver isso, preciso..."
+  /para\s+resolver\s+(?:isso|este\s+problema|a\s+questão)[,\.]?\s*(?:preciso|vou|tenho\s+que)\b/i,
+  // "próximo passo", "em seguida", "agora vou"
+  /(?:pr[oó]ximo\s+passo|em\s+seguida|agora\s+vou)\b/i,
+  // "aguarde um momento", "espere um pouco"
+  /(?:aguarde|espere)\s+(?:um\s+momento|um\s+pouco|instante)\b/i,
+  // "continue...", "deixe-me continuar"
+  /(?:continue|deixe-me\s+continuar|deixa\s+eu\s+continuar)\b/i,
+  // "vou começar", "primeiro vou", "deixa eu começar"
+  /(?:vou\s+começar|primeiro\s+vou|deixa\s+eu\s+começar)\b/i,
+  // "ainda preciso", "ainda falta", "falta ainda"
+  /(?:ainda\s+preciso|ainda\s+falta|falta\s+ainda)\b/i,
+];
+
+function looksLikeIncompleteWork(text: string): boolean {
+  if (!text || text.length < 30) return false;
+  // Checa só o final da resposta (últimos 300 chars) — início normalmente
+  // é explicação e o final é onde a IA diz "agora vou...".
+  const tail = text.slice(-300).toLowerCase();
+  // Conta quantos padrões casam — se casou 1 ou mais, considera incompleto.
+  for (const pattern of INCOMPLETE_PATTERNS) {
+    if (pattern.test(tail)) {
+      console.log('[Synap] agentic loop: padrão casou:', pattern.source);
+      return true;
+    }
+  }
+  return false;
+}
+
 // Tools que funcionam SEM repo ativo (busca global no GitHub)
 const SEARCH_GITHUB_REPOS_TOOL = {
   type: 'function' as const,
@@ -2719,6 +2766,28 @@ function AppContent() {
               role: 'user',
               content:
                 'Sua resposta anterior foi cortada por limite de tamanho. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.',
+            },
+          ];
+          hasToolCallsToProcess = true;
+        } else if (
+          iterationFinishReason === 'stop' &&
+          iterationText.trim() &&
+          loopCount < MAX_TOOL_ITERATIONS &&
+          // AGENTIC LOOP: detecta quando a IA indica que vai continuar trabalhando
+          // mas parou a resposta antes de concluir. Auto-injeta um continuation prompt.
+          looksLikeIncompleteWork(iterationText)
+        ) {
+          console.log('[Synap] agentic loop detectado — continuando trabalho automaticamente');
+          currentMessagesForApi = [
+            ...currentMessagesForApi,
+            { role: 'assistant', content: iterationText },
+            {
+              role: 'user',
+              content:
+                'Continue trabalhando agora. Não pare até terminar a tarefa. ' +
+                'Não repita o que já fez, não peça permissão, não diga que vai verificar — apenas faça. ' +
+                'Se precisar de mais informações, faça perguntas específicas. ' +
+                'Se terminou a tarefa, escreva um resumo final do que foi feito.',
             },
           ];
           hasToolCallsToProcess = true;

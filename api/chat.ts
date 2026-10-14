@@ -6,9 +6,12 @@ export const config = {
 };
 
 function maxTokensFor(effort: string): number {
-  if (effort === 'max') return 12288;
-  if (effort === 'high' || effort === 'medium') return 8192;
-  return 4096;
+  // Aumentado pra permitir respostas mais longas quando IA tá em modo agentic
+  // (resolvendo problema complexo sem parar no meio).
+  // Limite real da NVIDIA GLM-5.3 é 16K tokens por resposta.
+  if (effort === 'max') return 16384;
+  if (effort === 'high' || effort === 'medium') return 12288;
+  return 8192;
 }
 
 // ===========================================================================
