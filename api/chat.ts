@@ -249,11 +249,13 @@ export default async function handler(req: Request) {
       body: JSON.stringify(payload),
     });
 
-    // O Edge exige o primeiro byte em ~25s. Se a NVIDIA demorar, respondemos já
-    // com keepalives SSE e fazemos o pipe quando a resposta chegar.
+    // O Node.js permite 60s. Se a NVIDIA demorar mais que 12s pra responder,
+    // entramos em slow stream mode com keepalives SSE e fazemos o pipe quando chegar.
+    // Importante: o slowStream tem um timeout de 45s pra abortar antes do limite da Vercel (60s).
+    const SLOW_STREAM_TIMEOUT_MS = 45_000;
     const early = await Promise.race([
       firstFetch,
-      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 15000)),
+      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 12000)),
     ]);
 
     if (early === 'slow') {
@@ -263,9 +265,19 @@ export default async function handler(req: Request) {
           const timer = setInterval(() => {
             try { controller.enqueue(enc.encode(': keepalive\n\n')); } catch { /* fechado */ }
           }, 8000);
+          // Timeout: se a NVIDIA não responder em 45s, aborta com erro claro
+          const slowTimeout = setTimeout(() => {
+            try {
+              controller.enqueue(
+                enc.encode(`data: ${JSON.stringify({ error: 'A NVIDIA não respondeu a tempo (45s). Tente novamente ou use GLM Flash.' })}\n\n`)
+              );
+              controller.close();
+            } catch { /* fechado */ }
+          }, SLOW_STREAM_TIMEOUT_MS);
           try {
             controller.enqueue(enc.encode(': keepalive\n\n'));
             const res = await firstFetch;
+            clearTimeout(slowTimeout);
             if (!res.ok || !res.body) {
               const t = await res.text().catch(() => '');
               controller.enqueue(
@@ -280,11 +292,13 @@ export default async function handler(req: Request) {
               }
             }
           } catch (e: any) {
+            clearTimeout(slowTimeout);
             try {
               controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: `Stream interrupted: ${e?.message || 'unknown'}` })}\n\n`));
             } catch { /* fechado */ }
           } finally {
             clearInterval(timer);
+            clearTimeout(slowTimeout);
             try { controller.close(); } catch { /* fechado */ }
           }
         },
@@ -380,15 +394,32 @@ export default async function handler(req: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
+        // Timeout: se o stream ficar parado 45s, aborta antes do limite da Vercel (60s)
+        let idleTimer: ReturnType<typeof setTimeout> | null = null;
+        const resetIdleTimer = () => {
+          if (idleTimer) clearTimeout(idleTimer);
+          idleTimer = setTimeout(() => {
+            try {
+              controller.enqueue(
+                new TextEncoder().encode(`\ndata: {"error": "Stream parado por 45s (NVIDIA sobrecarregada). Tente GLM Flash."}\n\n`)
+              );
+              controller.close();
+            } catch { /* fechado */ }
+          }, 45_000);
+        };
+        resetIdleTimer();
         try {
           const reader = nvidiaRes.body!.getReader();
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            resetIdleTimer();
             controller.enqueue(value);
           }
+          if (idleTimer) clearTimeout(idleTimer);
           controller.close();
         } catch (streamErr: any) {
+          if (idleTimer) clearTimeout(idleTimer);
           console.error('Stream reading error:', streamErr);
           try {
             controller.enqueue(
