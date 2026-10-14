@@ -184,12 +184,37 @@ export default async function handler(req: Request, envArg?: Env) {
     const selectedEffort = reasoning_effort || 'low';
     const apiEffort = selectedEffort === 'max' ? 'high' : selectedEffort;
 
-    const hasImages = messages.some((m: any) => m.images && Array.isArray(m.images) && m.images.length > 0);
+    // IMPORTANTE: não bloqueamos mais se o histórico contiver imagens e o modelo
+    // atual não for vision. Em vez disso, filtramos as imagens do histórico
+    // (substituindo por nota textual) na função buildFormattedMessages abaixo.
+    //
+    // Cenário que isso resolve: usuário anexou foto no início da conversa
+    // usando GLM-5.3-Flash, depois trocou pra Qwen Coder / R1 / DeepSeek.
+    // Antes, o backend bloqueava com 400 "Este modelo não suporta imagens"
+    // mesmo o usuário não anexando foto nova. Agora, as imagens antigas
+    // viram texto "[Nota: N imagem(ns) omitida(s)]" e o modelo consegue responder.
+    //
+    // Só bloqueamos se a ÚLTIMA mensagem do usuário (a que tá sendo enviada
+    // AGORA) tiver imagem anexada e o modelo não for vision — nesse caso não
+    // tem o que fazer, a imagem é essencial pra pergunta.
+    const lastUserMsgIndexPre = (() => {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') return i;
+      }
+      return -1;
+    })();
+    const lastUserMsg = lastUserMsgIndexPre >= 0 ? messages[lastUserMsgIndexPre] : null;
+    const lastUserHasImages = Boolean(
+      lastUserMsg &&
+      lastUserMsg.images &&
+      Array.isArray(lastUserMsg.images) &&
+      lastUserMsg.images.length > 0
+    );
 
     // Validação de visão: apenas GLM-5.3-Flash e Kimi K3 suportam imagens.
-    // Modelos @cf/* (R1 Distill) não suportam visão.
+    // Só bloqueamos se a última mensagem do usuário (a atual) tiver imagem.
     const isVisionCapable = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3';
-    if (hasImages && !isVisionCapable) {
+    if (lastUserHasImages && !isVisionCapable) {
       return new Response(
         JSON.stringify({ error: 'Este modelo não suporta imagens. Use GLM-5.3-Flash ou Kimi K3.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -217,7 +242,8 @@ export default async function handler(req: Request, envArg?: Env) {
           return { role: 'assistant', content: m.content || null, tool_calls: m.tool_calls };
         }
         if (m.role === 'user' && m.images && Array.isArray(m.images) && m.images.length > 0) {
-          if (index === lastUserMsgIndex) {
+          if (index === lastUserMsgIndex && isVisionCapable) {
+            // Última mensagem do usuário + modelo vision = manda imagem real
             return {
               role: 'user',
               content: [
@@ -226,7 +252,10 @@ export default async function handler(req: Request, envArg?: Env) {
               ],
             };
           }
-          return { role: 'user', content: `${m.content || ''}\n[Nota: ${m.images.length} imagem(ns) omitida(s)]` };
+          // Histórico antigo com imagem, OU última mensagem mas modelo não é vision:
+          // manda só o texto, sem mencionar que tinha imagem (evita modelo recusar
+          // responder dizendo "não tenho olhos").
+          return { role: 'user', content: m.content || '' };
         }
         return { role: m.role, content: m.content || '' };
       });
