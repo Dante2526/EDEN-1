@@ -177,34 +177,53 @@ export default async function handler(req: Request) {
         };
 
         try {
-          let res = await callNvidia(payload);
+          // FETCH COM TIMEOUT: se NVIDIA não responder em 45s, aborta
+          const fetchWithTimeout = async (bodyPayload: any) => {
+            const fetchCtrl = new AbortController();
+            const fetchTimer = setTimeout(() => fetchCtrl.abort(), 45000);
+            try {
+              const r = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+                body: JSON.stringify(bodyPayload),
+                signal: fetchCtrl.signal,
+              });
+              clearTimeout(fetchTimer);
+              return r;
+            } catch (err) {
+              clearTimeout(fetchTimer);
+              throw err;
+            }
+          };
+
+          let res = await fetchWithTimeout(payload);
 
           // Auto-retry para Rate Limit (429) ou erro temporário de gateway (502/503/504)
           if ((res.status === 429 || res.status >= 502) && !req.signal?.aborted) {
             await res.body?.cancel().catch(() => {});
             await new Promise((r) => setTimeout(r, 2000));
-            res = await callNvidia(payload);
+            res = await fetchWithTimeout(payload);
           }
 
           // Fallback 1: 400/422 com reasoning_effort -> tenta sem reasoning_effort
           if (!res.ok && (res.status === 400 || res.status === 422) && payload.reasoning_effort) {
             await res.body?.cancel().catch(() => {});
             payload = createPayload(false, true, false);
-            res = await callNvidia(payload);
+            res = await fetchWithTimeout(payload);
           }
 
           // Fallback 2: 400/422 com tools -> tenta sem tools (e limpa tool_calls do histórico)
           if (!res.ok && (res.status === 400 || res.status === 422) && payload.tools) {
             await res.body?.cancel().catch(() => {});
             payload = createPayload(false, false, false);
-            res = await callNvidia(payload);
+            res = await fetchWithTimeout(payload);
           }
 
           // Fallback 3: 400/422 por excesso de max_tokens -> reduz max_tokens para 4096
           if (!res.ok && (res.status === 400 || res.status === 422) && payload.max_tokens > 4096) {
             await res.body?.cancel().catch(() => {});
             payload = createPayload(false, false, true);
-            res = await callNvidia(payload);
+            res = await fetchWithTimeout(payload);
           }
 
           if (!res.ok || !res.body) {
@@ -237,15 +256,30 @@ export default async function handler(req: Request) {
             return;
           }
 
-          // 4. Pipe dos dados reais da IA
+          // 4. Pipe dos dados reais da IA com IDLE TIMEOUT
+          // Se a NVIDIA aceitar a conexão mas não mandar dados por 45s, aborta
           const reader = res.body.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            lastActivity = Date.now();
-            const textChunk = dec.decode(value, { stream: true });
-            isMidChunk = !textChunk.endsWith('\n');
-            controller.enqueue(value);
+          let idleTimer: ReturnType<typeof setTimeout> | null = null;
+          const resetIdleTimer = () => {
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+              console.log('[chat] IDLE TIMEOUT: NVIDIA não mandou dados por 45s, abortando...');
+              try { reader.cancel(); } catch {}
+            }, 45000);
+          };
+          resetIdleTimer(); // inicia timer
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              resetIdleTimer();
+              lastActivity = Date.now();
+              const textChunk = dec.decode(value, { stream: true });
+              isMidChunk = !textChunk.endsWith('\n');
+              controller.enqueue(value);
+            }
+          } finally {
+            if (idleTimer) clearTimeout(idleTimer);
           }
           clearInterval(timer);
           controller.close();
