@@ -259,11 +259,12 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
     }
 
     // Heurísticas pra detectar App vazio
+    // Só checa o ÚLTIMO return do arquivo (return do componente principal)
+    // Antes checava ANY 'return null' no arquivo inteiro → falso positivo
+    // em arquivos com funções auxiliares que usam return null
+    const lastReturnMatch = appContent.match(/return\s+(null|<><\/>|<><\/>|<\s*>\s*<\/\s*>|\(\s*\))/g);
     const appIsEmpty = !appContent.trim() ||
-      appContent.includes('return null') ||
-      appContent.includes('return <></>') ||
-      appContent.includes('return (<></>)') ||
-      appContent.match(/return\s*\(\s*\)/);
+      (lastReturnMatch !== null && lastReturnMatch.length === 1 && appContent.trim().endsWith(lastReturnMatch[0]));
 
     return {
       totalFiles: files.length,

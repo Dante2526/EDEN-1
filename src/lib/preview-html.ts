@@ -172,9 +172,11 @@ export function buildPreviewHtml(options: BuildPreviewHtmlOptions): string {
     'express', 'fastify', 'koa', 'next', 'nuxt',
     '@vitejs/plugin-react', 'vite', 'webpack', 'rollup', 'esbuild',
     'typescript',
-    'firebase-admin', 'firebase-functions',
+    'firebase', 'firebase-admin', 'firebase-functions',
+    '@google/genai',
     'mongoose', 'mysql2', 'pg', 'redis', 'ioredis',
     'fs', 'path', 'os', 'child_process', 'crypto', 'http', 'https', 'net', 'url',
+    'dotenv',
   ];
 
   // Deps compatíveis com browser que conhecemos
