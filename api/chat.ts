@@ -150,8 +150,12 @@ export default async function handler(req: Request) {
         }
       }
       if (includeTools && tools && Array.isArray(tools) && tools.length > 0) {
-        p.tools = tools;
-        p.tool_choice = 'auto';
+        // Tools só pra modelos que suportam bem (GLM-5.3 e Flash)
+        // Kimi K3 e DeepSeek podem travar com tools
+        if (selectedModel === 'z-ai/glm-5.3' || selectedModel === 'z-ai/glm-5.3-flash') {
+          p.tools = tools;
+          p.tool_choice = 'auto';
+        }
       }
       return p;
     };
