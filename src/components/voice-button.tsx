@@ -7,6 +7,8 @@ interface VoiceButtonProps {
   disabled?: boolean;
   continuousMode?: boolean;
   onContinuousTranscript?: (text: string) => void;
+  /** Texto parcial (ainda sendo falado) no modo contínuo — usado pra interromper a IA na hora */
+  onContinuousInterim?: (text: string) => void;
 }
 
 export const VoiceButton: React.FC<VoiceButtonProps> = ({
@@ -15,6 +17,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   disabled = false,
   continuousMode = false,
   onContinuousTranscript,
+  onContinuousInterim,
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,6 +26,27 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   const finalTextRef = useRef<string>('');
   const isManuallyStoppedRef = useRef<boolean>(false);
   const isListeningRef = useRef<boolean>(false);
+
+  // Sempre a versão MAIS RECENTE das props. O objeto de reconhecimento de voz é longevo
+  // (reinicia sozinho no modo contínuo) e capturava props antigas (isStreaming/conversas
+  // desatualizados), o que quebrava interrupção e envio de mensagens.
+  const continuousModeRef = useRef(continuousMode);
+  const onContinuousTranscriptRef = useRef(onContinuousTranscript);
+  const onContinuousInterimRef = useRef(onContinuousInterim);
+  continuousModeRef.current = continuousMode;
+  onContinuousTranscriptRef.current = onContinuousTranscript;
+  onContinuousInterimRef.current = onContinuousInterim;
+
+  // Descarta a sessão de reconhecimento atual sem disparar reinício automático
+  const disposeRecognition = () => {
+    const old = recognitionRef.current;
+    if (!old) return;
+    old.onend = null;
+    old.onresult = null;
+    old.onerror = null;
+    try { old.abort(); } catch {}
+    recognitionRef.current = null;
+  };
 
   useEffect(() => {
     isListeningRef.current = isListening;
@@ -48,46 +72,23 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     }
   }, [continuousMode]);
 
-  // Listener pra modo contínuo: quando a IA termina de falar, reativa o microfone
+  // Eventos do modo contínuo: garante que o microfone esteja ligado (sem criar sessão duplicada).
+  // 'force-start' = IA começou a falar (mic precisa ficar aberto pra poder interromper)
+  // 'resume' = IA terminou de falar
   useEffect(() => {
     if (!continuousMode) return;
 
-    const handleResume = () => {
-      // No modo contínuo, sempre reativa o microfone (mesmo se já estava ouvindo)
-      // Isso garante que o usuário pode interromper a IA falando a qualquer momento
-      try {
-        if (recognitionRef.current && !isListeningRef.current) {
-          recognitionRef.current.start();
-        } else if (!recognitionRef.current) {
-          startListening();
-        }
-      } catch {
-        // Se já está ouvindo, ignora o erro
-        setTimeout(() => {
-          try {
-            if (!isListeningRef.current) startListening();
-          } catch {}
-        }, 200);
-      }
+    const ensureListening = () => {
+      if (isManuallyStoppedRef.current) return; // usuário/erro desligou o mic de propósito
+      if (recognitionRef.current && isListeningRef.current) return; // já está ouvindo
+      startListening();
     };
 
-    // Também escuta evento pra FORÇAR start do microfone (quando IA começa a falar)
-    const handleForceStart = () => {
-      try {
-        if (recognitionRef.current) {
-          try { recognitionRef.current.abort(); } catch {}
-        }
-        setTimeout(() => {
-          if (!isListeningRef.current) startListening();
-        }, 100);
-      } catch {}
-    };
-
-    window.addEventListener('synap:resume-listening', handleResume);
-    window.addEventListener('synap:force-start-listening', handleForceStart);
+    window.addEventListener('synap:resume-listening', ensureListening);
+    window.addEventListener('synap:force-start-listening', ensureListening);
     return () => {
-      window.removeEventListener('synap:resume-listening', handleResume);
-      window.removeEventListener('synap:force-start-listening', handleForceStart);
+      window.removeEventListener('synap:resume-listening', ensureListening);
+      window.removeEventListener('synap:force-start-listening', ensureListening);
     };
   }, [continuousMode]);
 
@@ -132,10 +133,16 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
 
       const fullText = (finalTextRef.current + interim).trim();
 
-      // No modo contínuo, envia texto final direto pro handler de contínuo
-      if (continuousMode && onContinuousTranscript && final) {
-        onContinuousTranscript(fullText);
-        finalTextRef.current = ''; // Limpa pra próxima frase
+      // Modo contínuo: final -> envia mensagem; parcial -> avisa pra interromper a IA na hora
+      if (continuousModeRef.current) {
+        if (final && onContinuousTranscriptRef.current) {
+          onContinuousTranscriptRef.current(fullText);
+          finalTextRef.current = ''; // Limpa pra próxima frase
+          return;
+        }
+        if (interim && onContinuousInterimRef.current) {
+          onContinuousInterimRef.current(fullText);
+        }
         return;
       }
 
@@ -161,7 +168,9 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       // Com continuous=false, onend dispara após cada frase
       // No modo contínuo, SEMPRE reinicia (mesmo durante TTS)
       // pra permitir interromper a IA falando
-      if (continuousMode && !isManuallyStoppedRef.current) {
+      // Sessão substituída/descartada: não reinicia (evita 2 reconhecimentos ao mesmo tempo)
+      if (recognitionRef.current !== recognition) return;
+      if (continuousModeRef.current && !isManuallyStoppedRef.current) {
         try {
           recognition.start();
           return;
@@ -197,6 +206,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     setErrorMessage(null);
     finalTextRef.current = '';
     isManuallyStoppedRef.current = false;
+    disposeRecognition();
 
     const recognition = createRecognition();
     if (!recognition) {

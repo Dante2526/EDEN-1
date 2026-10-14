@@ -27,6 +27,7 @@ interface ChatInputProps {
   onToggleContinuousVoice?: () => void;
   /** Handler específico pra transcrição do modo contínuo (interrompe TTS antes de enviar) */
   onContinuousVoiceTranscript?: (text: string) => void;
+  onContinuousVoiceInterim?: (text: string) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = React.memo(({
@@ -45,6 +46,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   isContinuousVoiceActive = false,
   onToggleContinuousVoice,
   onContinuousVoiceTranscript,
+  onContinuousVoiceInterim,
 }) => {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -316,6 +318,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 onStateChange={handleVoiceStateChange}
                 disabled={isLoading && !isContinuousVoiceActive}
                 continuousMode={isContinuousVoiceActive}
+                onContinuousInterim={isContinuousVoiceActive ? onContinuousVoiceInterim : undefined}
                 onContinuousTranscript={isContinuousVoiceActive ? (text) => {
                   // Usa handler específico que interrompe TTS antes de enviar
                   if (onContinuousVoiceTranscript) {

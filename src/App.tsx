@@ -67,6 +67,7 @@ import {
 import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } from './lib/theme';
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
+import { looksLikeEcho } from './lib/echo-filter';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -654,43 +655,73 @@ function AppContent() {
   const [continuousVoiceActive, setContinuousVoiceActive] = useState(false);
   const continuousVoiceTranscriptRef = useRef<string>('');
   const continuousVoiceListeningRef = useRef<boolean>(false);
-  // Ref pra armazenar o Audio element do TTS — pra poder interromper quando usuário fala
+  // Controle ÚNICO do que a IA está falando (áudio neural OU voz do navegador)
   const currentTTSAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentTTSUrlRef = useRef<string | null>(null);
+  const liveSpeechTokenRef = useRef(0); // muda a cada fala/interrupção: invalida falas em andamento
+  const liveIsSpeakingRef = useRef(false);
+  const liveSpokenTextRef = useRef(''); // o que a IA está falando (pro filtro de eco)
+  const lastSpokenMsgIdRef = useRef(''); // evita falar a MESMA resposta duas vezes
+
+  // Para TODA fala da IA imediatamente (áudio, fetch do TTS em andamento e Web Speech)
+  const stopLiveSpeech = useCallback(() => {
+    liveSpeechTokenRef.current += 1;
+    liveIsSpeakingRef.current = false;
+    const audio = currentTTSAudioRef.current;
+    if (audio) {
+      audio.onended = null;
+      audio.onerror = null;
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {}
+      currentTTSAudioRef.current = null;
+    }
+    if (currentTTSUrlRef.current) {
+      URL.revokeObjectURL(currentTTSUrlRef.current);
+      currentTTSUrlRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
 
   const handleContinuousVoiceToggle = useCallback(() => {
     setContinuousVoiceActive(prev => {
       const next = !prev;
       if (next) {
-        // Ligando
         playVoiceModeOnSound();
       } else {
-        // Desligando — para tudo
         playVoiceModeOffSound();
         continuousVoiceListeningRef.current = false;
-        if (typeof window !== 'undefined' && window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
       }
       return next;
     });
   }, []);
 
-  // Quando o streaming termina e o modo contínuo tá ativo, fala a resposta
+  // Ligou: marca a última resposta como "já lida" (não lê o histórico). Desligou: para a fala.
+  useEffect(() => {
+    if (!continuousVoiceActive) {
+      stopLiveSpeech();
+      return;
+    }
+    const conv = conversations.find(c => c.id === activeId);
+    const last = conv?.messages[conv.messages.length - 1];
+    if (last && last.role === 'assistant') lastSpokenMsgIdRef.current = last.id;
+  }, [continuousVoiceActive]);
+
+  // Quando o streaming termina e o modo contínuo tá ativo, fala a resposta (uma vez só)
   useEffect(() => {
     if (!continuousVoiceActive || isStreaming) return;
 
-    // Pega a última resposta da IA
     const conv = conversations.find(c => c.id === activeId);
     if (!conv || conv.messages.length === 0) return;
 
     const lastMsg = conv.messages[conv.messages.length - 1];
     if (lastMsg.role !== 'assistant' || !lastMsg.content) return;
+    if (lastMsg.id === lastSpokenMsgIdRef.current) return; // já falou essa resposta
 
-    const textToSpeak = lastMsg.content;
-    if (!textToSpeak.trim()) return;
-
-    // Fala a resposta
-    const cleanText = textToSpeak
+    const cleanText = lastMsg.content
       .replace(/<think>[\s\S]*?<\/think>/g, '')
       .replace(/```[\s\S]*?```/g, ' Trecho de código omitido. ')
       .replace(/`([^`]+)`/g, '$1')
@@ -706,42 +737,81 @@ function AppContent() {
 
     if (!cleanText) return;
 
-    // Tenta TTS neural do backend
+    lastSpokenMsgIdRef.current = lastMsg.id;
+    stopLiveSpeech(); // garante que nenhuma fala anterior continue tocando
+    const myToken = liveSpeechTokenRef.current;
+    liveSpokenTextRef.current = cleanText;
+    liveIsSpeakingRef.current = true;
+
+    const isCurrent = () => liveSpeechTokenRef.current === myToken;
+    const onFinished = () => {
+      if (!isCurrent()) return; // foi interrompida: o microfone já está aberto
+      liveIsSpeakingRef.current = false;
+      continuousVoiceListeningRef.current = true;
+      window.dispatchEvent(new CustomEvent('synap:resume-listening'));
+    };
+
     const speak = async () => {
-      // Som de "tô pronto pra falar"
       playSpeakingStartSound();
       try {
         const settings = JSON.parse(localStorage.getItem('synap_settings_v1') || '{}');
         const preferredVoice = settings.speechVoice || 'pt-BR-FranciscaNeural';
         const res = await fetch('/api/tts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
           body: JSON.stringify({ text: cleanText, voice: preferredVoice }),
         });
+        if (!isCurrent()) return; // usuário interrompeu enquanto o áudio era gerado
 
         if (res.ok) {
-          const blob = await res.blob();
-          const url = URL.createObjectURL(blob);
-          const audio = new Audio(url);
-          // Armazena no ref pra poder interromper
-          currentTTSAudioRef.current = audio;
-          // FORÇA o microfone a reativar imediatamente (pra permitir interromper)
-          // O VoiceButton vai ignorar o próprio áudio da IA (continuous=false só captura frases novas)
-          window.dispatchEvent(new CustomEvent('synap:force-start-listening'));
-          audio.onended = () => {
-            URL.revokeObjectURL(url);
-            currentTTSAudioRef.current = null;
-            // Reativa o microfone depois de falar
-            if (continuousVoiceActive) {
-              continuousVoiceListeningRef.current = true;
-              // Dispara evento pra VoiceButton reativar
-              window.dispatchEvent(new CustomEvent('synap:resume-listening'));
-            }
-          };
-          audio.play();
-          return;
+          let url = '';
+          let isBlobUrl = false;
+          if ((res.headers.get('content-type') || '').includes('application/json')) {
+            // Vozes Gemini voltam como JSON { audio (base64), mimeType }
+            const data = await res.json();
+            if (data?.audio) url = `data:${data.mimeType || 'audio/mpeg'};base64,${data.audio}`;
+          } else {
+            url = URL.createObjectURL(await res.blob());
+            isBlobUrl = true;
+          }
+          if (!isCurrent()) {
+            if (isBlobUrl) URL.revokeObjectURL(url);
+            return;
+          }
+          if (url) {
+            const audio = new Audio(url);
+            currentTTSAudioRef.current = audio;
+            currentTTSUrlRef.current = isBlobUrl ? url : null;
+            // Garante o microfone aberto durante a fala (pra poder interromper)
+            window.dispatchEvent(new CustomEvent('synap:force-start-listening'));
+            const cleanupAudio = () => {
+              if (currentTTSAudioRef.current === audio) currentTTSAudioRef.current = null;
+              if (isBlobUrl && currentTTSUrlRef.current === url) {
+                URL.revokeObjectURL(url);
+                currentTTSUrlRef.current = null;
+              }
+            };
+            audio.onended = () => {
+              cleanupAudio();
+              onFinished();
+            };
+            audio.onerror = () => {
+              cleanupAudio();
+              onFinished();
+            };
+            await audio.play();
+            return;
+          }
         }
-      } catch {}
+      } catch (err) {
+        if (!isCurrent()) return; // play() rejeitado porque foi interrompida: normal
+        console.warn('[Synap] TTS neural falhou no modo live, usando voz do navegador:', err);
+      }
+
+      if (!isCurrent()) return;
 
       // Fallback: Web Speech API
       if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -749,18 +819,17 @@ function AppContent() {
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'pt-BR';
         utterance.rate = 1.05;
-        utterance.onend = () => {
-          if (continuousVoiceActive) {
-            continuousVoiceListeningRef.current = true;
-            window.dispatchEvent(new CustomEvent('synap:resume-listening'));
-          }
-        };
+        utterance.onend = onFinished;
+        utterance.onerror = onFinished;
+        window.dispatchEvent(new CustomEvent('synap:force-start-listening'));
         window.speechSynthesis.speak(utterance);
+      } else {
+        onFinished();
       }
     };
 
     speak();
-  }, [isStreaming, continuousVoiceActive, activeId, conversations]);
+  }, [isStreaming, continuousVoiceActive, activeId, conversations, stopLiveSpeech]);
 
   // Handler pra quando o usuário fala no modo contínuo (definido depois de handleSendMessage)
   // Veja handleContinuousVoiceTranscript mais abaixo
@@ -2044,6 +2113,8 @@ function AppContent() {
     );
 
     setIsStreaming(true);
+    // Nova mensagem (voz ou digitada): a IA para de falar a resposta anterior
+    stopLiveSpeech();
     // Se modo contínuo ativo, toca som de "entendi, pensando..."
     if (continuousVoiceActive) {
       playThinkingSound();
@@ -2622,25 +2693,25 @@ function AppContent() {
     }
   }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
 
-  // Handler pra quando o usuário fala no modo contínuo
+  // Usuário começou a falar (texto parcial) enquanto a IA fala: interrompe NA HORA,
+  // sem esperar ele terminar a frase. Ignora eco da própria voz da IA.
+  const handleContinuousVoiceInterim = useCallback((text: string) => {
+    if (!continuousVoiceActive || !liveIsSpeakingRef.current) return;
+    if (text.trim().length < 3) return;
+    if (looksLikeEcho(text, liveSpokenTextRef.current)) return;
+    stopLiveSpeech();
+  }, [continuousVoiceActive, stopLiveSpeech]);
+
+  // Usuário terminou de falar no modo contínuo
   const handleContinuousVoiceTranscript = useCallback((text: string) => {
     if (!continuousVoiceActive) return;
+    // A IA se ouvindo falar (eco): ignora, não envia como mensagem
+    if (liveIsSpeakingRef.current && looksLikeEcho(text, liveSpokenTextRef.current)) return;
     continuousVoiceTranscriptRef.current = text;
 
-    // INTERROMPE a IA falando (3 camadas):
-    // 1. Para o Audio element do TTS (/api/tts)
-    if (currentTTSAudioRef.current) {
-      try {
-        currentTTSAudioRef.current.pause();
-        currentTTSAudioRef.current.currentTime = 0;
-        currentTTSAudioRef.current = null;
-      } catch {}
-    }
-    // 2. Cancela o Web Speech API (fallback TTS)
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    // 3. Para o streaming da resposta (IA para de gerar texto)
+    // Para a fala (áudio neural, fetch do TTS em andamento e Web Speech)
+    stopLiveSpeech();
+    // Para a geração de texto, se ainda estiver gerando
     if (isStreaming) {
       handleStopGeneration();
     }
@@ -2649,7 +2720,7 @@ function AppContent() {
     if (text.trim()) {
       handleSendMessage(text);
     }
-  }, [continuousVoiceActive, isStreaming, handleSendMessage, handleStopGeneration]);
+  }, [continuousVoiceActive, isStreaming, handleSendMessage, handleStopGeneration, stopLiveSpeech]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -2961,6 +3032,7 @@ function AppContent() {
           isContinuousVoiceActive={continuousVoiceActive}
           onToggleContinuousVoice={handleContinuousVoiceToggle}
           onContinuousVoiceTranscript={handleContinuousVoiceTranscript}
+          onContinuousVoiceInterim={handleContinuousVoiceInterim}
         />
           </>
         )}
