@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { SynapProject, ProjectTemplate } from '../../lib/types';
 import { projectToSandpackFiles } from '../../lib/project-storage';
-import { LocalPreview } from './local-preview';
+import { StackBlitzPreview } from './stackblitz-preview';
 
 interface ProjectWorkspaceProps {
   project: SynapProject;
@@ -504,8 +504,8 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
 
             {!showCode && (
               <div className="!flex-1 !min-w-0 bg-white min-h-0 relative">
-                {/* LocalPreview — 100% no navegador, sem servidor externo */}
-                <LocalPreview project={project} />
+                {/* StackBlitzPreview — WebContainer, suporta TUDO */}
+                <StackBlitzPreview project={project} />
 
                 {/* Overlay de Diagnóstico (manual, botão ⚠) */}
                 {showDiagnostic && (
