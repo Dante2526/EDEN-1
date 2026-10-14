@@ -2257,6 +2257,33 @@ function AppContent() {
 
             if (isNetworkErr && retryAttempt < MAX_RETRIES) {
               console.log(`[Synap] Rede caiu (tentativa ${retryAttempt + 1}/${MAX_RETRIES}). Tentando de novo em ${RETRY_DELAYS[retryAttempt]}ms...`);
+
+              // PRESERVA CONTEXTO: se a IA já gerou texto ou tool calls antes da queda,
+              // inclui como mensagem assistant + instrução de continuação
+              const partialText = iterationText || accumulatedAssistantText || '';
+              const partialWork = partialText.trim().length > 0;
+
+              if (partialWork) {
+                // Adiciona o texto parcial como mensagem assistant no contexto
+                const continuationMessages = [...currentMessagesForApi];
+
+                if (partialText.trim()) {
+                  continuationMessages.push({
+                    role: 'assistant',
+                    content: partialText.trim(),
+                  });
+                }
+
+                // Adiciona instrução de continuação
+                continuationMessages.push({
+                  role: 'user',
+                  content: '⚠️ Sua resposta anterior foi interrompida por uma queda de conexão. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução. Não refaça o que já fez.',
+                });
+
+                // Atualiza currentMessagesForApi pra próxima tentativa
+                currentMessagesForApi = continuationMessages;
+              }
+
               // Atualiza a mensagem da IA pra mostrar que tá reconectando
               setConversations((prev) =>
                 prev.map((c) => {
@@ -2267,7 +2294,7 @@ function AppContent() {
                       m.id === assistantMessageId
                         ? {
                             ...m,
-                            content: (iterationText || accumulatedAssistantText || '') + '\n\n⚠️ Conexão interrompida. Reconectando automaticamente...',
+                            content: partialText + '\n\n⚠️ Conexão interrompida. Reconectando automaticamente...',
                           }
                         : m
                     ),
@@ -2275,7 +2302,7 @@ function AppContent() {
                 })
               );
               await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[retryAttempt]));
-              continue; // Tenta de novo
+              continue; // Tenta de novo com contexto preservado
             }
             throw fetchErr; // Não é erro de rede ou esgotou retries
           }
