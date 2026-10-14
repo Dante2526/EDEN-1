@@ -102,6 +102,7 @@ function maxTokensFor(effort: string): number {
 }
 
 export default async function handler(req: Request) {
+  const FUNCTION_START = Date.now(); // timestamp do início da função (pra calcular timeout total)
   try {
     const securityResponse = await checkAuthAndRateLimit(req);
     if (securityResponse) return securityResponse;
@@ -394,11 +395,8 @@ export default async function handler(req: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        const startTime = Date.now();
-        const MAX_TOTAL_MS = 50_000; // 50s total — margem de 10s antes do limite Vercel (60s)
-        // Idle: se parar de receber dados por 30s, aborta
+        const HARD_LIMIT_MS = 55_000; // 55s — margem de 5s antes do Vercel cortar em 60s
         let idleTimer: ReturnType<typeof setTimeout> | null = null;
-        // Total: se o stream inteiro passar de 50s, corta e sinaliza continuação
         let totalTimer: ReturnType<typeof setTimeout> | null = null;
         let wasCutByTotalTimeout = false;
 
@@ -420,12 +418,15 @@ export default async function handler(req: Request) {
           }, 30_000);
         };
 
-        // Timer total: corta em 50s e sinaliza continuação automática
+        // Timer total: calculado pelo tempo RESTANTE até o limite da Vercel
+        // Se a função já gastou 15s esperando a NVIDIA, só restam 40s de stream
+        const elapsedSinceStart = Date.now() - FUNCTION_START;
+        const remainingMs = Math.max(10_000, HARD_LIMIT_MS - elapsedSinceStart); // mínimo 10s
+        console.log(`[chat] stream total timeout: ${remainingMs}ms (elapsed: ${elapsedSinceStart}ms)`);
         totalTimer = setTimeout(() => {
           wasCutByTotalTimeout = true;
           cleanupTimers();
           try {
-            // Envia um chunk fake com finish_reason=length pro frontend continuar automaticamente
             const fakeChunk = {
               choices: [{ finish_reason: 'length', delta: {} }],
             };
@@ -437,7 +438,7 @@ export default async function handler(req: Request) {
             );
             controller.close();
           } catch { /* fechado */ }
-        }, MAX_TOTAL_MS);
+        }, remainingMs);
 
         resetIdleTimer();
         try {
@@ -452,7 +453,7 @@ export default async function handler(req: Request) {
           controller.close();
         } catch (streamErr: any) {
           cleanupTimers();
-          if (wasCutByTotalTimeout) return; // já fechou via timeout
+          if (wasCutByTotalTimeout) return;
           console.error('Stream reading error:', streamErr);
           try {
             controller.enqueue(
