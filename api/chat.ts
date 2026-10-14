@@ -14,6 +14,7 @@ function maxTokensFor(effort: string): number {
 }
 
 export default async function handler(req: Request) {
+  const reqStart = Date.now(); // só medição (tempo até chamar a NVIDIA)
   try {
     const securityResponse = await checkAuthAndRateLimit(req);
     if (securityResponse) return securityResponse;
@@ -152,6 +153,29 @@ export default async function handler(req: Request) {
 
     let payload = createPayload(true, true);
 
+    // ===== MEDIÇÃO (só registra tempos — sem timers, sem abort, não altera o stream) =====
+    // Aparece em Vercel > Logs ("[chat-timing]"). headersMs = NVIDIA aceitou a requisição;
+    // firstChunkMs = 1º pedaço do stream chegou (esse é o tempo do "Conectando…").
+    const promptChars = JSON.stringify(formattedMessages).length;
+    const toolsChars = Array.isArray(tools) ? JSON.stringify(tools).length : 0;
+    const logTiming = (extra: Record<string, unknown>) => {
+      try {
+        console.log(
+          '[chat-timing]',
+          JSON.stringify({
+            model: selectedModel,
+            effort: selectedEffort,
+            msgs: formattedMessages.length,
+            promptChars,
+            toolsChars,
+            ...extra,
+          })
+        );
+      } catch { /* log nunca pode quebrar a resposta */ }
+    };
+    const fetchStart = Date.now();
+    const preMs = fetchStart - reqStart;
+
     const firstFetch = fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -172,6 +196,8 @@ export default async function handler(req: Request) {
       const enc = new TextEncoder();
       const slowStream = new ReadableStream({
         async start(controller) {
+          let headersMs = -1;
+          let firstChunkMs = -1;
           // Keepalives a cada 5s (era 8s) — mais segurança contra cortes da Vercel
           const timer = setInterval(() => {
             try { controller.enqueue(enc.encode(': keepalive\n\n')); } catch { /* fechado */ }
@@ -189,6 +215,7 @@ export default async function handler(req: Request) {
               } catch { /* fechado */ }
             }, FALLBACK_TIMEOUT_MS);
             const res = await firstFetch;
+            headersMs = Date.now() - fetchStart;
             clearTimeout(fallbackTimer);
             if (!res.ok || !res.body) {
               const t = await res.text().catch(() => '');
@@ -200,6 +227,7 @@ export default async function handler(req: Request) {
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
+                if (firstChunkMs < 0) firstChunkMs = Date.now() - fetchStart;
                 controller.enqueue(value);
               }
             }
@@ -208,6 +236,7 @@ export default async function handler(req: Request) {
               controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: `Stream interrupted: ${e?.message || 'unknown'}` })}\n\n`));
             } catch { /* fechado */ }
           } finally {
+            logTiming({ path: 'slow', headersMs, firstChunkMs, totalMs: Date.now() - fetchStart, preMs });
             clearInterval(timer);
             try { controller.close(); } catch { /* fechado */ }
           }
@@ -219,6 +248,7 @@ export default async function handler(req: Request) {
           'Content-Type': 'text/event-stream; charset=utf-8',
           'Cache-Control': 'no-cache, no-transform',
           'X-Accel-Buffering': 'no',
+          'X-Synap-Prompt-Chars': String(promptChars),
         },
       });
     }
@@ -283,6 +313,7 @@ export default async function handler(req: Request) {
       });
     }
 
+    const readyMs = Date.now() - fetchStart;
     const headers: Record<string, string> = {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
@@ -290,6 +321,9 @@ export default async function handler(req: Request) {
       'X-Accel-Buffering': 'no',
       'X-Content-Type-Options': 'nosniff',
     };
+
+    headers['Server-Timing'] = `upstream-ready;dur=${readyMs}`;
+    headers['X-Synap-Prompt-Chars'] = String(promptChars);
 
     if (fallbackType !== 'none') {
       headers['x-fallback'] = fallbackType;
@@ -304,13 +338,16 @@ export default async function handler(req: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
+        let firstChunkMs = -1;
         try {
           const reader = nvidiaRes.body!.getReader();
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            if (firstChunkMs < 0) firstChunkMs = Date.now() - fetchStart;
             controller.enqueue(value);
           }
+          logTiming({ path: 'fast', fallback: fallbackType, headersMs: readyMs, firstChunkMs, totalMs: Date.now() - fetchStart, preMs });
           controller.close();
         } catch (streamErr: any) {
           console.error('Stream reading error:', streamErr);

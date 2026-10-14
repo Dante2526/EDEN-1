@@ -4,9 +4,60 @@ export const COMPACTION_TRIGGER_THRESHOLD = 16;
 export const RECENT_MESSAGES_WINDOW = 6;
 
 /**
- * Avalia se uma conversa atingiu o critério de volume para disparo de compactação de contexto.
+ * Gatilho por TAMANHO: tokens estimados das mensagens que já saíram da janela recente
+ * (e que seriam enviadas à IA). Pouca mensagem enorme (código, anexos) também compacta.
  */
-export function shouldCompact(conversation: Conversation): boolean {
+export const COMPACTION_TOKEN_THRESHOLD = 16_000;
+
+/**
+ * Mensagens FORA da janela recente são enviadas encurtadas à IA. Quanto menor o prompt,
+ * mais rápido o 1º token. As mensagens recentes (e a última do usuário) vão sempre inteiras.
+ */
+export const OLD_DOCUMENT_MAX_CHARS = 4_000;
+export const OLD_MESSAGE_MAX_CHARS = 12_000;
+
+/** Estimativa grosseira (~4 caracteres por token), suficiente pra decidir quando compactar. */
+export function estimateTokens(text: string): number {
+  return Math.ceil((text || '').length / 4);
+}
+
+/** Mantém o começo e o fim do texto e troca o meio por um aviso. */
+export function trimMiddle(text: string, maxChars: number, label: string): string {
+  if (!text || text.length <= maxChars) return text;
+  const head = Math.floor(maxChars * 0.65);
+  const tail = maxChars - head;
+  const omitted = text.length - maxChars;
+  return (
+    `${text.slice(0, head)}\n[... ${omitted} caracteres omitidos (${label}) para acelerar a resposta ...]\n` +
+    text.slice(text.length - tail)
+  );
+}
+
+/** Texto da mensagem como vai pra API (anexos inline). `trim` encurta anexos/texto longos. */
+function renderMessageContent(m: Message, trim: boolean): string {
+  let content = m.content || '';
+  if (trim) content = trimMiddle(content, OLD_MESSAGE_MAX_CHARS, 'mensagem antiga');
+  if (m.documents && m.documents.length > 0) {
+    const docsBlock = m.documents
+      .map((d) => {
+        const body = trim ? trimMiddle(d.content || '', OLD_DOCUMENT_MAX_CHARS, 'anexo antigo') : d.content;
+        return `[Arquivo anexado: ${d.name}]\n\`\`\`\n${body}\n\`\`\``;
+      })
+      .join('\n\n');
+    content = docsBlock + (content ? `\n\n${content}` : '');
+  }
+  return content;
+}
+
+/** Tokens estimados do que está FORA da janela recente (já encurtado, como é enviado). */
+function olderMessagesTokens(messages: Message[]): number {
+  const olderCount = Math.max(0, messages.length - RECENT_MESSAGES_WINDOW);
+  let total = 0;
+  for (let i = 0; i < olderCount; i++) total += estimateTokens(renderMessageContent(messages[i], true));
+  return total;
+}
+
+function countBasedTrigger(conversation: Conversation): boolean {
   if (!conversation.messages || conversation.messages.length <= COMPACTION_TRIGGER_THRESHOLD) {
     return false;
   }
@@ -18,6 +69,23 @@ export function shouldCompact(conversation: Conversation): boolean {
   if (lastIndex === -1) return true;
   const uncompactedCount = conversation.messages.length - (lastIndex + 1);
   return uncompactedCount > COMPACTION_TRIGGER_THRESHOLD - RECENT_MESSAGES_WINDOW;
+}
+
+function sizeBasedTrigger(conversation: Conversation): boolean {
+  const messages = conversation.messages || [];
+  const lastCompactedId = conversation.contextCompaction?.compactedUpToMessageId;
+  const lastIndex = lastCompactedId ? messages.findIndex((m) => m.id === lastCompactedId) : -1;
+  const uncompacted = lastIndex >= 0 ? messages.slice(lastIndex + 1) : messages;
+  if (uncompacted.length <= RECENT_MESSAGES_WINDOW) return false;
+  return olderMessagesTokens(uncompacted) > COMPACTION_TOKEN_THRESHOLD;
+}
+
+/**
+ * Avalia se a conversa deve ser compactada: por volume de mensagens OU por tamanho em tokens.
+ */
+export function shouldCompact(conversation: Conversation): boolean {
+  if (!conversation.messages || conversation.messages.length === 0) return false;
+  return countBasedTrigger(conversation) || sizeBasedTrigger(conversation);
 }
 
 /**
@@ -140,20 +208,13 @@ export function prepareMessagesForApi(
     };
   }
 
-  const formatted = effectiveMessages.map((m) => {
-    let content = m.content || '';
-    if (m.documents && m.documents.length > 0) {
-      const docsBlock = m.documents
-        .map((d) => `[Arquivo anexado: ${d.name}]\n\`\`\`\n${d.content}\n\`\`\``)
-        .join('\n\n');
-      content = docsBlock + (content ? `\n\n${content}` : '');
-    }
-    return {
-      role: m.role,
-      content,
-      images: m.images,
-    };
-  });
+  const recentStart = Math.max(0, effectiveMessages.length - RECENT_MESSAGES_WINDOW);
+  const formatted = effectiveMessages.map((m, index) => ({
+    role: m.role,
+    // Fora da janela recente: anexos/textos enormes vão encurtados (1º token mais rápido)
+    content: renderMessageContent(m, index < recentStart),
+    images: m.images,
+  }));
 
   const finalMessages: any[] = [];
   if (systemPrompts.base) finalMessages.push({ role: 'system', content: systemPrompts.base });
