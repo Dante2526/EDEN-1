@@ -53,6 +53,93 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   const branch = url.searchParams.get('branch') || 'main';
 
   try {
+    if (action === 'diagnose') {
+      // Endpoint de diagnóstico: testa o token contra a API do GitHub
+      // e retorna informações úteis pra debugar sem expor o token.
+      let userInfo: any = null;
+      let rateLimit: any = null;
+      let primaryError: string | null = null;
+      let primaryStatus = 0;
+
+      try {
+        const userRes = await fetch('https://api.github.com/user', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'User-Agent': 'Synap-Diagnose',
+          },
+        });
+        primaryStatus = userRes.status;
+        if (userRes.ok) {
+          userInfo = await userRes.json();
+        } else {
+          const errBody = await userRes.json().catch(() => ({}));
+          primaryError = errBody?.message || `GitHub API retornou ${userRes.status}`;
+        }
+        // Pega info de rate limit do header (não consome quota)
+        const rlRes = await fetch('https://api.github.com/rate_limit', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github+json',
+            'User-Agent': 'Synap-Diagnose',
+          },
+        });
+        if (rlRes.ok) {
+          const rlBody = await rlRes.json();
+          rateLimit = rlBody?.resources?.core || rlBody?.rate;
+        }
+      } catch (err: any) {
+        primaryError = err?.message || String(err);
+      }
+
+      return new Response(
+        JSON.stringify(
+          {
+            ok: primaryStatus === 200,
+            status: primaryStatus,
+            error: primaryError,
+            // UserInfo: só campos seguros, sem expor email privado
+            user: userInfo
+              ? {
+                  login: userInfo.login,
+                  name: userInfo.name,
+                  type: userInfo.type,
+                  public_repos: userInfo.public_repos,
+                  scopes_header: '(check below)',
+                }
+              : null,
+            // Token scopes vêm no header X-OAuth-Scopes (tokens clássicos)
+            // Pra fine-grained PATs, é diferente — o header é X-Accepted-Github-Permissions
+            tokenScopes: '(see rawHeaders)',
+            rateLimit: rateLimit
+              ? {
+                  limit: rateLimit.limit,
+                  remaining: rateLimit.remaining,
+                  reset: rateLimit.reset,
+                  used: rateLimit.used,
+                }
+              : null,
+            // Dicas de troubleshooting
+            hints: [
+              primaryStatus === 401
+                ? '401 = token inválido/expirado. Recrie o PAT em https://github.com/settings/tokens'
+                : primaryStatus === 403
+                ? '403 = token válido mas sem permissão pra ação. Verifique os scopes do PAT.'
+                : primaryStatus === 200
+                ? 'Token válido! Problema pode estar em outra action do /api/github.'
+                : 'Status inesperado — verifique formato do token.',
+              'Para Source Control (commits/file-explorer): PAT precisa ter escopos "Contents: Read and Write" + "Metadata: Read".',
+              'Fine-grained PATs precisam ter o repo selecionado em "Repository access".',
+            ],
+          },
+          null,
+          2
+        ),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (action === 'user') {
       const data = await ghFetch('/user', token);
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
