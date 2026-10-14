@@ -103,6 +103,8 @@ function maxTokensFor(effort: string): number {
 
 export default async function handler(req: Request) {
   const FUNCTION_START = Date.now(); // timestamp do início da função (pra calcular timeout total)
+  // TRIGGER DEPLOY — força Vercel a fazer novo deploy
+  const DEPLOY_VERSION = '2024-10-13-v2';
   try {
     const securityResponse = await checkAuthAndRateLimit(req);
     if (securityResponse) return securityResponse;
@@ -253,7 +255,7 @@ export default async function handler(req: Request) {
     // O Node.js permite 60s. Se a NVIDIA demorar mais que 12s pra responder,
     // entramos em slow stream mode com keepalives SSE e fazemos o pipe quando chegar.
     // Importante: o slowStream tem um timeout de 45s pra abortar antes do limite da Vercel (60s).
-    const SLOW_STREAM_TIMEOUT_MS = 40_000;
+    const SLOW_STREAM_TIMEOUT_MS = 35_000;
     const early = await Promise.race([
       firstFetch,
       new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 12000)),
@@ -395,7 +397,7 @@ export default async function handler(req: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        const HARD_LIMIT_MS = 55_000; // 55s — margem de 5s antes do Vercel cortar em 60s
+        const HARD_LIMIT_MS = 50_000; // 50s — margem de 10s antes do Vercel cortar em 60s
         let idleTimer: ReturnType<typeof setTimeout> | null = null;
         let totalTimer: ReturnType<typeof setTimeout> | null = null;
         let wasCutByTotalTimeout = false;
