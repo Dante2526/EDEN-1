@@ -2219,26 +2219,77 @@ function AppContent() {
         iterationFinishReason = '';
         streamErrorMsg = '';
 
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': import.meta.env.VITE_API_SECRET || ''
-          },
-          body: JSON.stringify({
-            messages: currentMessagesForApi,
-            model: effectiveModel,
-            reasoning_effort: reasoningEffort,
-            tools: requestTools.length > 0 ? requestTools : undefined,
-          }),
-          signal: controller.signal,
-        });
+        // ===== FETCH COM RETRY AUTOMÁTICO (resiliência de rede) =====
+        // Se a rede cair (troca de aba, oscilação de DNS, etc), tenta de novo
+        // em vez de desistir. Preserva o contexto da conversa.
+        const MAX_RETRIES = 3;
+        const RETRY_DELAYS = [1000, 3000, 8000]; // 1s, 3s, 8s
+        let response: Response | null = null;
+        let lastFetchError: any = null;
 
-        if (!response.ok) {
-          let rawText = '';
-          let errMessage = `Erro HTTP ${response.status} na requisição ao servidor`;
+        for (let retryAttempt = 0; retryAttempt <= MAX_RETRIES; retryAttempt++) {
           try {
-            rawText = await response.text();
+            response = await fetch('/api/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': import.meta.env.VITE_API_SECRET || ''
+              },
+              body: JSON.stringify({
+                messages: currentMessagesForApi,
+                model: effectiveModel,
+                reasoning_effort: reasoningEffort,
+                tools: requestTools.length > 0 ? requestTools : undefined,
+              }),
+              signal: controller.signal,
+            });
+            break; // Sucesso — sai do loop de retry
+          } catch (fetchErr: any) {
+            lastFetchError = fetchErr;
+            // Se foi o usuário que cancelou (AbortController), não tenta de novo
+            if (fetchErr?.name === 'AbortError') throw fetchErr;
+
+            const isNetworkErr =
+              fetchErr?.name === 'TypeError' ||
+              fetchErr?.message?.includes('network') ||
+              fetchErr?.message?.includes('fetch') ||
+              fetchErr?.message?.includes('Failed to');
+
+            if (isNetworkErr && retryAttempt < MAX_RETRIES) {
+              console.log(`[Synap] Rede caiu (tentativa ${retryAttempt + 1}/${MAX_RETRIES}). Tentando de novo em ${RETRY_DELAYS[retryAttempt]}ms...`);
+              // Atualiza a mensagem da IA pra mostrar que tá reconectando
+              setConversations((prev) =>
+                prev.map((c) => {
+                  if (c.id !== currentConvId) return c;
+                  return {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === assistantMessageId
+                        ? {
+                            ...m,
+                            content: (iterationText || accumulatedAssistantText || '') + '\n\n⚠️ Conexão interrompida. Reconectando automaticamente...',
+                          }
+                        : m
+                    ),
+                  };
+                })
+              );
+              await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[retryAttempt]));
+              continue; // Tenta de novo
+            }
+            throw fetchErr; // Não é erro de rede ou esgotou retries
+          }
+        }
+
+        if (!response) throw lastFetchError || new Error('Falha ao conectar com o servidor após várias tentativas.');
+
+        const finalResponse = response;
+
+        if (!finalResponse.ok) {
+          let rawText = '';
+          let errMessage = `Erro HTTP ${finalResponse.status} na requisição ao servidor`;
+          try {
+            rawText = await finalResponse.text();
             try {
               const errData = JSON.parse(rawText);
               if (errData.error) errMessage = errData.error;
@@ -2251,10 +2302,10 @@ function AppContent() {
                 } else if (trimmed.includes('FUNCTION_INVOCATION_TIMEOUT')) {
                   errMessage = `Erro 504 Vercel (FUNCTION_INVOCATION_TIMEOUT): A execução excedeu 60 segundos (limite do plano Hobby da Vercel). Alterne para o modelo z-ai/glm-5.3-flash ou reduza o nível de raciocínio nas configurações.`;
                 } else if (trimmed.length < 500) {
-                  errMessage = `Erro ${response.status}: ${trimmed}`;
-                } else if (response.status === 500) {
+                  errMessage = `Erro ${finalResponse.status}: ${trimmed}`;
+                } else if (finalResponse.status === 500) {
                   errMessage = 'Erro interno do servidor (500). Verifique os logs da Vercel em vercel.com/dashboard.';
-                } else if (response.status === 502) {
+                } else if (finalResponse.status === 502) {
                   errMessage = 'Erro de gateway (502). A função serverless demorou demais ou caiu na Vercel.';
                 }
               }
@@ -2262,16 +2313,16 @@ function AppContent() {
           } catch {}
 
           const customErr: any = new Error(errMessage);
-          customErr.status = response.status;
+          customErr.status = finalResponse.status;
           customErr.rawResponse = rawText || errMessage;
           throw customErr;
         }
 
-        if (!response.body) {
+        if (!finalResponse.body) {
           throw new Error('Nenhuma resposta retornada pelo servidor.');
         }
 
-        const fallbackType = response.headers.get('x-fallback');
+        const fallbackType = finalResponse.headers.get('x-fallback');
         let fallbackWarning: string | undefined = undefined;
         if (fallbackType === 'no-reasoning') {
           fallbackWarning = 'O modelo negou o uso de raciocínio profundo para esta requisição (downgrade).';
@@ -2281,7 +2332,7 @@ function AppContent() {
           fallbackWarning = 'O modelo recusou raciocínio profundo e ferramentas (downgrade).';
         }
 
-        const reader = response.body.getReader();
+        const reader = finalResponse.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
         const toolCallsAccumulator: Record<number, { id: string; name: string; arguments: string }> = {};
