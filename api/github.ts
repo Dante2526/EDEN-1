@@ -24,6 +24,10 @@ async function ghFetch(endpoint: string, token: string, method: string = 'GET', 
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
       'Content-Type': 'application/json',
+      // GitHub API EXIGE User-Agent em todos os requests. Sem ele, retorna
+      // 403 Forbidden "Request forbidden by administrative rules".
+      // https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api#user-agent
+      'User-Agent': 'Synap-App/1.0',
     },
     body: body ? JSON.stringify(body) : undefined,
   });
