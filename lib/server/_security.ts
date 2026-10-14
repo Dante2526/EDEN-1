@@ -14,7 +14,21 @@ export const ALLOWED_MODELS = [
   'z-ai/glm-5.3-flash',
   'moonshotai/kimi-k3',
   'deepseek-ai/deepseek-v4.1-flash',
+  '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
 ];
+
+/**
+ * Modelos hospedados na Cloudflare Workers AI.
+ * Usam endpoint OpenAI-compatible em api.cloudflare.com e exigem
+ * CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN configurados.
+ */
+export const CLOUDFLARE_MODELS = [
+  '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+];
+
+export function isCloudflareModel(model: string): boolean {
+  return CLOUDFLARE_MODELS.includes(model);
+}
 
 export const VISION_MODELS = [
   'z-ai/glm-5.3-flash',

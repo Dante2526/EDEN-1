@@ -59,6 +59,12 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       subtitle: 'Rápido e eficiente — ótimo custo-benefício',
       badge: 'Flash',
     },
+    {
+      id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+      title: 'DeepSeek R1 Distill 32B',
+      subtitle: 'Raciocínio profundo via Cloudflare Workers AI',
+      badge: 'CF · R1',
+    },
   ];
 
   const reasoningLevels: Array<{
@@ -110,6 +116,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'Kimi K3'
                 : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
                 ? 'DeepSeek V4.1'
+                : selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
+                ? 'R1 Distill'
                 : 'GLM Flash'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
