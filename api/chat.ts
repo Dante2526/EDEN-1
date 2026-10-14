@@ -202,6 +202,9 @@ export default async function handler(req: Request) {
               } catch { /* fechado */ }
             }, FALLBACK_TIMEOUT_MS);
             const res = await firstFetch;
+            // CRÍTICO: parar keepalives IMEDIATAMENTE quando NVIDIA responde
+            // Se continuar, pode injetar :keepalive no meio de um chunk JSON
+            clearInterval(timer);
             clearTimeout(fallbackTimer);
             if (!res.ok || !res.body) {
               const t = await res.text().catch(() => '');
