@@ -243,10 +243,10 @@ export default async function handler(req: Request) {
     // ===== WATCHDOG: não espera a NVIDIA pra sempre =====
     // Se nenhum dado chegar em FIRST_BYTE_MS (ou ficar parado IDLE_MS no meio), aborta
     // e devolve erro claro em vez de deixar o usuário em "Conectando..." até o limite da Vercel.
-    // IMPORTANTE: limite do plano Hobby = 60s. Watchdog aborta em 50s pra dar margem
-    // de devolver o erro antes do Vercel cortar com 504.
-    const FIRST_BYTE_MS = 50_000;
-    const IDLE_MS = 45_000;
+    // IMPORTANTE: limite do plano Hobby = 60s. Watchdog aborta em 40s pra dar margem
+    // de 20s pra devolver o erro e fechar a função antes do Vercel cortar com 504.
+    const FIRST_BYTE_MS = 40_000;
+    const IDLE_MS = 30_000;
     const t0 = Date.now();
     const upstream = new AbortController();
     let lastActivity = Date.now();
@@ -285,7 +285,7 @@ export default async function handler(req: Request) {
     // com keepalives SSE e fazemos o pipe quando a resposta chegar.
     const early = await Promise.race([
       firstFetch,
-      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 15000)),
+      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 10000)),
     ]);
 
     if (early === 'slow') {
