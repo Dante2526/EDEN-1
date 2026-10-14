@@ -243,6 +243,10 @@ export default async function handler(req: Request) {
 
     let payload = createPayload(true, true);
 
+    // AbortController pra CANCELAR o fetch da NVIDIA quando precisar
+    // Sem isso, reader.read() bloqueia indefinidamente e a Vercel dá 504
+    const nvidiaAbort = new AbortController();
+
     const firstFetch = fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -250,6 +254,7 @@ export default async function handler(req: Request) {
         Authorization: `Bearer ${apiKey.trim()}`,
       },
       body: JSON.stringify(payload),
+      signal: nvidiaAbort.signal,
     });
 
     // O Node.js permite 60s. Se a NVIDIA demorar mais que 12s pra responder,
@@ -270,9 +275,10 @@ export default async function handler(req: Request) {
           }, 8000);
           // Timeout: se a NVIDIA não responder em 45s, aborta com erro claro
           const slowTimeout = setTimeout(() => {
+            nvidiaAbort.abort(); // CANCELA o fetch da NVIDIA — sem isso reader.read() bloqueia
             try {
               controller.enqueue(
-                enc.encode(`data: ${JSON.stringify({ error: 'A NVIDIA não respondeu a tempo (45s). Tente novamente ou use GLM Flash.' })}\n\n`)
+                enc.encode(`data: ${JSON.stringify({ error: 'A NVIDIA não respondeu a tempo (35s). Tente novamente.' })}\n\n`)
               );
               controller.close();
             } catch { /* fechado */ }
@@ -331,6 +337,7 @@ export default async function handler(req: Request) {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
         body: JSON.stringify(payload),
+        signal: nvidiaAbort.signal,
       });
       fallbackType = 'no-reasoning';
     }
@@ -346,6 +353,7 @@ export default async function handler(req: Request) {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
         body: JSON.stringify(payload),
+        signal: nvidiaAbort.signal,
       });
       fallbackType = fallbackType === 'no-reasoning' ? 'no-reasoning-and-tools' : 'no-tools';
     }
@@ -410,6 +418,7 @@ export default async function handler(req: Request) {
         const resetIdleTimer = () => {
           if (idleTimer) clearTimeout(idleTimer);
           idleTimer = setTimeout(() => {
+            nvidiaAbort.abort(); // CRÍTICO: cancela fetch pra reader.read() parar
             cleanupTimers();
             try {
               controller.enqueue(
@@ -427,6 +436,7 @@ export default async function handler(req: Request) {
         console.log(`[chat] stream total timeout: ${remainingMs}ms (elapsed: ${elapsedSinceStart}ms)`);
         totalTimer = setTimeout(() => {
           wasCutByTotalTimeout = true;
+          nvidiaAbort.abort(); // CRÍTICO: cancela fetch da NVIDIA pra reader.read() parar de bloquear
           cleanupTimers();
           try {
             const fakeChunk = {
