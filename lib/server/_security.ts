@@ -17,6 +17,7 @@ export const ALLOWED_MODELS = [
   'moonshotai/kimi-k3',
   'deepseek-ai/deepseek-v4.1-flash',
   '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+  '@cf/qwen/qwen2.5-coder-32b-instruct',
 ];
 
 /**
@@ -26,6 +27,7 @@ export const ALLOWED_MODELS = [
  */
 export const CLOUDFLARE_MODELS = [
   '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
+  '@cf/qwen/qwen2.5-coder-32b-instruct',
 ];
 
 export function isCloudflareModel(model: string): boolean {
