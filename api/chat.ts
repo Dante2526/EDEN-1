@@ -240,37 +240,6 @@ export default async function handler(req: Request) {
 
     let payload = createPayload(true, true);
 
-    // ===== WATCHDOG: não espera a NVIDIA pra sempre =====
-    // Se nenhum dado chegar em FIRST_BYTE_MS (ou ficar parado IDLE_MS no meio), aborta
-    // e devolve erro claro em vez de deixar o usuário em "Conectando..." até o limite da Vercel.
-    // IMPORTANTE: limite do plano Hobby = 60s. Watchdog aborta em 40s pra dar margem
-    // de 20s pra devolver o erro e fechar a função antes do Vercel cortar com 504.
-    const FIRST_BYTE_MS = 40_000;
-    const IDLE_MS = 30_000;
-    const t0 = Date.now();
-    const upstream = new AbortController();
-    let lastActivity = Date.now();
-    let seenData = false;
-    const touch = () => {
-      if (!seenData) {
-        seenData = true;
-        console.log(`[chat] primeiro dado da NVIDIA em ${Date.now() - t0}ms (modelo=${selectedModel}, effort=${selectedEffort})`);
-      }
-      lastActivity = Date.now();
-    };
-    const watchdog = setInterval(() => {
-      const limit = seenData ? IDLE_MS : FIRST_BYTE_MS;
-      if (Date.now() - lastActivity > limit) {
-        console.error(`[chat] NVIDIA sem dados por ${limit / 1000}s — abortando (modelo=${selectedModel}, effort=${selectedEffort})`);
-        upstream.abort();
-        clearInterval(watchdog);
-      }
-    }, 3000);
-    const explainErr = (e: any): string =>
-      upstream.signal.aborted
-        ? `A NVIDIA não enviou dados a tempo (modelo sobrecarregado ou fora do ar). Tente o GLM Flash ou reduza o nível de raciocínio.`
-        : (e?.message || 'unknown');
-
     const firstFetch = fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -278,14 +247,13 @@ export default async function handler(req: Request) {
         Authorization: `Bearer ${apiKey.trim()}`,
       },
       body: JSON.stringify(payload),
-      signal: upstream.signal,
     });
 
     // O Edge exige o primeiro byte em ~25s. Se a NVIDIA demorar, respondemos já
     // com keepalives SSE e fazemos o pipe quando a resposta chegar.
     const early = await Promise.race([
       firstFetch,
-      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 10000)),
+      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 15000)),
     ]);
 
     if (early === 'slow') {
@@ -308,17 +276,15 @@ export default async function handler(req: Request) {
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                touch();
                 controller.enqueue(value);
               }
             }
           } catch (e: any) {
             try {
-              controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: `Stream interrupted: ${explainErr(e)}` })}\n\n`));
+              controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: `Stream interrupted: ${e?.message || 'unknown'}` })}\n\n`));
             } catch { /* fechado */ }
           } finally {
             clearInterval(timer);
-            clearInterval(watchdog);
             try { controller.close(); } catch { /* fechado */ }
           }
         },
@@ -348,7 +314,6 @@ export default async function handler(req: Request) {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
         body: JSON.stringify(payload),
-        signal: upstream.signal,
       });
       fallbackType = 'no-reasoning';
     }
@@ -364,13 +329,11 @@ export default async function handler(req: Request) {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
         body: JSON.stringify(payload),
-        signal: upstream.signal,
       });
       fallbackType = fallbackType === 'no-reasoning' ? 'no-reasoning-and-tools' : 'no-tools';
     }
 
     if (!nvidiaRes.ok) {
-      clearInterval(watchdog);
       const errText = await nvidiaRes.text();
       let errMsg = `Erro da API NVIDIA (${nvidiaRes.status})`;
       try {
@@ -409,7 +372,6 @@ export default async function handler(req: Request) {
     }
 
     if (!nvidiaRes.body) {
-      clearInterval(watchdog);
       return new Response(JSON.stringify({ error: 'Resposta da NVIDIA veio sem corpo (body vazio).' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -423,28 +385,20 @@ export default async function handler(req: Request) {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            touch();
             controller.enqueue(value);
           }
-          clearInterval(watchdog);
           controller.close();
         } catch (streamErr: any) {
-          clearInterval(watchdog);
           console.error('Stream reading error:', streamErr);
           try {
             controller.enqueue(
-              new TextEncoder().encode(`\ndata: {"error": "Stream interrupted: ${explainErr(streamErr)}"}\n\n`)
+              new TextEncoder().encode(`\ndata: {"error": "Stream interrupted: ${streamErr?.message || 'unknown'}"}\n\n`)
             );
             controller.close();
           } catch {
             // controller already closed
           }
         }
-      },
-      cancel() {
-        // Usuário fechou/cancelou: libera o timer e a conexão com a NVIDIA
-        clearInterval(watchdog);
-        upstream.abort();
       },
     });
 
@@ -458,12 +412,9 @@ export default async function handler(req: Request) {
       stack: error?.stack?.split('\n').slice(0, 5).join(' | '),
       name: error?.name,
     });
-    const aborted = error?.name === 'AbortError';
-    const errMsg = aborted
-      ? 'A NVIDIA não respondeu a tempo (modelo sobrecarregado ou fora do ar). Tente o GLM Flash ou reduza o nível de raciocínio.'
-      : (error?.message || 'Erro ao processar mensagem.');
+    const errMsg = error?.message || 'Erro ao processar mensagem.';
     return new Response(JSON.stringify({ error: errMsg, errorName: error?.name || 'Unknown' }), {
-      status: aborted ? 504 : 500,
+      status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
