@@ -1,281 +1,220 @@
-import { SynapProject } from './types';
+import type { SynapProject } from './types';
 
 /**
- * Gera o HTML completo pro preview do projeto (LocalPreview).
- * Módulo separado pra ser testável com `npm test`.
+ * Geração do HTML do preview local (100% no navegador).
  *
- * Como funciona:
- * 1. Transpila cada arquivo .tsx/.ts/.jsx com Babel standalone (CDN)
- * 2. Cria blob URLs pra cada arquivo transpilado
- * 3. Monta import map que resolve:
- *    - deps npm → esm.sh (ex: react, lucide-react)
- *    - imports locais → blob URLs (ex: ./App, ./components/Button)
- * 4. Carrega o entry point (main.tsx) como module script
+ * Fluxo dentro do iframe:
+ * 1. Babel standalone (unpkg) transpila cada arquivo .tsx/.ts/.jsx/.js
+ * 2. Cada arquivo vira um Blob URL, registrado num import map
+ * 3. Imports relativos (./App, ../x, @/x) são reescritos (via AST do Babel) para
+ *    especificadores "bare" `synap-local/<caminho>` — necessário porque módulos
+ *    carregados de blob: não conseguem resolver imports relativos
+ * 4. Dependências npm vêm do esm.sh (com ?external=react,react-dom pra compartilhar
+ *    a mesma instância do React)
+ * 5. CSS e JSON importados viram módulos (CSS injeta um <style>)
+ *
+ * IMPORTANTE: o iframe herda o Content-Security-Policy da página (vercel.json).
+ * O CSP precisa liberar unpkg.com, esm.sh e blob: em script-src.
  */
 
-export interface PreviewFile {
-  path: string;
-  code: string;
+/** Prefixo dos especificadores bare que apontam pros arquivos do projeto. */
+export const LOCAL_PREFIX = 'synap-local/';
+
+/**
+ * Serializa um valor como JSON seguro pra ser embutido dentro de uma tag <script>.
+ * JSON.stringify NÃO escapa "</script>" nem "<!--": se algum arquivo do projeto
+ * tivesse isso, o HTML quebrava e o preview ficava preso em "Compilando...".
+ */
+export function safeJson(value: unknown): string {
+  return (JSON.stringify(value) ?? 'null')
+    .replace(/</g, '\\u003c')
+    .split(String.fromCharCode(0x2028)).join('\\u2028')
+    .split(String.fromCharCode(0x2029)).join('\\u2029');
 }
 
-export interface BuildPreviewHtmlOptions {
-  files: Record<string, { content: string }>;
-  template?: string;
-  dependencies?: Record<string, string>;
+/** "^18.2.0" -> "18.2.0"; "latest", "*", "workspace:*" -> "" (esm.sh escolhe a última). */
+export function cleanVersion(version?: string): string {
+  if (!version) return '';
+  const match = version.trim().match(/\d+(?:\.\d+){0,2}/);
+  return match ? match[0] : '';
 }
 
-/** Converte nome de dependency pra URL do esm.sh */
+/** URL do esm.sh pra uma dependência npm (React externo = mesma instância do React). */
 export function depToUrl(name: string, version?: string): string {
-  const cleanName = name.trim();
-  const cleanVersion = version ? `@${version.replace(/[\^~>=<]/g, '')}` : '';
-  return `https://esm.sh/${cleanName}${cleanVersion}`;
+  const v = cleanVersion(version);
+  return `https://esm.sh/${name.trim()}${v ? `@${v}` : ''}?external=react,react-dom`;
 }
 
-/** Extrai dependencies do package.json (se existir nos arquivos) */
-export function extractDeps(
-  files: Record<string, { content: string }>,
-  fallbackDeps?: Record<string, string>
-): Record<string, string> {
-  const pkgFile = files['package.json'];
-  if (!pkgFile) return fallbackDeps || {};
+// Dependências que não entram no import map (build/tipos ou já mapeadas à parte)
+const SKIP_DEPS = new Set([
+  'react',
+  'react-dom',
+  'react-scripts',
+  'typescript',
+  'vite',
+  '@vitejs/plugin-react',
+  'tailwindcss',
+  '@tailwindcss/vite',
+  'postcss',
+  'autoprefixer',
+]);
+
+/** Dependências do package.json (dependencies + devDependencies) ou do projeto. */
+export function extractDeps(project: SynapProject): Record<string, string> {
+  const pkgFile = project.files['package.json'];
+  if (!pkgFile) return project.dependencies || {};
   try {
     const pkg = JSON.parse(pkgFile.content);
-    return {
-      ...(pkg.dependencies || {}),
-      ...(pkg.devDependencies || {}),
-    };
+    return { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
   } catch {
-    return fallbackDeps || {};
+    return project.dependencies || {};
   }
 }
 
-/** Resolve um import relativo (./App, ../components/Button) pro path completo */
-export function resolveImportPath(importerPath: string, importPath: string): string | null {
-  if (!importPath.startsWith('.')) return null;
-  const dir = importerPath.includes('/')
-    ? importerPath.slice(0, importerPath.lastIndexOf('/') + 1)
-    : '';
-  let resolved = importPath;
-  if (importPath.startsWith('./')) {
-    resolved = dir + importPath.slice(2);
-  } else if (importPath.startsWith('../')) {
-    const parts = dir.split('/').filter(Boolean);
-    parts.pop();
-    resolved = parts.join('/') + '/' + importPath.slice(3);
+/** Import map das dependências npm (React fixado + demais deps do projeto). */
+export function buildImportMap(deps: Record<string, string>): Record<string, string> {
+  const reactVersion = cleanVersion(deps['react']) || '18.3.1';
+  const reactDomVersion = cleanVersion(deps['react-dom']) || reactVersion;
+
+  const map: Record<string, string> = {
+    react: `https://esm.sh/react@${reactVersion}`,
+    'react/jsx-runtime': `https://esm.sh/react@${reactVersion}/jsx-runtime`,
+    'react/jsx-dev-runtime': `https://esm.sh/react@${reactVersion}/jsx-dev-runtime`,
+    'react-dom': `https://esm.sh/react-dom@${reactDomVersion}?external=react`,
+    'react-dom/client': `https://esm.sh/react-dom@${reactDomVersion}/client?external=react`,
+  };
+
+  for (const [name, version] of Object.entries(deps)) {
+    if (SKIP_DEPS.has(name) || name.startsWith('@types/')) continue;
+    map[name] = depToUrl(name, version);
   }
-  return resolved.replace(/^\.\//, '');
+  return map;
 }
 
-/** Tenta achar um arquivo dado um path sem extensão */
-export function findFile(
-  files: Record<string, { content: string }>,
-  basePath: string
-): string | null {
-  const candidates = [
-    basePath,
-    basePath + '.tsx',
-    basePath + '.ts',
-    basePath + '.jsx',
-    basePath + '.js',
-    basePath + '/index.tsx',
-    basePath + '/index.ts',
-    basePath + '/index.jsx',
-    basePath + '/index.js',
-  ];
-  for (const c of candidates) {
-    if (files[c]) return c;
-  }
+type PreviewFileKind = 'code' | 'css' | 'json';
+
+interface PreviewFile {
+  path: string;
+  code: string;
+  kind: PreviewFileKind;
+}
+
+function fileKind(path: string): PreviewFileKind | null {
+  if (/\.(tsx|ts|jsx|js|mjs)$/i.test(path)) return 'code';
+  if (/\.css$/i.test(path)) return 'css';
+  if (/\.json$/i.test(path)) return 'json';
   return null;
 }
 
-/** Escapa </script> dentro do código pra não quebrar o HTML do iframe */
-export function escapeScriptTags(code: string): string {
-  return code.replace(/<\/script>/gi, '<\\/script>');
-}
+const ENTRY_CANDIDATES = [
+  'src/main.tsx', 'src/main.ts', 'src/main.jsx', 'src/main.js',
+  'src/index.tsx', 'src/index.ts', 'src/index.jsx', 'src/index.js',
+];
 
-/**
- * Reescreve imports relativos no código transpilado pra paths completos.
- * Suporta: import X from './App', import './index.css', @/x, import()
- */
-export function rewriteImports(
-  code: string,
-  importerPath: string,
-  files: Record<string, { content: string }>
-): string {
-  return code.replace(
-    /(from\s+|import\s+)['"]([^'"]+)['"]/g,
-    (match, prefix, importPath) => {
-      // Imports relativos (./ ou ../)
-      if (importPath.startsWith('.')) {
-        const resolved = resolveImportPath(importerPath, importPath);
-        if (resolved) {
-          const found = findFile(files, resolved);
-          if (found) {
-            return `${prefix}'./${found}'`;
-          }
-        }
-        return match;
-      }
-      // @/ alias
-      if (importPath.startsWith('@/')) {
-        const aliased = importPath.slice(2);
-        const found = findFile(files, aliased);
-        if (found) {
-          return `${prefix}'./${found}'`;
-        }
-      }
-      return match;
-    }
-  );
-}
+/** Gera o HTML completo que vai no srcDoc do iframe do preview. */
+export function buildPreviewHtml(project: SynapProject): string {
+  const deps = extractDeps(project);
+  const importMap = buildImportMap(deps);
 
-/**
- * Gera o HTML completo pro iframe do preview.
- * 
- * ABORDAGEM: Sistema de módulos CommonJS INLINE (sem blob URLs, sem import maps).
- * 
- * Por que não blob URLs + import maps?
- * - Blob URLs não são hierárquicas → imports relativos (./App) falham
- * - Import maps têm restrições de timing no browser (devem ser registradas
- *   antes de qualquer module script, e em alguns browsers são ignoradas
- *   se adicionadas dinamicamente após o load)
- * 
- * Como funciona:
- * 1. Transpila cada arquivo .tsx/.ts com Babel → CommonJS (require/module.exports)
- * 2. Registra cada módulo numa registry inline
- * 3. Carrega deps npm (react, etc.) via import() dinâmico do esm.sh
- * 4. Executa o entry point, que chama require() recursivamente
- * 5. Tudo num único <script> inline — sem blob, sem import map
- */
-export function buildPreviewHtml(options: BuildPreviewHtmlOptions): string {
-  const { files, dependencies } = options;
-  const deps = extractDeps(files, dependencies);
-
-  // React versions
-  const reactVersion = deps['react'] || '18.2.0';
-  const reactDomVersion = deps['react-dom'] || reactVersion;
-
-  // Import map: só deps npm (não arquivos locais)
-  const importMap: Record<string, string> = {
-    react: `https://esm.sh/react@${reactVersion}`,
-    'react-dom': `https://esm.sh/react-dom@${reactDomVersion}`,
-    'react-dom/client': `https://esm.sh/react-dom@${reactDomVersion}/client`,
-    'react/jsx-runtime': `https://esm.sh/react@${reactVersion}/jsx-runtime`,
-    'react/jsx-dev-runtime': `https://esm.sh/react@${reactVersion}/jsx-dev-runtime`,
-  };
-
-  // Deps que NÃO rodam no navegador (são build tools, server-side ou nativas)
-  const BROWSER_INCOMPATIBLE_DEPS = [
-    '@tailwindcss/vite', '@tailwindcss/postcss', '@tailwindcss/oxide',
-    'tailwindcss', 'postcss', 'autoprefixer',
-    'tsx', 'ts-node', 'tsx-cli',
-    'express', 'fastify', 'koa', 'next', 'nuxt',
-    '@vitejs/plugin-react', 'vite', 'webpack', 'rollup', 'esbuild',
-    'typescript',
-    'firebase-admin', 'firebase-functions',
-    'mongoose', 'mysql2', 'pg', 'redis', 'ioredis',
-    'fs', 'path', 'os', 'child_process', 'crypto', 'http', 'https', 'net', 'url',
-  ];
-
-  // Deps compatíveis com browser que conhecemos
-  const KNOWN_BROWSER_DEPS = [
-    'react', 'react-dom', 'react-dom/client', 'react/jsx-runtime',
-    'react-router-dom', 'react-router', 'react-helmet',
-    'lucide-react', 'framer-motion', 'motion',
-    'clsx', 'tailwind-merge', 'class-variance-authority',
-    'recharts', 'chart.js', 'd3',
-    'axios', 'swr', '@tanstack/react-query',
-    'zustand', 'jotai', 'recoil', 'redux', '@reduxjs/toolkit',
-    'date-fns', 'dayjs', 'moment',
-    'zod', 'yup',
-    'react-markdown', 'remark-gfm', 'rehype',
-    'idb-keyval', 'idb',
-    'react-dropzone', 'react-hot-toast', 'sonner',
-    'react-diff-viewer-continued',
-    '@radix-ui/react-dialog', '@radix-ui/react-select',
-    'embla-carousel-react',
-    'react-hook-form', '@hookform/resolvers',
-  ];
-
-  // Filtra deps que não rodam no browser
-  const blockedDeps: string[] = [];
-  for (const [name, version] of Object.entries(deps)) {
-    if (name === 'react' || name === 'react-dom' || name === 'react-scripts') continue;
-    if (name.startsWith('@types/')) continue;
-
-    // Bloqueia deps incompatíveis
-    if (BROWSER_INCOMPATIBLE_DEPS.includes(name) ||
-        name.startsWith('@tailwindcss/') ||
-        name.includes('oxide') ||
-        name.includes('node-')) {
-      blockedDeps.push(name);
-      continue;
-    }
-
-    // Adiciona deps compatíveis
-    importMap[name] = depToUrl(name, version);
+  // Arquivos que o iframe consegue importar (código, CSS, JSON)
+  const previewFiles: PreviewFile[] = [];
+  const known: Record<string, string> = {};
+  for (const [rawPath, file] of Object.entries(project.files)) {
+    const path = rawPath.replace(/^\/+/, '');
+    const content = typeof file === 'string' ? (file as string) : file?.content || '';
+    known[path] = content;
+    const kind = fileKind(path);
+    if (!kind) continue;
+    if (path === 'package.json' || /(^|\/)tsconfig[^/]*\.json$/.test(path)) continue;
+    previewFiles.push({ path, code: content, kind });
   }
+  const codeFiles = previewFiles.filter((f) => f.kind === 'code');
 
-  // Lista de arquivos JS/TS transpiláveis
-  const codeFiles = Object.entries(files).filter(([path]) => {
-    return (
-      path.endsWith('.tsx') ||
-      path.endsWith('.ts') ||
-      path.endsWith('.jsx') ||
-      path.endsWith('.js')
-    );
-  });
+  // Ponto de entrada: main/index, senão o fallback do App é montado no iframe
+  const entryPath = ENTRY_CANDIDATES.find((p) => codeFiles.some((f) => f.path === p)) ?? null;
+  const fallbackEntry = codeFiles.length > 0 ? codeFiles[0].path : null;
 
-  const filesToTranspile: PreviewFile[] = codeFiles.map(([path, file]) => ({
-    path,
-    code: file.content || '',
-  }));
-
-  // Entry point
-  const entryCandidates = [
-    'src/main.tsx', 'src/main.ts', 'src/main.js', 'src/main.jsx',
-    'src/index.tsx', 'src/index.ts', 'src/index.js', 'src/index.jsx',
-  ];
-  let entryPath = entryCandidates.find((p) => files[p]);
-  if (!entryPath && codeFiles.length > 0) {
-    entryPath = codeFiles[0][0];
-  }
-
-  // Custom HTML do index.html
+  // Estilos vindos do index.html (<style> inline e <link rel=stylesheet>)
   let customStyles = '';
   let customHead = '';
-  const indexHtml = files['index.html'];
+  const indexHtml = known['index.html'];
   if (indexHtml) {
-    const styleMatch = indexHtml.content.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-    if (styleMatch) customStyles = styleMatch[1];
-    const headMatch = indexHtml.content.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-    if (headMatch) {
-      const linkMatches = headMatch[1].matchAll(/<link[^>]*href="([^"]+\.css)"[^>]*>/gi);
-      for (const m of linkMatches) {
-        customHead += `<link rel="stylesheet" href="${m[1]}">`;
+    const styleMatch = indexHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+    if (styleMatch) customStyles += styleMatch[1] + '\n';
+    for (const m of indexHtml.matchAll(/<link[^>]*href="([^"]+\.css)"[^>]*>/gi)) {
+      const href = m[1];
+      const local = href.replace(/^\.?\/+/, '');
+      if (known[local] !== undefined) {
+        // CSS do próprio projeto: inline (um link relativo não resolveria dentro do srcDoc)
+        customStyles += known[local].replace(/<\/style/gi, '<\\/style') + '\n';
+      } else if (/^https?:\/\//i.test(href)) {
+        customHead += `<link rel="stylesheet" href="${href}">`;
       }
     }
   }
 
-  // Escapa </script> nos códigos
-  const escapedFiles = filesToTranspile.map((f) => ({
-    ...f,
-    code: escapeScriptTags(f.code),
-  }));
-
-  const defaultEntry = `import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode><App /></React.StrictMode>
-);`;
-
-  return `<!DOCTYPE html>
+  return String.raw`<!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview</title>
+  <script>
+    // Bootstrap: roda ANTES do Babel pra capturar qualquer falha de carregamento
+    (function () {
+      var failed = false;
+      var finished = false;
+      function post(msg) { try { window.parent.postMessage(msg, '*'); } catch (e) {} }
+      function hideLoading() {
+        var l = document.getElementById('synap-loading');
+        if (l) l.style.display = 'none';
+      }
+      window.__synapFail = function (text) {
+        if (failed) return;
+        failed = true;
+        hideLoading();
+        var box = document.getElementById('synap-error');
+        if (!box) {
+          box = document.createElement('div');
+          box.id = 'synap-error';
+          (document.body || document.documentElement).appendChild(box);
+        }
+        box.textContent = 'ERRO NO PREVIEW:\n\n' + text;
+        post({ type: 'synap-preview-error', message: text });
+      };
+      window.__synapDone = function () {
+        if (failed || finished) return;
+        finished = true;
+        hideLoading();
+        post({ type: 'synap-preview-compiled' });
+      };
+      window.__synapState = function () { return { failed: failed, finished: finished }; };
+
+      window.onerror = function (msg, url, line, col, err) {
+        var text = String(msg);
+        if (/ResizeObserver loop/i.test(text)) return true;
+        window.__synapFail(err && err.stack ? err.stack : text);
+        return false;
+      };
+      window.addEventListener('unhandledrejection', function (event) {
+        var r = event.reason;
+        window.__synapFail('Promise rejeitada: ' + (r && r.stack ? r.stack : String(r)));
+      });
+      // Script bloqueado pelo CSP (Babel, esm.sh, blob:...) => erro claro, em vez de ficar "compilando" pra sempre
+      document.addEventListener('securitypolicyviolation', function (e) {
+        var dir = e.violatedDirective || '';
+        if (dir.indexOf('script-src') === 0) {
+          window.__synapFail(
+            'Bloqueado pelo CSP (' + dir + '): ' + e.blockedURI + '\n\n' +
+            'Libere esse endereço em script-src no Content-Security-Policy do vercel.json.'
+          );
+        } else {
+          console.warn('[preview] CSP bloqueou (' + dir + '): ' + e.blockedURI);
+        }
+      });
+    })();
+  </script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js" onerror="window.__synapBabelFailed = true"></script>
   ${customHead}
   <style>
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -298,10 +237,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     #synap-error {
       position: fixed; inset: 0; padding: 16px; overflow-y: auto;
       background: #1a0d0d; color: #ef4444; font-family: monospace; font-size: 11px;
-      z-index: 9999; white-space: pre-wrap; word-break: break-all;
+      z-index: 10000; white-space: pre-wrap; word-break: break-all;
     }
   </style>
-  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"><\/script>
 </head>
 <body>
   <div id="root"></div>
@@ -311,254 +249,204 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </div>
 
   <script>
-    window.onerror = function(msg, url, line, col, err) {
-      var errorStack = err && err.stack ? err.stack : String(msg);
-      if (errorStack.indexOf('Refused to load') >= 0 || errorStack.indexOf('Content Security Policy') >= 0) {
-        errorStack = 'BLOQUEADO POR CSP:\\n\\n' + errorStack + '\\n\\nVerifique o vercel.json.';
-      }
-      var loading = document.getElementById('synap-loading');
-      if (loading) loading.style.display = 'none';
-      var errorDiv = document.getElementById('synap-error');
-      if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = 'synap-error';
-        document.body.appendChild(errorDiv);
-      }
-      errorDiv.textContent = errorStack;
-      window.parent.postMessage({ type: 'synap-preview-error', message: errorStack }, '*');
-      return false;
-    };
-    window.addEventListener('unhandledrejection', function(event) {
-      var msg = event.reason && event.reason.stack ? event.reason.stack : String(event.reason);
-      window.onerror('Promise rejeitada: ' + msg, '', 0, 0, event.reason);
-    });
+    var SYNAP_FILES = ${safeJson(previewFiles)};
+    var SYNAP_ENTRY = ${safeJson(entryPath)};
+    var SYNAP_FALLBACK_ENTRY = ${safeJson(fallbackEntry)};
+    var SYNAP_IMPORT_MAP = ${safeJson(importMap)};
+    var SYNAP_PREFIX = ${safeJson(LOCAL_PREFIX)};
 
-    var SYNAP_FILES = ${JSON.stringify(escapedFiles)};
-    var SYNAP_BLOCKED_DEPS = ${JSON.stringify(blockedDeps)};
-    var SYNAP_ENTRY = ${JSON.stringify(entryPath)};
-    var SYNAP_DEFAULT_ENTRY = ${JSON.stringify(escapeScriptTags(defaultEntry))};
+    var BY_PATH = {};
+    for (var i = 0; i < SYNAP_FILES.length; i++) BY_PATH[SYNAP_FILES[i].path] = SYNAP_FILES[i];
 
-    function resolveImportPath(importerPath, importPath) {
-      if (!importPath.startsWith('.')) return null;
-      var dir = importerPath.indexOf('/') >= 0 ? importerPath.substring(0, importerPath.lastIndexOf('/') + 1) : '';
-      var resolved = importPath;
-      if (importPath.startsWith('./')) {
-        resolved = dir + importPath.substring(2);
-      } else if (importPath.startsWith('../')) {
-        var parts = dir.split('/').filter(Boolean);
-        parts.pop();
-        resolved = parts.join('/') + '/' + importPath.substring(3);
+    var unresolved = [];
+    var ASSET_RE = /\.(css|scss|sass|less|png|jpe?g|gif|webp|avif|svg|ico|bmp|woff2?|ttf|otf|eot|mp3|mp4|webm|wav|ogg|pdf|md|txt)$/i;
+
+    // Junta o diretório do importador com o import relativo, resolvendo "." e ".."
+    function joinPath(importerPath, spec) {
+      var segs;
+      if (spec.indexOf('@/') === 0) {
+        segs = ['src'].concat(spec.slice(2).split('/'));
+      } else {
+        var base = importerPath.split('/');
+        base.pop();
+        segs = base.concat(spec.split('/'));
       }
-      return resolved.replace(/^\\.\\//, '');
+      var out = [];
+      for (var k = 0; k < segs.length; k++) {
+        var s = segs[k];
+        if (s === '' || s === '.') continue;
+        if (s === '..') out.pop(); else out.push(s);
+      }
+      return out.join('/');
     }
 
     function findFile(basePath) {
       var candidates = [
-        basePath, basePath + '.tsx', basePath + '.ts',
-        basePath + '.jsx', basePath + '.js',
-        basePath + '/index.tsx', basePath + '/index.ts',
-        basePath + '/index.jsx', basePath + '/index.js',
+        basePath, basePath + '.tsx', basePath + '.ts', basePath + '.jsx', basePath + '.js', basePath + '.mjs',
+        basePath + '/index.tsx', basePath + '/index.ts', basePath + '/index.jsx', basePath + '/index.js'
       ];
-      for (var i = 0; i < candidates.length; i++) {
-        for (var j = 0; j < SYNAP_FILES.length; j++) {
-          if (SYNAP_FILES[j].path === candidates[i]) return candidates[i];
-        }
+      for (var c = 0; c < candidates.length; c++) {
+        if (BY_PATH[candidates[c]]) return candidates[c];
       }
       return null;
     }
 
+    // Import relativo -> especificador bare "synap-local/<arquivo>" (resolvido pelo import map)
+    function mapSpecifier(importerPath, spec) {
+      var isLocal = spec.charAt(0) === '.' || spec.indexOf('@/') === 0;
+      if (!isLocal) return spec;
+      var found = findFile(joinPath(importerPath, spec));
+      if (found) return SYNAP_PREFIX + found;
+      if (ASSET_RE.test(spec)) return SYNAP_PREFIX + '__empty__';
+      unresolved.push(spec + ' (importado em ' + importerPath + ')');
+      return spec;
+    }
+
+    // Plugin do Babel: reescreve imports via AST (não pega texto dentro de strings)
+    function rewritePlugin(importerPath) {
+      return function () {
+        function fix(node) {
+          if (node && node.type === 'StringLiteral') node.value = mapSpecifier(importerPath, node.value);
+        }
+        return {
+          visitor: {
+            ImportDeclaration: function (p) { if (p.node.importKind !== 'type') fix(p.node.source); },
+            ExportAllDeclaration: function (p) { fix(p.node.source); },
+            ExportNamedDeclaration: function (p) { if (p.node.source) fix(p.node.source); },
+            CallExpression: function (p) {
+              if (p.node.callee.type === 'Import' && p.node.arguments.length > 0) fix(p.node.arguments[0]);
+            }
+          }
+        };
+      };
+    }
+
+    function transpile(file) {
+      return Babel.transform(file.code, {
+        filename: file.path,
+        sourceType: 'module',
+        presets: [
+          ['react', { runtime: 'automatic' }],
+          ['typescript', { isTSX: !/\.ts$/.test(file.path), allExtensions: true }]
+        ],
+        plugins: [rewritePlugin(file.path)]
+      }).code;
+    }
+
+    function cssModule(file) {
+      return 'var s = document.createElement("style");' +
+        's.setAttribute("data-synap-css", ' + JSON.stringify(file.path) + ');' +
+        's.textContent = ' + JSON.stringify(file.code) + ';' +
+        'document.head.appendChild(s); export default {};';
+    }
+
+    function jsonModule(file) {
+      var text = '{}';
+      try { JSON.parse(file.code); text = file.code; } catch (e) {}
+      return 'export default ' + text + ';';
+    }
+
+    function blobUrl(code) {
+      return URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+    }
+
+    function unresolvedHint() {
+      return unresolved.length
+        ? '\n\nImports não encontrados no projeto:\n- ' + unresolved.join('\n- ')
+        : '';
+    }
+
     function buildAndLoad() {
       try {
-        // Mostra aviso de deps bloqueadas (não rodam no browser)
-        if (SYNAP_BLOCKED_DEPS && SYNAP_BLOCKED_DEPS.length > 0) {
-          var loadingEl = document.getElementById('synap-loading');
-          if (loadingEl) {
-            loadingEl.innerHTML =
-              '<div style="padding:16px;max-width:400px;text-align:center;color:#f09a7d;font-size:11px;line-height:1.5">' +
-              '<div style="font-size:14px;margin-bottom:8px;color:#d97757">⚠ Dependências incompatíveis</div>' +
-              '<div>Algumas deps não rodam no navegador e foram ignoradas:</div>' +
-              '<div style="margin:8px 0;font-family:monospace;font-size:10px;color:#8c867a">' +
-              SYNAP_BLOCKED_DEPS.map(function(d) { return '• ' + d; }).join('<br>') +
-              '</div>' +
-              '<div>O preview pode não funcionar corretamente. Estas deps são build tools ou server-side:</div>' +
-              '<div style="margin-top:4px;font-size:10px;color:#5e5a52">• @tailwindcss → compila CSS no build (não no browser)</div>' +
-              '<div style="font-size:10px;color:#5e5a52">• express/firebase-admin → servidor Node.js</div>' +
-              '<div style="font-size:10px;color:#5e5a52">• tsx → runtime Node.js</div>' +
-              '</div>';
-          }
-        }
-
         if (typeof Babel === 'undefined') {
-          throw new Error('Babel não carregou. Verifique CSP ou conexão.');
+          throw new Error('Babel não carregou. Verifique a conexão com a internet.');
         }
 
-        // ===== SISTEMA DE MÓDULOS COMMONJS INLINE =====
-        // Sem blob URLs, sem import maps. Tudo num único script.
-        var moduleRegistry = {};
-        var moduleCache = {};
+        var imports = {};
+        for (var dep in SYNAP_IMPORT_MAP) imports[dep] = SYNAP_IMPORT_MAP[dep];
+        imports[SYNAP_PREFIX + '__empty__'] = blobUrl('export default "";');
 
-        // Transpila cada arquivo pra CommonJS e registra
-        for (var i = 0; i < SYNAP_FILES.length; i++) {
-          var fileObj = SYNAP_FILES[i];
+        for (var n = 0; n < SYNAP_FILES.length; n++) {
+          var file = SYNAP_FILES[n];
+          var source;
           try {
-            var transformed = Babel.transform(fileObj.code, {
-              presets: [
-                ['react'],
-                ['typescript', { isTSX: true, allExtensions: true }],
-              ],
-              plugins: ['transform-modules-commonjs'],
-              filename: fileObj.path,
-            }).code;
-
-            // Reescreve require() de imports relativos pra resolver paths
-            var rewritten = transformed.replace(/require\(\s*['"]([^'"]+)['"]\s*\)/g, function(match, reqPath) {
-              if (reqPath.startsWith('.')) {
-                var resolved = resolveImportPath(fileObj.path, reqPath);
-                if (resolved) {
-                  var found = findFile(resolved);
-                  if (found) return "require('" + found + "')";
-                }
-              }
-              if (reqPath.startsWith('@/')) {
-                var aliased = reqPath.substring(2);
-                var foundAlias = findFile(aliased);
-                if (foundAlias) return "require('" + foundAlias + "')";
-              }
-              // Bare specifier (npm dep) — mantém como string
-              // Vai ser resolvido pelo synapRequire via depCache
-              return "require('" + reqPath + "')";
-            });
-
-            // Cria função do módulo (CommonJS wrapper)
-            moduleRegistry[fileObj.path] = new Function('exports', 'require', 'module', '__filename', '__dirname', rewritten);
+            if (file.kind === 'css') source = cssModule(file);
+            else if (file.kind === 'json') source = jsonModule(file);
+            else source = transpile(file);
           } catch (e) {
-            throw new Error('Erro ao transpilar ' + fileObj.path + ': ' + (e.message || e));
+            throw new Error('Erro ao transpilar ' + file.path + ':\n' + (e.message || e));
+          }
+          imports[SYNAP_PREFIX + file.path] = blobUrl(source);
+        }
+
+        // Ponto de entrada: main/index do projeto; senão monta o App; senão o 1º arquivo de código
+        var entrySource;
+        if (SYNAP_ENTRY) {
+          entrySource = 'import ' + JSON.stringify(SYNAP_PREFIX + SYNAP_ENTRY) + ';\nwindow.__synapDone();';
+        } else {
+          var app = findFile('src/App') || findFile('App');
+          if (app) {
+            entrySource =
+              'import React from "react";\n' +
+              'import { createRoot } from "react-dom/client";\n' +
+              'import App from ' + JSON.stringify(SYNAP_PREFIX + app) + ';\n' +
+              'createRoot(document.getElementById("root")).render(React.createElement(App));\n' +
+              'window.__synapDone();';
+          } else if (SYNAP_FALLBACK_ENTRY) {
+            entrySource = 'import ' + JSON.stringify(SYNAP_PREFIX + SYNAP_FALLBACK_ENTRY) + ';\nwindow.__synapDone();';
+          } else {
+            throw new Error('Nenhum arquivo de código (main.tsx, App.tsx...) encontrado no projeto.');
           }
         }
 
-        // ===== CARREGA DEPS NPM VIA ESM (esm.sh) =====
-        var npmDeps = ${JSON.stringify(Object.keys(importMap))};
-        var depCache = {};
+        var mapScript = document.createElement('script');
+        mapScript.type = 'importmap';
+        mapScript.textContent = JSON.stringify({ imports: imports });
+        document.head.appendChild(mapScript);
 
-        // Importa todas as deps npm via dynamic import()
-        var importPromises = npmDeps.map(function(depName) {
-          var depUrl = ${JSON.stringify(importMap)}[depName];
-          return import(depUrl).then(function(mod) {
-            depCache[depName] = mod;
-            // Se é react, também registra subpath exports
-            if (depName === 'react') {
-              depCache['react/jsx-runtime'] = mod.jsxRuntime || mod;
-            }
-          }).catch(function(err) {
-            console.warn('Falha ao carregar dep:', depName, err);
-          });
-        });
+        var moduleScript = document.createElement('script');
+        moduleScript.type = 'module';
+        moduleScript.src = blobUrl(entrySource);
+        moduleScript.onerror = function () {
+          window.__synapFail('Falha ao carregar os módulos do preview (dependência do esm.sh, import quebrado ou bloqueio de rede).' + unresolvedHint());
+        };
+        document.body.appendChild(moduleScript);
 
-        Promise.all(importPromises).then(function() {
-          // ===== FUNÇÃO require() CUSTOMizada =====
-          function synapRequire(path) {
-            // 1. Deps npm (bare specifiers)
-            if (depCache[path]) return depCache[path];
-            
-            // 2. Subpath imports (react/jsx-runtime, etc.)
-            for (var depKey in depCache) {
-              if (path === depKey || path.startsWith(depKey + '/')) {
-                return depCache[depKey];
-              }
-            }
-
-            // 3. Módulos locais
-            if (moduleCache[path]) return moduleCache[path].exports;
-            if (!moduleRegistry[path]) {
-              // Tenta encontrar com extensões
-              var found = findFile(path);
-              if (found && moduleRegistry[found]) {
-                return synapRequire(found);
-              }
-              throw new Error('Módulo não encontrado: ' + path);
-            }
-
-            var module = { exports: {} };
-            moduleCache[path] = module;
-            try {
-              var dirname = path.indexOf('/') >= 0 ? path.substring(0, path.lastIndexOf('/')) : '';
-              moduleRegistry[path](module.exports, synapRequire, module, path, dirname);
-            } catch(e) {
-              delete moduleCache[path];
-              throw e;
-            }
-            return module.exports;
+        // Sem resposta em 20s: mostra erro em vez de ficar girando pra sempre
+        setTimeout(function () {
+          var st = window.__synapState();
+          if (!st.failed && !st.finished) {
+            window.__synapFail('O preview não terminou de carregar em 20s. As dependências (esm.sh) podem estar lentas ou bloqueadas.' + unresolvedHint());
           }
-
-          // ===== EXECUTA ENTRY POINT =====
-          var entry = SYNAP_ENTRY;
-          if (!entry || !moduleRegistry[entry]) {
-            // Cria entry default
-            var entryCode = Babel.transform(SYNAP_DEFAULT_ENTRY, {
-              presets: [['react'], ['typescript', { isTSX: true, allExtensions: true }]],
-              plugins: ['transform-modules-commonjs'],
-              filename: 'main.tsx',
-            }).code;
-            entryCode = entryCode.replace(/require\(\s*['"]([^'"]+)['"]\s*\)/g, function(match, reqPath) {
-              if (reqPath.startsWith('.')) {
-                var resolved = resolveImportPath('src/main.tsx', reqPath);
-                if (resolved) {
-                  var found = findFile(resolved);
-                  if (found) return "require('" + found + "')";
-                }
-              }
-              return "require('" + reqPath + "')";
-            });
-            entry = '__synap_entry__';
-            moduleRegistry[entry] = new Function('exports', 'require', 'module', '__filename', '__dirname', entryCode);
-          }
-
-          synapRequire(entry);
-
-          // Esconde loading
-          setTimeout(function() {
-            var loading = document.getElementById('synap-loading');
-            if (loading) loading.style.display = 'none';
-            window.parent.postMessage({ type: 'synap-preview-compiled' }, '*');
-          }, 500);
-        }).catch(function(err) {
-          window.onerror('Erro ao carregar dependências: ' + (err.message || err), '', 0, 0, err);
-        });
+        }, 20000);
       } catch (e) {
-        window.onerror(e.message || String(e), '', 0, 0, e);
+        window.__synapFail(e && e.message ? e.message : String(e));
       }
     }
 
+    // Espera o Babel carregar (falha na hora se o script foi bloqueado/derrubado)
     if (typeof Babel !== 'undefined') {
       buildAndLoad();
     } else {
-      var babelCheck = setInterval(function() {
+      var waited = 0;
+      var babelCheck = setInterval(function () {
+        waited += 100;
         if (typeof Babel !== 'undefined') {
           clearInterval(babelCheck);
           buildAndLoad();
+        } else if (window.__synapBabelFailed) {
+          clearInterval(babelCheck);
+          window.__synapFail('Não foi possível carregar o Babel (unpkg.com). Verifique a internet e se o CSP do vercel.json libera https://unpkg.com em script-src.');
+        } else if (waited >= 15000) {
+          clearInterval(babelCheck);
+          window.__synapFail('O Babel não carregou em 15s. Verifique sua conexão.');
         }
       }, 100);
-      setTimeout(function() {
-        if (typeof Babel === 'undefined') {
-          clearInterval(babelCheck);
-          window.onerror('Babel não carregou em 15s. Verifique CSP.', '', 0, 0, null);
-        }
-      }, 15000);
     }
-  <\/script>
+  </script>
 </body>
 </html>`;
 }
 
-/** Wrapper que aceita SynapProject direto */
-export function buildPreviewHtmlFromProject(project: SynapProject): string {
-  const files: Record<string, { content: string }> = {};
-  for (const [path, file] of Object.entries(project.files)) {
-    files[path] = { content: file.content };
-  }
-  return buildPreviewHtml({
-    files,
-    template: project.template,
-    dependencies: project.dependencies,
-  });
-}
+/** Nome usado pelo LocalPreview (mantido por compatibilidade). */
+export const buildPreviewHtmlFromProject = buildPreviewHtml;
