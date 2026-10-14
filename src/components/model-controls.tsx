@@ -53,6 +53,18 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       subtitle: 'Contexto longo e raciocínio avançado',
       badge: 'Contexto',
     },
+    {
+      id: 'claude-sonnet-4-5',
+      title: 'Claude Sonnet 4.5',
+      subtitle: 'Anthropic via Abhibots — rápido e inteligente',
+      badge: 'Claude',
+    },
+    {
+      id: 'claude-opus-4-1',
+      title: 'Claude Opus 4.1',
+      subtitle: 'Anthropic via Abhibots — mais poderoso',
+      badge: 'Claude',
+    },
   ];
 
   const reasoningLevels: Array<{
@@ -102,6 +114,10 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'GLM-5.3'
                 : selectedModel === 'moonshotai/kimi-k3'
                 ? 'Kimi K3'
+                : selectedModel === 'claude-sonnet-4-5'
+                ? 'Claude Sonnet'
+                : selectedModel === 'claude-opus-4-1'
+                ? 'Claude Opus'
                 : 'GLM Flash'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />

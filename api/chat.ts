@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit, ALLOWED_MODELS } from '../lib/server/_security';
+import { checkAuthAndRateLimit, ALLOWED_MODELS, isAbhibotsModel, isVisionModel } from '../lib/server/_security';
 
 export const config = {
   runtime: 'edge',
@@ -10,9 +10,9 @@ function maxTokensFor(effort: string): number {
   return 8192;
 }
 
-/** Helper: faz fetch pra NVIDIA com headers padrão */
-function nvidiaFetch(payload: any, apiKey: string) {
-  return fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+/** Helper: faz fetch pro provedor correto (NVIDIA ou Abhibots) */
+function providerFetch(payload: any, apiKey: string, endpoint: string) {
+  return fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -23,14 +23,14 @@ function nvidiaFetch(payload: any, apiKey: string) {
 }
 
 /**
- * Função única que tenta obter resposta da NVIDIA com fallbacks.
+ * Função única que tenta obter resposta com fallbacks.
  * Tenta: (reasoning+tools) → (no-reasoning+tools) → (no-reasoning+no-tools).
- * Retorna { res, fallbackType }.
  */
-async function getNvidiaResponseWithFallbacks(
+async function getResponseWithFallbacks(
   initialFetchPromise: Promise<Response>,
   createPayload: (includeReasoning: boolean, includeTools: boolean) => any,
-  apiKey: string
+  apiKey: string,
+  endpoint: string
 ): Promise<{ res: Response; fallbackType: string }> {
   let res = await initialFetchPromise;
   let fallbackType = 'none';
@@ -40,7 +40,7 @@ async function getNvidiaResponseWithFallbacks(
     const payload1 = createPayload(false, true);
     if (payload1.reasoning_effort !== undefined || payload1.tools) {
       await res.body?.cancel().catch(() => {});
-      res = await nvidiaFetch(payload1, apiKey);
+      res = await providerFetch(payload1, apiKey, endpoint);
       fallbackType = 'no-reasoning';
     }
   }
@@ -50,7 +50,7 @@ async function getNvidiaResponseWithFallbacks(
     const payload2 = createPayload(false, false);
     if (payload2.tools !== undefined) {
       await res.body?.cancel().catch(() => {});
-      res = await nvidiaFetch(payload2, apiKey);
+      res = await providerFetch(payload2, apiKey, endpoint);
       fallbackType = fallbackType === 'no-reasoning' ? 'no-reasoning-and-tools' : 'no-tools';
     }
   }
@@ -71,16 +71,6 @@ export default async function handler(req: Request) {
       status: 405,
       headers: { 'Content-Type': 'application/json' },
     });
-  }
-
-  const apiKey = process.env.NVIDIA_API_KEY;
-  if (!apiKey || apiKey === 'sua_key_aqui' || apiKey === 'nvapi-your-key-here' || apiKey.trim() === '') {
-    return new Response(
-      JSON.stringify({
-        error: 'NVIDIA_API_KEY não configurada. Adicione sua chave NVIDIA nas Environment Variables da Vercel.',
-      }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
   }
 
   try {
@@ -111,6 +101,25 @@ export default async function handler(req: Request) {
       return new Response(JSON.stringify({ error: 'Modelo não autorizado.' }), {
         status: 403, headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    // Detecta provedor: Abhibots (Claude) ou NVIDIA
+    const useAbhibots = isAbhibotsModel(selectedModel);
+    const apiKey = useAbhibots
+      ? process.env.ABHIBOTS_API_KEY
+      : process.env.NVIDIA_API_KEY;
+    const apiEndpoint = useAbhibots
+      ? 'https://opus.abhibots.com/v1/chat/completions'
+      : 'https://integrate.api.nvidia.com/v1/chat/completions';
+    const apiKeyName = useAbhibots ? 'BHIBOTS_API_KEY' : 'NVIDIA_API_KEY';
+
+    if (!apiKey || apiKey.trim() === '') {
+      return new Response(
+        JSON.stringify({
+          error: `${apiKeyName} não configurada. Adicione sua chave nas Environment Variables da Vercel.`,
+        }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     const selectedEffort = reasoning_effort || 'low';
@@ -161,7 +170,9 @@ export default async function handler(req: Request) {
         stream_options: { include_usage: true },
         max_tokens: maxTokensFor(selectedEffort),
       };
-      if (includeReasoning && selectedEffort && selectedEffort !== 'none' && selectedEffort !== 'default') {
+      if (includeReasoning && selectedEffort && selectedEffort !== 'none' && selectedEffort !== 'default' && !useAbhibots) {
+        // reasoning_effort só funciona nos modelos NVIDIA (GLM/Kimi)
+        // Claude (Abhibots) não suporta esse parâmetro
         p.reasoning_effort = selectedEffort;
       }
       if (includeTools && tools && Array.isArray(tools) && tools.length > 0) {
@@ -172,7 +183,7 @@ export default async function handler(req: Request) {
     };
 
     const initialPayload = createPayload(true, true);
-    const firstFetchPromise = nvidiaFetch(initialPayload, apiKey);
+    const firstFetchPromise = providerFetch(initialPayload, apiKey, apiEndpoint);
 
     // Race: se a NVIDIA não responder em 15s, entra no slow stream mode
     const early = await Promise.race([
@@ -211,8 +222,8 @@ export default async function handler(req: Request) {
           }, 90_000);
 
           try {
-            // FIX 3: Usa getNvidiaResponseWithFallbacks no modo lento também
-            const { res } = await getNvidiaResponseWithFallbacks(firstFetchPromise, createPayload, apiKey);
+            // FIX 3: Usa getResponseWithFallbacks no modo lento também
+            const { res } = await getResponseWithFallbacks(firstFetchPromise, createPayload, apiKey, apiEndpoint);
             clearTimeout(warnTimer);
 
             if (!res.ok || !res.body) {
@@ -264,9 +275,9 @@ export default async function handler(req: Request) {
     }
 
     // ===== FAST MODE (NVIDIA respondeu em <15s) =====
-    // FIX 3: Usa getNvidiaResponseWithFallbacks no modo rápido também
-    const { res: nvidiaRes, fallbackType } = await getNvidiaResponseWithFallbacks(
-      Promise.resolve(early), createPayload, apiKey
+    // FIX 3: Usa getResponseWithFallbacks no modo rápido também
+    const { res: nvidiaRes, fallbackType } = await getResponseWithFallbacks(
+      Promise.resolve(early), createPayload, apiKey, apiEndpoint
     );
 
     if (!nvidiaRes.ok) {

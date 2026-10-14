@@ -13,12 +13,26 @@ export const ALLOWED_MODELS = [
   'z-ai/glm-5.3',
   'z-ai/glm-5.3-flash',
   'moonshotai/kimi-k3',
+  'claude-sonnet-4-5',
+  'claude-opus-4-1',
 ];
 
 export const VISION_MODELS = [
   'z-ai/glm-5.3-flash',
   'moonshotai/kimi-k3',
+  'claude-sonnet-4-5',
+  'claude-opus-4-1',
 ];
+
+/** Modelos que usam a API do Abhibots (Claude) em vez da NVIDIA */
+export const ABHIBOTS_MODELS = [
+  'claude-sonnet-4-5',
+  'claude-opus-4-1',
+];
+
+export function isAbhibotsModel(model: string): boolean {
+  return ABHIBOTS_MODELS.includes(model);
+}
 
 export function isVisionModel(model: string): boolean {
   return VISION_MODELS.includes(model);
