@@ -1,6 +1,6 @@
 export const config = {
   runtime: 'nodejs',
-  maxDuration: 300,
+  maxDuration: 60,
 };
 
 // ===== INLINE: ALLOWED_MODELS e VISION_MODELS (zero imports externos) =====
@@ -243,8 +243,10 @@ export default async function handler(req: Request) {
     // ===== WATCHDOG: não espera a NVIDIA pra sempre =====
     // Se nenhum dado chegar em FIRST_BYTE_MS (ou ficar parado IDLE_MS no meio), aborta
     // e devolve erro claro em vez de deixar o usuário em "Conectando..." até o limite da Vercel.
-    const FIRST_BYTE_MS = 120_000;
-    const IDLE_MS = 90_000;
+    // IMPORTANTE: limite do plano Hobby = 60s. Watchdog aborta em 50s pra dar margem
+    // de devolver o erro antes do Vercel cortar com 504.
+    const FIRST_BYTE_MS = 50_000;
+    const IDLE_MS = 45_000;
     const t0 = Date.now();
     const upstream = new AbortController();
     let lastActivity = Date.now();

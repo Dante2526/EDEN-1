@@ -2239,7 +2239,7 @@ function AppContent() {
                 if (trimmed.includes('FUNCTION_INVOCATION_FAILED')) {
                   errMessage = `Erro 500 Vercel (FUNCTION_INVOCATION_FAILED): A Serverless Function falhou na inicialização. Verifique se a variável NVIDIA_API_KEY foi adicionada nas Environment Variables da Vercel.`;
                 } else if (trimmed.includes('FUNCTION_INVOCATION_TIMEOUT')) {
-                  errMessage = `Erro 504 Vercel (FUNCTION_INVOCATION_TIMEOUT): A execução excedeu 300 segundos (limite do plano Hobby da Vercel). Alterne para o modelo z-ai/glm-5.3-flash ou reduza o nível de raciocínio nas configurações.`;
+                  errMessage = `Erro 504 Vercel (FUNCTION_INVOCATION_TIMEOUT): A execução excedeu 60 segundos (limite do plano Hobby da Vercel). Alterne para o modelo z-ai/glm-5.3-flash ou reduza o nível de raciocínio nas configurações.`;
                 } else if (trimmed.length < 500) {
                   errMessage = `Erro ${response.status}: ${trimmed}`;
                 } else if (response.status === 500) {
