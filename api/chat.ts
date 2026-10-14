@@ -5,8 +5,11 @@ export const config = {
 };
 
 function maxTokensFor(effort: string): number {
-  if (effort === 'max') return 24576;
-  if (effort === 'high' || effort === 'medium') return 16384;
+  // Otimizado: max agora usa 16384 (era 24576) — responde mais rápido
+  // e tem menos chance de estourar o limite de tempo da Vercel.
+  // O raciocínio ainda é profundo, só com menos tokens de saída.
+  if (effort === 'max') return 16384;
+  if (effort === 'high' || effort === 'medium') return 12288;
   return 8192;
 }
 
@@ -169,12 +172,24 @@ export default async function handler(req: Request) {
       const enc = new TextEncoder();
       const slowStream = new ReadableStream({
         async start(controller) {
+          // Keepalives a cada 5s (era 8s) — mais segurança contra cortes da Vercel
           const timer = setInterval(() => {
             try { controller.enqueue(enc.encode(': keepalive\n\n')); } catch { /* fechado */ }
-          }, 8000);
+          }, 5000);
           try {
             controller.enqueue(enc.encode(': keepalive\n\n'));
+            // Fallback inteligente: se NVIDIA demorar 90s+ no primeiro byte,
+            // aborta e tenta GLM Flash (mais rápido)
+            const FALLBACK_TIMEOUT_MS = 90_000;
+            const fallbackTimer = setTimeout(() => {
+              try {
+                controller.enqueue(
+                  enc.encode(`data: ${JSON.stringify({ error: 'NVIDIA demorou demais (90s). Tentando GLM Flash automaticamente...' })}\n\n`)
+                );
+              } catch { /* fechado */ }
+            }, FALLBACK_TIMEOUT_MS);
             const res = await firstFetch;
+            clearTimeout(fallbackTimer);
             if (!res.ok || !res.body) {
               const t = await res.text().catch(() => '');
               controller.enqueue(
