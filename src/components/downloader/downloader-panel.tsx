@@ -135,7 +135,19 @@ export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose })
         body: JSON.stringify({ url, audioOnly }),
       });
 
-      const data: DownloadResult = await response.json();
+      // Lê como texto: se a Vercel devolver uma página de erro (não-JSON), mostramos
+      // uma mensagem clara em vez de "Unexpected token ... is not valid JSON".
+      const raw = await response.text();
+      let data: DownloadResult;
+      try {
+        data = JSON.parse(raw) as DownloadResult;
+      } catch {
+        data = {
+          ok: false,
+          status: 'error',
+          error: `O servidor retornou uma resposta inesperada (HTTP ${response.status}). Tente novamente em instantes.`,
+        };
+      }
       setResult(data);
 
       // Adiciona ao histórico
