@@ -617,7 +617,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3' || saved === 'deepseek-ai/deepseek-v4.1-flash' || saved === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b') return saved;
+      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3' || saved === 'deepseek-ai/deepseek-v4.1-flash' || saved === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || saved === '@cf/zai-org/glm-5.3') return saved;
     }
     return 'z-ai/glm-5.3-flash'; // Default mais rápido (Flash) - GLM-5.3 full demora muito pra responder
   });
@@ -3136,7 +3136,7 @@ function AppContent() {
           onSendMessage={handleSendMessage}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'}
+          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || selectedModel === '@cf/zai-org/glm-5.3'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}
