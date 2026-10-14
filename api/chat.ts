@@ -1,99 +1,8 @@
+import { checkAuthAndRateLimit, ALLOWED_MODELS } from '../lib/server/_security';
+
 export const config = {
-  runtime: 'nodejs',
-  maxDuration: 60,
+  runtime: 'edge',
 };
-
-// ===== INLINE: ALLOWED_MODELS e VISION_MODELS (zero imports externos) =====
-const ALLOWED_MODELS = [
-  'z-ai/glm-5.3',
-  'z-ai/glm-5.3-flash',
-  'moonshotai/kimi-k3',
-];
-
-const VISION_MODELS = [
-  'z-ai/glm-5.3-flash',
-  'moonshotai/kimi-k3',
-];
-
-function isVisionModel(model: string): boolean {
-  return VISION_MODELS.includes(model);
-}
-
-// ===== INLINE: rate limit + auth check (simplificado, sem Redis) =====
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const MAX_REQUESTS_PER_MINUTE = 120;
-
-function getHeader(req: any, name: string): string | null {
-  if (!req || !req.headers) return null;
-  if (typeof req.headers.get === 'function') {
-    return req.headers.get(name);
-  }
-  const lowerName = name.toLowerCase();
-  const val = req.headers[lowerName] ?? req.headers[name];
-  if (Array.isArray(val)) return val[0] || null;
-  return typeof val === 'string' ? val : null;
-}
-
-function getClientIp(req: Request | any): string {
-  const xForwardedFor = getHeader(req, 'x-forwarded-for');
-  if (xForwardedFor) {
-    const firstIp = xForwardedFor.split(',')[0].trim();
-    if (firstIp) return firstIp;
-  }
-  const realIp = getHeader(req, 'x-real-ip');
-  if (realIp && realIp.trim()) return realIp.trim();
-  if ((req as any)?.socket?.remoteAddress) {
-    return (req as any).socket.remoteAddress;
-  }
-  return 'unknown';
-}
-
-function timingSafeEqualStrings(a: string, b: string): boolean {
-  const enc = new TextEncoder();
-  const aBytes = enc.encode(a);
-  const bBytes = enc.encode(b);
-  if (aBytes.byteLength !== bBytes.byteLength) return false;
-  let result = 0;
-  for (let i = 0; i < aBytes.byteLength; i++) {
-    result |= aBytes[i] ^ bBytes[i];
-  }
-  return result === 0;
-}
-
-async function checkAuthAndRateLimit(req: Request): Promise<Response | null> {
-  const ip = getClientIp(req);
-  if (ip !== 'unknown') {
-    const now = Date.now();
-    for (const [key, entry] of rateLimitMap.entries()) {
-      if (now > entry.resetAt) rateLimitMap.delete(key);
-    }
-    const entry = rateLimitMap.get(ip);
-    if (!entry || now > entry.resetAt) {
-      rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
-    } else {
-      entry.count += 1;
-      if (entry.count > MAX_REQUESTS_PER_MINUTE) {
-        return new Response(JSON.stringify({ error: 'Too Many Requests' }), {
-          status: 429,
-          headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
-        });
-      }
-    }
-  }
-
-  // Auth opcional (só se SYNAP_API_SECRET estiver configurada)
-  const expectedSecret = process.env.SYNAP_API_SECRET?.trim();
-  if (expectedSecret) {
-    const providedKey = getHeader(req, 'x-api-key');
-    if (!providedKey || !timingSafeEqualStrings(providedKey, expectedSecret)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-  }
-  return null;
-}
 
 function maxTokensFor(effort: string): number {
   if (effort === 'max') return 24576;
@@ -102,9 +11,6 @@ function maxTokensFor(effort: string): number {
 }
 
 export default async function handler(req: Request) {
-  const FUNCTION_START = Date.now(); // timestamp do início da função (pra calcular timeout total)
-  // TRIGGER DEPLOY — força Vercel a fazer novo deploy
-  const DEPLOY_VERSION = '2024-10-13-v2';
   try {
     const securityResponse = await checkAuthAndRateLimit(req);
     if (securityResponse) return securityResponse;
@@ -163,10 +69,10 @@ export default async function handler(req: Request) {
 
     // Verify multimodal support
     const hasImages = messages.some((m: any) => m.images && Array.isArray(m.images) && m.images.length > 0);
-    const modelSupportsVision = isVisionModel(selectedModel);
-    if (hasImages && !modelSupportsVision) {
+    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3';
+    if (hasImages && !isVisionModel) {
       return new Response(
-        JSON.stringify({ error: 'Este modelo não suporta imagens. Use o modelo GLM-5.3-Flash, Kimi K3 ou Gemini 3.1 Pro.' }),
+        JSON.stringify({ error: 'Este modelo não suporta imagens. Use o modelo GLM-5.3-Flash ou Kimi K3.' }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -243,10 +149,6 @@ export default async function handler(req: Request) {
 
     let payload = createPayload(true, true);
 
-    // AbortController pra CANCELAR o fetch da NVIDIA quando precisar
-    // Sem isso, reader.read() bloqueia indefinidamente e a Vercel dá 504
-    const nvidiaAbort = new AbortController();
-
     const firstFetch = fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -254,16 +156,13 @@ export default async function handler(req: Request) {
         Authorization: `Bearer ${apiKey.trim()}`,
       },
       body: JSON.stringify(payload),
-      signal: nvidiaAbort.signal,
     });
 
-    // O Node.js permite 60s. Se a NVIDIA demorar mais que 12s pra responder,
-    // entramos em slow stream mode com keepalives SSE e fazemos o pipe quando chegar.
-    // Importante: o slowStream tem um timeout de 45s pra abortar antes do limite da Vercel (60s).
-    const SLOW_STREAM_TIMEOUT_MS = 35_000;
+    // O Edge exige o primeiro byte em ~25s. Se a NVIDIA demorar, respondemos já
+    // com keepalives SSE e fazemos o pipe quando a resposta chegar.
     const early = await Promise.race([
       firstFetch,
-      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 12000)),
+      new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 15000)),
     ]);
 
     if (early === 'slow') {
@@ -273,20 +172,9 @@ export default async function handler(req: Request) {
           const timer = setInterval(() => {
             try { controller.enqueue(enc.encode(': keepalive\n\n')); } catch { /* fechado */ }
           }, 8000);
-          // Timeout: se a NVIDIA não responder em 45s, aborta com erro claro
-          const slowTimeout = setTimeout(() => {
-            nvidiaAbort.abort(); // CANCELA o fetch da NVIDIA — sem isso reader.read() bloqueia
-            try {
-              controller.enqueue(
-                enc.encode(`data: ${JSON.stringify({ error: 'A NVIDIA não respondeu a tempo (35s). Tente novamente.' })}\n\n`)
-              );
-              controller.close();
-            } catch { /* fechado */ }
-          }, SLOW_STREAM_TIMEOUT_MS);
           try {
             controller.enqueue(enc.encode(': keepalive\n\n'));
             const res = await firstFetch;
-            clearTimeout(slowTimeout);
             if (!res.ok || !res.body) {
               const t = await res.text().catch(() => '');
               controller.enqueue(
@@ -301,13 +189,11 @@ export default async function handler(req: Request) {
               }
             }
           } catch (e: any) {
-            clearTimeout(slowTimeout);
             try {
               controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: `Stream interrupted: ${e?.message || 'unknown'}` })}\n\n`));
             } catch { /* fechado */ }
           } finally {
             clearInterval(timer);
-            clearTimeout(slowTimeout);
             try { controller.close(); } catch { /* fechado */ }
           }
         },
@@ -337,7 +223,6 @@ export default async function handler(req: Request) {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
         body: JSON.stringify(payload),
-        signal: nvidiaAbort.signal,
       });
       fallbackType = 'no-reasoning';
     }
@@ -353,7 +238,6 @@ export default async function handler(req: Request) {
           Authorization: `Bearer ${apiKey.trim()}`,
         },
         body: JSON.stringify(payload),
-        signal: nvidiaAbort.signal,
       });
       fallbackType = fallbackType === 'no-reasoning' ? 'no-reasoning-and-tools' : 'no-tools';
     }
@@ -405,67 +289,15 @@ export default async function handler(req: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        const HARD_LIMIT_MS = 50_000; // 50s — margem de 10s antes do Vercel cortar em 60s
-        let idleTimer: ReturnType<typeof setTimeout> | null = null;
-        let totalTimer: ReturnType<typeof setTimeout> | null = null;
-        let wasCutByTotalTimeout = false;
-
-        const cleanupTimers = () => {
-          if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
-          if (totalTimer) { clearTimeout(totalTimer); totalTimer = null; }
-        };
-
-        const resetIdleTimer = () => {
-          if (idleTimer) clearTimeout(idleTimer);
-          idleTimer = setTimeout(() => {
-            nvidiaAbort.abort(); // CRÍTICO: cancela fetch pra reader.read() parar
-            cleanupTimers();
-            try {
-              controller.enqueue(
-                new TextEncoder().encode(`\ndata: {"error": "Stream parado por 30s (NVIDIA sobrecarregada). Tente GLM Flash."}\n\n`)
-              );
-              controller.close();
-            } catch { /* fechado */ }
-          }, 30_000);
-        };
-
-        // Timer total: calculado pelo tempo RESTANTE até o limite da Vercel
-        // Se a função já gastou 15s esperando a NVIDIA, só restam 40s de stream
-        const elapsedSinceStart = Date.now() - FUNCTION_START;
-        const remainingMs = Math.max(10_000, HARD_LIMIT_MS - elapsedSinceStart); // mínimo 10s
-        console.log(`[chat] stream total timeout: ${remainingMs}ms (elapsed: ${elapsedSinceStart}ms)`);
-        totalTimer = setTimeout(() => {
-          wasCutByTotalTimeout = true;
-          nvidiaAbort.abort(); // CRÍTICO: cancela fetch da NVIDIA pra reader.read() parar de bloquear
-          cleanupTimers();
-          try {
-            const fakeChunk = {
-              choices: [{ finish_reason: 'length', delta: {} }],
-            };
-            controller.enqueue(
-              new TextEncoder().encode(`data: ${JSON.stringify(fakeChunk)}\n\n`)
-            );
-            controller.enqueue(
-              new TextEncoder().encode(`data: [DONE]\n\n`)
-            );
-            controller.close();
-          } catch { /* fechado */ }
-        }, remainingMs);
-
-        resetIdleTimer();
         try {
           const reader = nvidiaRes.body!.getReader();
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            resetIdleTimer();
             controller.enqueue(value);
           }
-          cleanupTimers();
           controller.close();
         } catch (streamErr: any) {
-          cleanupTimers();
-          if (wasCutByTotalTimeout) return;
           console.error('Stream reading error:', streamErr);
           try {
             controller.enqueue(
