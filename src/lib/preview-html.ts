@@ -420,7 +420,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               if (reqPath.startsWith('.')) {
                 var resolved = resolveImportPath(fileObj.path, reqPath);
                 if (resolved) {
-                  var found = findFile(resolved);
+                  // Limpa ./ do início antes de buscar
+                  var cleanResolved = resolved.replace(/^\.?\//, '');
+                  var found = findFile(cleanResolved);
                   if (found) return "require('" + found + "')";
                 }
               }
@@ -486,8 +488,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               }
               return module.exports;
             }
-            // Tenta encontrar com extensões
-            var found = findFile(path);
+            // Limpa ./ e ../ do path antes de buscar
+            var cleanPath = path.replace(/^\.?\//, '');
+            var found = findFile(cleanPath);
             if (found && moduleRegistry[found]) {
               return synapRequire(found);
             }
