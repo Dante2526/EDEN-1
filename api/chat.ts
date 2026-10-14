@@ -141,7 +141,11 @@ export default async function handler(req: Request) {
         max_tokens: maxTokensFor(selectedEffort), // Tokens de raciocínio contam aqui; escala com o nível
       };
       if (includeReasoning && selectedEffort && selectedEffort !== 'none' && selectedEffort !== 'default') {
-        p.reasoning_effort = selectedEffort;
+        // reasoning_effort SÓ funciona no GLM-5.3 (modelo principal)
+        // Flash, Kimi K3 e DeepSeek não suportam esse parâmetro
+        if (selectedModel === 'z-ai/glm-5.3') {
+          p.reasoning_effort = selectedEffort;
+        }
       }
       if (includeTools && tools && Array.isArray(tools) && tools.length > 0) {
         p.tools = tools;
