@@ -17,6 +17,7 @@
 
 import { Env } from './lib/server/env';
 import chatHandler from './api/chat';
+import chatTestHandler from './api/chat-test';
 import downloadHandler from './api/download';
 import fetchUrlHandler from './api/fetch-url';
 import githubHandler from './api/github';
@@ -36,6 +37,9 @@ export default {
     try {
       if (path === '/api/chat' || path === '/api/chat/') {
         return await chatHandler(request, env);
+      }
+      if (path === '/api/chat-test' || path === '/api/chat-test/') {
+        return await chatTestHandler(request, env);
       }
       if (path === '/api/download' || path === '/api/download/') {
         return await downloadHandler(request, env);
