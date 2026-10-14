@@ -42,6 +42,12 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       badge: 'Pensar',
     },
     {
+      id: 'z-ai/glm-5.3-flash',
+      title: 'GLM-5.3 Flash',
+      subtitle: 'Mais rápido + Suporte multimodal a visão e fotos',
+      badge: 'Visão',
+    },
+    {
       id: 'deepseek-ai/deepseek-v4.1-flash',
       title: 'DeepSeek V4.1 Flash',
       subtitle: 'Rápido e eficiente — ótimo custo-benefício',
@@ -106,6 +112,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             <span className="font-medium text-[color:var(--c-fg-f3efe6)]">
               {selectedModel === 'z-ai/glm-5.3'
                 ? 'GLM-5.3'
+                : selectedModel === 'z-ai/glm-5.3-flash'
+                ? 'GLM Flash'
                 : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
                 ? 'DeepSeek V4.1'
                 : selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'

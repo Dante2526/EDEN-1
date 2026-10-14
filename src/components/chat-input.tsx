@@ -106,6 +106,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   const processFiles = async (files: FileList | File[]) => {
     const newImages: string[] = [];
     const newDocs: AttachedDocument[] = [];
+    let switchedToFlash = false;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -116,10 +117,13 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
           const base64 = await fileToBase64(file);
           newImages.push(base64);
 
-          // Nenhum modelo disponível suporta imagens — GLM-5.3 Flash e Kimi K3
-          // foram removidos (Flash descontinuado pela NVIDIA, Kimi instável).
-          // Não tentamos mais trocar de modelo automaticamente.
-          // O handleSendMessage do App.tsx vai exibir mensagem explicando.
+          // Auto-switch para GLM-5.3 Flash quando usuário anexa imagem
+          // (é o único modelo disponível que suporta visão)
+          const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash';
+          if (!isVisionModel) {
+            onSelectModel('z-ai/glm-5.3-flash');
+            switchedToFlash = true;
+          }
         } catch (err: any) {
           alert(err.message || 'Erro ao carregar imagem');
         }
@@ -145,10 +149,12 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
     }
     if (newDocs.length > 0) {
       setDocuments((prev) => [...prev, ...newDocs]);
-      setNotification(`${newDocs.length} arquivo(s) anexado(s) com sucesso.`);
     }
-    if (newImages.length > 0) {
-      setNotification('Aviso: nenhum modelo disponível suporta imagens. A foto será anexada mas não poderá ser analisada.');
+
+    if (switchedToFlash) {
+      setNotification('Modelo alternado para GLM-5.3 Flash para análise de imagens.');
+    } else if (newDocs.length > 0) {
+      setNotification(`${newDocs.length} arquivo(s) anexado(s) com sucesso.`);
     }
 
     if (fileInputRef.current) {

@@ -1,11 +1,14 @@
 export const ALLOWED_MODELS = [
   'z-ai/glm-5.3',
+  'z-ai/glm-5.3-flash',
   'deepseek-ai/deepseek-v4.1-flash',
   '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
   '@cf/qwen/qwen2.5-coder-32b-instruct',
 ] as const;
 
-export const VISION_MODELS: string[] = [];
+export const VISION_MODELS = [
+  'z-ai/glm-5.3-flash',
+] as const;
 
 export function isVisionModel(model: string): boolean {
   return VISION_MODELS.includes(model as any);

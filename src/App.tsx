@@ -664,9 +664,9 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      if (saved === 'z-ai/glm-5.3' || saved === 'deepseek-ai/deepseek-v4.1-flash' || saved === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || saved === '@cf/qwen/qwen2.5-coder-32b-instruct') return saved;
+      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'deepseek-ai/deepseek-v4.1-flash' || saved === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || saved === '@cf/qwen/qwen2.5-coder-32b-instruct') return saved;
     }
-    return 'z-ai/glm-5.3'; // Modelo padrão: GLM-5.3 full (Flash foi descontinuado pela NVIDIA)
+    return 'z-ai/glm-5.3'; // Modelo padrão: GLM-5.3 full (mais robusto)
   });
 
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() => {
@@ -2084,11 +2084,12 @@ function AppContent() {
     const activePlan = overridePlanMode !== undefined ? overridePlanMode : isPlanMode;
 
     let effectiveModel = selectedModel;
-    // Nenhum modelo restante suporta visão (GLM-5.3 Flash e Kimi K3 removidos).
-    // Se vier imagem, exibimos erro claro em vez de trocar de modelo.
-    if (images.length > 0) {
-      setErrorMessage('Nenhum modelo disponível suporta imagens. GLM-5.3 Flash foi descontinuado pela NVIDIA e Kimi K3 foi removido por instabilidade. Anexar fotos está desativado.');
-      return;
+    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash';
+    if (images.length > 0 && !isVisionModel) {
+      // Auto-switch pra GLM-5.3 Flash (único modelo vision restante) quando usuário anexa imagem
+      effectiveModel = 'z-ai/glm-5.3-flash';
+      setSelectedModel('z-ai/glm-5.3-flash');
+      localStorage.setItem(MODEL_STORAGE_KEY, 'z-ai/glm-5.3-flash');
     }
 
     const userMessage: Message = {
@@ -3205,7 +3206,7 @@ function AppContent() {
           onSendMessage={handleSendMessage}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'}
+          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}
