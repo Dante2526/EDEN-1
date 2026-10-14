@@ -164,12 +164,55 @@ export function buildPreviewHtml(options: BuildPreviewHtmlOptions): string {
     'react/jsx-dev-runtime': `https://esm.sh/react@${reactVersion}/jsx-dev-runtime`,
   };
 
-  // Adiciona outras deps npm
+  // Deps que NÃO rodam no navegador (são build tools, server-side ou nativas)
+  const BROWSER_INCOMPATIBLE_DEPS = [
+    '@tailwindcss/vite', '@tailwindcss/postcss', '@tailwindcss/oxide',
+    'tailwindcss', 'postcss', 'autoprefixer',
+    'tsx', 'ts-node', 'tsx-cli',
+    'express', 'fastify', 'koa', 'next', 'nuxt',
+    '@vitejs/plugin-react', 'vite', 'webpack', 'rollup', 'esbuild',
+    'typescript',
+    'firebase-admin', 'firebase-functions',
+    'mongoose', 'mysql2', 'pg', 'redis', 'ioredis',
+    'fs', 'path', 'os', 'child_process', 'crypto', 'http', 'https', 'net', 'url',
+  ];
+
+  // Deps compatíveis com browser que conhecemos
+  const KNOWN_BROWSER_DEPS = [
+    'react', 'react-dom', 'react-dom/client', 'react/jsx-runtime',
+    'react-router-dom', 'react-router', 'react-helmet',
+    'lucide-react', 'framer-motion', 'motion',
+    'clsx', 'tailwind-merge', 'class-variance-authority',
+    'recharts', 'chart.js', 'd3',
+    'axios', 'swr', '@tanstack/react-query',
+    'zustand', 'jotai', 'recoil', 'redux', '@reduxjs/toolkit',
+    'date-fns', 'dayjs', 'moment',
+    'zod', 'yup',
+    'react-markdown', 'remark-gfm', 'rehype',
+    'idb-keyval', 'idb',
+    'react-dropzone', 'react-hot-toast', 'sonner',
+    'react-diff-viewer-continued',
+    '@radix-ui/react-dialog', '@radix-ui/react-select',
+    'embla-carousel-react',
+    'react-hook-form', '@hookform/resolvers',
+  ];
+
+  // Filtra deps que não rodam no browser
+  const blockedDeps: string[] = [];
   for (const [name, version] of Object.entries(deps)) {
     if (name === 'react' || name === 'react-dom' || name === 'react-scripts') continue;
     if (name.startsWith('@types/')) continue;
-    if (name === 'typescript' || name === 'vite') continue;
-    if (name === '@vitejs/plugin-react') continue;
+
+    // Bloqueia deps incompatíveis
+    if (BROWSER_INCOMPATIBLE_DEPS.includes(name) ||
+        name.startsWith('@tailwindcss/') ||
+        name.includes('oxide') ||
+        name.includes('node-')) {
+      blockedDeps.push(name);
+      continue;
+    }
+
+    // Adiciona deps compatíveis
     importMap[name] = depToUrl(name, version);
   }
 
@@ -291,6 +334,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     });
 
     var SYNAP_FILES = ${JSON.stringify(escapedFiles)};
+    var SYNAP_BLOCKED_DEPS = ${JSON.stringify(blockedDeps)};
     var SYNAP_ENTRY = ${JSON.stringify(entryPath)};
     var SYNAP_DEFAULT_ENTRY = ${JSON.stringify(escapeScriptTags(defaultEntry))};
 
@@ -325,6 +369,25 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
     function buildAndLoad() {
       try {
+        // Mostra aviso de deps bloqueadas (não rodam no browser)
+        if (SYNAP_BLOCKED_DEPS && SYNAP_BLOCKED_DEPS.length > 0) {
+          var loadingEl = document.getElementById('synap-loading');
+          if (loadingEl) {
+            loadingEl.innerHTML =
+              '<div style="padding:16px;max-width:400px;text-align:center;color:#f09a7d;font-size:11px;line-height:1.5">' +
+              '<div style="font-size:14px;margin-bottom:8px;color:#d97757">⚠ Dependências incompatíveis</div>' +
+              '<div>Algumas deps não rodam no navegador e foram ignoradas:</div>' +
+              '<div style="margin:8px 0;font-family:monospace;font-size:10px;color:#8c867a">' +
+              SYNAP_BLOCKED_DEPS.map(function(d) { return '• ' + d; }).join('<br>') +
+              '</div>' +
+              '<div>O preview pode não funcionar corretamente. Estas deps são build tools ou server-side:</div>' +
+              '<div style="margin-top:4px;font-size:10px;color:#5e5a52">• @tailwindcss → compila CSS no build (não no browser)</div>' +
+              '<div style="font-size:10px;color:#5e5a52">• express/firebase-admin → servidor Node.js</div>' +
+              '<div style="font-size:10px;color:#5e5a52">• tsx → runtime Node.js</div>' +
+              '</div>';
+          }
+        }
+
         if (typeof Babel === 'undefined') {
           throw new Error('Babel não carregou. Verifique CSP ou conexão.');
         }
