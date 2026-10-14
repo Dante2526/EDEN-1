@@ -175,7 +175,7 @@ export interface Conversation {
   contextCompaction?: ContextCompaction;
 }
 
-export type ModelId = 'z-ai/glm-5.3' | 'z-ai/glm-5.3-flash' | 'moonshotai/kimi-k3';
+export type ModelId = 'z-ai/glm-5.3' | 'z-ai/glm-5.3-flash' | 'moonshotai/kimi-k3' | 'deepseek-ai/deepseek-v4.1-flash';
 export type ReasoningEffort = 'low' | 'high' | 'max';
 
 export interface AppSettings {

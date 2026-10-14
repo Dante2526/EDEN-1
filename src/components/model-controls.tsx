@@ -53,6 +53,12 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       subtitle: 'Contexto longo e raciocínio avançado',
       badge: 'Contexto',
     },
+    {
+      id: 'deepseek-ai/deepseek-v4.1-flash',
+      title: 'DeepSeek V4.1 Flash',
+      subtitle: 'Rápido e eficiente — ótimo custo-benefício',
+      badge: 'Flash',
+    },
   ];
 
   const reasoningLevels: Array<{
@@ -102,6 +108,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'GLM-5.3'
                 : selectedModel === 'moonshotai/kimi-k3'
                 ? 'Kimi K3'
+                : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
+                ? 'DeepSeek V4.1'
                 : 'GLM Flash'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />

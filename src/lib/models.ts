@@ -2,6 +2,7 @@ export const ALLOWED_MODELS = [
   'z-ai/glm-5.3',
   'z-ai/glm-5.3-flash',
   'moonshotai/kimi-k3',
+  'deepseek-ai/deepseek-v4.1-flash',
 ] as const;
 
 export const VISION_MODELS = [
