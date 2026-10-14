@@ -625,7 +625,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3' || saved === 'claude-sonnet-4-5' || saved === 'claude-opus-4-1') return saved;
+      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'moonshotai/kimi-k3' || saved === 'claude-opus-5-5' || saved === 'claude-sonnet-5' || saved === 'claude-opus-5' || saved === 'claude-fabula-5-1' || saved === 'claude-opus-4-8') return saved;
     }
     return 'z-ai/glm-5.3-flash'; // Default mais rápido (Flash) - GLM-5.3 full demora muito pra responder
   });
@@ -2050,7 +2050,7 @@ function AppContent() {
     const activePlan = overridePlanMode !== undefined ? overridePlanMode : isPlanMode;
 
     let effectiveModel = selectedModel;
-    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'claude-sonnet-4-5' || selectedModel === 'claude-opus-4-1';
+    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'claude-opus-5-5' || selectedModel === 'claude-sonnet-5' || selectedModel === 'claude-opus-5' || selectedModel === 'claude-fabula-5-1' || selectedModel === 'claude-opus-4-8';
     if (images.length > 0 && !isVisionModel) {
       effectiveModel = 'z-ai/glm-5.3-flash';
       setSelectedModel('z-ai/glm-5.3-flash');
@@ -3089,7 +3089,7 @@ function AppContent() {
           onSendMessage={handleSendMessage}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'claude-sonnet-4-5' || selectedModel === 'claude-opus-4-1'}
+          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3' || selectedModel === 'claude-opus-5-5' || selectedModel === 'claude-sonnet-5' || selectedModel === 'claude-opus-5' || selectedModel === 'claude-fabula-5-1' || selectedModel === 'claude-opus-4-8'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}

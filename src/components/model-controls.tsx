@@ -54,15 +54,33 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       badge: 'Contexto',
     },
     {
-      id: 'claude-sonnet-4-5',
-      title: 'Claude Sonnet 4.5',
+      id: 'claude-opus-5-5',
+      title: 'Claude Opus 5.5',
+      subtitle: 'Anthropic via Abhibots — mais recente e poderoso',
+      badge: 'Claude',
+    },
+    {
+      id: 'claude-sonnet-5',
+      title: 'Claude Sonnet 5',
       subtitle: 'Anthropic via Abhibots — rápido e inteligente',
       badge: 'Claude',
     },
     {
-      id: 'claude-opus-4-1',
-      title: 'Claude Opus 4.1',
-      subtitle: 'Anthropic via Abhibots — mais poderoso',
+      id: 'claude-opus-5',
+      title: 'Claude Opus 5',
+      subtitle: 'Anthropic via Abhibots — raciocínio profundo',
+      badge: 'Claude',
+    },
+    {
+      id: 'claude-fabula-5-1',
+      title: 'Claude Fabula 5.1',
+      subtitle: 'Anthropic via Abhibots — criativo',
+      badge: 'Claude',
+    },
+    {
+      id: 'claude-opus-4-8',
+      title: 'Claude Opus 4.8',
+      subtitle: 'Anthropic via Abhibots — versão anterior',
       badge: 'Claude',
     },
   ];
@@ -114,10 +132,16 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'GLM-5.3'
                 : selectedModel === 'moonshotai/kimi-k3'
                 ? 'Kimi K3'
-                : selectedModel === 'claude-sonnet-4-5'
-                ? 'Claude Sonnet'
-                : selectedModel === 'claude-opus-4-1'
-                ? 'Claude Opus'
+                : selectedModel === 'claude-opus-5-5'
+                ? 'Opus 5.5'
+                : selectedModel === 'claude-sonnet-5'
+                ? 'Sonnet 5'
+                : selectedModel === 'claude-opus-5'
+                ? 'Opus 5'
+                : selectedModel === 'claude-fabula-5-1'
+                ? 'Fabula 5.1'
+                : selectedModel === 'claude-opus-4-8'
+                ? 'Opus 4.8'
                 : 'GLM Flash'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
