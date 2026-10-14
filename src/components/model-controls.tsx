@@ -165,24 +165,60 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             </span>
           </button>
 
-          {/* Token Usage Tool Pill */}
-          <button
-            type="button"
-            onClick={() => setOpenSheet('tokens')}
-            aria-label="Ferramenta de Monitoramento de Tokens"
-            title="Clique para abrir a Ferramenta de Monitoramento de Tokens & Contexto"
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
-              openSheet === 'tokens'
-                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shadow-xs'
-                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
-            <span className="text-[color:var(--c-fg-8c867a)] text-[11px]">tokens:</span>
-            <span className="font-mono font-medium text-[color:var(--c-fg-f3efe6)]">
-              {conversationTokens?.totalTokens ? conversationTokens.totalTokens.toLocaleString() : '0'}
-            </span>
-          </button>
+          {/* Token Usage Tool Pill com barra de progresso embutida */}
+          {(() => {
+            const total = conversationTokens?.totalTokens || 0;
+            const CONTEXT_LIMIT = 128000; // Limite de contexto do GLM-5.3
+            const percent = Math.min(100, (total / CONTEXT_LIMIT) * 100);
+            // Cor conforme % de uso
+            const barColor =
+              percent >= 90 ? 'bg-red-500' :
+              percent >= 75 ? 'bg-orange-500' :
+              percent >= 50 ? 'bg-yellow-500' :
+              'bg-emerald-500';
+            const textColor =
+              percent >= 90 ? 'text-red-400' :
+              percent >= 75 ? 'text-orange-400' :
+              percent >= 50 ? 'text-yellow-400' :
+              'text-[color:var(--c-fg-f3efe6)]';
+            const pulseClass = percent >= 90 ? 'animate-pulse' : '';
+            return (
+              <button
+                type="button"
+                onClick={() => setOpenSheet('tokens')}
+                aria-label="Ferramenta de Monitoramento de Tokens"
+                title={`Tokens: ${total.toLocaleString()} / ${CONTEXT_LIMIT.toLocaleString()} (${percent.toFixed(1)}%)${
+                  percent >= 90 ? ' ⚠️ Contexto crítico — compactação automática recomendada' :
+                  percent >= 75 ? ' ⚠️ Contexto alto — considere reduzir' : ''
+                }`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
+                  openSheet === 'tokens'
+                    ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shadow-xs'
+                    : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
+                }`}
+              >
+                <Zap className={`w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] ${pulseClass}`} />
+                <span className="text-[color:var(--c-fg-8c867a)] text-[11px]">tokens:</span>
+                <span className={`font-mono font-medium ${textColor} ${pulseClass}`}>
+                  {total.toLocaleString()}
+                </span>
+                {/* Mini barra de progresso — só aparece se tiver >0 tokens */}
+                {total > 0 && (
+                  <div className="hidden sm:flex items-center gap-1 ml-0.5">
+                    <div className="w-12 h-1.5 bg-[color:var(--c-bg-2f2d28)] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${barColor} transition-all duration-300 ${pulseClass}`}
+                        style={{ width: `${Math.max(2, percent)}%` }}
+                      />
+                    </div>
+                    <span className={`text-[9px] font-mono ${textColor}`}>
+                      {percent.toFixed(0)}%
+                    </span>
+                  </div>
+                )}
+              </button>
+            );
+          })()}
         </div>
 
       </div>

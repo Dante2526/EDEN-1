@@ -1,23 +1,69 @@
 import { Conversation, Message, ContextCompaction } from './types';
 
-export const COMPACTION_TRIGGER_THRESHOLD = 16;
+export const COMPACTION_TRIGGER_THRESHOLD = 12; // Antes era 16 — mais agressivo pra evitar stream cancelled
 export const RECENT_MESSAGES_WINDOW = 6;
+// Limiar de tokens: se passar de 12K tokens acumulados, compacta mesmo com poucas mensagens
+// (cenário: poucas mensagens mas cada uma com muito código/tool calls longos)
+export const COMPACTION_TOKEN_THRESHOLD = 12000;
+
+/**
+ * Estima o total de tokens de uma conversa somando o conteúdo de todas as mensagens.
+ * Estimativa simples: ~4 chars = 1 token (regra de polegar comum pra inglês/português).
+ * Não é perfeita mas é suficiente pra decidir quando compactar.
+ */
+export function estimateConversationTokens(conversation: Conversation): number {
+  if (!conversation.messages) return 0;
+  let totalChars = 0;
+  for (const m of conversation.messages) {
+    if (m.content) totalChars += m.content.length;
+    if (m.reasoning) totalChars += m.reasoning.length;
+    if (m.toolCalls) {
+      for (const tc of m.toolCalls) {
+        if (tc.arguments) totalChars += tc.arguments.length;
+        if (tc.result) totalChars += tc.result.length;
+      }
+    }
+  }
+  return Math.ceil(totalChars / 4);
+}
 
 /**
  * Avalia se uma conversa atingiu o critério de volume para disparo de compactação de contexto.
+ * DISPARA se QUALQUER destas condições for verdadeira:
+ *   1. Número de mensagens > COMPACTION_TRIGGER_THRESHOLD (12)
+ *   2. Tokens estimados > COMPACTION_TOKEN_THRESHOLD (12K)
+ * Isso evita o cenário "poucas mensagens mas cada uma enorme" que causava stream cancelled.
  */
 export function shouldCompact(conversation: Conversation): boolean {
-  if (!conversation.messages || conversation.messages.length <= COMPACTION_TRIGGER_THRESHOLD) {
+  if (!conversation.messages || conversation.messages.length <= RECENT_MESSAGES_WINDOW) {
     return false;
   }
+
+  // Critério 1: número de mensagens
   const lastCompactedId = conversation.contextCompaction?.compactedUpToMessageId;
+  let uncompactedCount: number;
   if (!lastCompactedId) {
-    return conversation.messages.length > COMPACTION_TRIGGER_THRESHOLD;
+    uncompactedCount = conversation.messages.length;
+  } else {
+    const lastIndex = conversation.messages.findIndex((m) => m.id === lastCompactedId);
+    if (lastIndex === -1) {
+      uncompactedCount = conversation.messages.length;
+    } else {
+      uncompactedCount = conversation.messages.length - (lastIndex + 1);
+    }
   }
-  const lastIndex = conversation.messages.findIndex((m) => m.id === lastCompactedId);
-  if (lastIndex === -1) return true;
-  const uncompactedCount = conversation.messages.length - (lastIndex + 1);
-  return uncompactedCount > COMPACTION_TRIGGER_THRESHOLD - RECENT_MESSAGES_WINDOW;
+
+  if (uncompactedCount > COMPACTION_TRIGGER_THRESHOLD) {
+    return true;
+  }
+
+  // Critério 2: tokens estimados (só conta mensagens não compactadas)
+  const estimatedTokens = estimateConversationTokens(conversation);
+  if (estimatedTokens > COMPACTION_TOKEN_THRESHOLD && uncompactedCount > RECENT_MESSAGES_WINDOW) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -73,6 +119,8 @@ export async function compactConversation(
       },
       body: JSON.stringify({
         messages: [{ role: 'user', content: prompt }],
+        // GLM-5.3 Flash: rápido e estável para compactação.
+        // Não usa tools nem reasoning_effort (flash não suporta reasoning).
         model: 'z-ai/glm-5.3-flash',
         reasoning_effort: 'low',
         tools: [],
