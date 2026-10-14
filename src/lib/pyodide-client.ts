@@ -36,6 +36,7 @@ export function formatPythonOutput(res: PythonExecutionResult): string {
 }
 
 let workerInstance: Worker | null = null;
+let isInitializing = false;
 const pendingRequests = new Map<
   string,
   {
@@ -46,24 +47,40 @@ const pendingRequests = new Map<
 >();
 
 function getWorker(): Worker {
-  if (!workerInstance && typeof window !== 'undefined') {
-    workerInstance = new Worker(new URL('../workers/pyodide-worker.ts', import.meta.url), {
-      type: 'module',
-    });
+  if (!workerInstance && typeof window !== 'undefined' && !isInitializing) {
+    isInitializing = true;
+    try {
+      workerInstance = new Worker(new URL('../workers/pyodide-worker.ts', import.meta.url), {
+        type: 'module',
+      });
 
-    workerInstance.onmessage = (event: MessageEvent) => {
-      const { id, ...data } = event.data || {};
-      const pending = pendingRequests.get(id);
-      if (pending) {
-        clearTimeout(pending.timer);
-        pendingRequests.delete(id);
-        pending.resolve(data as PythonExecutionResult);
-      }
-    };
+      workerInstance.onmessage = (event: MessageEvent) => {
+        const { id, ...data } = event.data || {};
+        const pending = pendingRequests.get(id);
+        if (pending) {
+          clearTimeout(pending.timer);
+          pendingRequests.delete(id);
+          pending.resolve(data as PythonExecutionResult);
+        }
+      };
 
-    workerInstance.onerror = (err) => {
-      console.error('Erro no Worker Pyodide:', err);
-    };
+      workerInstance.onerror = (err) => {
+        console.error('[Pyodide] Worker erro:', err);
+        // Rejeita todas as requisições pendentes
+        for (const [id, pending] of pendingRequests) {
+          clearTimeout(pending.timer);
+          pending.reject(new Error('Worker Pyodide crashou. Tente novamente.'));
+          pendingRequests.delete(id);
+        }
+        // Marca worker como morto pra recriar na próxima chamada
+        workerInstance = null;
+      };
+    } catch (err) {
+      console.error('[Pyodide] Falha ao criar Worker:', err);
+      workerInstance = null;
+    } finally {
+      isInitializing = false;
+    }
   }
   return workerInstance!;
 }
@@ -85,6 +102,16 @@ export function executePythonCode(
   const id = `py_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const worker = getWorker();
 
+  if (!worker) {
+    return Promise.resolve({
+      success: false,
+      stdout: '',
+      stderr: '',
+      error: 'Não foi possível inicializar o Web Worker do Pyodide. Recarregue a página e tente novamente.',
+      executionTimeMs: 0,
+    });
+  }
+
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       pendingRequests.delete(id);
@@ -97,7 +124,7 @@ export function executePythonCode(
         success: false,
         stdout: '',
         stderr: '',
-        error: `Tempo limite de execução esgotado (${timeoutMs / 1000}s). Possível loop infinito.`,
+        error: `Tempo limite de execução esgotado (${timeoutMs / 1000}s). Possível loop infinito. O worker foi reiniciado — tente novamente.`,
         executionTimeMs: timeoutMs,
       });
     }, timeoutMs);
