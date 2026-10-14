@@ -2204,10 +2204,20 @@ function AppContent() {
       let currentBatchRefactor: { summary: string; files: MessageEditedFile[] } | undefined = undefined;
       let accumulatedAssistantText = '';
       let accumulatedReasoningText = '';
+      // Variáveis de iteração (resetadas a cada loop)
+      let iterationText = '';
+      let iterationReasoning = '';
+      let iterationFinishReason = '';
+      let streamErrorMsg = '';
 
       while (hasToolCallsToProcess && loopCount < MAX_TOOL_ITERATIONS) {
         loopCount++;
         hasToolCallsToProcess = false;
+        // Reset das variáveis de iteração (não acumular entre loops)
+        iterationText = '';
+        iterationReasoning = '';
+        iterationFinishReason = '';
+        streamErrorMsg = '';
 
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -2273,10 +2283,6 @@ function AppContent() {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
-        let iterationText = '';
-        let iterationReasoning = '';
-        let iterationFinishReason = '';
-        let streamErrorMsg = '';
         let buffer = '';
         const toolCallsAccumulator: Record<number, { id: string; name: string; arguments: string }> = {};
         let iterationTokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined = undefined;
@@ -2399,10 +2405,42 @@ function AppContent() {
         }
 
         if (streamErrorMsg) {
+          // Verifica se é erro de timeout do watchdog (NVIDIA não enviou dados a tempo)
+          const isWatchdogTimeout = streamErrorMsg.includes('não enviou dados a tempo') ||
+            streamErrorMsg.includes('não respondeu a tempo') ||
+            streamErrorMsg.includes('Stream interrupted: A NVIDIA');
+
           if (!iterationText.trim() && Object.keys(toolCallsAccumulator).length === 0) {
+            // Sem texto e sem tool calls — erro real, lança exceção
             throw new Error(streamErrorMsg);
           }
-          iterationText += `\n\n⚠️ ${streamErrorMsg}`;
+
+          if (isWatchdogTimeout && iterationText.trim() && loopCount < MAX_TOOL_ITERATIONS) {
+            // Watchdog abortou MAS já tem texto parcial → continua automaticamente
+            // preservando o raciocínio/texto já gerado
+            console.log('[Synap] Watchdog timeout com texto parcial — continuando automaticamente');
+            // Adiciona texto parcial ao acumulado pra próxima iteração
+            accumulatedAssistantText = accumulatedAssistantText
+              ? `${accumulatedAssistantText}\n\n${iterationText}`
+              : iterationText;
+            currentMessagesForApi = [
+              ...currentMessagesForApi,
+              { role: 'assistant', content: iterationText },
+              {
+                role: 'user',
+                content:
+                  'Sua resposta anterior foi interrompida por limite de tempo. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.',
+              },
+            ];
+            hasToolCallsToProcess = true;
+          } else if (isWatchdogTimeout && !iterationText.trim() && loopCount < MAX_TOOL_ITERATIONS) {
+            // Watchdog abortou sem texto — tenta de novo com mensagem mais simples
+            console.log('[Synap] Watchdog timeout sem texto — tentando de novo');
+            hasToolCallsToProcess = true;
+          } else {
+            // Outro erro — adiciona aviso no texto
+            iterationText += `\n\n⚠️ ${streamErrorMsg}`;
+          }
         }
 
         // Process tool calls if any were returned
