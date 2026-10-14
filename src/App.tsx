@@ -2871,10 +2871,21 @@ function AppContent() {
         return prev;
       });
     } catch (err: any) {
+      const errMsgStr = err?.message || '';
       const isAbort =
         err?.name === 'AbortError' ||
-        (err?.message || '').includes('aborted') ||
-        (err?.message || '').includes('The operation was aborted');
+        errMsgStr.includes('aborted') ||
+        errMsgStr.includes('The operation was aborted');
+
+      // "Stream was cancelled" — servidor (NVIDIA/CF) cortou o streaming.
+      // Diferente de abort: não foi o usuário nem o SO, foi o backend.
+      // Tratamos igual ao "tela apagou": se tem texto parcial, salva pra retomar.
+      const isStreamCancelled =
+        errMsgStr.includes('Stream was cancelled') ||
+        errMsgStr.includes('stream cancelled') ||
+        errMsgStr.includes('Stream cancelled') ||
+        errMsgStr.includes('connection reset') ||
+        errMsgStr.includes('network error') && errMsgStr.includes('stream');
 
       if (isAbort) {
         // Abort pode ser de 3 fontes:
@@ -2944,6 +2955,66 @@ function AppContent() {
             // Não mostra erro, só loga
             console.log('[Synap] Abort sem texto parcial — provavelmente TTFB interrompido por tela apagada.');
           }
+        }
+      } else if (isStreamCancelled) {
+        // Stream cancelled pelo servidor (NVIDIA/CF cortou o streaming)
+        // Mesma lógica de "tela apagou": se tem texto parcial, salva pra retomar.
+        const partialText = streamingAccumulatedTextRef.current;
+        const partialReasoning = streamingAccumulatedReasoningRef.current;
+        console.log('[Synap] Stream cancelled pelo servidor — texto parcial:', partialText.length, 'chars');
+
+        if (partialText && partialText.trim().length > 30) {
+          pendingResumeRef.current = {
+            conversationId: currentConversationIdRef.current,
+            assistantMessageId: currentAssistantMessageIdRef.current,
+            accumulatedText: partialText,
+            accumulatedReasoning: partialReasoning,
+            timestamp: Date.now(),
+          };
+          // Marca a mensagem visualmente
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id !== currentConversationIdRef.current) return c;
+              return {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === currentAssistantMessageIdRef.current
+                    ? {
+                        ...m,
+                        content: m.content
+                          ? `${m.content}\n\n---\n⏸️ **Streaming cortado pelo servidor** — vou continuar de onde parei automaticamente.`
+                          : m.content,
+                      }
+                    : m
+                ),
+              };
+            })
+          );
+          // Auto-retoma depois de 1.5s (dá tempo do servidor recuperar)
+          setTimeout(() => {
+            if (pendingResumeRef.current && pendingResumeRef.current.conversationId === currentConversationIdRef.current) {
+              console.log('[Synap] Auto-retomando após stream cancelled...');
+              const pending = pendingResumeRef.current;
+              pendingResumeRef.current = null;
+              // Só retoma se ainda tá na mesma conversa e não tem streaming em curso
+              if (pending.conversationId === activeId && !isStreaming) {
+                handleSendMessage(
+                  'Continue exatamente de onde você parou. Não repita o que já fez. Apenas continue a resposta.',
+                  [],
+                  []
+                );
+              }
+            }
+          }, 1500);
+        } else {
+          // Sem texto parcial — mostra erro amigável sugerindo tentar de novo
+          setErrorMessage(
+            'Streaming cortado pelo servidor (NVIDIA ou Cloudflare). Possíveis causas:\n' +
+            '• Rate limit temporário\n' +
+            '• Modelo sobrecarregado\n' +
+            '• CPU time do Worker excedido\n\n' +
+            'Tente novamente em alguns segundos. Se persistir, troque de modelo ou reduza o tamanho da mensagem.'
+          );
         }
       } else {
         console.error('Chat generation error:', err);
