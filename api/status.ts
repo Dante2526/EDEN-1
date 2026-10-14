@@ -1,15 +1,19 @@
+import { Env, getEnv } from '../lib/server/env';
+
 export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(_req: Request) {
-  const rawKey = process.env.NVIDIA_API_KEY || '';
+export default async function handler(_req: Request, envArg?: Env) {
+  const env = getEnv(envArg);
+
+  const rawKey = env.NVIDIA_API_KEY || '';
   const isPlaceholder = rawKey === 'sua_key_aqui' || rawKey === 'nvapi-your-key-here' || rawKey.trim() === '';
 
-  const rawGemini = process.env.GEMINI_API_KEY || '';
+  const rawGemini = env.GEMINI_API_KEY || '';
   const isGeminiPlaceholder = rawGemini === 'MY_GEMINI_API_KEY' || rawGemini.trim() === '';
 
-  const rawGitHub = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT || '';
+  const rawGitHub = env.GITHUB_TOKEN || env.GITHUB_PAT || '';
   const isGitHubPlaceholder =
     rawGitHub === 'ghp_your_github_token_here' || rawGitHub.trim() === '';
 

@@ -1,4 +1,5 @@
 import { checkAuthAndRateLimit, ALLOWED_MODELS, isCloudflareModel } from '../lib/server/_security';
+import { Env, getEnv } from '../lib/server/env';
 
 export const config = {
   runtime: 'edge',
@@ -108,9 +109,10 @@ class CloudflareThinkSplitter {
   }
 }
 
-export default async function handler(req: Request) {
+export default async function handler(req: Request, envArg?: Env) {
+  const env = getEnv(envArg);
   try {
-    const securityResponse = await checkAuthAndRateLimit(req);
+    const securityResponse = await checkAuthAndRateLimit(req, env);
     if (securityResponse) return securityResponse;
   } catch (secErr: any) {
     console.error('Security check error:', secErr);
@@ -158,19 +160,19 @@ export default async function handler(req: Request) {
     let cfApiToken: string | undefined;
 
     if (usingCloudflare) {
-      cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
-      cfApiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
+      cfAccountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
+      cfApiToken = env.CLOUDFLARE_API_TOKEN?.trim();
       if (!cfAccountId || !cfApiToken) {
         return new Response(
           JSON.stringify({
             error:
-              'Cloudflare não configurada. Defina CLOUDFLARE_ACCOUNT_ID e CLOUDFLARE_API_TOKEN nas Environment Variables da Vercel.',
+              'Cloudflare não configurada. Defina CLOUDFLARE_ACCOUNT_ID e CLOUDFLARE_API_TOKEN nas variáveis de ambiente (CF Pages dashboard).',
           }),
           { status: 401, headers: { 'Content-Type': 'application/json' } }
         );
       }
     } else {
-      apiKey = process.env.NVIDIA_API_KEY;
+      apiKey = env.NVIDIA_API_KEY;
       if (!apiKey || apiKey === 'sua_key_aqui' || apiKey === 'nvapi-your-key-here' || apiKey.trim() === '') {
         return new Response(
           JSON.stringify({ error: 'NVIDIA_API_KEY não configurada. Adicione nas Environment Variables da Vercel.' }),

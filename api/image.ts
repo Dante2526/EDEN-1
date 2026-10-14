@@ -1,11 +1,12 @@
 import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { Env } from '../lib/server/env';
 
 export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(req: Request): Promise<Response> {
-  const securityResponse = await checkAuthAndRateLimit(req);
+export default async function handler(req: Request, envArg?: Env): Promise<Response> {
+  const securityResponse = await checkAuthAndRateLimit(req, envArg);
   if (securityResponse) return securityResponse;
 
   let prompt = '';

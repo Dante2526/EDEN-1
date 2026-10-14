@@ -1,0 +1,7 @@
+# Cloudflare Pages _redirects — SPA fallback
+# ============================
+# IMPORTANTE: não usar /* /index.html 200 porque entra em loop (warning do wrangler).
+# Em vez disso, o _worker.ts já faz o fallback pra /index.html quando o ASSETS binding
+# retorna 404 (caso de rotas do SPA como /chat/abc). O _redirects aqui só cuida de
+# paths específicos que devem sempre ir pro index.html.
+# (Vazio por enquanto — o fallback está no _worker.ts via env.ASSETS.fetch)

@@ -1,4 +1,5 @@
 import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { Env } from '../lib/server/env';
 
 /**
  * Synap Downloader API
@@ -11,8 +12,9 @@ import { checkAuthAndRateLimit } from '../lib/server/_security';
  */
 
 export const config = {
-  runtime: 'nodejs',
-  maxDuration: 60,
+  // No CF Worker não há distinction Node/Edge — tudo é V8 isolate.
+  // Mantemos o campo por compat retroativa com a Vercel se voltarmos.
+  runtime: 'edge',
 };
 
 // Lista de instâncias públicas do cobalt. Caso uma falhe, tentamos a próxima.
@@ -137,8 +139,8 @@ async function tryCobaltInstance(
   return data;
 }
 
-export default async function handler(req: Request): Promise<Response> {
-  const securityResponse = await checkAuthAndRateLimit(req);
+export default async function handler(req: Request, envArg?: Env): Promise<Response> {
+  const securityResponse = await checkAuthAndRateLimit(req, envArg);
   if (securityResponse) return securityResponse;
 
   // Aceita GET (query string) ou POST (body JSON)

@@ -1,4 +1,5 @@
 import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { Env } from '../lib/server/env';
 
 export const config = {
   runtime: 'edge',
@@ -83,8 +84,8 @@ function extractTextFromHtml(html: string): { title: string; content: string; le
   return { title, content: clean, length: clean.length, truncated };
 }
 
-export default async function handler(req: Request): Promise<Response> {
-  const securityResponse = await checkAuthAndRateLimit(req);
+export default async function handler(req: Request, envArg?: Env): Promise<Response> {
+  const securityResponse = await checkAuthAndRateLimit(req, envArg);
   if (securityResponse) return securityResponse;
 
   const reqUrl = new URL(req.url);

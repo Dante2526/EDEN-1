@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build",
+    "build": "vite build && node scripts/copy-cf-artifacts.mjs",
+    "build:cf": "vite build && node scripts/copy-cf-artifacts.mjs",
+    "dev:cf": "vite build && node scripts/copy-cf-artifacts.mjs && wrangler pages dev dist --port 8788",
+    "deploy:cf": "vite build && node scripts/copy-cf-artifacts.mjs && wrangler pages deploy dist",
     "start": "cross-env NODE_ENV=production tsx server.ts",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "rm -rf dist server.js .wrangler",
     "lint": "tsc --noEmit",
     "test": "tsx --test src/lib/*.test.ts"
   },
@@ -49,6 +52,7 @@
     "autoprefixer": "^10.6.1",
     "esbuild": "^0.25.12",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.151.0"
   }
 }

@@ -1,4 +1,5 @@
 import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { Env } from '../lib/server/env';
 
 export const config = {
   runtime: 'edge',
@@ -189,8 +190,8 @@ async function searchDuckDuckGoApi(query: string): Promise<SearchResult[]> {
   return results;
 }
 
-export default async function handler(req: Request): Promise<Response> {
-  const securityResponse = await checkAuthAndRateLimit(req);
+export default async function handler(req: Request, envArg?: Env): Promise<Response> {
+  const securityResponse = await checkAuthAndRateLimit(req, envArg);
   if (securityResponse) return securityResponse;
 
   const url = new URL(req.url);

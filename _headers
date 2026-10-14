@@ -1,0 +1,26 @@
+# ====== /api/* — headers anti-cache + sem buffering (crítico para SSE) ======
+/api/*
+  Cache-Control: no-cache, no-transform
+  X-Accel-Buffering: no
+  X-Content-Type-Options: nosniff
+
+# ====== Static assets — cache agressivo (vite usa hashes nos nomes) ======
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ====== Service Worker — nunca cachear (precisa sempre pegar a versão nova) ======
+/sw.js
+  Cache-Control: no-cache
+
+# ====== Manifest — cache moderado ======
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+# ====== CSP + segurança para tudo que NÃO é /api/* ======
+# (Cloudflare _headers: a flag :splat não existe como no Netlify; usamos
+#  exclusão via pattern. Aplicamos a tudo e depois sobrescrevemos /api/*.)
+/*
+  Content-Security-Policy: default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://esm.sh https://cdn.jsdelivr.net https://cdn.tailwindcss.com blob:; style-src 'self' 'unsafe-inline' https://unpkg.com https://esm.sh https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https: wss: blob:; font-src 'self' data: https: https://fonts.gstatic.com; worker-src 'self' blob:; frame-src 'self' blob: data: https://stackblitz.com https://*.stackblitz.com;
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN

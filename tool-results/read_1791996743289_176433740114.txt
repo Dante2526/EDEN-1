@@ -1,0 +1,626 @@
+     1→import { checkAuthAndRateLimit, ALLOWED_MODELS, isCloudflareModel } from '../lib/server/_security';
+     2→
+     3→export const config = {
+     4→  runtime: 'edge',
+     5→};
+     6→
+     7→function maxTokensFor(effort: string): number {
+     8→  if (effort === 'max') return 12288;
+     9→  if (effort === 'high' || effort === 'medium') return 8192;
+    10→  return 4096;
+    11→}
+    12→
+    13→// ===========================================================================
+    14→// Transformador SSE: extrai <think>...</think> do delta.content da Cloudflare
+    15→// e reescreve como delta.reasoning_content, mantendo o resto em delta.content.
+    16→//
+    17→// Por que isso existe?
+    18→//   - O DeepSeek R1-Distill-Qwen-32B da Cloudflare retorna o raciocínio embutido
+    19→//     em `delta.content` entre tags <think>...</think>.
+    20→//   - O frontend do Synap já sabe separar `delta.reasoning_content` (mostrado na
+    21→//     Safe Thinking Orb e ignorado pelo TTS) de `delta.content` (resposta final).
+    22→//   - Então interceptamos os chunks SSE aqui no backend e "traduzimos" o formato
+    23→//     da Cloudflare para o formato NVIDIA/GLM, deixando o frontend intacto.
+    24→//
+    25→// Como funciona:
+    26→//   - Mantemos um buffer acumulando o `content` de todos os chunks recebidos.
+    27→//   - A cada novo chunk, processamos o buffer acumulado procurando por <think> e
+    28→//     </think>, emitindo deltas de reasoning ou de content conforme apropriado.
+    29→//   - Sempre preservamos o texto incompleto (ex.: "<thi" sem fechar) para o
+    30→//     próximo chunk.
+    31→//   - No fim do stream (DONE), fazemos um flush final.
+    32→// ===========================================================================
+    33→class CloudflareThinkSplitter {
+    34→  private contentBuffer: string = '';
+    35→  private inThinking: boolean = false;
+    36→  private thinkTagEmitted: boolean = false;
+    37→
+    38→  /** Processa um chunk de content (string) e retorna os SSEs a emitir. */
+    39→  feed(contentDelta: string): { reasoningDelta?: string; contentDelta?: string } {
+    40→    if (!contentDelta) return {};
+    41→    this.contentBuffer += contentDelta;
+    42→
+    43→    const out: { reasoningDelta?: string; contentDelta?: string } = {};
+    44→    const OPEN = String.fromCharCode(60, 116, 104, 105, 110, 107, 62);   //  Dems
+    45→    const CLOSE = String.fromCharCode(60, 47, 116, 104, 105, 110, 107, 62); //  Democrats
+    46→
+    47→    // Loop: em um único feed podemos ter OPEN ... CLOSE ... OPEN ... CLOSE.
+    48→    // IMPORTANTE: depois de cada slice() no contentBuffer, tudo que sobra é
+    49→    // "não emitido por construção", então não rastreamos offsets — só
+    50→    // mantemos um lookahead de OPEN/CLOSE.length chars no fim (caso a tag
+    51→    // venha cortada entre dois chunks) e soltamos o resto no flush().
+    52→    while (true) {
+    53→      if (!this.inThinking) {
+    54→        const openIdx = this.contentBuffer.indexOf(OPEN);
+    55→        if (openIdx !== -1) {
+    56→          // Emite como content tudo que veio antes do OPEN.
+    57→          if (openIdx > 0) {
+    58→            out.contentDelta = (out.contentDelta || '') + this.contentBuffer.slice(0, openIdx);
+    59→          }
+    60→          this.contentBuffer = this.contentBuffer.slice(openIdx + OPEN.length);
+    61→          this.inThinking = true;
+    62→          this.thinkTagEmitted = true;
+    63→          continue; // volta pro while pra procurar CLOSE
+    64→        }
+    65→        // Não achou OPEN: emite tudo exceto os últimos OPEN.length chars
+    66→        // (lookahead de segurança, caso a tag venha cortada no próximo chunk).
+    67→        if (this.contentBuffer.length > OPEN.length) {
+    68→          const safeLen = this.contentBuffer.length - OPEN.length;
+    69→          out.contentDelta = (out.contentDelta || '') + this.contentBuffer.slice(0, safeLen);
+    70→          this.contentBuffer = this.contentBuffer.slice(safeLen);
+    71→        }
+    72→        break; // buffer pequeno e sem OPEN: espera próximo chunk
+    73→      }
+    74→
+    75→      // Estamos dentro de  Dems... Democrats: procura o fechamento.
+    76→      const closeIdx = this.contentBuffer.indexOf(CLOSE);
+    77→      if (closeIdx !== -1) {
+    78→        if (closeIdx > 0) {
+    79→          out.reasoningDelta = (out.reasoningDelta || '') + this.contentBuffer.slice(0, closeIdx);
+    80→        }
+    81→        this.contentBuffer = this.contentBuffer.slice(closeIdx + CLOSE.length);
+    82→        this.inThinking = false;
+    83→        continue; // volta pro while pra procurar próximo OPEN
+    84→      }
+    85→      // Não fechou ainda: emite tudo exceto os últimos CLOSE.length chars
+    86→      // (lookahead de segurança, caso a tag de fechamento venha cortada).
+    87→      if (this.contentBuffer.length > CLOSE.length) {
+    88→        const safeLen = this.contentBuffer.length - CLOSE.length;
+    89→        out.reasoningDelta = (out.reasoningDelta || '') + this.contentBuffer.slice(0, safeLen);
+    90→        this.contentBuffer = this.contentBuffer.slice(safeLen);
+    91→      }
+    92→      break; // buffer pequeno e sem CLOSE: espera próximo chunk
+    93→    }
+    94→    return out;
+    95→  }
+    96→
+    97→  /** Flush final: solta qualquer texto restante no buffer. */
+    98→  flush(): { reasoningDelta?: string; contentDelta?: string } {
+    99→    const out: { reasoningDelta?: string; contentDelta?: string } = {};
+   100→    if (this.inThinking) {
+   101→      // Nunca fechou  Dems: emite tudo como reasoning (caso patológico).
+   102→      if (this.contentBuffer) out.reasoningDelta = this.contentBuffer;
+   103→    } else {
+   104→      if (this.contentBuffer) out.contentDelta = this.contentBuffer;
+   105→    }
+   106→    this.contentBuffer = '';
+   107→    return out;
+   108→  }
+   109→}
+   110→
+   111→export default async function handler(req: Request) {
+   112→  try {
+   113→    const securityResponse = await checkAuthAndRateLimit(req);
+   114→    if (securityResponse) return securityResponse;
+   115→  } catch (secErr: any) {
+   116→    console.error('Security check error:', secErr);
+   117→  }
+   118→
+   119→  if (req.method !== 'POST') {
+   120→    return new Response(JSON.stringify({ error: 'Método não permitido.' }), {
+   121→      status: 405, headers: { 'Content-Type': 'application/json' },
+   122→    });
+   123→  }
+   124→
+   125→  try {
+   126→    const body = await req.json();
+   127→    let { messages } = body;
+   128→    const { model, reasoning_effort, tools } = body;
+   129→
+   130→    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+   131→      return new Response(JSON.stringify({ error: 'Nenhuma mensagem informada.' }), {
+   132→        status: 400, headers: { 'Content-Type': 'application/json' },
+   133→      });
+   134→    }
+   135→
+   136→    // Corte de 80 mensagens — sem deixar tool órfã no início
+   137→    if (messages.length > 80) {
+   138→      const sys = messages[0]?.role === 'system' ? [messages[0]] : [];
+   139→      let trimmed = messages.slice(-79);
+   140→      while (trimmed.length > 0 && trimmed[0].role === 'tool') {
+   141→        trimmed = trimmed.slice(1);
+   142→      }
+   143→      messages = [...sys, ...trimmed];
+   144→    }
+   145→
+   146→    const selectedModel = model || 'z-ai/glm-5.3';
+   147→    if (!ALLOWED_MODELS.includes(selectedModel)) {
+   148→      return new Response(JSON.stringify({ error: 'Modelo não autorizado.' }), {
+   149→        status: 403, headers: { 'Content-Type': 'application/json' },
+   150→      });
+   151→    }
+   152→
+   153→    const usingCloudflare = isCloudflareModel(selectedModel);
+   154→
+   155→    // ====== VALIDAÇÃO DE CREDENCIAIS POR PROVEDOR ======
+   156→    let apiKey: string | undefined;
+   157→    let cfAccountId: string | undefined;
+   158→    let cfApiToken: string | undefined;
+   159→
+   160→    if (usingCloudflare) {
+   161→      cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+   162→      cfApiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
+   163→      if (!cfAccountId || !cfApiToken) {
+   164→        return new Response(
+   165→          JSON.stringify({
+   166→            error:
+   167→              'Cloudflare não configurada. Defina CLOUDFLARE_ACCOUNT_ID e CLOUDFLARE_API_TOKEN nas Environment Variables da Vercel.',
+   168→          }),
+   169→          { status: 401, headers: { 'Content-Type': 'application/json' } }
+   170→        );
+   171→      }
+   172→    } else {
+   173→      apiKey = process.env.NVIDIA_API_KEY;
+   174→      if (!apiKey || apiKey === 'sua_key_aqui' || apiKey === 'nvapi-your-key-here' || apiKey.trim() === '') {
+   175→        return new Response(
+   176→          JSON.stringify({ error: 'NVIDIA_API_KEY não configurada. Adicione nas Environment Variables da Vercel.' }),
+   177→          { status: 401, headers: { 'Content-Type': 'application/json' } }
+   178→        );
+   179→      }
+   180→    }
+   181→
+   182→    const selectedEffort = reasoning_effort || 'low';
+   183→    const apiEffort = selectedEffort === 'max' ? 'high' : selectedEffort;
+   184→
+   185→    const hasImages = messages.some((m: any) => m.images && Array.isArray(m.images) && m.images.length > 0);
+   186→
+   187→    // Validação de visão: apenas GLM-5.3-Flash e Kimi K3 suportam imagens.
+   188→    // Modelos @cf/* (R1 Distill) não suportam visão.
+   189→    const isVisionCapable = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'moonshotai/kimi-k3';
+   190→    if (hasImages && !isVisionCapable) {
+   191→      return new Response(
+   192→        JSON.stringify({ error: 'Este modelo não suporta imagens. Use GLM-5.3-Flash ou Kimi K3.' }),
+   193→        { status: 400, headers: { 'Content-Type': 'application/json' } }
+   194→      );
+   195→    }
+   196→
+   197→    let lastUserMsgIndex = -1;
+   198→    for (let i = messages.length - 1; i >= 0; i--) {
+   199→      if (messages[i].role === 'user') { lastUserMsgIndex = i; break; }
+   200→    }
+   201→
+   202→    // Formata mensagens adaptando caso o modelo não use tools (evita erro 400 no DeepSeek/Kimi/CF)
+   203→    const buildFormattedMessages = (allowToolsInHistory: boolean) => {
+   204→      return messages.map((m: any, index: number) => {
+   205→        if (m.role === 'tool') {
+   206→          if (!allowToolsInHistory) {
+   207→            return { role: 'user', content: `[Resultado da ferramenta ${m.tool_call_id || ''}]: ${m.content || ''}` };
+   208→          }
+   209→          return { role: 'tool', content: m.content || '', tool_call_id: m.tool_call_id };
+   210→        }
+   211→        if (m.role === 'assistant' && m.tool_calls) {
+   212→          if (!allowToolsInHistory) {
+   213→            return { role: 'assistant', content: m.content || 'Executando ferramentas...' };
+   214→          }
+   215→          return { role: 'assistant', content: m.content || null, tool_calls: m.tool_calls };
+   216→        }
+   217→        if (m.role === 'user' && m.images && Array.isArray(m.images) && m.images.length > 0) {
+   218→          if (index === lastUserMsgIndex) {
+   219→            return {
+   220→              role: 'user',
+   221→              content: [
+   222→                { type: 'text', text: m.content || '' },
+   223→                ...m.images.map((img: string) => ({ type: 'image_url', image_url: { url: img } })),
+   224→              ],
+   225→            };
+   226→          }
+   227→          return { role: 'user', content: `${m.content || ''}\n[Nota: ${m.images.length} imagem(ns) omitida(s)]` };
+   228→        }
+   229→        return { role: m.role, content: m.content || '' };
+   230→      });
+   231→    };
+   232→
+   233→    // Modelos NVIDIA que suportam tools: GLM-5.3 e GLM-5.3-Flash.
+   234→    // Modelos Cloudflare não suportam tools nativamente via endpoint OpenAI-compat.
+   235→    const modelSupportsTools = !usingCloudflare && (selectedModel === 'z-ai/glm-5.3' || selectedModel === 'z-ai/glm-5.3-flash');
+   236→
+   237→    // ====== BUILDER DE PAYLOAD — NUVEM (NVIDIA) ======
+   238→    const createNvidiaPayload = (includeReasoning = true, includeTools = true, safeTokenLimit = false) => {
+   239→      const hasToolsActive = includeTools && modelSupportsTools && tools && Array.isArray(tools) && tools.length > 0;
+   240→      const p: any = {
+   241→        model: selectedModel,
+   242→        messages: buildFormattedMessages(Boolean(hasToolsActive)),
+   243→        stream: true,
+   244→        max_tokens: safeTokenLimit ? 4096 : maxTokensFor(selectedEffort),
+   245→      };
+   246→      if (selectedModel === 'z-ai/glm-5.3') {
+   247→        p.stream_options = { include_usage: true };
+   248→      }
+   249→      if (includeReasoning && apiEffort && apiEffort !== 'none' && apiEffort !== 'default') {
+   250→        if (selectedModel === 'z-ai/glm-5.3') {
+   251→          p.reasoning_effort = apiEffort;
+   252→        }
+   253→      }
+   254→      if (hasToolsActive) {
+   255→        p.tools = tools;
+   256→        p.tool_choice = 'auto';
+   257→      }
+   258→      return p;
+   259→    };
+   260→
+   261→    // ====== BUILDER DE PAYLOAD — CLOUDFLARE WORKERS AI ======
+   262→    // O R1-Distill 32B da CF:
+   263→    //   - Não suporta reasoning_effort (o R1 sempre raciocina; o esforço é fixo).
+   264→    //   - Não suporta tools via endpoint OpenAI-compat.
+   265→    //   - Não suporta stream_options.include_usage.
+   266→    //   - max_tokens recomendado: 4096 (limite seguro para evitar cortes e custos altos).
+   267→    //   - Retorna o raciocínio embutido em delta.content entre <think>...</think>.
+   268→    //     O transformador CloudflareThinkSplitter (acima) cuida de separar isso.
+   269→    const createCloudflarePayload = () => {
+   270→      const p: any = {
+   271→        model: selectedModel,
+   272→        messages: buildFormattedMessages(false),
+   273→        stream: true,
+   274→        max_tokens: 4096,
+   275→        temperature: 0.6, // recomendado pela DeepSeek para R1-distill
+   276→      };
+   277→      return p;
+   278→    };
+   279→
+   280→    let payload = usingCloudflare
+   281→      ? createCloudflarePayload()
+   282→      : createNvidiaPayload(true, true, false);
+   283→
+   284→    console.log(
+   285→      `[chat] provider=${usingCloudflare ? 'cloudflare' : 'nvidia'} model=${selectedModel} effort=${selectedEffort}->${apiEffort} tools=${payload.tools?.length || 0}`
+   286→    );
+   287→
+   288→    const enc = new TextEncoder();
+   289→    const dec = new TextDecoder();
+   290→
+   291→    const stream = new ReadableStream({
+   292→      async start(controller) {
+   293→        let lastActivity = Date.now();
+   294→        let isMidChunk = false;
+   295→
+   296→        // 1. Primeiro byte imediato para destravar o TTFB de 25s da Vercel
+   297→        controller.enqueue(enc.encode(': keepalive\n\n'));
+   298→
+   299→        // 2. Heartbeat a cada 5s enquanto aguarda a IA pensar
+   300→        const timer = setInterval(() => {
+   301→          if (Date.now() - lastActivity >= 4500 && !isMidChunk) {
+   302→            try {
+   303→              controller.enqueue(enc.encode(': keepalive\n\n'));
+   304→            } catch {
+   305→              clearInterval(timer);
+   306→            }
+   307→          }
+   308→        }, 5000);
+   309→
+   310→        req.signal?.addEventListener('abort', () => {
+   311→          clearInterval(timer);
+   312→          try { controller.close(); } catch {}
+   313→        });
+   314→
+   315→        // ====== FETCH COM TIMEOUT (45s) ======
+   316→        const fetchWithTimeout = async (bodyPayload: any) => {
+   317→          const url = usingCloudflare
+   318→            ? `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1/chat/completions`
+   319→            : 'https://integrate.api.nvidia.com/v1/chat/completions';
+   320→
+   321→          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+   322→          if (usingCloudflare) {
+   323→            headers['Authorization'] = `Bearer ${cfApiToken}`;
+   324→          } else {
+   325→            headers['Authorization'] = `Bearer ${(apiKey as string).trim()}`;
+   326→          }
+   327→
+   328→          const fetchCtrl = new AbortController();
+   329→          const fetchTimer = setTimeout(() => fetchCtrl.abort(), 45000);
+   330→          try {
+   331→            const r = await fetch(url, {
+   332→              method: 'POST',
+   333→              headers,
+   334→              body: JSON.stringify(bodyPayload),
+   335→              signal: fetchCtrl.signal,
+   336→            });
+   337→            clearTimeout(fetchTimer);
+   338→            return r;
+   339→          } catch (err) {
+   340→            clearTimeout(fetchTimer);
+   341→            throw err;
+   342→          }
+   343→        };
+   344→
+   345→        // ====== PIPE DE ERRO PADRÃO ======
+   346→        const sendErrorAndClose = (errMsg: string) => {
+   347→          try {
+   348→            controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: errMsg })}\n\n`));
+   349→            controller.enqueue(
+   350→              enc.encode(
+   351→                `data: ${JSON.stringify({
+   352→                  choices: [{ index: 0, delta: { content: `\n\n⚠️ **Erro:** ${errMsg}` }, finish_reason: 'stop' }],
+   353→                })}\n\n`
+   354→              )
+   355→            );
+   356→            controller.enqueue(enc.encode('data: [DONE]\n\n'));
+   357→            controller.close();
+   358→          } catch {}
+   359→          clearInterval(timer);
+   360→        };
+   361→
+   362→        try {
+   363→          let res = await fetchWithTimeout(payload);
+   364→
+   365→          // Auto-retry para Rate Limit (429) ou erro temporário de gateway (502/503/504)
+   366→          if ((res.status === 429 || res.status >= 502) && !req.signal?.aborted) {
+   367→            await res.body?.cancel().catch(() => {});
+   368→            await new Promise((r) => setTimeout(r, 2000));
+   369→            res = await fetchWithTimeout(payload);
+   370→          }
+   371→
+   372→          // ====== FALLBACKS (apenas NVIDIA — CF não tem reasoning/tools p/ recuar) ======
+   373→          if (!usingCloudflare) {
+   374→            // Fallback 1: 400/422 com reasoning_effort -> tenta sem reasoning_effort
+   375→            if (!res.ok && (res.status === 400 || res.status === 422) && payload.reasoning_effort) {
+   376→              await res.body?.cancel().catch(() => {});
+   377→              payload = createNvidiaPayload(false, true, false);
+   378→              res = await fetchWithTimeout(payload);
+   379→            }
+   380→            // Fallback 2: 400/422 com tools -> tenta sem tools
+   381→            if (!res.ok && (res.status === 400 || res.status === 422) && payload.tools) {
+   382→              await res.body?.cancel().catch(() => {});
+   383→              payload = createNvidiaPayload(false, false, false);
+   384→              res = await fetchWithTimeout(payload);
+   385→            }
+   386→            // Fallback 3: 400/422 por excesso de max_tokens -> reduz para 4096
+   387→            if (!res.ok && (res.status === 400 || res.status === 422) && payload.max_tokens > 4096) {
+   388→              await res.body?.cancel().catch(() => {});
+   389→              payload = createNvidiaPayload(false, false, true);
+   390→              res = await fetchWithTimeout(payload);
+   391→            }
+   392→          }
+   393→
+   394→          if (!res.ok || !res.body) {
+   395→            const errText = await res.text().catch(() => 'Erro desconhecido');
+   396→            let errMsg = usingCloudflare
+   397→              ? `Erro da API Cloudflare (${res.status})`
+   398→              : `Erro da API NVIDIA (${res.status})`;
+   399→            try {
+   400→              const parsed = JSON.parse(errText);
+   401→              if (usingCloudflare && parsed?.errors?.length) {
+   402→                errMsg = parsed.errors.map((e: any) => e.message || JSON.stringify(e)).join('; ');
+   403→              } else if (parsed?.error?.message) {
+   404→                errMsg = parsed.error.message;
+   405→              } else if (parsed?.message) {
+   406→                errMsg = parsed.message;
+   407→              } else if (parsed?.detail) {
+   408→                errMsg = String(parsed.detail);
+   409→              }
+   410→            } catch {
+   411→              if (errText) errMsg = errText.slice(0, 300);
+   412→            }
+   413→            if (res.status === 401) {
+   414→              errMsg = usingCloudflare
+   415→                ? 'CLOUDFLARE_API_TOKEN inválido ou sem permissão de Workers AI.'
+   416→                : 'Chave NVIDIA_API_KEY inválida.';
+   417→            } else if (res.status === 429) {
+   418→              errMsg = 'Limite de requisições atingido (Rate Limit). Aguarde alguns segundos.';
+   419→            }
+   420→            sendErrorAndClose(errMsg);
+   421→            return;
+   422→          }
+   423→
+   424→          // ====== PIPE DOS DADOS REAIS ======
+   425→          // Se for Cloudflare, interceptamos o stream para separar <think> do content.
+   426→          const reader = res.body.getReader();
+   427→          let idleTimer: ReturnType<typeof setTimeout> | null = null;
+   428→          const resetIdleTimer = () => {
+   429→            if (idleTimer) clearTimeout(idleTimer);
+   430→            idleTimer = setTimeout(() => {
+   431→              console.log('[chat] IDLE TIMEOUT: provedor não mandou dados por 45s, abortando...');
+   432→              try { reader.cancel(); } catch {}
+   433→            }, 45000);
+   434→          };
+   435→          resetIdleTimer();
+   436→
+   437→          // Instanciado só quando necessário (CF). Para NVIDIA, é null e pulamos o rewrite.
+   438→          const splitter: CloudflareThinkSplitter | null = usingCloudflare ? new CloudflareThinkSplitter() : null;
+   439→          // Buffer de linha SSE bruta (para o caso de um chunk cortar no meio de uma linha)
+   440→          let sseBuffer = '';
+   441→
+   442→          try {
+   443→            while (true) {
+   444→              const { done, value } = await reader.read();
+   445→              if (done) break;
+   446→              resetIdleTimer();
+   447→              lastActivity = Date.now();
+   448→              const textChunk = dec.decode(value, { stream: true });
+   449→
+   450→              if (splitter) {
+   451→                const sp = splitter;
+   452→                // ====== MODO TRANSFORMADOR: parse SSE, separa <think>, reescreve ======
+   453→                sseBuffer += textChunk;
+   454→                isMidChunk = !sseBuffer.endsWith('\n');
+   455→                const lines = sseBuffer.split('\n');
+   456→                sseBuffer = lines.pop() || '';
+   457→
+   458→                for (const line of lines) {
+   459→                  const trimmed = line.trim();
+   460→                  if (!trimmed) continue;
+   461→                  if (trimmed.startsWith(':')) continue; // comentário keepalive
+   462→                  if (!trimmed.startsWith('data:')) continue;
+   463→
+   464→                  const dataStr = trimmed.replace(/^data:\s*/, '');
+   465→                  if (dataStr === '[DONE]') {
+   466→                    // Flush final antes de propagar o DONE
+   467→                    const flushed = sp.flush();
+   468→                    if (flushed.reasoningDelta) {
+   469→                      controller.enqueue(
+   470→                        enc.encode(
+   471→                          `data: ${JSON.stringify({
+   472→                            choices: [{ index: 0, delta: { reasoning_content: flushed.reasoningDelta } }],
+   473→                          })}\n\n`
+   474→                        )
+   475→                      );
+   476→                    }
+   477→                    if (flushed.contentDelta) {
+   478→                      controller.enqueue(
+   479→                        enc.encode(
+   480→                          `data: ${JSON.stringify({
+   481→                            choices: [{ index: 0, delta: { content: flushed.contentDelta } }],
+   482→                          })}\n\n`
+   483→                        )
+   484→                      );
+   485→                    }
+   486→                    controller.enqueue(enc.encode('data: [DONE]\n\n'));
+   487→                    continue;
+   488→                  }
+   489→
+   490→                  try {
+   491→                    const parsed = JSON.parse(dataStr);
+   492→                    const choice = parsed.choices?.[0];
+   493→                    const delta = choice?.delta || choice?.message;
+   494→
+   495→                    if (delta && typeof delta.content === 'string' && delta.content.length > 0) {
+   496→                      const split = sp.feed(delta.content);
+   497→                      // Constrói um novo chunk preservando tudo do original, só trocando o delta
+   498→                      const newDelta: any = { ...delta };
+   499→                      delete newDelta.content;
+   500→                      if (split.reasoningDelta) newDelta.reasoning_content = split.reasoningDelta;
+   501→                      if (split.contentDelta) newDelta.content = split.contentDelta;
+   502→
+   503→                      if (split.reasoningDelta || split.contentDelta) {
+   504→                        const newParsed = {
+   505→                          ...parsed,
+   506→                          choices: [{ ...choice, delta: newDelta }],
+   507→                        };
+   508→                        controller.enqueue(enc.encode(`data: ${JSON.stringify(newParsed)}\n\n`));
+   509→                      }
+   510→                      // Se nenhum dos dois veio (texto no buffer de lookahead), não emite nada
+   511→                      // ainda — vai ser emitido nos próximos chunks quando o lookahead fechar.
+   512→                    } else {
+   513→                      // Chunk sem content (ex.: só role, tool_calls, finish_reason) — repassa direto
+   514→                      controller.enqueue(enc.encode(`data: ${JSON.stringify(parsed)}\n\n`));
+   515→                    }
+   516→                  } catch {
+   517→                    // JSON malformado (raro): repassa a linha original
+   518→                    controller.enqueue(enc.encode(`${line}\n`));
+   519→                  }
+   520→                }
+   521→              } else {
+   522→                // ====== MODO PIPE DIRETO (NVIDIA) ======
+   523→                isMidChunk = !textChunk.endsWith('\n');
+   524→                controller.enqueue(value);
+   525→              }
+   526→            }
+   527→
+   528→            // Após o loop: se ainda há SSE buffer pendente no modo transformador, processa
+   529→            if (splitter && sseBuffer.trim()) {
+   530→              const spFinal = splitter;
+   531→              const trimmed = sseBuffer.trim();
+   532→              if (trimmed.startsWith('data:') && trimmed.replace(/^data:\s*/, '') === '[DONE]') {
+   533→                const flushed = spFinal.flush();
+   534→                if (flushed.reasoningDelta) {
+   535→                  controller.enqueue(
+   536→                    enc.encode(
+   537→                      `data: ${JSON.stringify({
+   538→                        choices: [{ index: 0, delta: { reasoning_content: flushed.reasoningDelta } }],
+   539→                      })}\n\n`
+   540→                    )
+   541→                  );
+   542→                }
+   543→                if (flushed.contentDelta) {
+   544→                  controller.enqueue(
+   545→                    enc.encode(
+   546→                      `data: ${JSON.stringify({
+   547→                        choices: [{ index: 0, delta: { content: flushed.contentDelta } }],
+   548→                      })}\n\n`
+   549→                    )
+   550→                  );
+   551→                }
+   552→                controller.enqueue(enc.encode('data: [DONE]\n\n'));
+   553→              } else if (trimmed.startsWith('data:')) {
+   554→                // Tenta processar como JSON normal (chunk final sem \n)
+   555→                try {
+   556→                  const dataStr = trimmed.replace(/^data:\s*/, '');
+   557→                  const parsed = JSON.parse(dataStr);
+   558→                  const choice = parsed.choices?.[0];
+   559→                  const delta = choice?.delta || choice?.message;
+   560→                  if (delta && typeof delta.content === 'string' && delta.content.length > 0) {
+   561→                    const split = spFinal.feed(delta.content);
+   562→                    const flushed = spFinal.flush();
+   563→                    const reasoningFull = (split.reasoningDelta || '') + (flushed.reasoningDelta || '');
+   564→                    const contentFull = (split.contentDelta || '') + (flushed.contentDelta || '');
+   565→                    const newDelta: any = { ...delta };
+   566→                    delete newDelta.content;
+   567→                    if (reasoningFull) newDelta.reasoning_content = reasoningFull;
+   568→                    if (contentFull) newDelta.content = contentFull;
+   569→                    if (reasoningFull || contentFull) {
+   570→                      controller.enqueue(
+   571→                        enc.encode(
+   572→                          `data: ${JSON.stringify({
+   573→                            ...parsed,
+   574→                            choices: [{ ...choice, delta: newDelta }],
+   575→                          })}\n\n`
+   576→                        )
+   577→                      );
+   578→                    }
+   579→                  } else {
+   580→                    controller.enqueue(enc.encode(`data: ${dataStr}\n\n`));
+   581→                  }
+   582→                } catch {
+   583→                  // ignora linha truncada irreconhecível
+   584→                }
+   585→              }
+   586→            }
+   587→          } finally {
+   588→            if (idleTimer) clearTimeout(idleTimer);
+   589→          }
+   590→          clearInterval(timer);
+   591→          controller.close();
+   592→        } catch (err: any) {
+   593→          clearInterval(timer);
+   594→          if (!req.signal?.aborted) {
+   595→            const errMsg = err?.message || 'Falha na conexão com a IA';
+   596→            sendErrorAndClose(errMsg);
+   597→          }
+   598→        }
+   599→      },
+   600→      async cancel() {},
+   601→    });
+   602→
+   603→    return new Response(stream, {
+   604→      status: 200,
+   605→      headers: {
+   606→        'Content-Type': 'text/event-stream; charset=utf-8',
+   607→        'Cache-Control': 'no-cache, no-transform',
+   608→        'Connection': 'keep-alive',
+   609→        'X-Accel-Buffering': 'no',
+   610→        'X-Content-Type-Options': 'nosniff',
+   611→      },
+   612→    });
+   613→  } catch (error: any) {
+   614→    console.error('Chat API error:', {
+   615→      message: error?.message,
+   616→      stack: error?.stack?.split('\n').slice(0, 5).join(' | '),
+   617→      name: error?.name,
+   618→    });
+   619→    const errMsg = error?.message || 'Erro ao processar mensagem.';
+   620→    return new Response(JSON.stringify({ error: errMsg, errorName: error?.name || 'Unknown' }), {
+   621→      status: 500,
+   622→      headers: { 'Content-Type': 'application/json' },
+   623→    });
+   624→  }
+   625→}
+   626→

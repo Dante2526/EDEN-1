@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Shared API handlers (Single Source of Truth for local Express and Vercel Serverless)
+// Shared API handlers (Single Source of Truth for local Express, Vercel, e CF Pages)
 import statusHandler from './api/status';
 import chatHandler from './api/chat';
 import ttsHandler from './api/tts';
@@ -11,6 +11,8 @@ import githubHandler from './api/github';
 import searchHandler from './api/search';
 import imageHandler from './api/image';
 import fetchUrlHandler from './api/fetch-url';
+import downloadHandler from './api/download';
+import { Env } from './lib/server/env';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
@@ -25,10 +27,11 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 app.use(express.raw({ type: '*/*', limit: '30mb' }));
 
 /**
- * Adapter that converts Express (req, res) to Web Standard (Request -> Response).
- * This eliminates code duplication completely between server.ts (Express) and api/*.ts (Vercel).
+ * Adapter que converte Express (req, res) → Web Standard (Request → Response).
+ * Monta um objeto `env` a partir de `process.env` (dev local) e passa como
+ * segundo argumento pro handler — mesma assinatura que o CF Pages usa.
  */
-function adaptWebHandler(handler: (req: Request) => Promise<Response>) {
+function adaptWebHandler(handler: (req: Request, env?: Env) => Promise<Response>) {
   return async (req: express.Request, res: express.Response) => {
     try {
       const protocol = req.protocol || 'http';
@@ -67,7 +70,22 @@ function adaptWebHandler(handler: (req: Request) => Promise<Response>) {
       }
 
       const webReq = new Request(url, init);
-      const webRes = await handler(webReq);
+      // Monta Env a partir de process.env (dev local). Em produção no CF Pages,
+      // o _worker.ts passa o env real do binding — aqui em dev é só um snapshot.
+      const env: Env = {
+        NVIDIA_API_KEY: process.env.NVIDIA_API_KEY,
+        CLOUDFLARE_ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID,
+        CLOUDFLARE_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN,
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+        GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+        GITHUB_PAT: process.env.GITHUB_PAT,
+        SYNAP_API_SECRET: process.env.SYNAP_API_SECRET,
+        UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+        UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+        KV_REST_API_URL: process.env.KV_REST_API_URL,
+        KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+      };
+      const webRes = await handler(webReq, env);
 
       res.status(webRes.status);
       webRes.headers.forEach((value, key) => {
@@ -116,6 +134,7 @@ app.all('/api/github', adaptWebHandler(githubHandler));
 app.all('/api/search', adaptWebHandler(searchHandler));
 app.all('/api/image', adaptWebHandler(imageHandler));
 app.all('/api/fetch-url', adaptWebHandler(fetchUrlHandler));
+app.all('/api/download', adaptWebHandler(downloadHandler));
 
 // Fallback explícito para rotas de API inexistentes (evita retornar HTML do SPA)
 app.all('/api/*', (req, res) => {

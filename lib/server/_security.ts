@@ -1,3 +1,5 @@
+import { Env, getEnv } from './env';
+
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const MAX_REQUESTS_PER_MINUTE = 120;
 
@@ -51,6 +53,11 @@ export function getHeader(req: any, name: string): string | null {
 }
 
 export function getClientIp(req: Request | any): string {
+  // No Cloudflare, cf-connecting-ip é o cabeçalho confiável (setado pela própria CF).
+  // Prioriza ele quando presente.
+  const cfIp = getHeader(req, 'cf-connecting-ip');
+  if (cfIp && cfIp.trim()) return cfIp.trim();
+
   const xForwardedFor = getHeader(req, 'x-forwarded-for');
   if (xForwardedFor) {
     const firstIp = xForwardedFor.split(',')[0].trim();
@@ -59,9 +66,6 @@ export function getClientIp(req: Request | any): string {
 
   const realIp = getHeader(req, 'x-real-ip');
   if (realIp && realIp.trim()) return realIp.trim();
-
-  const cfIp = getHeader(req, 'cf-connecting-ip');
-  if (cfIp && cfIp.trim()) return cfIp.trim();
 
   if (req?.socket?.remoteAddress) {
     return req.socket.remoteAddress;
@@ -91,12 +95,21 @@ export function timingSafeEqualStrings(a: string, b: string): boolean {
   return result === 0;
 }
 
-export async function checkRateLimit(req: Request, maxLimit = MAX_REQUESTS_PER_MINUTE): Promise<Response | null> {
+/**
+ * Verifica rate limit. Aceita `env` (CF bindings) opcional — se não recebido,
+ * cai pra `process.env` (dev local Node/Express).
+ */
+export async function checkRateLimit(
+  req: Request,
+  maxLimit = MAX_REQUESTS_PER_MINUTE,
+  envArg?: Env
+): Promise<Response | null> {
   const ip = getClientIp(req);
   if (ip === 'unknown') return null;
 
-  const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  const env = getEnv(envArg);
+  const redisUrl = env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL;
+  const redisToken = env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN;
 
   if (redisUrl && redisToken) {
     try {
@@ -119,7 +132,7 @@ export async function checkRateLimit(req: Request, maxLimit = MAX_REQUESTS_PER_M
       if (res.ok) {
         const data = await res.json();
         const count = data?.[0]?.result || 1;
-        
+
         if (count > maxLimit) {
           return new Response(JSON.stringify({ error: 'Too Many Requests: Limite de taxa excedido (global).' }), {
             status: 429,
@@ -164,11 +177,20 @@ export async function checkRateLimit(req: Request, maxLimit = MAX_REQUESTS_PER_M
   return null;
 }
 
-export async function checkAuthAndRateLimit(req: Request): Promise<Response | null> {
-  const rateLimitResponse = await checkRateLimit(req);
+/**
+ * Combo: rate limit + auth (header x-api-key). Aceita `env` (CF bindings)
+ * opcional. Se não recebido, cai pra `process.env` via `getEnv()`.
+ */
+export async function checkAuthAndRateLimit(
+  req: Request,
+  envArg?: Env
+): Promise<Response | null> {
+  const env = getEnv(envArg);
+
+  const rateLimitResponse = await checkRateLimit(req, MAX_REQUESTS_PER_MINUTE, env);
   if (rateLimitResponse) return rateLimitResponse;
 
-  const expectedSecret = process.env.SYNAP_API_SECRET?.trim();
+  const expectedSecret = env.SYNAP_API_SECRET?.trim();
   if (!expectedSecret) {
     return null;
   }

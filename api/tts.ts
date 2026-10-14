@@ -1,12 +1,14 @@
 import { EdgeTTS } from '@andresaya/edge-tts';
 import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { Env, getEnv } from '../lib/server/env';
 
 export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(req: Request) {
-  const securityResponse = await checkAuthAndRateLimit(req);
+export default async function handler(req: Request, envArg?: Env) {
+  const env = getEnv(envArg);
+  const securityResponse = await checkAuthAndRateLimit(req, env);
   if (securityResponse) return securityResponse;
 
   if (req.method !== 'POST') {
@@ -31,7 +33,7 @@ export default async function handler(req: Request) {
     const cleanText = text.trim();
 
     if (engine === 'gemini') {
-      const geminiApiKey = process.env.GEMINI_API_KEY;
+      const geminiApiKey = env.GEMINI_API_KEY;
       if (geminiApiKey && geminiApiKey.trim() && geminiApiKey !== 'MY_GEMINI_API_KEY') {
         try {
           const geminiRes = await fetch(

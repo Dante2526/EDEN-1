@@ -1,11 +1,12 @@
 import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { Env, getEnv } from '../lib/server/env';
 
 export const config = {
   runtime: 'edge',
 };
 
-function getEffectiveToken(req: Request): string | null {
-  const serverToken = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
+function getEffectiveToken(req: Request, env: Env = getEnv()): string | null {
+  const serverToken = env.GITHUB_TOKEN || env.GITHUB_PAT;
   if (serverToken && serverToken.trim() && serverToken !== 'ghp_your_github_token_here') return serverToken.trim();
   const authHeader = req.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -31,11 +32,12 @@ async function ghFetch(endpoint: string, token: string, method: string = 'GET', 
   return data;
 }
 
-export default async function handler(req: Request): Promise<Response> {
-  const securityResponse = await checkAuthAndRateLimit(req);
+export default async function handler(req: Request, envArg?: Env): Promise<Response> {
+  const env = getEnv(envArg);
+  const securityResponse = await checkAuthAndRateLimit(req, env);
   if (securityResponse) return securityResponse;
 
-  const token = getEffectiveToken(req);
+  const token = getEffectiveToken(req, env);
   if (!token) {
     return new Response(JSON.stringify({ error: 'Token do GitHub não fornecido.' }), {
       status: 401,

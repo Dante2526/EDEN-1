@@ -1,0 +1,40 @@
+# ===========================================================================
+# Synap — Configuração do Cloudflare Pages + Worker
+# ===========================================================================
+#
+# Este arquivo configura o wrangler CLI para deploy local e CI/CD.
+# Em produção, o CF Pages também lê este arquivo se você conectar o repo
+# GitHub e usar "Framework preset: Vite" com build command `npm run build`.
+#
+# Docs: https://developers.cloudflare.com/pages/functions/wrangler-configuration/
+# ===========================================================================
+
+name = "synap"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages: o diretório de saída do Vite é `dist/`.
+# O _worker.ts na raiz vira o entrypoint do Worker que intercepta /api/*.
+pages_build_output_dir = "dist"
+
+# ===========================================================================
+# Variáveis de ambiente (bindings)
+# ===========================================================================
+# Configuradas via dashboard do CF Pages em Settings → Environment variables.
+# Não coloque secrets aqui — use o dashboard ou `wrangler pages secret put`.
+# ===========================================================================
+
+# [vars]
+# Variáveis públicas (não-sensíveis) podem ser declaradas aqui.
+# Exemplo:
+# APP_NAME = "Synap"
+
+# Variáveis sensíveis (NÃO declarar aqui — usar dashboard):
+# - NVIDIA_API_KEY
+# - CLOUDFLARE_ACCOUNT_ID  (não é secret, mas mantemos no dashboard pra flexibilidade)
+# - CLOUDFLARE_API_TOKEN
+# - GEMINI_API_KEY
+# - GITHUB_TOKEN / GITHUB_PAT
+# - SYNAP_API_SECRET
+# - UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN
+# - VITE_API_SECRET (essa também vai como build env var, não runtime binding)
