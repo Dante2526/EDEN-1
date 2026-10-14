@@ -252,7 +252,7 @@ export default async function handler(req: Request) {
     // O Node.js permite 60s. Se a NVIDIA demorar mais que 12s pra responder,
     // entramos em slow stream mode com keepalives SSE e fazemos o pipe quando chegar.
     // Importante: o slowStream tem um timeout de 45s pra abortar antes do limite da Vercel (60s).
-    const SLOW_STREAM_TIMEOUT_MS = 45_000;
+    const SLOW_STREAM_TIMEOUT_MS = 40_000;
     const early = await Promise.race([
       firstFetch,
       new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), 12000)),
@@ -394,19 +394,51 @@ export default async function handler(req: Request) {
 
     const stream = new ReadableStream({
       async start(controller) {
-        // Timeout: se o stream ficar parado 45s, aborta antes do limite da Vercel (60s)
+        const startTime = Date.now();
+        const MAX_TOTAL_MS = 50_000; // 50s total — margem de 10s antes do limite Vercel (60s)
+        // Idle: se parar de receber dados por 30s, aborta
         let idleTimer: ReturnType<typeof setTimeout> | null = null;
+        // Total: se o stream inteiro passar de 50s, corta e sinaliza continuação
+        let totalTimer: ReturnType<typeof setTimeout> | null = null;
+        let wasCutByTotalTimeout = false;
+
+        const cleanupTimers = () => {
+          if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+          if (totalTimer) { clearTimeout(totalTimer); totalTimer = null; }
+        };
+
         const resetIdleTimer = () => {
           if (idleTimer) clearTimeout(idleTimer);
           idleTimer = setTimeout(() => {
+            cleanupTimers();
             try {
               controller.enqueue(
-                new TextEncoder().encode(`\ndata: {"error": "Stream parado por 45s (NVIDIA sobrecarregada). Tente GLM Flash."}\n\n`)
+                new TextEncoder().encode(`\ndata: {"error": "Stream parado por 30s (NVIDIA sobrecarregada). Tente GLM Flash."}\n\n`)
               );
               controller.close();
             } catch { /* fechado */ }
-          }, 45_000);
+          }, 30_000);
         };
+
+        // Timer total: corta em 50s e sinaliza continuação automática
+        totalTimer = setTimeout(() => {
+          wasCutByTotalTimeout = true;
+          cleanupTimers();
+          try {
+            // Envia um chunk fake com finish_reason=length pro frontend continuar automaticamente
+            const fakeChunk = {
+              choices: [{ finish_reason: 'length', delta: {} }],
+            };
+            controller.enqueue(
+              new TextEncoder().encode(`data: ${JSON.stringify(fakeChunk)}\n\n`)
+            );
+            controller.enqueue(
+              new TextEncoder().encode(`data: [DONE]\n\n`)
+            );
+            controller.close();
+          } catch { /* fechado */ }
+        }, MAX_TOTAL_MS);
+
         resetIdleTimer();
         try {
           const reader = nvidiaRes.body!.getReader();
@@ -416,10 +448,11 @@ export default async function handler(req: Request) {
             resetIdleTimer();
             controller.enqueue(value);
           }
-          if (idleTimer) clearTimeout(idleTimer);
+          cleanupTimers();
           controller.close();
         } catch (streamErr: any) {
-          if (idleTimer) clearTimeout(idleTimer);
+          cleanupTimers();
+          if (wasCutByTotalTimeout) return; // já fechou via timeout
           console.error('Stream reading error:', streamErr);
           try {
             controller.enqueue(
