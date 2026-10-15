@@ -1,7 +1,27 @@
-# Task List: Correção do Botão de Gerar Mensagem de Commit
+# Task List: Modernização dos Cartões (Design System & Sombras em Camadas)
 
-- [x] **Task: Correção do Gerador de Mensagem de Commit e Ajuste Visual do Botão**
-  - [x] Step 1: Eliminar o timeout prematuro de 10s em `handleGenerateCommitMessage`, estender para 45s com captura resiliente de chunks e fallback inteligente para nunca deixar o campo vazio
-  - [x] Step 2: Ajustar o botão no JSX: manter apenas o `<Sparkles />` amarelinho na esquerda, remover o emoji `✨` duplicado e alterar o texto para apenas `Gerar` (sem `com IA`)
-  - [x] Step 3: Atualizar o placeholder do textarea para "Escreva a mensagem ou clique em 'Gerar'..."
-  - [x] Step 4: Executar verificação (`npm run lint`, `npm test`, `npm run build`)
+- [x] **Task 1: Design Tokens e Classes Utilitárias no CSS Global**
+  - [x] Step 1: Adicionar `.synap-card`, `.synap-card-interactive` e `.synap-card-subtle` em `src/index.css`
+  - [x] Step 2: Validar variáveis de tema claro e escuro
+  - [x] Step 3: Compilar com `npm run build` para validar Tailwind v4
+- [x] **Task 2: Modernização dos Cartões do Chat**
+  - [x] Step 1: Aplicar `.synap-card` no bloco de pensamento (Thinking / Raciocínio) em `chat-message.tsx`
+  - [x] Step 2: Aplicar `.synap-card-interactive` nos cartões de arquivos editados e botões de diff
+  - [x] Step 3: Aplicar acabamento nos cartões de ferramentas (Tool Calls) e imagens
+  - [x] Step 4: Refinar o divisor de compactação em `compaction-marker.tsx`
+- [x] **Task 3: Modernização dos Cartões do Source Control**
+  - [x] Step 1: Card de aviso de Pull/commits remotos em `source-control-panel.tsx`
+  - [x] Step 2: Lista de arquivos modificados / staged
+  - [x] Step 3: Caixa de mensagem de commit e ações
+- [x] **Task 4: Modernização da Barra Lateral, Repositórios e Skills**
+  - [x] Step 1: Itens de conversa no histórico (`chat-sidebar.tsx`)
+  - [x] Step 2: Cartões de repositórios (`repo-list.tsx`)
+  - [x] Step 3: Cartões de Habilidades e MCP (`extensions-panel.tsx`)
+- [x] **Task 5: Modernização dos Cartões do Studio**
+  - [x] Step 1: Timeline cards dos agentes Kimi / GLM / Implementador em `studio-panel.tsx`
+  - [x] Step 2: Sub-cards de passos de execução (`step`)
+- [x] **Task 6: Verificação e Build Final**
+  - [x] Step 1: Executar `npm run lint` (`tsc --noEmit`)
+  - [x] Step 2: Executar testes automatizados (`npm test`)
+  - [x] Step 3: Executar build de produção (`npm run build`)
+  - [x] Step 4: Atualizar `walkthrough.md`

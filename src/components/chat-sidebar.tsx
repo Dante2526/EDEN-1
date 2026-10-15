@@ -370,8 +370,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
                   }}
                   className={`group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition-all duration-150 active:scale-[0.99] ${
                     isActive
-                      ? 'bg-dark-card text-[color:var(--c-fg-f3efe6)] font-medium border-l-2 border-l-[#d97757] border-y border-r border-gray-800/40 dark:border-white/5 shadow-xs'
-                      : 'text-[color:var(--c-fg-a0aec0)] hover:bg-dark-bg-secondary hover:text-[color:var(--c-fg-f3efe6)]'
+                      ? 'synap-card text-[color:var(--c-fg-f3efe6)] font-medium border-l-2 border-l-[#d97757]'
+                      : 'text-[color:var(--c-fg-a0aec0)] hover:synap-card hover:text-[color:var(--c-fg-f3efe6)]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">

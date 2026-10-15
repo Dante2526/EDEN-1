@@ -32,7 +32,7 @@ export const CompactionMarker: React.FC<CompactionMarkerProps> = ({ compaction }
       </div>
 
       {isOpen && (
-        <div className="mt-3 p-4 bg-zinc-900/90 border border-zinc-800/80 rounded-xl text-xs text-zinc-300 shadow-xl max-h-80 overflow-y-auto backdrop-blur-md">
+        <div className="mt-3 p-4.5 synap-card text-xs text-zinc-300 max-h-80 overflow-y-auto backdrop-blur-md">
           <div className="font-semibold text-zinc-200 mb-2 flex items-center justify-between pb-2 border-b border-zinc-800">
             <span className="flex items-center gap-1.5 text-amber-300">
               <Zap className="w-3.5 h-3.5" />

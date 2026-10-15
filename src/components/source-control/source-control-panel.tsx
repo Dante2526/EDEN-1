@@ -695,7 +695,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
 
           {/* Prominent Pull Banner when Remote has Incoming Commits */}
           {incomingCommits.length > 0 && (
-            <div className="mx-3 mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-950/60 via-orange-950/50 to-amber-950/40 border border-amber-500/40 text-amber-200 shadow-md flex flex-col gap-2">
+            <div className="mx-2.5 mt-2.5 p-3.5 synap-card bg-gradient-to-r from-amber-950/60 via-orange-950/50 to-amber-950/40 border-amber-500/40 text-amber-200 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <ArrowDownCircle className="w-4 h-4 text-amber-400 shrink-0" />
@@ -798,9 +798,9 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
 
           {/* TAB 1: PENDING CHANGES */}
           {activeTab === 'changes' && (
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col p-2 space-y-2">
               {/* Commit Message Box */}
-              <div className="p-3 border-b border-[color:var(--c-bg-2d2a25)] space-y-2 bg-dark-bg">
+              <div className="p-3.5 synap-card space-y-2.5">
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="font-medium text-[color:var(--c-fg-c4bfb6)]">Mensagem de Commit</span>
                   <button
@@ -1200,7 +1200,7 @@ const ChangeRow: React.FC<ChangeRowProps> = ({
   return (
     <div
       onClick={onViewDiff}
-      className="group px-3 py-2 flex items-center justify-between text-xs hover:bg-[color:var(--c-bg-25231f)] transition cursor-pointer"
+      className="group my-1 px-3 py-2 flex items-center justify-between text-xs rounded-xl synap-card-interactive cursor-pointer"
     >
       <div className="flex items-center gap-2 min-w-0 pr-2">
         {/* Status letter M / A / D */}

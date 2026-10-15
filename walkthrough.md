@@ -374,3 +374,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 19/19 testes passando (5 suítes).
   - `npm run build`: bundle compilado com sucesso em 2.33s (`dist/_worker.js` 95.6 kB).
+
+## 34. Design System de Cartões com Profundidade em Camadas 3D (Layered Depth Shadows)
+- **Objetivo:** Elevar o acabamento estético de todos os cartões da aplicação para um nível premium e tridimensional, introduzindo sombras em camadas (ambient + direct occlusions), specular highlights (`inset 0 1px 0 rgba(255,255,255,0.08)`), gradientes de superfície sutis e micro-elevação ao passar o mouse (`translateY(-1.5px)`).
+- **Tokens e Utilitários Globais (`src/index.css`):**
+  - `--synap-card-bg`: gradiente sutil vertical fundido com a cor de superfície base.
+  - `--synap-card-border` e `--synap-card-border-hover`: realce de contraste de alta precisão adaptado para tema claro e escuro.
+  - `--synap-card-shadow`: combinação de 3 camadas de sombras (sombra de contato rente + difusa suave + specular highlight superior).
+  - Classes padronizadas: `.synap-card`, `.synap-card-interactive` (com curvas `cubic-bezier(0.16, 1, 0.3, 1)`) e `.synap-card-subtle`.
+- **Componentes Modernizados:**
+  1. **Chat & Mensagens (`chat-message.tsx`, `compaction-marker.tsx`):** Balão do usuário, accordion de raciocínio da IA, cartões de execução de ferramentas em tempo real (Terminal, Fetch URL, Python WASM, Habilidades), cartões de refatoração em lote e arquivos modificados, e popup de resumo de compactação ativa.
+  2. **Controle de Versão (`source-control-panel.tsx`):** Card de alerta de Pull/commits remotos, caixa de digitação de commit e itens de arquivos modificados (`ChangeRow`) com micro-elevação interativa.
+  3. **Navegação & Repositórios (`chat-sidebar.tsx`, `repo-list.tsx`):** Itens de conversas no histórico com hover suave e cards de repositórios do GitHub.
+  4. **Habilidades & MCP (`extensions-panel.tsx`):** Cards de regras nativas e customizadas e servidores MCP conectados.
+  5. **Painel do Studio (`studio-panel.tsx`):** Timeline cards dos agentes (Kimi, GLM, Implementador) e passos de execução do plano.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (95.6 kB) compilados com 0 erros.
+

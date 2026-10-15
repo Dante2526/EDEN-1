@@ -210,10 +210,10 @@ export const RepoList: React.FC<RepoListProps> = ({
                   return (
                     <div
                       key={repo.id}
-                      className={`p-3 rounded-xl border transition flex flex-col justify-between gap-2.5 ${
+                      className={`p-3.5 transition flex flex-col justify-between gap-2.5 synap-card-interactive ${
                         isActive
-                          ? 'bg-[color:var(--c-bg-2b2720)] border-[#d97757]/60 shadow-xs'
-                          : 'bg-[color:var(--c-bg-1f1d19)] border-[color:var(--c-bg-312f2a)] hover:border-[color:var(--c-bg-423e35)]'
+                          ? 'border-[#d97757]/60 shadow-lg'
+                          : ''
                       }`}
                     >
                       <div>

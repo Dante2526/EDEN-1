@@ -304,7 +304,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       {isUser ? (
         /* ================= USER MESSAGE (Claude warm card on right) ================= */
         <div className="flex justify-end">
-          <div className="bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b34)]/90 rounded-2xl px-4.5 py-3 max-w-[90%] sm:max-w-[80%] shadow-sm leading-relaxed tracking-normal">
+          <div className="synap-card text-[color:var(--c-fg-f3efe6)] px-4.5 py-3 max-w-[90%] sm:max-w-[80%] leading-relaxed tracking-normal">
             {message.isPlanMode && (
               <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[color:var(--c-bg-3e3b34)] text-[11px] font-mono font-medium text-[color:var(--c-fg-f09a7d)]">
                 <ListTodo className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
@@ -439,7 +439,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
           {/* Thinking Process Accordion (Dynamic label reflecting selected mode: low / high / max) */}
           {thinkingContent && (
-            <div className="w-full mb-3.5 rounded-xl border border-[color:var(--c-bg-38352e)]/90 bg-[color:var(--c-bg-24221e)]/95 shadow-xs overflow-hidden backdrop-blur-xs">
+            <div className="w-full mb-3.5 synap-card overflow-hidden backdrop-blur-xs">
               <button
                 type="button"
                 onClick={() => setShowReasoning(!showReasoning)}
@@ -582,7 +582,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-[color:var(--c-bg-24211d)] border border-[#d97757]/40 shadow-xs"
+                      className="flex items-center gap-3.5 p-3 synap-card border-[#d97757]/40"
                     >
                       <ThinkingOrb
                         state={orbState}
@@ -617,7 +617,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="flex items-center gap-3.5 p-3 rounded-2xl bg-[color:var(--c-bg-24211d)] border border-[#d97757]/40 shadow-xs"
+                      className="flex items-center gap-3.5 p-3 synap-card border-[#d97757]/40"
                     >
                       <ThinkingOrb
                         state="working"
@@ -662,9 +662,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="rounded-xl overflow-hidden border border-[color:var(--c-bg-3e392f)] bg-[color:var(--c-bg-141310)] shadow-sm my-1.5 font-mono text-xs w-full"
+                      className="synap-card overflow-hidden my-2 font-mono text-xs w-full"
                     >
-                      <div className="flex items-center justify-between px-3 py-2 bg-[color:var(--c-bg-1f1d19)] border-b border-[color:var(--c-bg-2d2a23)]">
+                      <div className="flex items-center justify-between px-3.5 py-2.5 bg-[color:var(--c-bg-1f1d19)] border-b border-[color:var(--c-bg-2d2a23)]">
                         <div className="flex items-center gap-2 truncate">
                           <Terminal className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] shrink-0" />
                           <span className="text-[color:var(--c-fg-d97757)] font-bold select-none">$</span>
@@ -721,7 +721,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[color:var(--c-bg-24211d)] border border-[color:var(--c-bg-383329)] text-xs font-mono text-[color:var(--c-fg-c4bfb6)] shadow-2xs"
+                      className="flex items-center gap-2 px-3.5 py-2 synap-card text-xs font-mono text-[color:var(--c-fg-c4bfb6)] my-1.5"
                     >
                       {tc.status === 'error' ? (
                         <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
@@ -757,7 +757,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   return (
                     <div
                       key={tc.id}
-                      className="rounded-xl overflow-hidden border border-[color:var(--c-bg-3e392f)] bg-[color:var(--c-bg-141310)] shadow-sm my-2 font-mono text-xs w-full"
+                      className="synap-card overflow-hidden my-2 font-mono text-xs w-full"
                     >
                       <div className="flex items-center justify-between px-3 py-2 bg-[color:var(--c-bg-1f1d19)] border-b border-[color:var(--c-bg-2d2a23)]">
                         <div className="flex items-center gap-2 truncate">
@@ -991,7 +991,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             <div className="w-full mb-3 space-y-2">
               {/* If multiple files were edited or batchRefactor is present: Show prominent Batch Refactor Card */}
               {(message.batchRefactor || message.editedFiles.length >= 2) ? (
-                <div className="rounded-2xl bg-[color:var(--c-bg-201e1a)] border border-[color:var(--c-bg-484133)] shadow-md overflow-hidden">
+                <div className="synap-card overflow-hidden">
                   {/* Card Header */}
                   <div className="p-3.5 bg-[color:var(--c-bg-27241f)] border-b border-[color:var(--c-bg-3b362b)] flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -1069,7 +1069,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 message.editedFiles.map((file, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl bg-[color:var(--c-bg-23201c)] border border-[color:var(--c-bg-3e392f)] flex items-center justify-between gap-3 text-xs shadow-xs"
+                    className="p-3.5 synap-card flex items-center justify-between gap-3 text-xs"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-lg bg-[color:var(--c-bg-2e2a22)] flex items-center justify-center text-[color:var(--c-fg-d97757)] shrink-0">

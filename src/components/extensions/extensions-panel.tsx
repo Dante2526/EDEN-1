@@ -212,14 +212,14 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             </div>
 
             {/* Skills List */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {skills.map((skill) => (
                 <div
                   key={skill.id}
-                  className={`p-3 rounded-xl border transition-all ${
+                  className={`p-3.5 synap-card transition-all ${
                     skill.enabled
-                      ? 'bg-[color:var(--c-bg-23211d)] border-purple-500/30 shadow-sm'
-                      : 'bg-[color:var(--c-bg-1e1c18)] border-[color:var(--c-bg-2d2a25)] opacity-80 hover:opacity-100'
+                      ? 'border-purple-500/40 shadow-md'
+                      : 'opacity-85 hover:opacity-100'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -308,7 +308,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   return (
                     <div
                       key={server.id}
-                      className="p-3 rounded-xl border border-[color:var(--c-bg-2d2a25)] bg-[color:var(--c-bg-1e1c18)] space-y-2 transition-all"
+                      className="p-3.5 synap-card space-y-2.5 transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">

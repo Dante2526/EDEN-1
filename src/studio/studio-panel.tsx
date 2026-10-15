@@ -841,7 +841,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
       </div>
 
       {/* Card content */}
-      <div className="rounded-xl bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-2d2b26)] overflow-hidden shadow-sm">
+      <div className="synap-card overflow-hidden">
         {entry.title && (
           <div className="px-3.5 sm:px-4 py-2.5 text-xs font-medium text-[color:var(--c-fg-c4bfb6)] border-b border-[color:var(--c-bg-2d2b26)]/60 flex items-center justify-between bg-[color:var(--c-bg-141310)]">
             <span className="truncate pr-2">{entry.title}</span>
@@ -918,7 +918,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({ entry, onAction }) => {
                 {entry.steps.map((step) => (
                   <div
                     key={step.id}
-                    className="flex items-start gap-2.5 text-xs sm:text-sm p-2 rounded-lg bg-[color:var(--c-bg-141310)] border border-[color:var(--c-bg-26241e)]"
+                    className="flex items-start gap-2.5 text-xs sm:text-sm p-2.5 rounded-xl synap-card-subtle"
                   >
                     <span className="flex-shrink-0 mt-0.5">
                       {step.status === 'completed' ? (
