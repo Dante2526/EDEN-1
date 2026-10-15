@@ -261,3 +261,21 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 19/19 testes passando (5 suítes).
   - `npm run build`: `dist/_worker.js` (92.4 kB) e assets compilados com sucesso em 6.28s.
 
+## 26. Blindagem de Execução Autônoma e Resolução do Stream Interrompido
+- **Problema:** Ao solicitar alterações em repositórios conectados via Synap em modelos como GLM 5.3 com thinking low e conversas longas (>25k tokens), a IA emitia texto preliminar e era cortada com `⚠️ Erro: Stream was cancelled.`, finalizando o turno sem disparar as ferramentas (`edit_file`/`create_file`) e sem alterar os arquivos no GitHub.
+- **Causas Raízes:**
+  1. **Idle Timeout Precoce no Backend (`api/chat.ts`):** O leitor SSE possuía um timeout de 45s. Quando a GPU da NVIDIA demorava para iniciar a geração do payload volumoso da tool call, o backend abortava a stream via `reader.cancel()`, lançando a exceção `Stream was cancelled`.
+  2. **Falso `finish_reason: 'stop'`:** O tratador de erro `sendErrorAndClose` emitia evento SSE com `finish_reason: 'stop'`, mascarando o cancelamento como uma conclusão bem-sucedida.
+  3. **Ausência de Auto-Recuperação no Frontend (`src/App.tsx`):** O tratador de erros recuperáveis ignorava `Stream was cancelled`, adicionava o texto de erro na mensagem e encerrava o loop sem executar nenhuma ferramenta.
+  4. **Falsas Conclusões por Texto:** Se o modelo prometesse alterar/criar arquivos mas não emitisse a chamada de ferramenta, o chat encerrava sem validar se os arquivos foram de fato alterados.
+- **Solução Implementada:**
+  - **Expansão do Idle Timer (`api/chat.ts`):** Timeout elevado de 45s para **90 segundos**, garantindo tempo hábil para a IA processar o raciocínio e gerar ferramentas complexas em prompts grandes.
+  - **Sinalização Transparente de Interrupção:** `sendErrorAndClose` agora marca `finish_reason: 'error'` e envia a flag `isInterruption: true`, alertando o cliente de que o streaming foi cortado antes do fim.
+  - **Auto-Continuação Resiliente no Loop (`src/App.tsx`):** O frontend captura erros de stream interrompido (`Stream was cancelled`, timeouts de rede) e reinvoca o modelo imediatamente com ordem de execução imperativa (*"Execute IMEDIATAMENTE a ferramenta agora para concluir as alterações no repositório"*), preservando o contexto e prosseguindo no loop.
+  - **Trava Anti-Falsa-Conclusão (`looksLikeFileModificationPromise`):** Se houver repositório ativo e o modelo emitir promessas de alteração de arquivo sem ter disparado nenhuma ferramenta de código (`allEditedFiles === 0` e `detectedCalls === 0`), o Synap bloqueia o encerramento do turno e força a chamada imediata de `edit_file` ou `create_file`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (92.9 kB) gerados com 0 erros.
+
+

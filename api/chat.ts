@@ -340,6 +340,7 @@ export default async function handler(req: Request, envArg?: Env) {
       async start(controller) {
         let lastActivity = Date.now();
         let isMidChunk = false;
+        let wasIdleTimeout = false;
 
         // 1. Primeiro byte imediato para destravar o TTFB de 25s da Vercel
         controller.enqueue(enc.encode(': keepalive\n\n'));
@@ -391,13 +392,13 @@ export default async function handler(req: Request, envArg?: Env) {
         };
 
         // ====== PIPE DE ERRO PADRÃO ======
-        const sendErrorAndClose = (errMsg: string) => {
+        const sendErrorAndClose = (errMsg: string, isInterruption = false) => {
           try {
-            controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: errMsg })}\n\n`));
+            controller.enqueue(enc.encode(`data: ${JSON.stringify({ error: errMsg, isInterruption })}\n\n`));
             controller.enqueue(
               enc.encode(
                 `data: ${JSON.stringify({
-                  choices: [{ index: 0, delta: { content: `\n\n⚠️ **Erro:** ${errMsg}` }, finish_reason: 'stop' }],
+                  choices: [{ index: 0, delta: { content: `\n\n⚠️ **Erro:** ${errMsg}` }, finish_reason: isInterruption ? 'error' : 'stop' }],
                 })}\n\n`
               )
             );
@@ -488,12 +489,14 @@ export default async function handler(req: Request, envArg?: Env) {
           // Se for Cloudflare, interceptamos o stream para separar <think> do content.
           const reader = res.body.getReader();
           let idleTimer: ReturnType<typeof setTimeout> | null = null;
+          wasIdleTimeout = false;
           const resetIdleTimer = () => {
             if (idleTimer) clearTimeout(idleTimer);
             idleTimer = setTimeout(() => {
-              console.log('[chat] IDLE TIMEOUT: provedor não mandou dados por 45s, abortando...');
+              wasIdleTimeout = true;
+              console.log('[chat] IDLE TIMEOUT: provedor não mandou dados por 90s, abortando leitor...');
               try { reader.cancel(); } catch {}
-            }, 45000);
+            }, 90000);
           };
           resetIdleTimer();
 
@@ -661,8 +664,16 @@ export default async function handler(req: Request, envArg?: Env) {
         } catch (err: any) {
           clearInterval(timer);
           if (!req.signal?.aborted) {
-            const errMsg = err?.message || 'Falha na conexão com a IA';
-            sendErrorAndClose(errMsg);
+            let errMsg = err?.message || 'Falha na conexão com a IA';
+            const isInterruption =
+              wasIdleTimeout ||
+              errMsg.includes('Stream was cancelled') ||
+              errMsg.includes('stream cancelled') ||
+              errMsg.includes('Stream interrupted');
+            if (wasIdleTimeout) {
+              errMsg = 'Stream interrupted: A IA demorou mais de 90s para gerar os dados.';
+            }
+            sendErrorAndClose(errMsg, isInterruption);
           }
         }
       },

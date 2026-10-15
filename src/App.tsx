@@ -102,17 +102,36 @@ const INCOMPLETE_PATTERNS = [
   /(?:vou\s+começar|primeiro\s+vou|deixa\s+eu\s+começar)\b/i,
   // "ainda preciso", "ainda falta", "falta ainda"
   /(?:ainda\s+preciso|ainda\s+falta|falta\s+ainda)\b/i,
+  // "vou criar", "vou alterar", "vou modificar", "vou implementar"
+  /(?:vou|vou\s+agora|deixa\s+eu|deixe-me|deixa-me|vamos|irei)\s+(?:criar|gerar|implementar|fazer|escrever|alterar|modificar|adicionar|configurar|atualizar|ajustar|inserir|colocar)\b/i,
+  // "estou criando", "estou alterando", "estou implementando"
+  /(?:estou|estamos)\s+(?:criando|gerando|implementando|fazendo|escrevendo|alterando|modificando|adicionando|configurando|atualizando)\b/i,
 ];
 
 function looksLikeIncompleteWork(text: string): boolean {
-  if (!text || text.length < 30) return false;
-  // Checa só o final da resposta (últimos 300 chars) — início normalmente
-  // é explicação e o final é onde a IA diz "agora vou...".
-  const tail = text.slice(-300).toLowerCase();
-  // Conta quantos padrões casam — se casou 1 ou mais, considera incompleto.
+  if (!text || text.length < 20) return false;
+  // Checa tanto a cauda (últimos 350 chars) quanto o texto inteiro se for curto
+  const sample = text.length <= 400 ? text.toLowerCase() : text.slice(-350).toLowerCase();
   for (const pattern of INCOMPLETE_PATTERNS) {
-    if (pattern.test(tail)) {
-      console.log('[Synap] agentic loop: padrão casou:', pattern.source);
+    if (pattern.test(sample)) {
+      console.log('[Synap] agentic loop: padrão incompleto casou:', pattern.source);
+      return true;
+    }
+  }
+  return false;
+}
+
+function looksLikeFileModificationPromise(text: string): boolean {
+  if (!text || text.length < 20) return false;
+  const sample = text.length <= 500 ? text.toLowerCase() : text.slice(-400).toLowerCase();
+  const fileActionPatterns = [
+    /(?:vou|vamos|irei|vou\s+agora|deixa\s+eu|deixe-me)\s+(?:criar|adicionar|implementar|fazer|alterar|modificar|inserir|colocar|atualizar|configurar)\b/i,
+    /(?:estou|estamos)\s+(?:criando|adicionando|implementando|fazendo|alterando|modificando|inserindo|colocando|atualizando|configurando)\b/i,
+    /(?:criando|alterando|modificando|adicionando|atualizando)\s+(?:o\s+arquivo|o\s+componente|em|no|na)\b/i,
+    /(?:aqui\s+está\s+o\s+código|alterações\s+feitas|arquivo\s+atualizado)\b/i,
+  ];
+  for (const p of fileActionPatterns) {
+    if (p.test(sample)) {
       return true;
     }
   }
@@ -2532,6 +2551,9 @@ function AppContent() {
                     ? parsed.error
                     : parsed.error.message || JSON.stringify(parsed.error);
               }
+              if (parsed.isInterruption) {
+                iterationFinishReason = 'interrupted';
+              }
               const choice = parsed.choices?.[0];
               if (choice?.finish_reason) iterationFinishReason = choice.finish_reason;
               const delta = choice?.delta || choice?.message;
@@ -2624,41 +2646,51 @@ function AppContent() {
         }
 
         if (streamErrorMsg) {
-          // Verifica se é erro de timeout do watchdog (NVIDIA não enviou dados a tempo)
-          const isWatchdogTimeout = streamErrorMsg.includes('não enviou dados a tempo') ||
-            streamErrorMsg.includes('não respondeu a tempo') ||
-            streamErrorMsg.includes('Stream interrupted: A NVIDIA');
+          // Limpa do iterationText qualquer mensagem de erro injetada por sendErrorAndClose
+          iterationText = iterationText.replace(/\n\n⚠️ \*\*Erro:\*\* .*/g, '').trim();
 
-          if (!iterationText.trim() && Object.keys(toolCallsAccumulator).length === 0) {
-            // Sem texto e sem tool calls — erro real, lança exceção
+          const isRecoverableStreamError =
+            streamErrorMsg.includes('não enviou dados a tempo') ||
+            streamErrorMsg.includes('não respondeu a tempo') ||
+            streamErrorMsg.includes('Stream interrupted') ||
+            streamErrorMsg.includes('Stream was cancelled') ||
+            streamErrorMsg.includes('stream cancelled') ||
+            streamErrorMsg.includes('stream interrupted') ||
+            streamErrorMsg.includes('connection reset') ||
+            streamErrorMsg.includes('network error');
+
+          if (!iterationText.trim() && Object.keys(toolCallsAccumulator).length === 0 && !isRecoverableStreamError) {
+            // Sem texto e sem tool calls — erro real não recuperável, lança exceção
             throw new Error(streamErrorMsg);
           }
 
-          if (isWatchdogTimeout && iterationText.trim() && loopCount < MAX_TOOL_ITERATIONS) {
-            // Watchdog abortou MAS já tem texto parcial → continua automaticamente
-            // preservando o raciocínio/texto já gerado
-            console.log('[Synap] Watchdog timeout com texto parcial — continuando automaticamente');
-            // Adiciona texto parcial ao acumulado pra próxima iteração
-            accumulatedAssistantText = accumulatedAssistantText
-              ? `${accumulatedAssistantText}\n\n${iterationText}`
-              : iterationText;
-            streamingAccumulatedTextRef.current = accumulatedAssistantText;
+          if (isRecoverableStreamError && loopCount < MAX_TOOL_ITERATIONS) {
+            console.log('[Synap] Erro recuperável de stream detectado:', streamErrorMsg, '— continuando trabalho automaticamente');
+            const cleanText = iterationText.trim();
+            if (cleanText) {
+              accumulatedAssistantText = accumulatedAssistantText
+                ? `${accumulatedAssistantText}\n\n${cleanText}`
+                : cleanText;
+              streamingAccumulatedTextRef.current = accumulatedAssistantText;
+            }
+
+            const continuationPrompt = chatActiveRepo
+              ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE as ferramentas necessárias (ex: edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
+              : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.';
+
             currentMessagesForApi = [
               ...currentMessagesForApi,
-              { role: 'assistant', content: iterationText },
+              { role: 'assistant', content: cleanText || 'Continuando execução...' },
               {
                 role: 'user',
-                content:
-                  'Sua resposta anterior foi interrompida por limite de tempo. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.',
+                content: continuationPrompt,
               },
             ];
             hasToolCallsToProcess = true;
-          } else if (isWatchdogTimeout && !iterationText.trim() && loopCount < MAX_TOOL_ITERATIONS) {
-            // Watchdog abortou sem texto — tenta de novo com mensagem mais simples
-            console.log('[Synap] Watchdog timeout sem texto — tentando de novo');
-            hasToolCallsToProcess = true;
+            // Limpa streamErrorMsg para não poluir a UI nesta rodada
+            streamErrorMsg = '';
           } else {
-            // Outro erro — adiciona aviso no texto
+            // Outro erro ou limite de iterações atingido — adiciona aviso no texto
             iterationText += `\n\n⚠️ ${streamErrorMsg}`;
           }
         }
@@ -2920,6 +2952,43 @@ function AppContent() {
           ];
           hasToolCallsToProcess = true;
         } else if (
+          (iterationFinishReason === 'interrupted' || iterationFinishReason === 'error') &&
+          loopCount < MAX_TOOL_ITERATIONS
+        ) {
+          console.log('[Synap] finish_reason=interrupted/error — auto-continuando execução');
+          const cleanText = iterationText.trim();
+          currentMessagesForApi = [
+            ...currentMessagesForApi,
+            { role: 'assistant', content: cleanText || '[Ação interrompida pelo servidor]' },
+            {
+              role: 'user',
+              content: chatActiveRepo
+                ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE a ferramenta (edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
+                : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou sem introdução.',
+            },
+          ];
+          hasToolCallsToProcess = true;
+        } else if (
+          iterationText.trim() &&
+          loopCount < MAX_TOOL_ITERATIONS &&
+          chatActiveRepo &&
+          allEditedFiles.length === 0 &&
+          detectedCalls.length === 0 &&
+          looksLikeFileModificationPromise(iterationText)
+        ) {
+          console.log('[Synap] IA prometeu alterar arquivos mas não disparou tool — forçando execução');
+          currentMessagesForApi = [
+            ...currentMessagesForApi,
+            { role: 'assistant', content: iterationText },
+            {
+              role: 'user',
+              content:
+                'Você descreveu alterações mas ainda não executou a ferramenta (edit_file ou create_file). ' +
+                'Execute IMEDIATAMENTE a ferramenta apropriada agora para aplicar as alterações solicitadas no repositório ativo.',
+            },
+          ];
+          hasToolCallsToProcess = true;
+        } else if (
           iterationFinishReason === 'stop' &&
           iterationText.trim() &&
           loopCount < MAX_TOOL_ITERATIONS &&
@@ -3116,8 +3185,11 @@ function AppContent() {
               pendingResumeRef.current = null;
               // Só retoma se ainda tá na mesma conversa e não tem streaming em curso
               if (pending.conversationId === activeId && !isStreaming) {
+                const continuationPrompt = chatActiveRepo
+                  ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE a ferramenta (edit_file ou create_file) agora no repositório ativo para aplicar as alterações solicitadas.'
+                  : 'Continue exatamente de onde você parou. Não repita o que já fez. Apenas continue a resposta.';
                 handleSendMessage(
-                  'Continue exatamente de onde você parou. Não repita o que já fez. Apenas continue a resposta.',
+                  continuationPrompt,
                   [],
                   []
                 );
