@@ -27,7 +27,7 @@ export async function commitStagedChanges(
     throw new Error('Por favor, informe uma mensagem de commit.');
   }
 
-  return callGitHubApi<CommitResult>(
+  const res = await callGitHubApi<CommitResult>(
     'commit',
     {},
     'POST',
@@ -43,4 +43,22 @@ export async function commitStagedChanges(
       })),
     }
   );
+
+  if (res?.sha && typeof window !== 'undefined') {
+    try {
+      const syncKey = `synap_synced_sha_${owner}/${repo}_${branch}`;
+      localStorage.setItem(syncKey, res.sha);
+
+      // Registra o SHA na lista de commits gerados localmente pelo Synap
+      const historyKey = `synap_recent_commits_${owner}/${repo}_${branch}`;
+      const raw = localStorage.getItem(historyKey);
+      const list: string[] = raw ? JSON.parse(raw) : [];
+      if (!list.includes(res.sha)) {
+        list.unshift(res.sha);
+        localStorage.setItem(historyKey, JSON.stringify(list.slice(0, 25)));
+      }
+    } catch {}
+  }
+
+  return res;
 }

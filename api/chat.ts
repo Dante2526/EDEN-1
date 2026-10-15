@@ -130,7 +130,13 @@ export default async function handler(req: Request, envArg?: Env) {
   try {
     const body = await req.json();
     let { messages } = body;
-    const { model, reasoning_effort, tools } = body;
+    const {
+      model,
+      reasoning_effort,
+      tools,
+      max_tokens: customMaxTokens,
+      temperature: customTemperature,
+    } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'Nenhuma mensagem informada.' }), {
@@ -274,16 +280,23 @@ export default async function handler(req: Request, envArg?: Env) {
     // ====== BUILDER DE PAYLOAD — NUVEM (NVIDIA) ======
     const createNvidiaPayload = (includeReasoning = true, includeTools = true, safeTokenLimit = false) => {
       const hasToolsActive = includeTools && modelSupportsTools && tools && Array.isArray(tools) && tools.length > 0;
+      const baseMaxTokens = safeTokenLimit ? 4096 : maxTokensFor(selectedEffort);
+      const tokenLimit = typeof customMaxTokens === 'number' && customMaxTokens > 0
+        ? Math.min(customMaxTokens, baseMaxTokens)
+        : baseMaxTokens;
       const p: any = {
         model: selectedModel,
         messages: buildFormattedMessages(Boolean(hasToolsActive)),
         stream: true,
-        max_tokens: safeTokenLimit ? 4096 : maxTokensFor(selectedEffort),
+        max_tokens: tokenLimit,
       };
+      if (typeof customTemperature === 'number') {
+        p.temperature = customTemperature;
+      }
       if (selectedModel === 'z-ai/glm-5.3') {
         p.stream_options = { include_usage: true };
       }
-      if (includeReasoning && apiEffort && apiEffort !== 'none' && apiEffort !== 'default') {
+      if (includeReasoning && apiEffort && apiEffort !== 'default') {
         if (selectedModel === 'z-ai/glm-5.3') {
           p.reasoning_effort = apiEffort;
         }
@@ -310,13 +323,18 @@ export default async function handler(req: Request, envArg?: Env) {
       } else if (selectedEffort === 'high' || selectedEffort === 'medium') {
         cfMaxTokens = 12288;
       }
+      const tokenLimit = typeof customMaxTokens === 'number' && customMaxTokens > 0
+        ? Math.min(customMaxTokens, cfMaxTokens)
+        : cfMaxTokens;
       const hasToolsActive = includeTools && modelSupportsTools && tools && Array.isArray(tools) && tools.length > 0;
       const p: any = {
         model: selectedModel,
         messages: buildFormattedMessages(Boolean(hasToolsActive)),
         stream: true,
-        max_tokens: cfMaxTokens,
-        temperature: selectedModel.includes('deepseek-r1') ? 0.6 : 0.7,
+        max_tokens: tokenLimit,
+        temperature: typeof customTemperature === 'number'
+          ? customTemperature
+          : selectedModel.includes('deepseek-r1') ? 0.6 : 0.7,
       };
       if (hasToolsActive) {
         p.tools = tools;

@@ -114,6 +114,16 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
           return;
         }
 
+        const historyKey = `synap_recent_commits_${activeRepo.fullName}_${activeRepo.branch}`;
+        const localCreatedShas: string[] = (() => {
+          try {
+            const raw = localStorage.getItem(historyKey);
+            return raw ? JSON.parse(raw) : [];
+          } catch {
+            return [];
+          }
+        })();
+
         const storedSha = localStorage.getItem(key);
         if (!storedSha) {
           // Âncora inicial: marca o commit mais recente como base
@@ -125,10 +135,29 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
           );
           if (foundIndex === -1) {
             // Houve novos commits que empurraram a lista
-            setIncomingCommits(remoteCommits.slice(0, 10));
+            const candidateCommits = remoteCommits.slice(0, 10);
+            const isAllLocal = candidateCommits.length > 0 && candidateCommits.every((c) =>
+              localCreatedShas.some((s) => s === c.sha || s.startsWith(c.short_sha) || c.sha.startsWith(s))
+            );
+            if (isAllLocal) {
+              localStorage.setItem(key, remoteCommits[0].sha);
+              setIncomingCommits([]);
+            } else {
+              setIncomingCommits(candidateCommits);
+            }
           } else if (foundIndex > 0) {
             // Há commits remotos à frente
-            setIncomingCommits(remoteCommits.slice(0, foundIndex));
+            const aheadCommits = remoteCommits.slice(0, foundIndex);
+            // Se os commits à frente foram criados pelo próprio Synap, sincroniza sem alertar pull falso
+            const isAllLocal = aheadCommits.length > 0 && aheadCommits.every((c) =>
+              localCreatedShas.some((s) => s === c.sha || s.startsWith(c.short_sha) || c.sha.startsWith(s))
+            );
+            if (isAllLocal) {
+              localStorage.setItem(key, remoteCommits[0].sha);
+              setIncomingCommits([]);
+            } else {
+              setIncomingCommits(aheadCommits);
+            }
           } else {
             // Perfeitamente atualizado com o GitHub
             setIncomingCommits([]);
@@ -236,7 +265,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
     setIsGeneratingCommitMsg(true);
     setCommitError(null);
 
-    // Gerador de mensagem de fallback caso a rede oscile ou a API atrase
+    // Gerador de mensagem de fallback instantânea (Conventional Commits)
     const getFallbackCommitMsg = () => {
       const first = changesToAnalyze[0];
       const filename = first?.path ? first.path.split('/').pop() || first.path : 'arquivos';
@@ -247,17 +276,21 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
       return `${prefix}: atualizar ${filename} e mais ${changesToAnalyze.length - 1} arquivo(s)`;
     };
 
-    // Timeout seguro de 40s para geração completa
+    // Preenche instantaneamente (0ms) para feedback imediato na UI
+    const instantFallback = getFallbackCommitMsg();
+    if (!commitMessage.trim()) {
+      setCommitMessage(instantFallback);
+    }
+
+    // Timeout rápido de 12s para a IA refinar o texto
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 40000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
+      // Resumo ultra-enxuto: apenas caminhos e tipos (sem despejar bytes ou códigos pesados)
       const filesSummary = changesToAnalyze
-        .slice(0, 15)
-        .map((c) => {
-          const sample = c.newContent ? c.newContent.slice(0, 200).replace(/\r?\n/g, ' ') : '';
-          return `- [${c.type}] ${c.path} ${sample ? `(trecho: ${sample})` : ''}`;
-        })
+        .slice(0, 10)
+        .map((c) => `${c.type === 'added' ? '+' : c.type === 'deleted' ? '-' : '~'} ${c.path}`)
         .join('\n');
 
       const response = await fetch('/api/chat', {
@@ -271,20 +304,22 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
             {
               role: 'system',
               content:
-                'Você é um assistente Git especializado em Conventional Commits.\n' +
-                'Gere EXCLUSIVAMENTE uma única linha de mensagem concisa no formato Conventional Commits (ex: feat(ui): ..., fix(auth): ..., refactor(core): ...).\n' +
-                'REGRAS RÍGIDAS:\n' +
-                '1. Máximo 72 caracteres.\n' +
-                '2. NUNCA use aspas, crases, marcadores ou introduções.\n' +
-                '3. Responda APENAS com a mensagem direta.',
+                'Você é um gerador de Conventional Commits ultra-rápido.\n' +
+                'Gere EXCLUSIVAMENTE uma única linha de commit conciso (ex: feat: ..., fix: ..., chore: ...).\n' +
+                'REGRAS:\n' +
+                '1. Máximo 60 caracteres.\n' +
+                '2. NÃO pense, NÃO use <think>, NÃO use crases ou aspas.\n' +
+                '3. Responda DIRETAMENTE com o commit.',
             },
             {
               role: 'user',
-              content: `Arquivos alterados:\n${filesSummary}\n\nGere a mensagem de commit:`,
+              content: `Arquivos alterados:\n${filesSummary}\n\nGere o commit:`,
             },
           ],
           model: 'z-ai/glm-5.3-flash',
-          reasoning_effort: 'low',
+          reasoning_effort: 'none',
+          max_tokens: 50,
+          temperature: 0.2,
         }),
         signal: controller.signal,
       });
@@ -302,10 +337,9 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
       let generatedText = '';
       let buffer = '';
 
-      // Timeout de inatividade de 25s (em vez de 10s)
       let lastChunkTime = Date.now();
       const readTimeout = setInterval(() => {
-        if (Date.now() - lastChunkTime > 25000) {
+        if (Date.now() - lastChunkTime > 8000) {
           controller.abort();
           clearInterval(readTimeout);
         }
@@ -329,14 +363,16 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
 
             try {
               const parsed = JSON.parse(dataStr);
-              if (parsed.error && !generatedText) {
-                console.warn('[CommitMsg] Erro retornado pela API:', parsed.error);
-              }
               const delta = parsed.choices?.[0]?.delta;
               if (delta?.content) {
                 generatedText += delta.content;
-                const clean = generatedText.replace(/^["'`]+|["'`]+$/g, '').trim();
-                setCommitMessage(clean);
+                const clean = generatedText
+                  .replace(/^["'`]+|["'`]+$/g, '')
+                  .replace(/[\r\n]+/g, ' ')
+                  .trim();
+                if (clean) {
+                  setCommitMessage(clean);
+                }
               }
             } catch {}
           }
@@ -345,15 +381,14 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
         clearInterval(readTimeout);
       }
 
-      if (!generatedText.trim()) {
-        const fallback = getFallbackCommitMsg();
-        setCommitMessage(fallback);
+      if (!generatedText.trim() && !commitMessage.trim()) {
+        setCommitMessage(instantFallback);
       }
     } catch (err: any) {
-      console.warn('Erro ao gerar mensagem de commit com IA, usando fallback:', err);
-      // Sempre garante preenchimento de mensagem para o usuário não ficar com a caixa vazia
-      const fallback = getFallbackCommitMsg();
-      setCommitMessage(fallback);
+      console.warn('IA demorou ou falhou, garantindo mensagem de commit rápida:', err);
+      if (!commitMessage.trim()) {
+        setCommitMessage(instantFallback);
+      }
     } finally {
       clearTimeout(timeoutId);
       setIsGeneratingCommitMsg(false);
@@ -393,6 +428,13 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
         sha: result.sha.substring(0, 7),
         url: result.html_url,
       });
+
+      // Sincroniza imediatamente o SHA local para evitar falso alerta de Pull
+      const syncKey = getSyncStorageKey();
+      if (syncKey && result?.sha) {
+        localStorage.setItem(syncKey, result.sha);
+      }
+      setIncomingCommits([]);
 
       // Reload commits if user is in history or will switch to it
       loadCommits();
@@ -817,10 +859,14 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                         <GitCommit className="w-3.5 h-3.5" />
                         <span>
                           {stagedChanges.length > 0
-                            ? `Commit (${stagedChanges.length})`
-                            : repoChanges.length > 0
-                            ? `Commit Tudo (${repoChanges.length})`
-                            : 'Commit'}
+                            ? stagedChanges.length === 1
+                              ? 'Commitar'
+                              : `Commitar (${stagedChanges.length})`
+                            : repoChanges.length === 1
+                            ? 'Commitar'
+                            : repoChanges.length > 1
+                            ? `Commitar Tudo (${repoChanges.length})`
+                            : 'Commitar'}
                         </span>
                       </>
                     )}

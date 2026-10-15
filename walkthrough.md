@@ -309,6 +309,35 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 19/19 testes passando.
   - `npm run build`: bundle compilado em 4.01s com sucesso.
 
+## 29. Correção de Sincronização Local-Remoto e Refinamento do Botão de Commit
+- **Problemas Identificados:**
+  1. **Falso Alerta de Pull após Push Local:** Após realizar um commit pelo Source Control ou terminal do Synap e recarregar a página, a UI exibia "1 alteração no GitHub — 1 commit" pedindo para puxar o mesmo commit recém-enviado pelo próprio usuário.
+  2. **Rótulo Inapropriado no Botão:** Com apenas 1 arquivo alterado, o botão exibia "Commit Tudo (1)", gerando estranheza semântica ("tudo" só faz sentido para múltiplos arquivos).
+- **Causas Raízes:**
+  1. O método `commitStagedChanges` e o handler `handleCommit` criavam o commit no GitHub via API, mas não atualizavam a chave `synap_synced_sha_${owner}/${repo}_${branch}` no `localStorage`. Ao recarregar, o `checkRemoteChanges` comparava o commit remoto com o SHA anterior defasado e assumia que o novo commit viera de fora.
+  2. A expressão ternária no botão de commit sempre concatenava `Commit Tudo (${repoChanges.length})` independentemente da quantidade ser unitária.
+- **Solução Implementada:**
+  - **Sincronização de SHA Atômica (`src/lib/github-commit.ts`):** `commitStagedChanges` agora atualiza imediatamente `synap_synced_sha_` com o novo `res.sha` e registra o SHA em `synap_recent_commits_` no `localStorage`.
+  - **Blindagem Anti-Falso-Pull (`src/components/source-control/source-control-panel.tsx`):** `checkRemoteChanges` verifica se os commits remotos à frente foram originados localmente pelo Synap (`localCreatedShas`). Se todos os commits à frente forem locais, a âncora é sincronizada silenciosamente sem exibir aviso de pull.
+  - **Rótulo Gramatical Inteligente:** Quando há apenas 1 arquivo alterado, o botão exibe estritamente **"Commitar"**. Quando há 2 ou mais arquivos, passa a exibir **"Commitar Tudo ({N})"** (ou `Commitar ({N})` se staged).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: bundle compilado em 2.70s e artefatos de Cloudflare copiados para `dist/`.
 
-
-
+## 30. Aceleração Instantânea do Gerador de Mensagens de Commit
+- **Problema:** O botão "Gerar" mensagem de commit com IA demorava muito (10 a 20 segundos) para preencher a caixa de texto, deixando o usuário esperando com o botão travado em "Gerando...".
+- **Causas Raízes:**
+  1. **Raciocínio Desnecessário:** O payload enviava `reasoning_effort: 'low'` para modelos de raciocínio, fazendo a IA gastar segundos preciosos escrevendo tags `<think>...</think>` ocultas antes de emitir o primeiro caractere do commit.
+  2. **Orçamento Excessivo de Tokens:** O backend `api/chat.ts` não aceitava `max_tokens` customizado no body e alocava o teto padrão de 8.192 tokens para uma tarefa de apenas 1 linha (~30 tokens).
+  3. **Payload com Fragmentos de Código Longos:** O frontend serializava trechos de arquivos com centenas de caracteres em vez de apenas a lista de arquivos alterados.
+  4. **Ausência de Feedback Imediato (Zero-Delay):** O campo de texto permanecia vazio até que o primeiro token do stream chegasse da nuvem.
+- **Solução Implementada:**
+  - **Preenchimento Instantâneo (0ms):** Ao clicar em "Gerar", o sistema preenche imediatamente a caixa de texto com uma sugestão Conventional Commits precisa baseada nos arquivos alterados (`getFallbackCommitMsg()`). O usuário já tem um commit válido na mesma fração de segundo.
+  - **Desativação de Raciocínio & Rota Flash:** Requisição ajustada para `reasoning_effort: 'none'` com diretiva de sistema anti-thinking e `temperature: 0.2`, indo direto para o texto final.
+  - **Teto Restrito de Tokens (`max_tokens: 50`):** `api/chat.ts` atualizado para honrar `customMaxTokens` no payload da NVIDIA e Cloudflare, reduzindo a janela de computação da GPU para o tamanho exato de um commit.
+  - **Payload Compacto:** O prompt agora envia apenas o resumo de caminhos (`+`, `-`, `~`) sem código bruto, baixando a ingestão para menos de 100 caracteres.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: bundle compilado em 2.59s com sucesso (`dist/_worker.js` 93.4 kB).
