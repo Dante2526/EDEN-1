@@ -431,5 +431,18 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 25/25 testes passando.
   - `npm run build`: `dist/_worker.js` (106.0 kB) compilado com sucesso.
 
+## 37. Refinamento Minimalista dos Itens de Conversa na Barra Lateral
+- **Problema:** A aplicação da classe genérica `.synap-card` nos itens de histórico da barra lateral transformou cada linha em uma cápsula volumosa e escura com raio de 16px (`rounded-2xl`), sombras pesadas e aspecto inchado, destoando da elegância limpa de sidebars modernas (Claude.ai / Cursor).
+- **Solução Implementada (`src/components/chat-sidebar.tsx`):**
+  - Removido `.synap-card` e `hover:synap-card` dos itens de conversa da lista de recentes.
+  - Reduzido o raio para `rounded-lg` (8px) e o espaçamento vertical para `px-3 py-2`.
+  - Item inativo: fundo transparente, texto discreto e hover sutil plano (`hover:bg-[color:var(--c-bg-201e1a)]`).
+  - Item ativo: superfície fosca elegante `bg-[color:var(--c-bg-272420)]` com borda fina `border-[color:var(--c-bg-3b362b)]` e sombra mínima (`shadow-xs`), sem distorções de cápsula.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando.
+  - `npm run build`: bundle compilado com sucesso em 4.28s.
+
+
 
 
