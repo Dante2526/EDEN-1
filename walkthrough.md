@@ -298,5 +298,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 19/19 testes passando (5 suítes).
   - `npm run build`: bundle compilado em 2.85s com sucesso.
 
+## 28. Eliminação de Quebras de Linha no Card de Pull (Source Control)
+- **Problema:** Na barra lateral do Source Control, o card de aviso de commits remotos para puxar (Pull) quebrava texto em várias linhas apertadas, quebrando a contagem de commits (`1` sobre `commit(s)`) e o botão laranja (`Puxar Alterações` sobre `Agora (Pull)`).
+- **Solução Implementada (`source-control-panel.tsx`):**
+  - **Título Conciso:** Texto encurtado para `{N} alteração(ões) no GitHub` em 1 linha com `truncate`.
+  - **Badge Sem Quebra:** Adicionadas classes `whitespace-nowrap shrink-0` para a contagem `{N} commit(s)` permanecer sempre inline.
+  - **Botão Otimizado:** Rótulo simplificado para `Puxar Alterações` (e `Puxando...`) com `whitespace-nowrap`, encaixando lado a lado com o botão `Detalhes`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando.
+  - `npm run build`: bundle compilado em 4.01s com sucesso.
+
+
 
 

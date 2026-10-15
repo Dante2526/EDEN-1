@@ -655,19 +655,19 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
           {incomingCommits.length > 0 && (
             <div className="mx-3 mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-950/60 via-orange-950/50 to-amber-950/40 border border-amber-500/40 text-amber-200 shadow-md flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <ArrowDownCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">
-                    {incomingCommits.length} alteração(ões) no GitHub para puxar (Pull)
+                  <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
+                    {incomingCommits.length === 1 ? '1 alteração no GitHub' : `${incomingCommits.length} alterações no GitHub`}
                   </span>
                 </div>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-medium">
-                  {incomingCommits.length} commit(s)
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-medium whitespace-nowrap shrink-0">
+                  {incomingCommits.length} {incomingCommits.length === 1 ? 'commit' : 'commits'}
                 </span>
               </div>
 
               <p className="text-[11px] text-[color:var(--c-fg-c4bcaa)] leading-relaxed">
-                Você enviou commits para a branch <strong>{activeRepo.branch}</strong> em outro lugar. Clique abaixo para sincronizar para o seu ambiente local.
+                Sincronize as atualizações da branch <strong>{activeRepo.branch}</strong> com o seu ambiente local.
               </p>
 
               <div className="flex items-center gap-2 pt-1">
@@ -675,22 +675,22 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                   type="button"
                   onClick={handlePullChanges}
                   disabled={isPulling}
-                  className="flex-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-1.5 px-3 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition disabled:opacity-50 cursor-pointer whitespace-nowrap"
                 >
                   {isPulling ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                   ) : (
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3.5 h-3.5 shrink-0" />
                   )}
-                  <span>{isPulling ? 'Puxando do GitHub...' : 'Puxar Alterações Agora (Pull)'}</span>
+                  <span className="whitespace-nowrap">{isPulling ? 'Puxando...' : 'Puxar Alterações'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setShowIncomingDetails(!showIncomingDetails)}
-                  className="py-1.5 px-2.5 rounded-lg bg-[color:var(--c-bg-25231e)] hover:bg-[color:var(--c-bg-312e27)] border border-[color:var(--c-bg-3f3b33)] text-[11px] text-[color:var(--c-fg-c4bcaa)] hover:text-[color:var(--c-on-strong)] transition cursor-pointer"
+                  className="py-1.5 px-2.5 rounded-lg bg-[color:var(--c-bg-25231e)] hover:bg-[color:var(--c-bg-312e27)] border border-[color:var(--c-bg-3f3b33)] text-[11px] text-[color:var(--c-fg-c4bcaa)] hover:text-[color:var(--c-on-strong)] transition cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  {showIncomingDetails ? 'Ocultar' : 'Ver Detalhes'}
+                  {showIncomingDetails ? 'Ocultar' : 'Detalhes'}
                 </button>
               </div>
 
