@@ -486,6 +486,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 25/25 testes passando (6 suítes).
   - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 6.04s.
 
+## 41. Restauração do Estilo Original das Conversas na Barra Lateral
+- **Solicitação do Usuário:** *"nn ta bo nn, deixa no esrilo eles no estilo que tava quando começamos a progaramr hoje, so eles"*.
+- **Causa & Decisão:**
+  - Os experimentos de cartões pesados e camadas causavam ruído e dúvida na distinção do chat ativo vs inativo.
+  - Apenas os itens de conversa foram restaurados para o estilo original limpo e direto do início do dia (commit `bdc5714`), preservando todas as demais novidades implementadas hoje (switch BB-8 Star Wars, monitor de deploy, modelos atualizados, persistência de arquivamento).
+- **Implementação (`src/components/chat-sidebar.tsx`):**
+  - **Item Ativo:** `bg-dark-card text-[color:var(--c-fg-f3efe6)] font-medium border-l-2 border-l-[#d97757] border-y border-r border-gray-800/40 dark:border-white/5 shadow-xs`.
+  - **Item Inativo:** `text-[color:var(--c-fg-a0aec0)] hover:bg-dark-bg-secondary hover:text-[color:var(--c-fg-f3efe6)]` com transição suave.
+  - **Ícone e Texto:** Ícone `MessageSquare` inline com destaque `#d97757` quando selecionado e tons neutros em repouso.
+  - **Ações:** Botões de hover rápidos para renomear, arquivar e deletar com confirmação.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
+
+
 
 
 

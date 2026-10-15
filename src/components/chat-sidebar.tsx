@@ -34,358 +34,7 @@ const ProjectsPanel = React.lazy(() =>
   import('./project-workspace/projects-panel').then((m) => ({ default: m.ProjectsPanel }))
 );
 
-interface SwipeableConversationCardProps {
-  conv: Conversation;
-  isActive: boolean;
-  isEditing: boolean;
-  isDeleting: boolean;
-  editTitle: string;
-  onSelect: (id: string) => void;
-  onStartRename: (conv: Conversation, e: React.MouseEvent) => void;
-  onSaveRename: (id: string, e?: React.FormEvent) => void;
-  onChangeEditTitle: (val: string) => void;
-  onCancelRename: () => void;
-  onConfirmDelete: (id: string, e: React.MouseEvent) => void;
-  onExecuteDelete: (id: string, e: React.MouseEvent) => void;
-  onCancelDelete: (e: React.MouseEvent) => void;
-  onArchive?: (id: string) => void;
-  onUnarchive?: (id: string) => void;
-  isArchivedSection?: boolean;
-}
 
-const SwipeableConversationCard: React.FC<SwipeableConversationCardProps> = ({
-  conv,
-  isActive,
-  isEditing,
-  isDeleting,
-  editTitle,
-  onSelect,
-  onStartRename,
-  onSaveRename,
-  onChangeEditTitle,
-  onCancelRename,
-  onConfirmDelete,
-  onExecuteDelete,
-  onCancelDelete,
-  onArchive,
-  onUnarchive,
-  isArchivedSection,
-}) => {
-  const [offsetX, setOffsetX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const startPosRef = React.useRef<{ x: number; y: number } | null>(null);
-  const hasMovedRef = React.useRef(false);
-  const axisLockedRef = React.useRef<'x' | 'y' | null>(null);
-  const currentOffsetRef = React.useRef(0);
-  currentOffsetRef.current = offsetX;
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0 || isEditing || isDeleting) return;
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('input') || target.closest('form')) {
-      return;
-    }
-
-    startPosRef.current = { x: e.clientX, y: e.clientY };
-    hasMovedRef.current = false;
-    axisLockedRef.current = null;
-    setIsDragging(true);
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {}
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!startPosRef.current) return;
-
-    const dx = e.clientX - startPosRef.current.x;
-    const dy = e.clientY - startPosRef.current.y;
-
-    if (!axisLockedRef.current) {
-      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
-        // Rolagem vertical: cancela o arraste horizontal
-        axisLockedRef.current = 'y';
-        startPosRef.current = null;
-        setIsDragging(false);
-        setOffsetX(0);
-        try {
-          e.currentTarget.releasePointerCapture(e.pointerId);
-        } catch {}
-        return;
-      }
-      if (Math.abs(dx) > 5) {
-        axisLockedRef.current = 'x';
-        hasMovedRef.current = true;
-      }
-    }
-
-    if (axisLockedRef.current === 'x') {
-      const absDx = Math.abs(dx);
-      const sign = Math.sign(dx);
-      // Amortecimento suave além de 80px
-      const damped = sign * (Math.min(absDx, 80) + Math.max(0, absDx - 80) * 0.28);
-      setOffsetX(damped);
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!startPosRef.current) return;
-    const finalOffset = currentOffsetRef.current;
-    startPosRef.current = null;
-    setIsDragging(false);
-    axisLockedRef.current = null;
-
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
-
-    const SWIPE_THRESHOLD = 60;
-
-    if (finalOffset > SWIPE_THRESHOLD) {
-      // Arrastou para a DIREITA -> Arquivar (ou Desarquivar se já arquivada)
-      if (isArchivedSection) {
-        onUnarchive?.(conv.id);
-      } else {
-        onArchive?.(conv.id);
-      }
-      setOffsetX(0);
-    } else if (finalOffset < -SWIPE_THRESHOLD) {
-      // Arrastou para a ESQUERDA -> Deletar
-      onExecuteDelete(conv.id, e);
-      setOffsetX(0);
-    } else {
-      setOffsetX(0);
-      if (!hasMovedRef.current && Math.abs(finalOffset) < 5) {
-        onSelect(conv.id);
-      }
-    }
-  };
-
-  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
-    startPosRef.current = null;
-    setIsDragging(false);
-    axisLockedRef.current = null;
-    setOffsetX(0);
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
-  };
-
-  return (
-    <div className="relative overflow-hidden rounded-xl select-none touch-pan-y">
-      {/* Camada inferior de Ações (Feedback do Gesto de Arraste) */}
-      <div className="absolute inset-0 rounded-xl overflow-hidden flex items-center justify-between pointer-events-none select-none">
-        {/* Ação Esquerda (Arraste para Direita) -> Arquivar / Desarquivar */}
-        <div
-          className={`h-full w-full flex items-center justify-start pl-3.5 gap-2 transition-opacity ${
-            isArchivedSection ? 'bg-amber-600/90 text-white' : 'bg-emerald-600/90 text-white'
-          }`}
-          style={{
-            opacity: offsetX > 0 ? Math.min(1, Math.max(0.15, offsetX / 45)) : 0,
-            display: offsetX > 0 ? 'flex' : 'none',
-          }}
-        >
-          {isArchivedSection ? (
-            <>
-              <ArchiveRestore className="w-4 h-4 shrink-0" />
-              <span className="text-[11px] font-semibold tracking-wide">Desarquivar</span>
-            </>
-          ) : (
-            <>
-              <Archive className="w-4 h-4 shrink-0" />
-              <span className="text-[11px] font-semibold tracking-wide">Arquivar</span>
-            </>
-          )}
-        </div>
-
-        {/* Ação Direita (Arraste para Esquerda) -> Deletar */}
-        <div
-          className="h-full w-full flex items-center justify-end pr-3.5 gap-2 bg-rose-600/90 text-white transition-opacity"
-          style={{
-            opacity: offsetX < 0 ? Math.min(1, Math.max(0.15, Math.abs(offsetX) / 45)) : 0,
-            display: offsetX < 0 ? 'flex' : 'none',
-          }}
-        >
-          <span className="text-[11px] font-semibold tracking-wide">Deletar</span>
-          <Trash2 className="w-4 h-4 shrink-0" />
-        </div>
-      </div>
-
-      {/* Cartão Superior Deslizável */}
-      <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-        style={{
-          transform: `translateX(${offsetX}px)`,
-          transition: isDragging ? 'none' : 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-        className={`group relative flex flex-col p-2.5 pl-3 rounded-xl text-xs sm:text-sm cursor-pointer transition-all duration-150 ${
-          isActive
-            ? 'bg-gradient-to-b from-[#2e2a25] to-[#221f1c] border border-[#d97757]/60 text-[color:var(--c-fg-f3efe6)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_16px_rgba(0,0,0,0.4),0_0_12px_rgba(217,119,87,0.15)] ring-1 ring-[#d97757]/25 z-10'
-            : 'bg-[color:var(--c-bg-201e1a)]/40 hover:bg-[color:var(--c-bg-272420)]/80 border border-[color:var(--c-bg-322e27)]/40 hover:border-[color:var(--c-bg-3f3a32)]/80 text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
-        }`}
-      >
-        {/* Indicador de camada ativa no canto esquerdo */}
-        {isActive && (
-          <div
-            className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#d97757] shadow-[0_0_8px_rgba(217,119,87,0.8)]"
-            aria-hidden="true"
-          />
-        )}
-
-        <div className="flex items-start gap-2.5 min-w-0">
-          <div
-            className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-              isActive
-                ? 'bg-[#d97757]/20 text-[#d97757] border border-[#d97757]/30 shadow-xs'
-                : 'bg-[color:var(--c-bg-272420)]/50 text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)]'
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-          </div>
-
-          {isEditing ? (
-            <form
-              onSubmit={(e) => onSaveRename(conv.id, e)}
-              className="flex items-center gap-1 flex-1 min-w-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <input
-                type="text"
-                autoFocus
-                value={editTitle}
-                onChange={(e) => onChangeEditTitle(e.target.value)}
-                className="w-full bg-dark-bg border border-[#d97757] rounded-md px-2 py-0.5 text-xs text-[color:var(--c-on-strong)] focus:outline-none"
-              />
-              <button
-                type="submit"
-                aria-label="Confirmar alteração"
-                className="p-1 hover:text-emerald-400 text-zinc-400"
-              >
-                <Check className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={onCancelRename}
-                aria-label="Cancelar renomeação"
-                className="p-1 hover:text-rose-400 text-zinc-400"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </form>
-          ) : (
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span
-                  className={`truncate text-xs sm:text-[13px] ${
-                    isActive
-                      ? 'font-semibold text-[color:var(--c-fg-f3efe6)]'
-                      : 'font-medium text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)]'
-                  }`}
-                >
-                  {conv.title}
-                </span>
-                {conv.activeRepo && (
-                  <span
-                    className="shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[color:var(--c-bg-2a261f)] text-[color:var(--c-fg-d97757)] border border-[#d97757]/30 font-mono font-medium truncate max-w-[80px]"
-                    title={`Repositório exclusivo deste chat: ${conv.activeRepo.fullName} (${conv.activeRepo.branch})`}
-                  >
-                    {conv.activeRepo.repo}
-                  </span>
-                )}
-                {(conv.isPlanMode || conv.messages?.some((m) => m.isPlanMode)) && (
-                  <span className="shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/35 font-mono font-medium">
-                    Plano
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between text-[10px] text-[color:var(--c-fg-736e65)] mt-1 font-normal">
-                <span>{formatDate(conv.updatedAt)}</span>
-
-                {/* Ações Desktop de Hover */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                  {isDeleting ? (
-                    <div
-                      className="flex items-center gap-1 bg-[color:var(--c-bg-3a1d1d)] border border-rose-800 rounded-md px-1.5 py-0.5"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span className="text-[10px] text-rose-300">Apagar?</span>
-                      <button
-                        onClick={(e) => onExecuteDelete(conv.id, e)}
-                        aria-label="Confirmar exclusão"
-                        className="p-0.5 text-rose-400 hover:text-[color:var(--c-on-strong)]"
-                      >
-                        <Check className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={onCancelDelete}
-                        aria-label="Cancelar exclusão"
-                        className="p-0.5 text-zinc-400 hover:text-[color:var(--c-on-strong)]"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      {isArchivedSection ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onUnarchive?.(conv.id);
-                          }}
-                          aria-label="Desarquivar conversa"
-                          title="Desarquivar conversa"
-                          className="p-1 text-[color:var(--c-fg-736e65)] hover:text-amber-400 hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
-                        >
-                          <ArchiveRestore className="w-3.5 h-3.5" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onArchive?.(conv.id);
-                          }}
-                          aria-label="Arquivar conversa (ou arraste para a direita)"
-                          title="Arquivar conversa (ou arraste para a direita)"
-                          className="p-1 text-[color:var(--c-fg-736e65)] hover:text-emerald-400 hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
-                        >
-                          <Archive className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => onStartRename(conv, e)}
-                        aria-label="Renomear conversa"
-                        title="Renomear"
-                        className="p-1 text-[color:var(--c-fg-736e65)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => onConfirmDelete(conv.id, e)}
-                        aria-label="Deletar conversa (ou arraste para a esquerda)"
-                        title="Deletar conversa (ou arraste para a esquerda)"
-                        className="p-1 text-[color:var(--c-fg-736e65)] hover:text-rose-400 hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 interface ChatSidebarProps {
   conversations: Conversation[];
@@ -505,6 +154,171 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
     e.stopPropagation();
     onDeleteConversation(id);
     setDeleteConfirmId(null);
+  };
+
+  const renderConversationItem = (conv: Conversation, isArchivedSection = false) => {
+    const isActive = conv.id === activeId;
+    const isEditing = editingId === conv.id;
+    const isDeleting = deleteConfirmId === conv.id;
+
+    return (
+      <div
+        key={conv.id}
+        onClick={() => {
+          onSelectConversation(conv.id);
+          if (window.innerWidth < 768) onClose();
+        }}
+        className={`group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition-all duration-150 active:scale-[0.99] ${
+          isActive
+            ? 'bg-dark-card text-[color:var(--c-fg-f3efe6)] font-medium border-l-2 border-l-[#d97757] border-y border-r border-gray-800/40 dark:border-white/5 shadow-xs'
+            : 'text-[color:var(--c-fg-a0aec0)] hover:bg-dark-bg-secondary hover:text-[color:var(--c-fg-f3efe6)]'
+        }`}
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <MessageSquare
+            className={`w-3.5 h-3.5 flex-shrink-0 ${
+              isActive ? 'text-[#d97757]' : 'text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)]'
+            }`}
+          />
+
+          {isEditing ? (
+            <form
+              onSubmit={(e) => saveRename(conv.id, e)}
+              className="flex items-center gap-1 flex-1 mr-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="text"
+                autoFocus
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full bg-dark-bg border border-[#d97757] rounded-md px-2 py-0.5 text-xs text-[color:var(--c-on-strong)] focus:outline-none"
+              />
+              <button
+                type="submit"
+                aria-label="Confirmar alteração"
+                className="p-1 hover:text-emerald-400 text-zinc-400"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingId(null)}
+                aria-label="Cancelar renomeação"
+                className="p-1 hover:text-rose-400 text-zinc-400"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          ) : (
+            <div className="truncate flex-1">
+              <div className="truncate flex items-center gap-1.5">
+                <span className="truncate">{conv.title}</span>
+                {conv.activeRepo && (
+                  <span
+                    className="flex-shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[color:var(--c-bg-2a261f)] text-[color:var(--c-fg-d97757)] border border-[#d97757]/30 font-mono font-medium truncate max-w-[80px]"
+                    title={`Repositório exclusivo deste chat: ${conv.activeRepo.fullName} (${conv.activeRepo.branch})`}
+                  >
+                    {conv.activeRepo.repo}
+                  </span>
+                )}
+                {(conv.isPlanMode || conv.messages?.some((m) => m.isPlanMode)) && (
+                  <span className="flex-shrink-0 text-[9px] px-1.5 py-0.2 rounded bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/35 font-mono font-medium">
+                    Plano
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-[color:var(--c-fg-736e65)] font-normal">
+                {formatDate(conv.updatedAt)}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Actions (Rename / Archive / Delete) */}
+        {!isEditing && (
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
+            {isDeleting ? (
+              <div
+                className="flex items-center gap-1 bg-[color:var(--c-bg-3a1d1d)] border border-rose-800 rounded-md px-1.5 py-0.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="text-[10px] text-rose-300">Apagar?</span>
+                <button
+                  onClick={(e) => executeDelete(conv.id, e)}
+                  aria-label="Confirmar exclusão"
+                  className="p-0.5 text-rose-400 hover:text-[color:var(--c-on-strong)]"
+                >
+                  <Check className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteConfirmId(null);
+                  }}
+                  aria-label="Cancelar exclusão"
+                  className="p-0.5 text-zinc-400 hover:text-[color:var(--c-on-strong)]"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <>
+                {isArchivedSection ? (
+                  onUnarchiveConversation && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUnarchiveConversation(conv.id);
+                      }}
+                      aria-label="Desarquivar conversa"
+                      title="Desarquivar conversa"
+                      className="p-1 text-[color:var(--c-fg-736e65)] hover:text-amber-400 hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
+                    >
+                      <ArchiveRestore className="w-3.5 h-3.5" />
+                    </button>
+                  )
+                ) : (
+                  onArchiveConversation && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onArchiveConversation(conv.id);
+                      }}
+                      aria-label="Arquivar conversa"
+                      title="Arquivar conversa"
+                      className="p-1 text-[color:var(--c-fg-736e65)] hover:text-emerald-400 hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
+                    >
+                      <Archive className="w-3.5 h-3.5" />
+                    </button>
+                  )
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => startRename(conv, e)}
+                  aria-label="Renomear conversa"
+                  title="Renomear conversa"
+                  className="p-1 text-[color:var(--c-fg-736e65)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => confirmDelete(conv.id, e)}
+                  aria-label="Deletar conversa"
+                  title="Deletar conversa"
+                  className="p-1 text-[color:var(--c-fg-736e65)] hover:text-rose-400 hover:bg-[color:var(--c-bg-302d28)] rounded-md transition"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -716,15 +530,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
           </button>
         </div>
 
-        {/* Conversation list (Estilo Cartão com Gesto de Arraste: Esquerda = Deletar, Direita = Arquivar) */}
-        <div className="flex-1 overflow-y-auto px-2.5 py-1 space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] font-bold text-[color:var(--c-fg-8c867a)] px-2 py-1 uppercase tracking-wider font-mono">
-            <span>Recentes ({activeConversations.length})</span>
-            {activeConversations.length > 0 && (
-              <span className="text-[9px] font-normal lowercase tracking-normal text-[color:var(--c-fg-736e65)] opacity-80 select-none">
-                ‹ apagar | arquivar ›
-              </span>
-            )}
+        {/* Conversation list (Estilo original do início do dia) */}
+        <div className="flex-1 overflow-y-auto px-2.5 py-1 space-y-1">
+          <div className="text-[10px] font-bold text-[color:var(--c-fg-8c867a)] px-2 py-1 uppercase tracking-wider font-mono">
+            Recentes ({activeConversations.length})
           </div>
 
           {activeConversations.length === 0 ? (
@@ -733,32 +542,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
               Comece uma nova conversa acima!
             </div>
           ) : (
-            activeConversations.map((conv) => (
-              <SwipeableConversationCard
-                key={conv.id}
-                conv={conv}
-                isActive={conv.id === activeId}
-                isEditing={editingId === conv.id}
-                isDeleting={deleteConfirmId === conv.id}
-                editTitle={editTitle}
-                onSelect={(id) => {
-                  onSelectConversation(id);
-                  if (window.innerWidth < 768) onClose();
-                }}
-                onStartRename={startRename}
-                onSaveRename={saveRename}
-                onChangeEditTitle={setEditTitle}
-                onCancelRename={() => setEditingId(null)}
-                onConfirmDelete={confirmDelete}
-                onExecuteDelete={executeDelete}
-                onCancelDelete={(e) => {
-                  e.stopPropagation();
-                  setDeleteConfirmId(null);
-                }}
-                onArchive={onArchiveConversation}
-                onUnarchive={onUnarchiveConversation}
-              />
-            ))
+            activeConversations.map((conv) => renderConversationItem(conv, false))
           )}
 
           {/* Seção Arquivadas (expansível com contagem) */}
@@ -781,34 +565,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
               </button>
 
               {showArchived && (
-                <div className="space-y-1.5 mt-1.5">
-                  {archivedConversations.map((conv) => (
-                    <SwipeableConversationCard
-                      key={conv.id}
-                      conv={conv}
-                      isActive={conv.id === activeId}
-                      isEditing={editingId === conv.id}
-                      isDeleting={deleteConfirmId === conv.id}
-                      editTitle={editTitle}
-                      onSelect={(id) => {
-                        onSelectConversation(id);
-                        if (window.innerWidth < 768) onClose();
-                      }}
-                      onStartRename={startRename}
-                      onSaveRename={saveRename}
-                      onChangeEditTitle={setEditTitle}
-                      onCancelRename={() => setEditingId(null)}
-                      onConfirmDelete={confirmDelete}
-                      onExecuteDelete={executeDelete}
-                      onCancelDelete={(e) => {
-                        e.stopPropagation();
-                        setDeleteConfirmId(null);
-                      }}
-                      onArchive={onArchiveConversation}
-                      onUnarchive={onUnarchiveConversation}
-                      isArchivedSection={true}
-                    />
-                  ))}
+                <div className="space-y-1 mt-1.5">
+                  {archivedConversations.map((conv) => renderConversationItem(conv, true))}
                 </div>
               )}
             </div>
