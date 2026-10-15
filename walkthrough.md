@@ -278,4 +278,25 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 19/19 testes passando (5 suítes).
   - `npm run build`: bundle de produção e `dist/_worker.js` (92.9 kB) gerados com 0 erros.
 
+## 27. Otimização do Gerador de Mensagens de Commit e Refinamento do Botão
+- **Problema:** Ao clicar em "Gerar com IA" no painel de Source Control, o botão ficava travado em "Analisando diff com IA..." e a caixa de texto não era preenchida. Além disso, o botão possuía dois ícones de IA duplicados (`<Sparkles />` SVG + emoji `✨`) e texto longo.
+- **Causas Raízes:**
+  1. **Timeout Agressivo de Leitura (10s):** O leitor da stream continha um `setInterval` que abortava a requisição se nenhum chunk de conteúdo chegasse em 10s. Como o GLM 5.3 com raciocínio (`reasoning_effort: 'low'`) demorava 12s a 20s para soltar os primeiros tokens, a requisição era cancelada silenciosamente pelo `controller.abort()`.
+  2. **Ausência de Fallback:** Se a IA atrasasse ou falhasse, o campo de texto permanecia vazio sem nenhuma mensagem sugerida.
+  3. **Poluição Visual no Botão:** Dois símbolos de IA concorrentes e texto `✨ Gerar com IA`.
+- **Solução Implementada:**
+  - **Ajuste Visual Cirúrgico (`source-control-panel.tsx`):**
+    - Mantido apenas o ícone `<Sparkles className="w-3 h-3 text-amber-400" />` amarelinho na extrema esquerda.
+    - Removido o emoji `✨` duplicado.
+    - Texto encurtado para apenas **"Gerar"** (durante execução: "Gerando...").
+    - Placeholder atualizado para `"Escreva a mensagem ou clique em 'Gerar'..."`.
+  - **Timeout Resiliente e Fallback Garantido:**
+    - Timeout de inatividade estendido de 10s para 25s, e teto geral para 40s.
+    - Implementado gerador automático de fallback no padrão Conventional Commits baseado nos arquivos alterados (ex: `feat: atualizar App.tsx`), garantindo que o usuário nunca fique com a caixa vazia.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: bundle compilado em 2.85s com sucesso.
+
+
 

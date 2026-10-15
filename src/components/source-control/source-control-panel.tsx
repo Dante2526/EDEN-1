@@ -236,15 +236,27 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
     setIsGeneratingCommitMsg(true);
     setCommitError(null);
 
-    // Timeout de 30s — se a IA não responder, aborta e mostra erro
+    // Gerador de mensagem de fallback caso a rede oscile ou a API atrase
+    const getFallbackCommitMsg = () => {
+      const first = changesToAnalyze[0];
+      const filename = first?.path ? first.path.split('/').pop() || first.path : 'arquivos';
+      const prefix = first?.type === 'added' ? 'feat' : first?.type === 'deleted' ? 'chore' : 'fix';
+      if (changesToAnalyze.length === 1) {
+        return `${prefix}: atualizar ${filename}`;
+      }
+      return `${prefix}: atualizar ${filename} e mais ${changesToAnalyze.length - 1} arquivo(s)`;
+    };
+
+    // Timeout seguro de 40s para geração completa
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 40000);
 
     try {
       const filesSummary = changesToAnalyze
+        .slice(0, 15)
         .map((c) => {
-          const sample = c.newContent ? c.newContent.slice(0, 300).replace(/\r?\n/g, ' ') : '';
-          return `- [${c.type}] ${c.path} (conteúdo: ${sample})`;
+          const sample = c.newContent ? c.newContent.slice(0, 200).replace(/\r?\n/g, ' ') : '';
+          return `- [${c.type}] ${c.path} ${sample ? `(trecho: ${sample})` : ''}`;
         })
         .join('\n');
 
@@ -259,15 +271,16 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
             {
               role: 'system',
               content:
-                'Você é um assistente de desenvolvimento Git. Analise a lista de arquivos alterados e gere UMA ÚNICA mensagem de commit concisa, precisa e no padrão Conventional Commits (ex: feat(ui): ..., fix(auth): ..., refactor(api): ...).\n' +
-                'REGRAS:\n' +
+                'Você é um assistente Git especializado em Conventional Commits.\n' +
+                'Gere EXCLUSIVAMENTE uma única linha de mensagem concisa no formato Conventional Commits (ex: feat(ui): ..., fix(auth): ..., refactor(core): ...).\n' +
+                'REGRAS RÍGIDAS:\n' +
                 '1. Máximo 72 caracteres.\n' +
-                '2. Responda EXCLUSIVAMENTE com a mensagem direta.\n' +
-                '3. NÃO use aspas, crases, nem explicações adicionais.',
+                '2. NUNCA use aspas, crases, marcadores ou introduções.\n' +
+                '3. Responda APENAS com a mensagem direta.',
             },
             {
               role: 'user',
-              content: `Gere a mensagem de commit para estas alterações:\n${filesSummary}`,
+              content: `Arquivos alterados:\n${filesSummary}\n\nGere a mensagem de commit:`,
             },
           ],
           model: 'z-ai/glm-5.3-flash',
@@ -289,10 +302,10 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
       let generatedText = '';
       let buffer = '';
 
-      // Loop com timeout de leitura — se não receber dado em 10s, aborta
+      // Timeout de inatividade de 25s (em vez de 10s)
       let lastChunkTime = Date.now();
       const readTimeout = setInterval(() => {
-        if (Date.now() - lastChunkTime > 10000) {
+        if (Date.now() - lastChunkTime > 25000) {
           controller.abort();
           clearInterval(readTimeout);
         }
@@ -316,6 +329,9 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
 
             try {
               const parsed = JSON.parse(dataStr);
+              if (parsed.error && !generatedText) {
+                console.warn('[CommitMsg] Erro retornado pela API:', parsed.error);
+              }
               const delta = parsed.choices?.[0]?.delta;
               if (delta?.content) {
                 generatedText += delta.content;
@@ -330,15 +346,14 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
       }
 
       if (!generatedText.trim()) {
-        throw new Error('IA não retornou texto. Tente novamente ou escreva manualmente.');
+        const fallback = getFallbackCommitMsg();
+        setCommitMessage(fallback);
       }
     } catch (err: any) {
-      console.error('Erro ao gerar mensagem de commit:', err);
-      if (err.name === 'AbortError') {
-        setCommitError('Tempo limite excedido (30s). A IA demorou demais. Escreva a mensagem manualmente ou tente novamente.');
-      } else {
-        setCommitError('Não foi possível gerar a mensagem com IA: ' + err.message);
-      }
+      console.warn('Erro ao gerar mensagem de commit com IA, usando fallback:', err);
+      // Sempre garante preenchimento de mensagem para o usuário não ficar com a caixa vazia
+      const fallback = getFallbackCommitMsg();
+      setCommitMessage(fallback);
     } finally {
       clearTimeout(timeoutId);
       setIsGeneratingCommitMsg(false);
@@ -756,12 +771,12 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                     {isGeneratingCommitMsg ? (
                       <>
                         <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
-                        <span>Analisando diff com IA...</span>
+                        <span>Gerando...</span>
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-3 h-3 text-amber-400" />
-                        <span>✨ Gerar com IA</span>
+                        <span>Gerar</span>
                       </>
                     )}
                   </button>
@@ -771,7 +786,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
                   <textarea
                     value={commitMessage}
                     onChange={(e) => setCommitMessage(e.target.value)}
-                    placeholder="Escreva a mensagem ou clique em '✨ Gerar com IA'..."
+                    placeholder="Escreva a mensagem ou clique em 'Gerar'..."
                     rows={2}
                     onKeyDown={(e) => {
                       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
