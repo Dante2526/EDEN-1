@@ -221,18 +221,26 @@ const SwipeableConversationCard: React.FC<SwipeableConversationCardProps> = ({
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? 'none' : 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
-        className={`group relative flex flex-col p-2.5 rounded-xl text-xs sm:text-sm cursor-pointer transition-colors duration-150 ${
+        className={`group relative flex flex-col p-2.5 pl-3 rounded-xl text-xs sm:text-sm cursor-pointer transition-all duration-150 ${
           isActive
-            ? 'bg-[color:var(--c-bg-272420)] border border-[#d97757]/45 text-[color:var(--c-fg-f3efe6)] shadow-[0_2px_10px_rgba(217,119,87,0.1)]'
-            : 'bg-[color:var(--c-bg-201e1a)]/75 hover:bg-[color:var(--c-bg-272420)] border border-[color:var(--c-bg-322e27)]/80 hover:border-[color:var(--c-bg-3f3a32)] text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] shadow-xs'
+            ? 'bg-gradient-to-b from-[#2e2a25] to-[#221f1c] border border-[#d97757]/60 text-[color:var(--c-fg-f3efe6)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_16px_rgba(0,0,0,0.4),0_0_12px_rgba(217,119,87,0.15)] ring-1 ring-[#d97757]/25 z-10'
+            : 'bg-[color:var(--c-bg-201e1a)]/40 hover:bg-[color:var(--c-bg-272420)]/80 border border-[color:var(--c-bg-322e27)]/40 hover:border-[color:var(--c-bg-3f3a32)]/80 text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)]'
         }`}
       >
+        {/* Indicador de camada ativa no canto esquerdo */}
+        {isActive && (
+          <div
+            className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#d97757] shadow-[0_0_8px_rgba(217,119,87,0.8)]"
+            aria-hidden="true"
+          />
+        )}
+
         <div className="flex items-start gap-2.5 min-w-0">
           <div
             className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
               isActive
-                ? 'bg-[#d97757]/15 text-[#d97757]'
-                : 'bg-[color:var(--c-bg-2a261f)] text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)]'
+                ? 'bg-[#d97757]/20 text-[#d97757] border border-[#d97757]/30 shadow-xs'
+                : 'bg-[color:var(--c-bg-272420)]/50 text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)]'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
@@ -270,7 +278,13 @@ const SwipeableConversationCard: React.FC<SwipeableConversationCardProps> = ({
           ) : (
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="truncate font-medium text-xs sm:text-[13px] text-[color:var(--c-fg-f3efe6)]">
+                <span
+                  className={`truncate text-xs sm:text-[13px] ${
+                    isActive
+                      ? 'font-semibold text-[color:var(--c-fg-f3efe6)]'
+                      : 'font-medium text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)]'
+                  }`}
+                >
                   {conv.title}
                 </span>
                 {conv.activeRepo && (

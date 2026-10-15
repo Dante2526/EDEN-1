@@ -470,6 +470,23 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 25/25 testes passando (6 suítes).
   - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 5.73s.
 
+## 40. Estilo Camada e Hierarquia Visual de Seleção na Barra Lateral
+- **Problema:** Ambos os cartões (ativo e inativo) possuíam bordas inteiras bem visíveis e o mesmo tom de texto branco no título, gerando ruído e confusão visual sobre qual conversa estava de fato selecionada.
+- **Solução Implementada (`src/components/chat-sidebar.tsx`):**
+  1. **Camada Superior Elevada (Cartão Ativo):**
+     - Superfície iluminada em gradiente vertical suave (`from-[#2e2a25] to-[#221f1c]`).
+     - Sombra em camadas 3D com specular highlight superior (`inset 0 1px 0 rgba(255,255,255,0.08)`) e glow terracota suave (`0 0 12px rgba(217,119,87,0.15)`).
+     - **Indicador Físico de Camada:** Barra lateral vertical no canto esquerdo (`w-1 rounded-r-full bg-[#d97757]`) com brilho sutil.
+     - Ícone em container terracota destacado (`bg-[#d97757]/20 border border-[#d97757]/30 text-[#d97757]`) e título em negrito branco (`font-semibold text-white`).
+  2. **Camada Base Recuada (Cartões Inativos):**
+     - Borda atenuada e translúcida (`border-white/5` ou `border-[#322e27]/40`) para não concorrer com o ativo.
+     - Título e ícone com cores de repouso secundárias (`text-[#8c867a]`), acendendo suavemente apenas no hover do mouse.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 6.04s.
+
+
 
 
 
