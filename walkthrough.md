@@ -358,3 +358,19 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 19/19 testes passando (5 suítes).
   - `npm run build`: bundle compilado com sucesso (`dist/_worker.js` 93.4 kB).
+
+## 33. Integração dos Modelos NVIDIA NIM: Google Gemma 4 31B + Qwen-Image & Edit
+- **Solicitação do Usuário:** Habilitar modelos adicionais disponíveis em sua conta NVIDIA NIM: o modelo de chat/visão **Google Gemma 4 31B** (`google/gemma-4-31b-it`) e os modelos visuais **Qwen-Image** e **Qwen-Image-Edit**.
+- **Solução Implementada:**
+  - **Google Gemma 4 31B no Chat (`src/lib/models.ts`, `src/lib/types.ts`, `src/components/model-controls.tsx`, `api/chat.ts`):**
+    - Adicionado à lista de modelos permitidos e ao menu de seleção com o badge `Google · 31B`.
+    - Habilitado para suporte a imagens multimodais (`isVisionCapable`), ferramentas (`modelSupportsTools`) e cálculo de contexto de 256.000 tokens (`CONTEXT_LIMIT = 256000`).
+    - Validação de storage em `src/App.tsx` e auto-detecção no `src/components/chat-input.tsx`.
+  - **Qwen-Image & Qwen-Image-Edit no Motor de Imagens (`api/image.ts`, `src/App.tsx`):**
+    - `api/image.ts` atualizado para ler `env.NVIDIA_API_KEY`. Se presente, invoca diretamente os endpoints da NVIDIA NIM (`ai.api.nvidia.com/v1/genai/qwen/qwen-image` para criação do zero e `qwen-image-edit` quando `image_url` for fornecida).
+    - Retorno imediato em Base64 Data URI sem latência de hospedagem intermediária.
+    - Fallback resiliente para FLUX (Pollinations) mantido caso haja oscilação na cota da NVIDIA.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: bundle compilado com sucesso em 2.33s (`dist/_worker.js` 95.6 kB).

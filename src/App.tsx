@@ -374,16 +374,20 @@ const IMAGE_GEN_TOOL = {
   function: {
     name: 'generate_image',
     description:
-      'Gera uma imagem artística, fotografia ou ilustração de alta qualidade com modelo FLUX. ' +
-      'Use SEMPRE esta ferramenta para gerar imagens. NUNCA gere ou invente URLs ou sintaxe de imagem markdown no texto antes de chamar a ferramenta.',
+      'Gera ou edita imagens artísticas, ilustrações e fotos de alta qualidade com os modelos Qwen-Image / Qwen-Image-Edit (NVIDIA) e FLUX. ' +
+      'Use SEMPRE esta ferramenta para gerar ou editar imagens. NUNCA gere ou invente URLs ou sintaxe markdown antes de chamar a ferramenta.',
     parameters: {
       type: 'object',
       properties: {
-        prompt: { type: 'string', description: 'Descrição detalhada da imagem a ser gerada' },
+        prompt: { type: 'string', description: 'Descrição detalhada da imagem a ser gerada ou das alterações a serem feitas na imagem existente' },
         aspect_ratio: {
           type: 'string',
           enum: ['1:1', '16:9', '9:16', '4:3'],
           description: 'Proporção da imagem (padrão 1:1)',
+        },
+        image_url: {
+          type: 'string',
+          description: 'URL ou base64 da imagem existente a ser editada (opcional, para usar qwen-image-edit)',
         },
       },
       required: ['prompt'],
@@ -683,7 +687,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'deepseek-ai/deepseek-v4.1-flash' || saved === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || saved === '@cf/qwen/qwen2.5-coder-32b-instruct') return saved;
+      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'google/gemma-4-31b-it' || saved === 'deepseek-ai/deepseek-v4.1-flash' || saved === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || saved === '@cf/qwen/qwen2.5-coder-32b-instruct') return saved;
     }
     return 'z-ai/glm-5.3'; // Modelo padrão: GLM-5.3 full (mais robusto)
   });
@@ -1649,13 +1653,14 @@ function AppContent() {
       try {
         const prompt = args.prompt || '';
         const aspect_ratio = args.aspect_ratio || '1:1';
+        const image_url = args.image_url || args.image || '';
         const res = await fetch('/api/image', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': import.meta.env.VITE_API_SECRET || '',
           },
-          body: JSON.stringify({ prompt, aspect_ratio }),
+          body: JSON.stringify({ prompt, aspect_ratio, image_url }),
         });
         if (!res.ok) throw new Error(`Falha ao gerar imagem (${res.status})`);
         const imgData = await res.json();
@@ -3640,7 +3645,7 @@ function AppContent() {
           onSendMessage={handleSendMessage}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'}
+          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}

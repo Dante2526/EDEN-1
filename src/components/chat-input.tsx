@@ -117,10 +117,9 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
           const base64 = await fileToBase64(file);
           newImages.push(base64);
 
-          // Auto-switch para GLM-5.3 Flash quando usuário anexa imagem
-          // (é o único modelo disponível que suporta visão)
-          const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash';
-          if (!isVisionModel) {
+          // Auto-switch para modelo com visão (GLM-5.3 Flash ou Gemma 4 31B)
+          const isVision = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it';
+          if (!isVision) {
             onSelectModel('z-ai/glm-5.3-flash');
             switchedToFlash = true;
           }

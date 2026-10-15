@@ -49,6 +49,12 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       badge: 'Visão',
     },
     {
+      id: 'google/gemma-4-31b-it',
+      title: 'Gemma 4 31B',
+      subtitle: 'Google DeepMind multimodal (256k contexto, visão e lógica)',
+      badge: 'Google · 31B',
+    },
+    {
       id: 'deepseek-ai/deepseek-v4.1-flash',
       title: 'DeepSeek V4.1 Flash',
       subtitle: 'Rápido e eficiente — ótimo custo-benefício',
@@ -115,6 +121,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'GLM-5.3'
                 : selectedModel === 'z-ai/glm-5.3-flash'
                 ? 'GLM Flash'
+                : selectedModel === 'google/gemma-4-31b-it'
+                ? 'Gemma 4 31B'
                 : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
                 ? 'DeepSeek V4.1'
                 : selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
@@ -170,7 +178,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
           {(() => {
             const activeTokens = conversationTokens?.activeContextTokens || conversationTokens?.totalTokens || 0;
             const totalAccumulated = conversationTokens?.totalTokens || 0;
-            const CONTEXT_LIMIT = 128000; // Limite de contexto do GLM-5.3
+            const CONTEXT_LIMIT = selectedModel === 'google/gemma-4-31b-it' ? 256000 : 128000; // 256k para Gemma 4, 128k para GLM-5.3
             const percent = Math.min(100, (activeTokens / CONTEXT_LIMIT) * 100);
             // Cor conforme % de uso da janela ativa
             const barColor =
