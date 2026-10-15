@@ -34,6 +34,9 @@ import {
 import { formatKnowledgePrompt, createKnowledgeFact } from './lib/knowledge-base';
 import { generateId, generateTitleFromMessage, formatFileSize } from './lib/utils';
 import { ChatHeader } from './components/chat-header';
+import { useDeploymentMonitor } from './lib/deployment-service';
+import { DeploymentErrorCard } from './components/deployments/deployment-error-card';
+import { DeploymentLogModal } from './components/deployments/deployment-log-modal';
 import { ChatSidebar } from './components/chat-sidebar';
 // Lazy load Sandpack components (só baixa quando usuário abre projetos)
 const ProjectWorkspace = React.lazy(() =>
@@ -615,6 +618,22 @@ function AppContent() {
   const [sidebarTab, setSidebarTab] = useState<'chats' | 'repos' | 'source-control' | 'skills' | 'projects'>('chats');
   const [activeRepo, setActiveRepo] = useState<ActiveRepoState | null>(null);
   const [isStudioMode, setIsStudioMode] = useState<boolean>(false);
+
+  // Cloudflare Pages Deployment Monitor
+  const [isDeploymentLogsOpen, setIsDeploymentLogsOpen] = useState(false);
+  const [dismissedDeploymentId, setDismissedDeploymentId] = useState<string | null>(null);
+
+  const {
+    deployment,
+    isLoading: isLoadingDeployment,
+    refreshNow: refreshDeployment,
+  } = useDeploymentMonitor({
+    projectName: 'synap',
+    owner: activeRepo?.owner || 'Dante2526',
+    repo: activeRepo?.repo || 'Synap',
+    activeCommitSha: activeRepo?.commitSha,
+    enabled: true,
+  });
 
   // Main view tabs (Chat / Preview / Agentes) — estilo Google AI Studio
   type MainViewTab = 'chat' | 'preview' | 'agentes';
@@ -3347,6 +3366,16 @@ function AppContent() {
     }
   }, [continuousVoiceActive, isStreaming, handleSendMessage, handleStopGeneration, stopLiveSpeech]);
 
+  // Handler para correção de falhas de build na Cloudflare assistida por IA
+  const handleFixBuildError = useCallback((errorSnippet: string) => {
+    const shortSha = deployment?.commitHash?.slice(0, 7) || 'recente';
+    const prompt = `O build de produção na Cloudflare Pages falhou no commit ${shortSha}.\n\n` +
+      `Abaixo está o log de erro do terminal emitido durante a compilação:\n` +
+      `\`\`\`\n${errorSnippet}\n\`\`\`\n\n` +
+      `Por favor, diagnostique a causa raiz do erro, identifique o(s) arquivo(s) afetado(s) e utilize a ferramenta edit_file para corrigir o código e restabelecer o deploy.`;
+    handleSendMessage(prompt);
+  }, [deployment, handleSendMessage]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bom dia';
@@ -3467,6 +3496,9 @@ function AppContent() {
           activeProjectName={activeProject?.name ?? null}
           errorCount={errorHistory.length}
           onOpenErrors={() => setIsErrorModalOpen(true)}
+          deployment={deployment}
+          isLoadingDeployment={isLoadingDeployment}
+          onOpenDeploymentLogs={() => setIsDeploymentLogsOpen(true)}
         />
 
         {/* Global Error Banner */}
@@ -3640,6 +3672,18 @@ function AppContent() {
           )}
         </div>
 
+        {/* Cloudflare Pages Deployment Failure Alert */}
+        {deployment?.status === 'failure' && dismissedDeploymentId !== deployment.id && (
+          <div className="px-3 sm:px-6 max-w-4xl mx-auto w-full">
+            <DeploymentErrorCard
+              deployment={deployment}
+              onViewLogs={() => setIsDeploymentLogsOpen(true)}
+              onFixWithAi={handleFixBuildError}
+              onDismiss={() => setDismissedDeploymentId(deployment.id)}
+            />
+          </div>
+        )}
+
         {/* Chat Input Bar */}
         <ChatInput
           onSendMessage={handleSendMessage}
@@ -3706,6 +3750,14 @@ function AppContent() {
         isOpen={isErrorModalOpen}
         onClose={() => setIsErrorModalOpen(false)}
         onClearHistory={() => setErrorHistory([])}
+      />
+
+      {/* Cloudflare Pages Deployment Logs Modal */}
+      <DeploymentLogModal
+        isOpen={isDeploymentLogsOpen}
+        onClose={() => setIsDeploymentLogsOpen(false)}
+        deployment={deployment}
+        onFixWithAi={handleFixBuildError}
       />
     </div>
   );

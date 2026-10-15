@@ -1,27 +1,26 @@
-# Task List: Modernização dos Cartões (Design System & Sombras em Camadas)
+# Checklist de Execução: Monitor de Deploy da Cloudflare & Correção com IA
 
-- [x] **Task 1: Design Tokens e Classes Utilitárias no CSS Global**
-  - [x] Step 1: Adicionar `.synap-card`, `.synap-card-interactive` e `.synap-card-subtle` em `src/index.css`
-  - [x] Step 2: Validar variáveis de tema claro e escuro
-  - [x] Step 3: Compilar com `npm run build` para validar Tailwind v4
-- [x] **Task 2: Modernização dos Cartões do Chat**
-  - [x] Step 1: Aplicar `.synap-card` no bloco de pensamento (Thinking / Raciocínio) em `chat-message.tsx`
-  - [x] Step 2: Aplicar `.synap-card-interactive` nos cartões de arquivos editados e botões de diff
-  - [x] Step 3: Aplicar acabamento nos cartões de ferramentas (Tool Calls) e imagens
-  - [x] Step 4: Refinar o divisor de compactação em `compaction-marker.tsx`
-- [x] **Task 3: Modernização dos Cartões do Source Control**
-  - [x] Step 1: Card de aviso de Pull/commits remotos em `source-control-panel.tsx`
-  - [x] Step 2: Lista de arquivos modificados / staged
-  - [x] Step 3: Caixa de mensagem de commit e ações
-- [x] **Task 4: Modernização da Barra Lateral, Repositórios e Skills**
-  - [x] Step 1: Itens de conversa no histórico (`chat-sidebar.tsx`)
-  - [x] Step 2: Cartões de repositórios (`repo-list.tsx`)
-  - [x] Step 3: Cartões de Habilidades e MCP (`extensions-panel.tsx`)
-- [x] **Task 5: Modernização dos Cartões do Studio**
-  - [x] Step 1: Timeline cards dos agentes Kimi / GLM / Implementador em `studio-panel.tsx`
-  - [x] Step 2: Sub-cards de passos de execução (`step`)
-- [x] **Task 6: Verificação e Build Final**
-  - [x] Step 1: Executar `npm run lint` (`tsc --noEmit`)
+- [x] **Task 1: Endpoint de Backend (`api/deployments.ts`) e Roteamento**
+  - [x] Step 1: Criar o endpoint `api/deployments.ts` com handlers `action=status` e `action=logs`
+  - [x] Step 2: Adicionar rota `/api/deployments` no `server.ts` (Express)
+  - [x] Step 3: Mapear rota `/api/deployments` no `_worker.ts` (Cloudflare Pages)
+  - [x] Step 4: Validar build e tipos com `npm run lint`
+- [x] **Task 2: Cliente Frontend TDD e Módulo de Extração de Erros (`src/lib/deployment-service.ts`)**
+  - [x] Step 1: Escrever teste unitário para normalização de deploys e extração de erro (RED)
+  - [x] Step 2: Implementar `src/lib/deployment-service.ts` (GREEN)
+  - [x] Step 3: Rodar testes com `npm test` e verificar sucesso (100% GREEN)
+- [x] **Task 3: Modal de Logs de Terminal do Deploy (`src/components/deployments/deployment-log-modal.tsx`)**
+  - [x] Step 1: Construir modal no estilo console escuro (`.synap-card`)
+  - [x] Step 2: Testar acessibilidade e responsividade mobile
+- [x] **Task 4: Card de Alerta no Chat com Ação Sob Demanda (`src/components/deployments/deployment-error-card.tsx`)**
+  - [x] Step 1: Criar componente de card de falha no design system `.synap-card`
+  - [x] Step 2: Integrar botões "Ver Logs Completos" e "⚡ Corrigir Erro com IA"
+- [x] **Task 5: Badge de Status Refinado no Cabeçalho (`src/components/deployments/deployment-status-badge.tsx`)**
+  - [x] Step 1: Criar o componente `DeploymentStatusBadge` com ícones Lucide modernos
+  - [x] Step 2: Integrar o badge no `chat-header.tsx` ao lado da branch
+- [x] **Task 6: Integração no Chat (`src/App.tsx`), Verificação e Documentação**
+  - [x] Step 1: Integrar o monitor de deploy no `src/App.tsx` e callback de correção com IA
   - [x] Step 2: Executar testes automatizados (`npm test`)
-  - [x] Step 3: Executar build de produção (`npm run build`)
-  - [x] Step 4: Atualizar `walkthrough.md`
+  - [x] Step 3: Executar checagem de tipos estritos (`npm run lint`)
+  - [x] Step 4: Executar build de produção (`npm run build`)
+  - [x] Step 5: Documentar a entrega na Seção 35 de `walkthrough.md`

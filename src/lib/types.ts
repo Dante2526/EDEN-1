@@ -102,6 +102,7 @@ export interface ActiveRepoState {
   fullName: string;
   branch: string;
   defaultBranch: string;
+  commitSha?: string;
 }
 
 export interface MessageEditedFile {

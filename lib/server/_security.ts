@@ -14,6 +14,7 @@ function cleanupExpiredEntries(now: number): void {
 export const ALLOWED_MODELS = [
   'z-ai/glm-5.3',
   'z-ai/glm-5.3-flash',
+  'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
   '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
   '@cf/qwen/qwen2.5-coder-32b-instruct',
@@ -35,6 +36,7 @@ export function isCloudflareModel(model: string): boolean {
 
 export const VISION_MODELS = [
   'z-ai/glm-5.3-flash',
+  'google/gemma-4-31b-it',
 ];
 
 export function isVisionModel(model: string): boolean {

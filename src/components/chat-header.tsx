@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { ClaudeLogo } from './claude-logo';
 import { ActiveRepoState } from '../lib/types';
+import { DeploymentStatusBadge } from './deployments/deployment-status-badge';
+import { DeploymentInfo } from '../lib/deployment-service';
 
 interface ChatHeaderProps {
   onToggleSidebar: () => void;
@@ -42,6 +44,9 @@ interface ChatHeaderProps {
   onOpenErrors?: () => void;
   theme?: 'dark' | 'light';
   onToggleTheme?: (e: React.MouseEvent) => void;
+  deployment?: DeploymentInfo | null;
+  isLoadingDeployment?: boolean;
+  onOpenDeploymentLogs?: () => void;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
@@ -65,6 +70,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
   onOpenErrors,
   theme = 'dark',
   onToggleTheme,
+  deployment,
+  isLoadingDeployment,
+  onOpenDeploymentLogs,
 }) => {
   return (
     <header className="h-14 sm:h-15 bg-transparent px-3 sm:px-5 flex items-center justify-between relative sticky top-0 z-30 select-none max-w-full">
@@ -107,6 +115,16 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               </button>
             )}
           </div>
+        )}
+
+        {/* Cloudflare Pages Deployment Status Badge */}
+        {deployment && (
+          <DeploymentStatusBadge
+            deployment={deployment}
+            isLoading={isLoadingDeployment}
+            onClick={onOpenDeploymentLogs}
+            className="hidden md:inline-flex"
+          />
         )}
       </div>
 

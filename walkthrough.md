@@ -393,3 +393,43 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 19/19 testes passando (5 suítes).
   - `npm run build`: bundle de produção e `dist/_worker.js` (95.6 kB) compilados com 0 erros.
 
+## 35. Monitor de Deploy da Cloudflare Pages e Correção Assistida por IA
+- **Solicitação do Usuário:** Monitorar a compilação e implantação no Cloudflare Pages em tempo real ("ó, Cloudflare está implementando..."), capturar os logs de erro em caso de falha de build e disponibilizar um botão no chat ("Corrigir erro") para que a IA só aja após o comando explícito do usuário, sem círculos/bolinhas genéricas.
+- **Solução Implementada:**
+  1. **Backend Serverless (`api/deployments.ts`):**
+     - Ações `status` e `logs` com consulta à API oficial do Cloudflare Pages (`/accounts/{id}/pages/projects/{project}/deployments` e `/history/logs`).
+     - Fallback automático e transparente para a API de Check Runs do GitHub (`/repos/{owner}/{repo}/commits/{sha}/check-runs`) caso o token da Cloudflare não possua escopo de leitura de Pages.
+     - Extrator inteligente de trechos de falha (`extractRelevantErrorSnippet`) com foco em erros TypeScript (`TSxxxx`), falhas de sintaxe e quebras do `npm run build`.
+     - Roteamento configurado no `server.ts` (Express dev) e no `_worker.ts` (Cloudflare Pages Advanced Worker).
+  2. **Serviço Frontend com Testes Unitários TDD (`src/lib/deployment-service.ts`):**
+     - Normalização robusta de status (`idle`, `building`, `success`, `failure`).
+     - Hook `useDeploymentMonitor` com polling adaptativo (8s durante compilação ativa; 45s ou sob demanda em repouso).
+     - Testes automatizados em `src/lib/deployment-service.test.ts` cobrindo normalização, extração de logs e consumo de endpoints (6/6 passando).
+  3. **Visualizador de Logs do Terminal (`src/components/deployments/deployment-log-modal.tsx`):**
+     - Console escuro retroiluminado (`#12110f`) em container `.synap-card`.
+     - Linhas numeradas, realce em vermelho para erros, botão de copiar logs completos e botão de ação direta "Corrigir Erro com IA".
+  4. **Card de Alerta com Ação Sob Demanda no Chat (`src/components/deployments/deployment-error-card.tsx`):**
+     - Em caso de falha no build, renderiza alerta visual no topo da barra de digitação.
+     - Ícone temático `<AlertTriangle />` moderno (sem bolinhas genéricas).
+     - Botão secundário "Ver Logs do Build" e botão primário com destaque terracota **"⚡ Corrigir Erro com IA"**.
+     - **Controle Total:** A IA nunca mexe no código de forma não solicitada; ao clicar no botão, o prompt com o log exato da Cloudflare é entregue para a IA no chat para diagnosticar e editar os arquivos com precisão cirúrgica.
+  5. **Badge de Status Moderno no Cabeçalho (`src/components/deployments/deployment-status-badge.tsx`):**
+     - Integrado ao `ChatHeader` com ícones Lucide ricos (`CloudUpload` pulsante em compilação, `CheckCircle2` esmeralda no ar, e `AlertTriangle` carmim em falhas).
+- **Evidências de Verificação:**
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 18.52s.
+
+## 36. Correção de Autorização do Modelo Google Gemma 4 31B (`/api/chat` HTTP 403)
+- **Problema:** Ao selecionar o modelo `google/gemma-4-31b-it` e enviar uma mensagem, o servidor retornava `HTTP 403: {"error":"Modelo não autorizado."}`.
+- **Causa Raiz:** O modelo havia sido cadastrado na lista de modelos do frontend (`src/lib/models.ts`), mas a lista de segurança do backend (`lib/server/_security.ts` em `ALLOWED_MODELS` e `VISION_MODELS`) ainda não continha `'google/gemma-4-31b-it'`. Como `api/chat.ts` valida estritamente a lista do backend antes de despachar a chamada à NVIDIA NIM, a requisição era rejeitada com 403.
+- **Solução Implementada:**
+  - Adicionado `'google/gemma-4-31b-it'` à constante `ALLOWED_MODELS` e à constante `VISION_MODELS` em `lib/server/_security.ts`.
+  - Recompilados os artefatos de produção e o worker (`dist/_worker.js`).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando.
+  - `npm run build`: `dist/_worker.js` (106.0 kB) compilado com sucesso.
+
+
+
