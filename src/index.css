@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @import "./theme-vars.generated.css";
+@import "./bb8-toggle.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

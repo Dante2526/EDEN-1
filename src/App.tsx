@@ -1490,6 +1490,32 @@ function AppContent() {
     );
   }, []);
 
+  const handleArchiveConversation = useCallback((id: string) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, isArchived: true, updatedAt: Date.now() } : c))
+    );
+    if (activeId === id) {
+      const remaining = conversations.filter((c) => c.id !== id && !c.isArchived);
+      if (remaining.length > 0) {
+        setActiveId(remaining[0].id);
+        if (remaining[0].model) setSelectedModel(remaining[0].model as ModelId);
+        if (remaining[0].reasoningEffort) setReasoningEffort(remaining[0].reasoningEffort);
+        if (remaining[0].isPlanMode !== undefined) setIsPlanMode(remaining[0].isPlanMode);
+        setActiveRepo(remaining[0].activeRepo || null);
+      } else {
+        setActiveId(null);
+        setIsPlanMode(false);
+        setActiveRepo(null);
+      }
+    }
+  }, [activeId, conversations]);
+
+  const handleUnarchiveConversation = useCallback((id: string) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, isArchived: false, updatedAt: Date.now() } : c))
+    );
+  }, []);
+
   const handleUpdateSettings = useCallback((newSettings: Partial<AppSettings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
@@ -3421,6 +3447,8 @@ function AppContent() {
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChat}
         onDeleteConversation={handleDeleteConversation}
+        onArchiveConversation={handleArchiveConversation}
+        onUnarchiveConversation={handleUnarchiveConversation}
         onRenameConversation={handleRenameConversation}
         onOpenSettings={() => setIsSettingsOpen(true)}
         theme={theme}
@@ -3499,6 +3527,8 @@ function AppContent() {
           deployment={deployment}
           isLoadingDeployment={isLoadingDeployment}
           onOpenDeploymentLogs={() => setIsDeploymentLogsOpen(true)}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
         />
 
         {/* Global Error Banner */}

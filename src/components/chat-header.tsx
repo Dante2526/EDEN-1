@@ -20,6 +20,7 @@ import { ClaudeLogo } from './claude-logo';
 import { ActiveRepoState } from '../lib/types';
 import { DeploymentStatusBadge } from './deployments/deployment-status-badge';
 import { DeploymentInfo } from '../lib/deployment-service';
+import { DarkModeToggle } from './dark-mode-toggle';
 
 interface ChatHeaderProps {
   onToggleSidebar: () => void;
@@ -238,6 +239,16 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               }`}
             />
           </button>
+        )}
+
+        {onToggleTheme && (
+          <div className="hidden sm:inline-flex items-center p-0.5">
+            <DarkModeToggle
+              isDarkMode={theme === 'dark'}
+              onToggle={onToggleTheme}
+              size={4.8}
+            />
+          </div>
         )}
 
       </div>

@@ -176,6 +176,7 @@ export interface Conversation {
   isPlanMode?: boolean;
   activeRepo?: ActiveRepoState | null;
   contextCompaction?: ContextCompaction;
+  isArchived?: boolean;
 }
 
 export type ModelId =

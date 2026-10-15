@@ -431,17 +431,46 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 25/25 testes passando.
   - `npm run build`: `dist/_worker.js` (106.0 kB) compilado com sucesso.
 
-## 37. Refinamento Minimalista dos Itens de Conversa na Barra Lateral
-- **Problema:** A aplicação da classe genérica `.synap-card` nos itens de histórico da barra lateral transformou cada linha em uma cápsula volumosa e escura com raio de 16px (`rounded-2xl`), sombras pesadas e aspecto inchado, destoando da elegância limpa de sidebars modernas (Claude.ai / Cursor).
-- **Solução Implementada (`src/components/chat-sidebar.tsx`):**
-  - Removido `.synap-card` e `hover:synap-card` dos itens de conversa da lista de recentes.
-  - Reduzido o raio para `rounded-lg` (8px) e o espaçamento vertical para `px-3 py-2`.
-  - Item inativo: fundo transparente, texto discreto e hover sutil plano (`hover:bg-[color:var(--c-bg-201e1a)]`).
-  - Item ativo: superfície fosca elegante `bg-[color:var(--c-bg-272420)]` com borda fina `border-[color:var(--c-bg-3b362b)]` e sombra mínima (`shadow-xs`), sem distorções de cápsula.
+## 38. Estilo Cartão e Gestos de Arraste na Barra Lateral (Swipe to Delete / Swipe to Archive)
+- **Solicitação do Usuário:** Transformar os itens da barra lateral em estilo cartão moderno e permitir arquivar e deletar deslizando/arrastando: arrastar para o lado esquerdo deleta, arrastar para o lado direito arquiva.
+- **Solução Implementada:**
+  1. **Modelo de Dados & Persistência (`src/lib/types.ts` & `src/App.tsx`):**
+     - Adicionado o campo opcional `isArchived?: boolean` na interface `Conversation`.
+     - Implementados os handlers `handleArchiveConversation(id)` e `handleUnarchiveConversation(id)` no `App.tsx`, com chaveamento automático de chat ativo caso a conversa arquivada seja a aberta no momento.
+  2. **Componente de Cartão Deslizável (`SwipeableConversationCard` em `src/components/chat-sidebar.tsx`):**
+     - **Design Estilo Cartão:** Cada conversa é renderizada como um cartão individual (`rounded-xl`, superfície `bg-[color:var(--c-bg-201e1a)]/75`, borda sutil `border-[color:var(--c-bg-322e27)]/80`, ícone em container arredondado e acento terracota `#d97757` no card ativo).
+     - **Gesto de Arraste Unificado (Touch & Pointer):**
+       - **Arrastar para a Esquerda ($offsetX < -60px$):** Revela fundo carmim (`bg-rose-600/90`) com ícone `Trash2` e rótulo "Deletar". Ao soltar além do threshold, aciona a exclusão.
+       - **Arrastar para a Direita ($offsetX > 60px$):** Revela fundo esmeralda (`bg-emerald-600/90`) com ícone `Archive` e rótulo "Arquivar". Ao soltar além do threshold, move para as arquivadas.
+       - **Amortecimento & Trava de Rolagem:** Se o usuário estiver rolando verticalmente a lista, o arraste horizontal é cancelado imediatamente para não travar a fluidez de navegação.
+       - **Retorno Suave (*Spring Back*):** Caso o arraste seja solto antes de 60px, o cartão retorna à posição de repouso com transição elástica `cubic-bezier(0.16, 1, 0.3, 1)`.
+  3. **Ações Desktop & Gaveta de Arquivadas:**
+     - Botões rápidos no hover para usuários de mouse (Renomear, Arquivar, Deletar).
+     - Seção expansível "Arquivadas ({count})" no rodapé da lista com botão de desarquivar instantâneo (`ArchiveRestore`).
 - **Evidências de Verificação:**
   - `npm run lint` (`tsc --noEmit`): 0 erros.
-  - `npm test`: 25/25 testes passando.
-  - `npm run build`: bundle compilado com sucesso em 4.28s.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
+
+## 39. Integração do Switch BB-8 (Star Wars) para Modo Escuro/Claro
+- **Solicitação do Usuário:** Importar o componente interativo do robô BB-8 do projeto `PAINEL-DSS` (`C:\Users\nayla\.antigravity\PAINEL-DSS`) e colocá-lo no Synap para controle do modo escuro.
+- **Solução Implementada:**
+  1. **Extração dos Estilos do BB-8 (`src/bb8-toggle.css`):**
+     - Transpostos integralmente os estilos CSS do BB-8 (`.bb8-toggle`, cabeça, antenas, corpo rotacionando a 225°, sombra inclinada, cenários com sóis de Tatooine no modo claro e constelações/planetas Gomrassen, Hermes e Chenini no modo escuro).
+     - Adicionado suporte à variável `--bb8-size` para escala paramétrica e responsiva.
+     - Importado em `src/index.css`.
+  2. **Componente Reutilizável (`src/components/dark-mode-toggle.tsx`):**
+     - Estruturado com `React.memo`, suporta propriedades `isDarkMode`, `onToggle`, `size` e `className`.
+     - Previne disparo duplo do evento de clique com `e.preventDefault()`.
+  3. **Integração na Interface (`ChatSidebar` & `ChatHeader`):**
+     - **Rodapé da Barra Lateral (`src/components/chat-sidebar.tsx`):** Substituído o botão simples de Sol/Lua pelo BB-8 animado ao lado do botão de Configurações (`size={5.2}`).
+     - **Cabeçalho Principal (`src/components/chat-header.tsx`):** Integrado o BB-8 (`size={4.8}`) na barra superior ao lado do Terminal para alternância instantânea sem necessidade de abrir a barra lateral.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 5.73s.
+
+
 
 
 
