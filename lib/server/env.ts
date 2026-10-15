@@ -55,6 +55,9 @@ export interface Env {
   // ====== CF Pages: binding especial p/ servir static assets ======
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
 
+  // ====== CF Pages: binding nativo Workers AI (env.AI) ======
+  AI?: { run: (model: string, input: any) => Promise<any> };
+
   // ====== CF Pages: KV namespaces opcionais (futuro) ======
   // Ex: SYNAP_KV?: KVNamespace;
 }

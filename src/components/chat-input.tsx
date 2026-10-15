@@ -231,7 +231,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        className="relative rounded-2xl border border-gray-800/60 dark:border-white/10 bg-dark-card shadow-2xl transition-all focus-within:border-[#d97757]/40 focus-within:ring-1 focus-within:ring-[#d97757]/20"
+        className="relative rounded-2xl border border-gray-800/60 dark:border-white/10 bg-dark-card shadow-xl transition-all duration-200 focus-within:border-[#d97757]/60 focus-within:ring-2 focus-within:ring-[#d97757]/20 focus-within:shadow-[0_8px_30px_rgba(0,0,0,0.25),0_0_20px_rgba(217,119,87,0.12)]"
       >
         {/* Previews for attached images and documents */}
         <FileAttachmentPreviews
@@ -337,7 +337,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                   onClick={onStopGeneration}
                   aria-label="Parar resposta"
                   title="Parar resposta"
-                  className="w-8 h-8 rounded-lg bg-[#d97757] hover:bg-[#c96442] text-white transition-all flex items-center justify-center shadow-sm cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-[#d97757] hover:bg-[#c86341] text-white transition-all duration-150 flex items-center justify-center shadow-sm hover:scale-[1.04] active:scale-[0.96] cursor-pointer"
                 >
                   <Square className="w-3.5 h-3.5 fill-white" />
                 </button>
@@ -348,10 +348,10 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                   disabled={!canSend}
                   aria-label="Enviar mensagem"
                   title="Enviar mensagem (Enter)"
-                  className={`w-8 h-8 rounded-lg transition-all flex items-center justify-center ${
+                  className={`w-8 h-8 rounded-xl transition-all duration-150 flex items-center justify-center ${
                     canSend
-                      ? 'bg-[#d97757] hover:bg-[#c96442] text-white shadow-sm active:scale-95 cursor-pointer'
-                      : 'bg-[color:var(--c-bg-312f2a)] text-[color:var(--c-fg-6b675e)] cursor-not-allowed opacity-60'
+                      ? 'bg-[#d97757] hover:bg-[#c86341] text-white shadow-sm hover:shadow-[#d97757]/30 hover:scale-[1.04] active:scale-[0.96] cursor-pointer'
+                      : 'bg-[color:var(--c-bg-312f2a)] text-[color:var(--c-fg-6b675e)] cursor-not-allowed opacity-50'
                   }`}
                 >
                   <ArrowUp className="w-4 h-4 stroke-[2.5]" />

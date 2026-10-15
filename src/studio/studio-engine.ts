@@ -468,8 +468,17 @@ Após executar, responda com texto curto confirmando o que fez.`;
         const result = await callChat(currentMessages, agent, [...READ_TOOLS, EDIT_TOOL]);
 
         if (result.toolCalls.length === 0) {
-          // Sem tool calls, IA só respondeu com texto
-          stepDone = true;
+          const requiresEdit = step.action === 'create' || step.action === 'modify' || step.action === 'delete';
+          if (requiresEdit && i < 2) {
+            currentMessages.push({ role: 'assistant', content: result.content || '' });
+            currentMessages.push({
+              role: 'user',
+              content: 'ATENÇÃO: Você respondeu com texto explicativo mas NÃO chamou a ferramenta `edit_file`. Execute a ferramenta `edit_file` agora para aplicar a alteração.',
+            });
+            continue;
+          }
+          // Se for ação apenas de leitura/análise ou se já tiver concluído
+          stepDone = !requiresEdit;
           break;
         }
 
@@ -501,6 +510,10 @@ Após executar, responda com texto curto confirmando o que fez.`;
             stepDone = true;
           }
         }
+      }
+
+      if (!stepDone) {
+        throw new Error('O modelo respondeu com texto mas não chamou a ferramenta edit_file.');
       }
 
       onProgress({

@@ -25,6 +25,7 @@ import imageHandler from './api/image';
 import searchHandler from './api/search';
 import statusHandler from './api/status';
 import ttsHandler from './api/tts';
+import transcribeHandler from './api/transcribe';
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
@@ -62,6 +63,9 @@ export default {
       if (path === '/api/tts' || path === '/api/tts/') {
         return await ttsHandler(request, env);
       }
+      if (path === '/api/transcribe' || path === '/api/transcribe/') {
+        return await transcribeHandler(request, env);
+      }
 
       // /api/* que não casa com nenhuma rota conhecida — 404 JSON (não cair no SPA fallback)
       if (path.startsWith('/api/')) {
@@ -82,9 +86,14 @@ export default {
         if (assetRes.status === 200) {
           return assetRes;
         }
-        // 404 em asset: provavelmente é uma rota do SPA (ex.: /chat/abc).
-        // Reescreve pra /index.html e deixa o React Router cuidar.
+        // 404 em asset: se for rota de navegação do SPA (sem extensão), reescreve pra /index.html.
+        // Se for asset estático com extensão (.js, .css, .png, etc.), retorna 404 real
+        // para evitar SyntaxError "Unexpected token '<'" no navegador.
         if (assetRes.status === 404) {
+          const hasFileExtension = /\.[a-zA-Z0-9]+$/.test(path);
+          if (hasFileExtension) {
+            return assetRes;
+          }
           const indexReq = new Request(new URL('/', url).toString(), request);
           return env.ASSETS.fetch(indexReq);
         }

@@ -2199,23 +2199,32 @@ function AppContent() {
     // Injetar contexto de repositório apenas se vinculado a esta conversa
     const chatActiveRepo = activeRepo || (currentConv?.activeRepo ? currentConv.activeRepo : null);
 
+    const isCfNoTools = effectiveModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b';
+
     const repoPrompt = chatActiveRepo
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
         `Você tem acesso às ferramentas de código: read_file, list_files, search_code e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
         `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
         `Ao propor alterações ou códigos para o repositório, utilize OBRIGATORIAMENTE a ferramenta edit_file. ` +
         `A alteração ficará salva localmente no Source Control para o usuário revisar o diff e commitar.`
-      : undefined;
+      : 'ATENÇÃO: Nenhum repositório GitHub está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
+        'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior.';
 
-    const basePrompt =
-      'Você é o assistente Synap com ferramentas avançadas integradas.\n' +
-      'Regras estritas para ferramentas:\n' +
-      '1. Geração de Imagens: Quando o usuário pedir qualquer imagem ou ilustração, execute OBRIGATORIAMENTE a ferramenta `generate_image`. NUNCA invente, presuma ou escreva links de imagens ou sintaxe markdown como `![...](https://...)` no seu texto antes da execução da ferramenta.\n' +
-      '2. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída.\n' +
-      '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
-      '4. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python.\n' +
-      '5. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
-      '6. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.';
+    const basePrompt = isCfNoTools
+      ? 'Você é o assistente Synap operando com o modelo DeepSeek R1.\n' +
+        'MODO CONSULTA: Este modelo opera em modo analítico e textual, sem ferramentas externas ativas.\n' +
+        'NUNCA diga que vai criar arquivos, rodar comandos ou fazer alterações no sistema. Forneça o raciocínio aprofundado e o código completo pronto para cópia diretamente no texto.'
+      : 'Você é o assistente Synap com ferramentas avançadas integradas.\n' +
+        'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO):\n' +
+        'Sempre que for realizar uma ação (editar arquivo, rodar comando no terminal, pesquisar na web, compilar documento ou rodar python), emita a tool_call IMEDIATAMENTE na primeira resposta.\n' +
+        'NUNCA responda apenas dizendo "Vou criar o arquivo...", "Vou verificar...", "Executando..." sem emitir a chamada de ferramenta na mesma resposta.\n' +
+        'Regras estritas para ferramentas:\n' +
+        '1. Geração de Imagens: Quando o usuário pedir qualquer imagem ou ilustração, execute OBRIGATORIAMENTE a ferramenta `generate_image`. NUNCA invente, presuma ou escreva links de imagens ou sintaxe markdown como `![...](https://...)` no seu texto antes da execução da ferramenta.\n' +
+        '2. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída.\n' +
+        '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
+        '4. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python.\n' +
+        '5. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
+        '6. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.';
 
     const planPrompt = activePlan
       ? 'Você é um estrategista e arquiteto de planejamento sênior. O MODO PLANO (FUNÇÃO PLAN) está ATIVADO. Para a solicitação do usuário, crie OBRIGATORIAMENTE um PLANO DE AÇÃO COMPLETO, PRÁTICO E EXECUTÁVEL, formatado estritamente com os seguintes tópicos em Markdown:\n\n' +
@@ -2686,6 +2695,8 @@ function AppContent() {
                   ? {
                       ...m,
                       tokenUsage: iterationTokenUsage,
+                      isTruncated: iterationFinishReason === 'length',
+                      streamError: streamErrorMsg || undefined,
                     }
                   : m
               ),
@@ -2892,18 +2903,19 @@ function AppContent() {
           }
         } else if (
           iterationFinishReason === 'length' &&
-          iterationText.trim() &&
           loopCount < MAX_TOOL_ITERATIONS
         ) {
-          // Resposta cortada por limite de tokens: pede pro modelo continuar de onde parou
-          console.log('[Synap] finish_reason=length — continuando resposta automaticamente');
+          // Resposta cortada por limite de tokens (seja no raciocínio ou no texto)
+          console.log('[Synap] finish_reason=length — continuando resposta/raciocínio automaticamente');
+          const lastAssistantContent = iterationText.trim() || '[Raciocínio inicial concluído]';
           currentMessagesForApi = [
             ...currentMessagesForApi,
-            { role: 'assistant', content: iterationText },
+            { role: 'assistant', content: lastAssistantContent },
             {
               role: 'user',
-              content:
-                'Sua resposta anterior foi cortada por limite de tamanho. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.',
+              content: iterationText.trim()
+                ? 'Sua resposta anterior foi cortada por limite de tamanho. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.'
+                : 'Seu raciocínio atingiu o limite de tokens antes de produzir a resposta. Por favor, apresente agora sua resposta e execute as ações necessárias.',
             },
           ];
           hasToolCallsToProcess = true;

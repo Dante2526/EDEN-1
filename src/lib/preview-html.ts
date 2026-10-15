@@ -353,7 +353,13 @@ export function buildPreviewHtmlPreTranspiled(
         if (!target) {
           throw new Error('Arquivo local "' + specifier + '" não encontrado (importado em ' + currentFile + ')');
         }
-        if (target.type === 'json') { return JSON.parse(jsonFiles[target.path]); }
+        if (target.type === 'json') {
+          try {
+            return JSON.parse(jsonFiles[target.path]);
+          } catch (err: any) {
+            throw new Error('Erro de sintaxe no arquivo JSON "' + target.path + '": ' + (err?.message || String(err)));
+          }
+        }
         const targetPath = target.path;
         if (moduleCache[targetPath]) { return moduleCache[targetPath].exports; }
         const moduleObj = { exports: {} };

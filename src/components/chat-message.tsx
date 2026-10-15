@@ -304,7 +304,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       {isUser ? (
         /* ================= USER MESSAGE (Claude warm card on right) ================= */
         <div className="flex justify-end">
-          <div className="bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl px-4 py-2.5 max-w-[90%] sm:max-w-[80%] shadow-xs">
+          <div className="bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b34)]/90 rounded-2xl px-4.5 py-3 max-w-[90%] sm:max-w-[80%] shadow-sm leading-relaxed tracking-normal">
             {message.isPlanMode && (
               <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[color:var(--c-bg-3e3b34)] text-[11px] font-mono font-medium text-[color:var(--c-fg-f09a7d)]">
                 <ListTodo className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
@@ -439,11 +439,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
           {/* Thinking Process Accordion (Dynamic label reflecting selected mode: low / high / max) */}
           {thinkingContent && (
-            <div className="w-full mb-3 rounded-xl border border-[color:var(--c-bg-38352e)] bg-[color:var(--c-bg-24221e)] overflow-hidden">
+            <div className="w-full mb-3.5 rounded-xl border border-[color:var(--c-bg-38352e)]/90 bg-[color:var(--c-bg-24221e)]/95 shadow-xs overflow-hidden backdrop-blur-xs">
               <button
                 type="button"
                 onClick={() => setShowReasoning(!showReasoning)}
-                className="w-full px-3.5 py-2 flex items-center justify-between text-xs text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2c2925)] transition-colors cursor-pointer"
+                className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2c2925)]/80 transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2 font-mono flex-wrap">
                   {showReasoning ? (
@@ -1273,6 +1273,26 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               </button>
 
               <SpeakButton text={displayContent} />
+
+              {message.isTruncated && (
+                <span
+                  title="O modelo atingiu a cota máxima de tokens nesta resposta."
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                >
+                  <AlertTriangle className="w-3 h-3 text-amber-400" />
+                  <span>Tokens esgotados</span>
+                </span>
+              )}
+
+              {message.streamError && (
+                <span
+                  title={message.streamError}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-rose-500/15 text-rose-300 border border-rose-500/30"
+                >
+                  <AlertTriangle className="w-3 h-3 text-rose-400" />
+                  <span>Stream interrompido</span>
+                </span>
+              )}
 
               {message.tokenUsage && (
                 <div className="ml-auto relative">

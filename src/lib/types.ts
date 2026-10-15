@@ -153,6 +153,8 @@ export interface Message {
     totalTokens: number;
   };
   fallbackWarning?: string;
+  isTruncated?: boolean;
+  streamError?: string;
 }
 
 export interface ContextCompaction {

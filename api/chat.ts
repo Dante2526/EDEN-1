@@ -264,9 +264,12 @@ export default async function handler(req: Request, envArg?: Env) {
       });
     };
 
-    // Modelos NVIDIA que suportam tools: GLM-5.3 e GLM-5.3-Flash.
-    // Modelos Cloudflare não suportam tools nativamente via endpoint OpenAI-compat.
-    const modelSupportsTools = !usingCloudflare && (selectedModel === 'z-ai/glm-5.3' || selectedModel === 'z-ai/glm-5.3-flash');
+    // Modelos que suportam tools:
+    // NVIDIA: GLM-5.3 e GLM-5.3-Flash.
+    // Cloudflare: Qwen 2.5 Coder 32B (@cf/qwen/qwen2.5-coder-32b-instruct).
+    const modelSupportsTools = usingCloudflare
+      ? selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'
+      : (selectedModel === 'z-ai/glm-5.3' || selectedModel === 'z-ai/glm-5.3-flash');
 
     // ====== BUILDER DE PAYLOAD — NUVEM (NVIDIA) ======
     const createNvidiaPayload = (includeReasoning = true, includeTools = true, safeTokenLimit = false) => {
@@ -294,29 +297,40 @@ export default async function handler(req: Request, envArg?: Env) {
 
     // ====== BUILDER DE PAYLOAD — CLOUDFLARE WORKERS AI ======
     // O R1-Distill 32B da CF:
-    //   - Não suporta reasoning_effort (o R1 sempre raciocina; o esforço é fixo).
-    //   - Não suporta tools via endpoint OpenAI-compat.
-    //   - Não suporta stream_options.include_usage.
-    //   - max_tokens recomendado: 4096 (limite seguro para evitar cortes e custos altos).
+    //   - max_tokens ampliado para até 16.384 no modo 'max' para permitir conclusão integral do raciocínio (<think>).
+    //   - Qwen 2.5 Coder suporta tools via endpoint OpenAI-compat da Cloudflare.
     //   - Retorna o raciocínio embutido em delta.content entre <think>...</think>.
-    //     O transformador CloudflareThinkSplitter (acima) cuida de separar isso.
-    const createCloudflarePayload = () => {
+    //     O transformador CloudflareThinkSplitter cuida de separar isso em delta.reasoning_content.
+    const createCloudflarePayload = (includeTools = true, safeTokenLimit = false) => {
+      let cfMaxTokens = 8192;
+      if (safeTokenLimit) {
+        cfMaxTokens = 4096;
+      } else if (selectedEffort === 'max') {
+        cfMaxTokens = 16384;
+      } else if (selectedEffort === 'high' || selectedEffort === 'medium') {
+        cfMaxTokens = 12288;
+      }
+      const hasToolsActive = includeTools && modelSupportsTools && tools && Array.isArray(tools) && tools.length > 0;
       const p: any = {
         model: selectedModel,
-        messages: buildFormattedMessages(false),
+        messages: buildFormattedMessages(Boolean(hasToolsActive)),
         stream: true,
-        max_tokens: 4096,
-        temperature: 0.6, // recomendado pela DeepSeek para R1-distill
+        max_tokens: cfMaxTokens,
+        temperature: selectedModel.includes('deepseek-r1') ? 0.6 : 0.7,
       };
+      if (hasToolsActive) {
+        p.tools = tools;
+        p.tool_choice = 'auto';
+      }
       return p;
     };
 
     let payload = usingCloudflare
-      ? createCloudflarePayload()
+      ? createCloudflarePayload(true)
       : createNvidiaPayload(true, true, false);
 
     console.log(
-      `[chat] provider=${usingCloudflare ? 'cloudflare' : 'nvidia'} model=${selectedModel} effort=${selectedEffort}->${apiEffort} tools=${payload.tools?.length || 0}`
+      `[chat] provider=${usingCloudflare ? 'cloudflare' : 'nvidia'} model=${selectedModel} effort=${selectedEffort}->${apiEffort} tools=${payload.tools?.length || 0} max_tokens=${payload.max_tokens}`
     );
 
     const enc = new TextEncoder();
@@ -360,7 +374,7 @@ export default async function handler(req: Request, envArg?: Env) {
           }
 
           const fetchCtrl = new AbortController();
-          const fetchTimer = setTimeout(() => fetchCtrl.abort(), 45000);
+          const fetchTimer = setTimeout(() => fetchCtrl.abort(), 75000); // 75s (teto seguro para início de raciocínio nas GPUs da Cloudflare)
           try {
             const r = await fetch(url, {
               method: 'POST',
@@ -403,8 +417,21 @@ export default async function handler(req: Request, envArg?: Env) {
             res = await fetchWithTimeout(payload);
           }
 
-          // ====== FALLBACKS (apenas NVIDIA — CF não tem reasoning/tools p/ recuar) ======
-          if (!usingCloudflare) {
+          // ====== FALLBACKS ======
+          if (usingCloudflare) {
+            // Fallback 1: Se Cloudflare der 400/422 com tools -> tenta sem tools
+            if (!res.ok && (res.status === 400 || res.status === 422) && payload.tools) {
+              await res.body?.cancel().catch(() => {});
+              payload = createCloudflarePayload(false, false);
+              res = await fetchWithTimeout(payload);
+            }
+            // Fallback 2: Se Cloudflare der 400/422 por excesso de max_tokens -> reduz para 4096
+            if (!res.ok && (res.status === 400 || res.status === 422) && payload.max_tokens > 4096) {
+              await res.body?.cancel().catch(() => {});
+              payload = createCloudflarePayload(false, true);
+              res = await fetchWithTimeout(payload);
+            }
+          } else {
             // Fallback 1: 400/422 com reasoning_effort -> tenta sem reasoning_effort
             if (!res.ok && (res.status === 400 || res.status === 422) && payload.reasoning_effort) {
               await res.body?.cancel().catch(() => {});
@@ -530,13 +557,19 @@ export default async function handler(req: Request, envArg?: Env) {
 
                     if (delta && typeof delta.content === 'string' && delta.content.length > 0) {
                       const split = sp.feed(delta.content);
+                      // Se esse chunk já veio com finish_reason, faz o flush de qualquer resto no buffer
+                      if (choice?.finish_reason) {
+                        const flushed = sp.flush();
+                        if (flushed.reasoningDelta) split.reasoningDelta = (split.reasoningDelta || '') + flushed.reasoningDelta;
+                        if (flushed.contentDelta) split.contentDelta = (split.contentDelta || '') + flushed.contentDelta;
+                      }
                       // Constrói um novo chunk preservando tudo do original, só trocando o delta
                       const newDelta: any = { ...delta };
                       delete newDelta.content;
                       if (split.reasoningDelta) newDelta.reasoning_content = split.reasoningDelta;
                       if (split.contentDelta) newDelta.content = split.contentDelta;
 
-                      if (split.reasoningDelta || split.contentDelta) {
+                      if (split.reasoningDelta || split.contentDelta || choice?.finish_reason || delta.tool_calls) {
                         const newParsed = {
                           ...parsed,
                           choices: [{ ...choice, delta: newDelta }],

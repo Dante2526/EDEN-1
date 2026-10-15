@@ -113,7 +113,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
       {/* Center: Chat / Preview / Studio Switcher */}
       {onToggleStudioMode && onChangeMainViewTab && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto z-20">
-          <div className="flex bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-2d2b26)] rounded-xl p-1 shadow-md">
+          <div className="flex items-center bg-[color:var(--c-bg-181714)]/95 backdrop-blur-md border border-[color:var(--c-bg-2d2b26)]/90 rounded-xl p-0.5 sm:p-1 shadow-xs">
             {/* Chat */}
             <button
               type="button"
@@ -121,9 +121,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
                 onChangeMainViewTab('chat');
                 onToggleStudioMode(false);
               }}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.97] cursor-pointer ${
                 mainViewTab === 'chat'
-                  ? 'bg-[#d97757] text-white shadow-sm font-semibold'
+                  ? 'bg-[#d97757] text-white shadow-xs font-semibold'
                   : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
@@ -141,9 +141,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               }}
               disabled={!activeProjectName}
               title={activeProjectName ? `Preview de ${activeProjectName}` : 'Nenhum projeto aberto'}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.97] ${
                 mainViewTab === 'preview'
-                  ? 'bg-[#d97757] text-white shadow-sm font-semibold cursor-pointer'
+                  ? 'bg-[#d97757] text-white shadow-xs font-semibold cursor-pointer'
                   : activeProjectName
                   ? 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)] cursor-pointer'
                   : 'text-[color:var(--c-fg-5e5a52)] opacity-50 cursor-not-allowed'
@@ -160,9 +160,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
                 onChangeMainViewTab('agentes');
                 onToggleStudioMode(true);
               }}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.97] cursor-pointer ${
                 mainViewTab === 'agentes'
-                  ? 'bg-[#d97757] text-white shadow-sm font-semibold'
+                  ? 'bg-[#d97757] text-white shadow-xs font-semibold'
                   : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
@@ -206,7 +206,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
             onClick={onToggleTerminal}
             aria-label="Alternar Terminal"
             title="Abrir/Fechar Terminal (Ctrl+`)"
-            className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-colors duration-150 cursor-pointer select-none ${
+            className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-all duration-150 active:scale-[0.97] cursor-pointer select-none ${
               isTerminalOpen
                 ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border-[#d97757]/40 shadow-xs'
                 : 'bg-[color:var(--c-bg-25231f)] hover:bg-[color:var(--c-bg-2e2a24)] text-[color:var(--c-fg-c4bfb6)] hover:text-[color:var(--c-fg-f3efe6)] border-[color:var(--c-bg-36332d)]'

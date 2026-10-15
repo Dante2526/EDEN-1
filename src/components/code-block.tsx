@@ -20,8 +20,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'text', value }
   };
 
   return (
-    <div className="relative my-4 rounded-xl border border-[#38352e] bg-[#181614] overflow-hidden text-sm shadow-md">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2d2a25] bg-[#22201c] text-xs text-[#a39d93]">
+    <div className="relative my-4 rounded-2xl border border-[#38352e]/80 bg-[#161513] overflow-hidden text-sm shadow-lg transition-all">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2d2a25] bg-[#1f1d19] text-xs text-[#a39d93]">
         <span className="font-mono text-[#c4bfb6] uppercase tracking-wider font-semibold text-[11px]">
           {language}
         </span>

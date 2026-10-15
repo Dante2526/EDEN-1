@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, AlertCircle } from 'lucide-react';
+import { Mic, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  isMediaRecorderSupported,
+  startAudioRecording,
+  sendAudioToTranscribe,
+  ActiveRecording,
+} from '../lib/audio-transcriber';
 
 interface VoiceButtonProps {
   onTranscript?: (text: string, isInterim?: boolean) => void;
@@ -20,9 +26,11 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   onContinuousInterim,
 }) => {
   const [isListening, setIsListening] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
+  const activeRecordingRef = useRef<ActiveRecording | null>(null);
   const finalTextRef = useRef<string>('');
   const isManuallyStoppedRef = useRef<boolean>(false);
   const isListeningRef = useRef<boolean>(false);
@@ -59,6 +67,10 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         try { recognitionRef.current.abort(); } catch {}
         recognitionRef.current = null;
       }
+      if (activeRecordingRef.current) {
+        try { activeRecordingRef.current.cancel(); } catch {}
+        activeRecordingRef.current = null;
+      }
     };
   }, []);
 
@@ -93,8 +105,8 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
   }, [continuousMode]);
 
   // No modo contínuo, não desabilita o botão durante streaming
-  // (precisa poder interromper a IA falando)
-  const effectiveDisabled = continuousMode ? false : disabled;
+  // (precisa poder interromper a IA falando). Bloqueia enquanto transcreve no backend.
+  const effectiveDisabled = (continuousMode ? false : disabled) || isTranscribing;
 
   const createRecognition = () => {
     const SpeechRecognition =
@@ -171,35 +183,38 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       // Sessão substituída/descartada: não reinicia (evita 2 reconhecimentos ao mesmo tempo)
       if (recognitionRef.current !== recognition) return;
       if (continuousModeRef.current && !isManuallyStoppedRef.current) {
-        try {
-          recognition.start();
-          return;
-        } catch {
-          setTimeout(() => {
-            if (!isManuallyStoppedRef.current) {
-              try { recognition.start(); } catch {}
-            }
-          }, 100);
-        }
+        setTimeout(() => {
+          if (!isManuallyStoppedRef.current) {
+            startListening();
+          }
+        }, 20);
         return;
       }
       // Modo normal: só reinicia se ainda ativo
       if (!isManuallyStoppedRef.current && isListeningRef.current) {
-        try {
-          recognition.start();
-          return;
-        } catch {
-          setTimeout(() => {
-            if (!isManuallyStoppedRef.current && isListeningRef.current) {
-              try { recognition.start(); } catch {}
-            }
-          }, 100);
-        }
+        setTimeout(() => {
+          if (!isManuallyStoppedRef.current && isListeningRef.current) {
+            startListening();
+          }
+        }, 20);
+        return;
       }
       setIsListening(false);
     };
 
     return recognition;
+  };
+
+  const startMediaRecordingMode = async () => {
+    try {
+      setIsListening(true);
+      const rec = await startAudioRecording();
+      activeRecordingRef.current = rec;
+    } catch (err: any) {
+      console.error('Falha ao iniciar gravação MediaRecorder:', err);
+      setIsListening(false);
+      setErrorMessage('Permissão de microfone negada ou indisponível.');
+    }
   };
 
   const startListening = () => {
@@ -210,7 +225,11 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
 
     const recognition = createRecognition();
     if (!recognition) {
-      setErrorMessage('Reconhecimento de voz não suportado neste navegador. Use o Chrome ou Edge.');
+      if (isMediaRecorderSupported()) {
+        startMediaRecordingMode();
+        return;
+      }
+      setErrorMessage('Reconhecimento de voz não suportado neste navegador.');
       return;
     }
 
@@ -219,16 +238,41 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
       recognition.start();
     } catch (err: any) {
       console.error('Falha ao iniciar reconhecimento de voz:', err);
+      if (isMediaRecorderSupported()) {
+        startMediaRecordingMode();
+        return;
+      }
       setErrorMessage('Não foi possível iniciar o microfone.');
       setIsListening(false);
     }
   };
 
-  const stopListening = () => {
+  const stopListening = async () => {
     isManuallyStoppedRef.current = true;
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch {}
       recognitionRef.current = null;
+    }
+    if (activeRecordingRef.current) {
+      const rec = activeRecordingRef.current;
+      activeRecordingRef.current = null;
+      setIsTranscribing(true);
+      try {
+        const audioBlob = await rec.stop();
+        const res = await sendAudioToTranscribe(audioBlob, 'pt');
+        if (res.text) {
+          if (continuousModeRef.current && onContinuousTranscriptRef.current) {
+            onContinuousTranscriptRef.current(res.text);
+          } else {
+            onTranscript?.(res.text, false);
+          }
+        }
+      } catch (err: any) {
+        console.error('Falha na transcrição Whisper:', err);
+        setErrorMessage(err?.message || 'Erro ao transcrever com Whisper.');
+      } finally {
+        setIsTranscribing(false);
+      }
     }
     setIsListening(false);
   };
@@ -266,15 +310,29 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         type="button"
         onClick={toggleListening}
         disabled={effectiveDisabled}
-        aria-label={isListening ? 'Parar transcrição de voz' : 'Falar por microfone'}
-        title={isListening ? 'Gravando em tempo real... Clique para parar' : 'Falar por voz (transcrição direta)'}
+        aria-label={
+          isTranscribing
+            ? 'Transcrevendo áudio com Whisper'
+            : isListening
+            ? 'Parar transcrição de voz'
+            : 'Falar por microfone'
+        }
+        title={
+          isTranscribing
+            ? 'Transcrevendo áudio com Whisper na Cloudflare...'
+            : isListening
+            ? 'Gravando... Clique para concluir e transcrever'
+            : 'Falar por voz'
+        }
         className={`relative p-1.5 rounded-lg transition-all flex items-center justify-center cursor-pointer ${
           isListening && !continuousMode
             ? 'bg-[#d97757]/20 text-[#d97757] ring-1 ring-[#d97757]/60 shadow-sm'
             : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
         } ${effectiveDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       >
-        {isListening && !continuousMode ? (
+        {isTranscribing ? (
+          <Loader2 className="w-4 h-4 text-[#d97757] animate-spin" />
+        ) : isListening && !continuousMode ? (
           <>
             <span className="absolute inset-0 rounded-lg bg-[#d97757]/30 animate-ping opacity-75" />
             <Mic className="w-4 h-4 text-[#d97757] relative z-10 animate-pulse" />

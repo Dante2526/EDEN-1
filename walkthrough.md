@@ -194,7 +194,70 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - **Zero Delay (Tempo Real):** Removido o pré-aquecimento bloqueante de áudio. A SpeechRecognition inicia imediatamente.
   - **Transcrição Direta no Input:** O texto reconhecido é inserido continuamente no textarea em tempo real sem latência.
 - **Evidências:**
-  - `npx tsc --noEmit` aprovado com 0 erros.
-  - 14/14 testes unitários passando (`npm test`).
-  - Build Vite de produção gerado com sucesso.
+## 21. Blindagem de Raciocínio na Cloudflare e Prevenção de Falsas Execuções
+- **Problema:** A IA cortava o raciocínio no meio em modelos de pensamento (DeepSeek R1 na Cloudflare) e dizia que ia alterar arquivos ou executar comandos sem disparar as ferramentas.
+- **Causas Raízes:**
+  1. Teto de tokens cravado em 4.096 no Cloudflare Workers AI, estourando durante o `<think>`.
+  2. Ferramentas desativadas (`modelSupportsTools = false`) para a Cloudflare e ausência de repositório vinculado nos chats.
+  3. Falsos positivos no Implementer do Studio (`studio-engine.ts`), que considerava texto explicativo como sucesso sem chamar `edit_file`.
+  4. Reconhecimento de voz (`voice-button.tsx`) travando no `onend` por reutilização da mesma instância SpeechRecognition (`InvalidStateError`).
+  5. Rota SPA do Cloudflare Pages retornando `index.html` para assets estáticos faltantes com extensão (.js, .css).
+- **Solução Implementada:**
+  - **Expansão de Tokens:** `max_tokens` na Cloudflare ampliado para até 8.192/12.288 para permitir conclusão integral do raciocínio.
+  - **Diretriz Anti-Preâmbulo & Modo Consulta:** O System Prompt agora exige execução imediata de `tool_call` quando houver ferramentas e impede promessas vazias quando não houver repositório ativo.
+  - **Auto-Continuação durante Raciocínio:** Se `finish_reason === 'length'` ocorrer durante o `<think>`, o sistema reengaja o modelo automaticamente para concluir e responder.
+  - **Alerta Visual na UI:** Badges de "Tokens esgotados" e "Stream interrompido" no rodapé da mensagem.
+  - **Blindagem no Studio:** Passos de edição agora falham ou exigem chamada real da ferramenta `edit_file` caso o agente apenas envie texto explicativo.
+  - **Estabilidade de Voz:** `voice-button.tsx` agora instancia uma nova sessão limpa via `startListening()` ao reiniciar.
+  - **Assets Estáticos no Worker:** `_worker.ts` não reescreve arquivos com extensão para `index.html`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 14/14 testes passando.
+  - `npm run build`: bundle compilado com sucesso e artefatos Cloudflare copiados para `dist/`.
+
+## 22. Varredura Profunda de Bugs e Blindagem de Edge Cases
+- **Auditoria Executada:**
+  1. **Preservação de `finish_reason` e `tool_calls` no SSE (`api/chat.ts`):** No modo transformador da Cloudflare, se o modelo emitia `finish_reason` junto com um fragmento final retido no buffer de lookahead, o `finish_reason` e eventuais `tool_calls` podiam ser suprimidos. Agora, a detecção de `finish_reason` força o flush imediato de todo o buffer restante e garante emissão completa do chunk.
+  2. **Proteção de Parsing JSON no Sandbox (`src/lib/preview-html.ts`):** O `JSON.parse` direto de arquivos locais foi encapsulado em bloco defensivo que aponta o arquivo exato com erro de sintaxe, impedindo congelamento opaco do sandbox.
+  3. **Eliminação de `InvalidStateError` no Microfone (`src/components/voice-button.tsx`):** Removida a tentativa ilegal pela especificação W3C de invocar `.start()` em instâncias encerradas de `SpeechRecognition`. O reinício agora cria uma instância nova com debounce seguro de 20ms.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 14/14 testes passando.
+  - `npm run build`: bundle de produção e `dist/_worker.js` gerados em 11.44s.
+
+## 23. Transcrição com Whisper Large V3 Turbo na Cloudflare
+- **Problema:** A transcrição de voz dependia exclusivamente da API `SpeechRecognition` nativa do navegador (Chromium/Edge), falhando completamente em navegadores mobile como Safari (iOS) ou Firefox no desktop.
+- **Solução Implementada:**
+  - **Endpoint Serverless (`api/transcribe.ts`):** Rota dedicada que aceita áudio binário (`audio/webm`, `audio/mp4`, `audio/wav`), `FormData` ou JSON Base64, e despacha para `@cf/openai/whisper-large-v3-turbo` via `env.AI` ou REST API da Cloudflare Workers AI com `language: "pt"`.
+  - **Roteamento Centralizado (`_worker.ts` & `server.ts`):** Mapeamento direto de `/api/transcribe` no Cloudflare Pages Advanced Worker e Express local.
+  - **Captura Universal no Cliente (`src/lib/audio-transcriber.ts`):** Módulo de gravação baseado em `MediaRecorder` padrão da Web com suporte a `audio/webm;codecs=opus`, `audio/mp4` e cancelamento seguro de streams.
+  - **Fallback Inteligente na UI (`src/components/voice-button.tsx`):** Se o navegador não suportar a Web Speech API, o botão ativa automaticamente o gravador `MediaRecorder` + Whisper na Cloudflare com feedback visual de carregamento (`Loader2` animado).
+- **Evidências de Verificação:**
+  - `npm test`: 19/19 testes passando (incluindo 5 novos testes de transcrição).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e `dist/_worker.js` (91.9 kB) gerados com sucesso em 4.60s.
+
+## 24. Maximização dos Tetos de Streaming da Cloudflare
+- **Objetivo:** Explorar a capacidade máxima permitida pela Cloudflare Workers AI sem risco de corte prematuro ou erros de estouro.
+- **Configurações Atualizadas (`api/chat.ts`):**
+  - **Teto de Saída Ampliado:** `max_tokens` elevado para até **16.384 tokens** no esforço `max` (e 12.288 em `high`/`medium`).
+  - **Fallback Dinâmico Inteligente:** Se a Cloudflare retornar erro de payload/tokens (HTTP 400/422), o sistema reduz automaticamente para 4.096 tokens sem travar a requisição do usuário.
+  - **Timeout Inicial Estendido:** Cronômetro de primeiro byte (`fetchWithTimeout`) expandido de 45s para **75 segundos**, concedendo folga máxima para a GPU da Cloudflare processar o raciocínio profundo inicial do DeepSeek R1.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando.
+  - `npm run build`: `dist/_worker.js` (92.4 kB) compilado em 3.73s.
+
+## 25. Polimento e Refinamento do Design Existente
+- **Filosofia:** Preservação estrita da identidade visual do Synap (paleta terracota Anthropic `#d97757` e tema escuro), aprimorando acabamentos de contornos, profundidade, transições e ergonomia tátil ("melhorar o que já tenho").
+- **Melhorias Implementadas:**
+  1. **Barra de Entrada do Chat (`src/components/chat-input.tsx`):** Container arredondado (`rounded-2xl`) com glow sutil focado no terracota (`focus-within:border-[#d97757]/60` e `shadow-[0_8px_30px_rgba(0,0,0,0.25),0_0_20px_rgba(217,119,87,0.12)]`), e botões de Enviar/Parar com feedback de microescala (`active:scale-[0.96]`).
+  2. **Balões de Mensagem e Accordion (`src/components/chat-message.tsx`):** Espaçamento refinado no balão do usuário (`px-4.5 py-3 rounded-2xl` com `shadow-sm`), e accordion de raciocínio da IA com efeito de desfoque sutil (`backdrop-blur-xs`, `border-[color:var(--c-bg-38352e)]/90` e `bg-[color:var(--c-bg-24221e)]/95`).
+  3. **Cabeçalho e Seletor Central (`src/components/chat-header.tsx`):** Cápsula central translúcida (`backdrop-blur-md bg-[color:var(--c-bg-181714)]/95 border-[color:var(--c-bg-2d2b26)]/90`) para alternância entre Chat, Preview e Studio com animações instantâneas e feedback tátil (`active:scale-[0.97]`).
+  4. **Blocos de Código (`src/components/code-block.tsx`):** Fundo enriquecido com contraste preciso (`#161513`), cabeçalho de barra de ferramentas em `#1f1d19` e contornos arredondados harmoniosos (`rounded-2xl`).
+  5. **Barra Lateral (`src/components/chat-sidebar.tsx`):** Transições suaves e feedback de clique (`active:scale-[0.99]`) na lista de conversas, mantendo o acento terracota de seleção ativa (`border-l-2 border-l-[#d97757]`).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: `dist/_worker.js` (92.4 kB) e assets compilados com sucesso em 6.28s.
 
