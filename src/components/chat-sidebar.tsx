@@ -147,8 +147,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
 
       {/* Claude.ai Sidebar container */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-40 w-72 sm:w-80 bg-dark-bg md:my-2 md:ml-2 md:rounded-2xl border border-gray-800/40 dark:border-white/5 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`fixed md:static inset-y-0 left-0 z-40 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-dark-bg my-2 ml-2 rounded-2xl max-h-[calc(100dvh-1rem)] border border-gray-800/40 dark:border-white/5 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-[calc(100%+2rem)] md:translate-x-0'
         }`}
       >
         {/* Top Header / App branding */}

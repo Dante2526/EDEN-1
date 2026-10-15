@@ -13,6 +13,7 @@ interface ModelControlsProps {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
+    activeContextTokens?: number;
   };
   onOpenTerminal?: () => void;
 }
@@ -167,10 +168,11 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
 
           {/* Token Usage Tool Pill com barra de progresso embutida */}
           {(() => {
-            const total = conversationTokens?.totalTokens || 0;
+            const activeTokens = conversationTokens?.activeContextTokens || conversationTokens?.totalTokens || 0;
+            const totalAccumulated = conversationTokens?.totalTokens || 0;
             const CONTEXT_LIMIT = 128000; // Limite de contexto do GLM-5.3
-            const percent = Math.min(100, (total / CONTEXT_LIMIT) * 100);
-            // Cor conforme % de uso
+            const percent = Math.min(100, (activeTokens / CONTEXT_LIMIT) * 100);
+            // Cor conforme % de uso da janela ativa
             const barColor =
               percent >= 90 ? 'bg-red-500' :
               percent >= 75 ? 'bg-orange-500' :
@@ -187,31 +189,28 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 type="button"
                 onClick={() => setOpenSheet('tokens')}
                 aria-label="Ferramenta de Monitoramento de Tokens"
-                title={`Tokens: ${total.toLocaleString()} / ${CONTEXT_LIMIT.toLocaleString()} (${percent.toFixed(1)}%)${
-                  percent >= 90 ? ' ⚠️ Contexto crítico — compactação automática recomendada' :
-                  percent >= 75 ? ' ⚠️ Contexto alto — considere reduzir' : ''
-                }`}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
+                title={`Contexto Ativo: ${activeTokens.toLocaleString()} / ${CONTEXT_LIMIT.toLocaleString()} (${percent.toFixed(1)}%) | Total acumulado na sessão: ${totalAccumulated.toLocaleString()} tokens`}
+                className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer whitespace-nowrap ${
                   openSheet === 'tokens'
                     ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shadow-xs'
                     : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
                 }`}
               >
-                <Zap className={`w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] ${pulseClass}`} />
+                <Zap className={`w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] ${pulseClass} shrink-0`} />
                 <span className="text-[color:var(--c-fg-8c867a)] text-[11px]">tokens:</span>
                 <span className={`font-mono font-medium ${textColor} ${pulseClass}`}>
-                  {total.toLocaleString()}
+                  {activeTokens.toLocaleString()}
                 </span>
-                {/* Mini barra de progresso — só aparece se tiver >0 tokens */}
-                {total > 0 && (
-                  <div className="hidden sm:flex items-center gap-1 ml-0.5">
-                    <div className="w-12 h-1.5 bg-[color:var(--c-bg-2f2d28)] rounded-full overflow-hidden">
+                {/* Mini barra de progresso — visível no celular e desktop */}
+                {activeTokens > 0 && (
+                  <div className="flex items-center gap-1 ml-0.5 shrink-0">
+                    <div className="w-8 sm:w-12 h-1.5 bg-[color:var(--c-bg-2f2d28)] rounded-full overflow-hidden">
                       <div
                         className={`h-full ${barColor} transition-all duration-300 ${pulseClass}`}
                         style={{ width: `${Math.max(2, percent)}%` }}
                       />
                     </div>
-                    <span className={`text-[9px] font-mono ${textColor}`}>
+                    <span className={`text-[9px] font-mono font-medium ${textColor}`}>
                       {percent.toFixed(0)}%
                     </span>
                   </div>
@@ -267,7 +266,13 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
               <div className="space-y-3">
                 <div className="p-3.5 rounded-xl bg-[color:var(--c-bg-1e1c19)] border border-[color:var(--c-bg-312f2a)] space-y-2.5">
                   <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[color:var(--c-bg-2c2924)]">
-                    <span className="text-[color:var(--c-fg-a8a296)]">Tokens de Prompt (Entrada):</span>
+                    <span className="text-[color:var(--c-fg-a8a296)]">Contexto Ativo Atual (Janela de 128k):</span>
+                    <span className="font-mono text-emerald-400 font-semibold">
+                      {(conversationTokens?.activeContextTokens || 0).toLocaleString()} tokens
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[color:var(--c-bg-2c2924)]">
+                    <span className="text-[color:var(--c-fg-a8a296)]">Tokens de Entrada (Prompt acumulado):</span>
                     <span className="font-mono text-[color:var(--c-fg-f3efe6)] font-semibold">
                       {conversationTokens?.promptTokens ? conversationTokens.promptTokens.toLocaleString() : '0'}
                     </span>
@@ -281,7 +286,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                   <div className="flex items-center justify-between text-xs pt-0.5">
                     <span className="text-[color:var(--c-fg-d97757)] font-semibold flex items-center gap-1.5">
                       <Zap className="w-3.5 h-3.5" />
-                      <span>Total Consumido no Chat:</span>
+                      <span>Total Consumido na Conversa:</span>
                     </span>
                     <span className="font-mono text-[color:var(--c-fg-d97757)] font-bold text-sm">
                       {conversationTokens?.totalTokens ? conversationTokens.totalTokens.toLocaleString() : '0'}

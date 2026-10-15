@@ -1117,9 +1117,9 @@ function AppContent() {
   // Active conversation token usage helper
   const conversationTokens = React.useMemo(() => {
     if (!activeConversation) {
-      return { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+      return { promptTokens: 0, completionTokens: 0, totalTokens: 0, activeContextTokens: 0 };
     }
-    return activeConversation.messages.reduce(
+    const totalAccumulated = activeConversation.messages.reduce(
       (acc, m) => {
         if (m.tokenUsage) {
           acc.promptTokens += m.tokenUsage.promptTokens || 0;
@@ -1130,6 +1130,21 @@ function AppContent() {
       },
       { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
     );
+
+    // Contexto ativo real da IA no turno mais recente (tamanho real que vai para a GPU)
+    let latestActiveTokens = 0;
+    for (let i = activeConversation.messages.length - 1; i >= 0; i--) {
+      const m = activeConversation.messages[i];
+      if (m.role === 'assistant' && m.tokenUsage?.promptTokens) {
+        latestActiveTokens = m.tokenUsage.promptTokens + (m.tokenUsage.completionTokens || 0);
+        break;
+      }
+    }
+
+    return {
+      ...totalAccumulated,
+      activeContextTokens: latestActiveTokens || totalAccumulated.totalTokens,
+    };
   }, [activeConversation]);
 
   // Active repo changes count

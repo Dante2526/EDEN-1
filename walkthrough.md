@@ -341,3 +341,20 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 19/19 testes passando (5 suítes).
   - `npm run build`: bundle compilado em 2.59s com sucesso (`dist/_worker.js` 93.4 kB).
+
+## 31. Correção do Monitor de Tokens: Janela de Contexto Ativa vs. Total Acumulado
+- **Problema:** A barra de tokens no cabeçalho exibia `186 495 tokens` e ficava vermelha em `100%`, sugerindo falsamente que a conversa havia estourado o limite da IA.
+- **Causa Raiz:** O helper `conversationTokens` em `src/App.tsx` somava cumulativamente os tokens de todos os turnos passados (`reduce` sobre todas as mensagens). O componente `model-controls.tsx` dividia essa soma total acumulada (como um hodômetro de horas de uso) pelo limite de contexto de uma única mensagem (`128.000` tokens). Como $186.495 \div 128.000 = 145\%$, a barra travava no teto de 100% em vermelho, mesmo que a janela ativa real na GPU tivesse apenas ~35k tokens.
+- **Solução Implementada:**
+  - **Cálculo da Janela Ativa Real (`src/App.tsx`):** `conversationTokens` agora calcula separadamente `activeContextTokens` a partir do prompt e completion do turno mais recente (o que de fato ocupa a memória da IA).
+  - **Medição Precisa na Barra (`src/components/model-controls.tsx`):** A barra de progresso e porcentagem no cabeçalho agora medem a ocupação real da janela de contexto ativa (ficando verde/saudável na faixa de ~25% a ~35%).
+## 32. Bordas Arredondadas e Visual Flutuante da Barra Lateral no Celular
+- **Problema:** No computador, a barra lateral (drawer/sidebar) possuía acabamento estético refinado com bordas arredondadas (`rounded-2xl`) e margens flutuantes (`my-2 ml-2`). No celular, as classes estavam limitadas com `md:`, fazendo com que a gaveta ficasse colada nas bordas e com cantos retos (`rounded-none`).
+- **Solução Implementada (`src/components/chat-sidebar.tsx`):**
+  - Removido o prefixo `md:` de `my-2 ml-2 rounded-2xl max-h-[calc(100dvh-1rem)]`.
+  - Adicionado `max-w-[calc(100vw-1.5rem)]` para preservar a margem lateral em telas pequenas.
+  - Ajustado o recuo fora da tela para `-translate-x-[calc(100%+2rem)]` para ocultação completa sem cortar sombras.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 19/19 testes passando (5 suítes).
+  - `npm run build`: bundle compilado com sucesso (`dist/_worker.js` 93.4 kB).
