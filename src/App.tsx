@@ -1446,7 +1446,16 @@ function AppContent() {
         )
       );
     }
-  }, [activeRepo, activeId]);
+    syncRepoToProject({
+      repoFullName: updated.fullName,
+      owner: updated.owner,
+      repo: updated.repo,
+      branch: updated.branch,
+      conversationId: activeId || undefined,
+    }).catch((err) => {
+      console.warn('[Synap] Auto-sync falhou ao trocar branch:', err);
+    });
+  }, [activeRepo, activeId, syncRepoToProject]);
 
   // Skills & MCP Handlers
   const handleToggleSkill = useCallback((id: string) => {
@@ -2606,14 +2615,26 @@ function AppContent() {
 
     const isNoToolsModel = !isToolCapableModel(effectiveModel);
 
+    // GraphRAG Passivo: injeta automaticamente o mapa cirúrgico de dependências (quem importa quem / hubs centrais)
+    // baseado na pergunta do usuário, economizando tokens e evitando list_files/read_file cegos.
+    const graphRagSummary =
+      projectGraph.nodes.length > 0
+        ? queryGraphContext(projectGraph, {
+            query: userMessage.content.slice(0, 120),
+            maxNodes: 8,
+          }).markdownContext
+        : '';
+
     const repoPrompt = isNoToolsModel
       ? undefined
       : chatActiveRepo
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
-        `Você tem acesso às ferramentas de código: read_file, list_files, search_code e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
+        `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_architecture_graph e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
         `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
+        `ECONOMIA DE TOKENS (GRAPHRAG): Use o mapa de dependências abaixo (e a ferramenta \`query_architecture_graph\` se precisar expandir) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
         `Ao propor alterações ou códigos para o repositório, utilize OBRIGATORIAMENTE a ferramenta edit_file. ` +
-        `A alteração ficará salva localmente no Source Control para o usuário revisar o diff e commitar.`
+        `A alteração ficará salva localmente no Source Control para o usuário revisar o diff e commitar.\n\n` +
+        graphRagSummary
       : 'ATENÇÃO: Nenhum repositório GitHub está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
         'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior.';
 
@@ -2630,7 +2651,8 @@ function AppContent() {
           chatActiveRepo?.fullName,
           chatActiveRepo?.branch,
           mcpOpenAiTools
-        )
+        ) +
+        (chatActiveRepo && graphRagSummary ? `\n\n${graphRagSummary}` : '')
       : 'Você é o assistente Synap com ferramentas avançadas integradas.\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO):\n' +
         'Sempre que for realizar uma ação (editar arquivo, rodar comando no terminal, pesquisar na web, compilar documento ou rodar python), emita a tool_call IMEDIATAMENTE na primeira resposta.\n' +

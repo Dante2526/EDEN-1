@@ -278,7 +278,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             f.path?.endsWith('main.jsx')
         );
 
-        if (!hasPackageJson && !hasIndexHtml && !hasReactFiles) {
+        const hasCodeFiles = allFiles.some(
+          (f: any) =>
+            /\.(tsx?|jsx?|mjs|py|go|rs|java|kt|dart)$/i.test(f.path || '')
+        );
+
+        if (!hasPackageJson && !hasIndexHtml && !hasReactFiles && !hasCodeFiles) {
           return { ok: false, reason: 'not_web' };
         }
 
@@ -302,11 +307,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         else if (hasPackageJson) { template = 'vanilla'; detectedTemplate = 'vanilla'; }
         else if (hasIndexHtml) { template = 'static'; detectedTemplate = 'static'; }
 
-        // 4. Filtra arquivos web relevantes (limite ~30 arquivos pra não estourar)
+        // 4. Filtra arquivos de código e web relevantes (priorizando código-fonte para o Graphify até 80 arquivos)
+        const CODE_PRIORITY_EXTENSIONS = ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.py', '.go', '.rs', '.dart'];
         const WEB_EXTENSIONS = [
-          '.tsx', '.ts', '.jsx', '.js', '.html', '.css', '.scss',
-          '.json', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp',
-          '.md',
+          ...CODE_PRIORITY_EXTENSIONS,
+          '.html', '.css', '.scss', '.json', '.md',
         ];
         const SKIP_PATHS = [
           'node_modules/', 'dist/', 'build/', '.git/', '.next/',
@@ -317,9 +322,15 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             if (f.type === 'tree') return false;
             const path = (f.path || '').replace(/^\//, '');
             if (SKIP_PATHS.some((s) => path.startsWith(s))) return false;
+            if (path.endsWith('package-lock.json') || path.endsWith('pnpm-lock.yaml') || path.endsWith('yarn.lock')) return false;
             return WEB_EXTENSIONS.some((ext) => path.endsWith(ext));
           })
-          .slice(0, 40);
+          .sort((a: any, b: any) => {
+            const aIsCode = CODE_PRIORITY_EXTENSIONS.some((ext) => (a.path || '').endsWith(ext)) ? 0 : 1;
+            const bIsCode = CODE_PRIORITY_EXTENSIONS.some((ext) => (b.path || '').endsWith(ext)) ? 0 : 1;
+            return aIsCode - bIsCode;
+          })
+          .slice(0, 80);
 
         // 5. Verifica se já existe projeto pra este repo+branch
         const existing = projectsIndex.find(

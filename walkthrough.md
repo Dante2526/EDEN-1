@@ -881,3 +881,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 57/57 testes passando em 14 suítes.
   - `npm run build`: bundle de produção compilado com sucesso.
+
+## 62. GraphRAG Passivo Automático no System Prompt + Sincronização Prioritária de Código (Economia de Tokens)
+- **Solicitação do Usuário:** Garantir 100% que a IA no chat use o grafo de dependências (quem importa quem e quem depende de quem) automaticamente para entender o repositório sem precisar sair lendo todos os arquivos e gastando tokens.
+- **Solução Implementada:**
+  1. **GraphRAG Passivo em Todas as Mensagens (`src/App.tsx`):**
+     - Ao enviar qualquer mensagem com repositório ativo, o Synap executa `queryGraphContext(projectGraph, { query: userMessage.content.slice(0, 120), maxNodes: 8 })` e injeta o resumo cirúrgico de dependências (**Importa** / **Usado por** + **Hubs Centrais**) diretamente no `repoPrompt` (modelos nativos) e no `basePrompt` (6º modelo `DeepSeek R1 Distill 32B`).
+     - Adicionada diretriz explícita de **Economia de Tokens (GraphRAG)** instruindo a IA a consultar o mapa injetado antes de chamar `read_file`, evitando leituras cegas.
+  2. **Sincronização Prioritária de Código e Auto-Sync na Troca de Branch (`src/lib/project-context.tsx` e `src/App.tsx`):**
+     - `handleChangeBranch` agora dispara `syncRepoToProject` automaticamente ao alternar de branch.
+     - `syncRepoToProject` passou a aceitar qualquer repositório com arquivos de código (`.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.go`, `.rs`, `.dart`, etc.), ignorar lockfiles (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`) e ordenar/priorizar até **80 arquivos de código-fonte** para alimentar o Graphify.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: todas as suítes passando.
+  - `npm run build`: bundle de produção compilado com sucesso.
