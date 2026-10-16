@@ -5,15 +5,23 @@ export const config = {
   runtime: 'edge',
 };
 
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.byteLength; i += chunkSize) {
-    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.byteLength));
-    binary += String.fromCharCode(...chunk);
+function base64ToBlob(base64: string, mimeType: string = 'audio/webm'): Blob {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-  return btoa(binary);
+  return new Blob([bytes], { type: mimeType });
+}
+
+function getAudioFileName(mimeType: string): string {
+  const lower = (mimeType || '').toLowerCase();
+  if (lower.includes('wav')) return 'audio.wav';
+  if (lower.includes('mp4') || lower.includes('m4a')) return 'audio.m4a';
+  if (lower.includes('ogg')) return 'audio.ogg';
+  if (lower.includes('mp3') || lower.includes('mpeg')) return 'audio.mp3';
+  return 'audio.webm';
 }
 
 export default async function handler(req: Request, envArg?: Env): Promise<Response> {
@@ -33,15 +41,12 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     });
   }
 
-  const cfAccountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
-  const cfApiToken = env.CLOUDFLARE_API_TOKEN?.trim();
-  const hasAiBinding = Boolean(env.AI && typeof env.AI.run === 'function');
-
-  if (!hasAiBinding && (!cfAccountId || !cfApiToken)) {
+  const nvidiaApiKey = env.NVIDIA_API_KEY?.trim();
+  if (!nvidiaApiKey) {
     return new Response(
       JSON.stringify({
         error:
-          'Cloudflare Workers AI não configurada. Defina CLOUDFLARE_ACCOUNT_ID e CLOUDFLARE_API_TOKEN nas variáveis de ambiente do Cloudflare Pages.',
+          'NVIDIA API Key não configurada. Defina NVIDIA_API_KEY nas variáveis de ambiente.',
       }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
@@ -49,8 +54,9 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
 
   try {
     const contentType = req.headers.get('content-type') || '';
-    let base64Audio = '';
-    let targetLang = 'pt';
+    let audioBlob: Blob | null = null;
+    let mimeType = 'audio/webm';
+    let targetLang = req.headers.get('x-language')?.trim() || 'pt';
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
@@ -61,8 +67,8 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           headers: { 'Content-Type': 'application/json' },
         });
       }
-      const arrayBuf = await file.arrayBuffer();
-      base64Audio = arrayBufferToBase64(arrayBuf);
+      audioBlob = file;
+      mimeType = file.type || 'audio/webm';
       const formLang = formData.get('language');
       if (typeof formLang === 'string' && formLang.trim()) {
         targetLang = formLang.trim();
@@ -75,8 +81,13 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           headers: { 'Content-Type': 'application/json' },
         });
       }
-      // Se vier com prefixo data URL (ex: data:audio/webm;base64,...), limpa
-      base64Audio = body.audio.replace(/^data:audio\/[^;]+;base64,/, '').trim();
+      // Se vier com prefixo data URL (ex: data:audio/webm;base64,...), extrai o mimeType e limpa
+      const match = body.audio.match(/^data:([^;]+);base64,/);
+      if (match) {
+        mimeType = match[1];
+      }
+      const base64Audio = body.audio.replace(/^data:audio\/[^;]+;base64,/, '').trim();
+      audioBlob = base64ToBlob(base64Audio, mimeType);
       if (body.language && typeof body.language === 'string') {
         targetLang = body.language.trim();
       }
@@ -89,61 +100,53 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           headers: { 'Content-Type': 'application/json' },
         });
       }
-      base64Audio = arrayBufferToBase64(arrayBuf);
+      mimeType = contentType || 'audio/webm';
+      audioBlob = new Blob([arrayBuf], { type: mimeType });
     }
 
-    if (!base64Audio) {
+    if (!audioBlob || audioBlob.size === 0) {
       return new Response(JSON.stringify({ error: 'Não foi possível extrair o áudio para transcrição.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const modelId = '@cf/openai/whisper-large-v3-turbo';
-    let result: any = null;
+    const fileName = getAudioFileName(mimeType);
+    const outFormData = new FormData();
+    outFormData.append('file', audioBlob, fileName);
+    outFormData.append('model', 'openai/whisper-large-v3');
+    if (targetLang) {
+      outFormData.append('language', targetLang);
+    }
+    outFormData.append('response_format', 'json');
 
-    if (hasAiBinding) {
-      result = await env.AI!.run(modelId, {
-        audio: base64Audio,
-        language: targetLang,
-        task: 'transcribe',
-      });
-    } else {
-      const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${modelId}`;
-      const cfRes = await fetch(cfUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${cfApiToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          audio: base64Audio,
-          language: targetLang,
-          task: 'transcribe',
-        }),
-      });
+    const nvRes = await fetch('https://integrate.api.nvidia.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${nvidiaApiKey}`,
+      },
+      body: outFormData,
+    });
 
-      const cfData = await cfRes.json().catch(() => ({}));
-      if (!cfRes.ok) {
-        const errorMsg =
-          cfData?.errors?.map((e: any) => e.message).join('; ') ||
-          `Falha ao processar áudio na Cloudflare (${cfRes.status})`;
-        return new Response(JSON.stringify({ error: errorMsg }), {
-          status: cfRes.status || 500,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-      result = cfData.result;
+    const nvData = await nvRes.json().catch(() => ({}));
+    if (!nvRes.ok) {
+      const errorMsg =
+        nvData?.error?.message ||
+        nvData?.detail ||
+        `Falha ao transcrever áudio na NVIDIA NIM (${nvRes.status})`;
+      return new Response(JSON.stringify({ error: errorMsg }), {
+        status: nvRes.status || 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    const transcribedText = (result?.text || '').trim();
+    const transcribedText = (nvData?.text || '').trim();
 
     return new Response(
       JSON.stringify({
         text: transcribedText,
-        word_count: result?.word_count || transcribedText.split(/\s+/).filter(Boolean).length,
-        vtt: result?.vtt || null,
-        model: modelId,
+        word_count: transcribedText ? transcribedText.split(/\s+/).filter(Boolean).length : 0,
+        model: 'openai/whisper-large-v3',
       }),
       {
         status: 200,
@@ -156,7 +159,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   } catch (err: any) {
     console.error('[transcribe] Erro inesperado:', err);
     return new Response(
-      JSON.stringify({ error: err?.message || 'Erro interno ao processar áudio.' }),
+      JSON.stringify({ error: err?.message || 'Erro interno ao processar áudio na NVIDIA NIM.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

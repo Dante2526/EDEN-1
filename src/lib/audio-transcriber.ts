@@ -118,7 +118,7 @@ export async function startAudioRecording(): Promise<ActiveRecording> {
 }
 
 /**
- * Envia o blob de áudio gravado para o endpoint /api/transcribe da Cloudflare.
+ * Envia o blob de áudio gravado para o endpoint /api/transcribe (NVIDIA NIM Whisper Large v3).
  */
 export async function sendAudioToTranscribe(
   audioBlob: Blob,
@@ -146,6 +146,6 @@ export async function sendAudioToTranscribe(
     text: (data.text || '').trim(),
     word_count: data.word_count || 0,
     vtt: data.vtt || null,
-    model: data.model || '@cf/openai/whisper-large-v3-turbo',
+    model: data.model || 'openai/whisper-large-v3',
   };
 }

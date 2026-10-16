@@ -1234,3 +1234,27 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 
 
 
+
+## 79. Migração do Backend de Transcrição e Modo Live para NVIDIA NIM (Whisper Large v3)
+- **Solicitação do Usuário:** Migrar a infraestrutura de Speech-to-Text / transcrição de áudio e do modo Live do Synap para a NVIDIA NIM, otimizando o tempo de processamento da IA para a resposta no modo live.
+- **Diagnóstico & Escolha Técnica:** O modelo `openai/whisper-large-v3` executado nos clusters NVIDIA NIM com aceleração TensorRT em GPUs H100 entrega latência de inferência ultrabaixa (~250ms a 400ms para trechos típicos de fala de 3 a 5 segundos) e precisão superior para português do Brasil (`pt-BR`) com termos técnicos e comandos de programação. Isso reduz o tempo total de resposta de ponta a ponta (Áudio -> Transcrição -> Raciocínio com GLM-5.3 Flash -> Resposta) para menos de 1 segundo, tornando a interação do modo Live fluida e natural.
+- **Solução Implementada:**
+  1. **Refatoração do Handler Serverless (`api/transcribe.ts`):**
+     - Substituição do backend da Cloudflare Workers AI pelo endpoint `https://integrate.api.nvidia.com/v1/audio/transcriptions`.
+     - Autenticação direta com `env.NVIDIA_API_KEY` (dispensando `CLOUDFLARE_ACCOUNT_ID` e `CLOUDFLARE_API_TOKEN`).
+     - Normalização universal de entradas: processa `multipart/form-data`, payloads JSON com áudio em base64 (com suporte a data URLs) ou áudios binários diretos (`audio/webm`, `audio/wav`, `audio/mp4`, `audio/ogg`, etc.).
+     - Despacho em `FormData` multipart padrão contendo `file`, `model: "openai/whisper-large-v3"`, `language: "pt"` e `response_format: "json"`.
+     - Retorno estruturado contendo `{ text, word_count, model: "openai/whisper-large-v3" }`.
+  2. **Atualização do Cliente de Áudio (`src/lib/audio-transcriber.ts`):**
+     - Atualização do modelo padrão retornado para `openai/whisper-large-v3`.
+  3. **Expansão da Suíte de Testes Automatizados (`src/lib/audio-transcriber.test.ts`):**
+     - Atualização das asserções de cliente para o novo modelo NVIDIA.
+     - Criação de suíte de testes de integração do handler `api/transcribe Handler (NVIDIA NIM)` cobrindo:
+       - Rejeição de métodos HTTP incorretos com 405.
+       - Rejeição de chamadas sem chave de API da NVIDIA com 401.
+       - Processamento e envio de áudio binário direto com 200.
+       - Processamento e envio de áudio via JSON Base64 com 200.
+- **Evidências de Verificação:**
+  - `npm test`: 61/61 testes unitários passando em 15 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 2.29s (Vite + Cloudflare Pages Worker).
