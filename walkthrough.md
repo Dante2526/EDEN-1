@@ -1137,3 +1137,26 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 61/61 testes unitários passando em 15 suítes.
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado em 2.15s com sucesso.
+
+## 75. Restauração do Card Visual Rico de Conexão com a IA
+- **Solicitação do Usuário:** O usuário solicitou o retorno do visual anterior de "conectando com a IA" (com o orb expandido de 64px e card detalhado) que havia sido substituído por uma barra fina de 42px no commit `2645cb4`, mantendo a correção da interface que eliminou o glitch de rolagem (sobe e desce da tela).
+- **Diagnóstico e Não-Regressão:**
+  - A barra simplificada de 42px havia sido introduzida para evitar que a tela pulasse ao receber tokens de pensamento.
+  - Contudo, a causa real do salto de tela identificada na Seção 72 foi:
+    1. Whitespace puro tratado como conteúdo (`Boolean('\n') === true`).
+    2. Eventos de rolagem programáticos travando o auto-scroll (`isUserScrollingRef`).
+    3. Falta de ancoragem nativa de scroll do navegador (`[overflow-anchor:none]`).
+  - Como esses três pontos foram corrigidos de forma estrutural (com `hasRealContent = Boolean(cleanContent && cleanContent.trim().length > 0)`, `isProgrammaticScrollRef` e restauração do overflow-anchor nativo), o card visual rico com `ThinkingOrb` (size 64) pôde ser restaurado com segurança no contêiner de markdown sem reintroduzir nenhum salto de tela.
+- **Solução Implementada (`src/components/chat-message.tsx`):**
+  1. **Remoção da Barra Fina (42px):** Retirada a barra simplificada que substituía o estado de carregamento nas linhas superiores do componente.
+  2. **Restauração do Card Visual Rico:** Reinserido o card estilizado com:
+     - `ThinkingOrb` no modo `working`, tamanho 64, tema dark e velocidade `1.5x`.
+     - Título dinâmico (`Conectando…` / `Pensando…` / `Aguardando…`) com ponto âmbar pulsante (`#d97757`).
+     - Subtítulo em fonte monospace detalhando a etapa em andamento (ex.: *"Estabelecendo conexão com o modelo de IA…"*, contagem de caracteres de raciocínio ou modo de plano estratégico).
+     - Estilização com cantos arredondados (`rounded-2xl`), bordas sutis e fundo semitransparente com variáveis CSS adaptáveis ao tema.
+  3. **Correção de Escopo de Variáveis:** Organizada a declaração de `hasRealContent` logo após a limpeza de texto para uso em `isAwaitingCompletion` e `isConnecting`, garantindo compatibilidade estrita com TypeScript (`tsc --noEmit` com 0 erros).
+- **Evidências de Verificação:**
+  - `npm test`: 61/61 testes unitários passando em 15 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e artefatos Cloudflare Pages compilados em 2.37s.
+
