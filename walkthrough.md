@@ -1350,3 +1350,23 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 66/66 testes unitários passando em 16 suítes.
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção compilado com sucesso em 1.63s.
+
+## 85. Produtividade & Visão: Colar Prints Diretamente (Ctrl+V) e Captura de Tela no Chat
+- **Solicitação do Usuário:** Permitir colocar prints tirados no PC diretamente no chat sem precisar salvar arquivo no computador e passar pelo botão de anexar.
+- **Solução Implementada:**
+  1. **Utilitário de Extração do Clipboard (`src/lib/clipboard-utils.ts`):**
+     - Função `extractImagesFromClipboardData`: extrai e valida imagens a partir de `clipboardData.items` e `clipboardData.files`.
+     - Normalização automática de arquivos (`print-<timestamp>.png`) mantendo o tipo mime original.
+  2. **Colar Direto com Ctrl+V (`src/components/chat-input.tsx`):**
+     - Handlers `onPaste` integrados no `<textarea>` e no contêiner do chat.
+     - Listener global de paste (`window.addEventListener('paste')`): captura prints colados em qualquer área da janela do Éden, anexando a imagem instantaneamente e focando o cursor no textarea.
+     - Conexão direta com `processFiles`: compactação inteligente (<600KB), chaveamento automático para modelo multimodal (`GLM-5.3 Flash`) e notificação amigável (*"📸 Print colado com sucesso!"*).
+  3. **Botão de Captura de Tela ("Tirar Print"):**
+     - Botão de câmera adicionado na barra inferior do chat com atalho direto à Screen Capture API (`navigator.mediaDevices.getDisplayMedia`).
+     - Permite ao usuário clicar, escolher a tela ou janela e o print cai imediatamente no chat pronto para envio à IA.
+  4. **Suíte de Testes Automatizados (`src/lib/clipboard-utils.test.ts`):**
+     - Validação de nulos, extração via `items`, filtragem de texto puro e fallback de `files`.
+- **Evidências de Verificação:**
+  - `npm test`: 70/70 testes unitários passando em 17 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção compilado com sucesso em 1.62s.

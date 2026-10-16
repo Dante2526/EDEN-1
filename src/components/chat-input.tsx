@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X } from 'lucide-react';
+import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X, Camera } from 'lucide-react';
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
 import { ModelId, ReasoningEffort, AttachedDocument, SelectedPreviewElement } from '../lib/types';
 import { isVisionModel } from '../lib/models';
 import { fileToBase64, readFileAsText, generateId } from '../lib/utils';
+import { extractImagesFromClipboardData } from '../lib/clipboard-utils';
 
 interface ChatInputProps {
   onSendMessage: (content: string, images: string[], documents: AttachedDocument[]) => void;
@@ -187,6 +188,103 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
     e.preventDefault();
   };
 
+  // Handler para colar prints diretamente via Ctrl+V no input
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const pastedImages = extractImagesFromClipboardData(e.clipboardData);
+    if (pastedImages.length > 0) {
+      e.preventDefault();
+      await processFiles(pastedImages);
+      setNotification(
+        pastedImages.length === 1
+          ? '📸 Print colado com sucesso!'
+          : `📸 ${pastedImages.length} prints colados com sucesso!`
+      );
+    }
+  };
+
+  // Listener global de paste para capturar prints mesmo se o foco não estiver no textarea
+  useEffect(() => {
+    const handleGlobalPaste = async (e: ClipboardEvent) => {
+      // Se o usuário estiver digitando em outro input/textarea específico (ex: renomear chat), ignora
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        activeEl !== textareaRef.current &&
+        (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')
+      ) {
+        return;
+      }
+
+      const pastedImages = extractImagesFromClipboardData(e.clipboardData);
+      if (pastedImages.length > 0) {
+        e.preventDefault();
+        await processFiles(pastedImages);
+        setNotification(
+          pastedImages.length === 1
+            ? '📸 Print colado com sucesso!'
+            : `📸 ${pastedImages.length} prints colados com sucesso!`
+        );
+        textareaRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('paste', handleGlobalPaste);
+    return () => window.removeEventListener('paste', handleGlobalPaste);
+  }, [selectedModel, isLoading]);
+
+  // Captura direta de tela via Screen Capture API (Web Standard)
+  const handleTakeScreenshot = async () => {
+    if (isLoading) return;
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        setNotification('Captura de tela direta não suportada. Use Win+Shift+S e cole com Ctrl+V.');
+        return;
+      }
+
+      setNotification('Selecione a tela ou janela para o print...');
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { cursor: 'always' } as any,
+        audio: false,
+      });
+
+      const track = stream.getVideoTracks()[0];
+      const video = document.createElement('video');
+      video.playsInline = true;
+      video.muted = true;
+      video.srcObject = stream;
+
+      await video.play();
+      // Aguarda estabilização do frame do monitor
+      await new Promise((res) => setTimeout(res, 200));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1920;
+      canvas.height = video.videoHeight || 1080;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
+
+      track.stop();
+      stream.getTracks().forEach((t) => t.stop());
+      video.srcObject = null;
+
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          const file = new File([blob], `print-${Date.now()}.png`, { type: 'image/png' });
+          await processFiles([file]);
+          setNotification('📸 Print capturado da tela com sucesso!');
+        }
+      }, 'image/png');
+    } catch (err: any) {
+      if (err.name !== 'NotAllowedError') {
+        console.error('Erro na captura de tela:', err);
+      }
+      setNotification(null);
+    }
+  };
+
   // Real-time live voice transcription handler
   const handleVoiceTranscript = (text: string, isInterim?: boolean) => {
     if (!isListeningRef.current) {
@@ -233,10 +331,11 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         </div>
       )}
 
-      {/* Input Box with Drag & Drop (DSS Dark Card Style) */}
+      {/* Input Box with Drag & Drop and Direct Paste (DSS Dark Card Style) */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
+        onPaste={handlePaste}
         className="relative rounded-2xl border border-gray-800/60 dark:border-white/10 bg-dark-card shadow-xl transition-all duration-200 focus-within:border-[#d97757]/60 focus-within:ring-2 focus-within:ring-[#d97757]/20 focus-within:shadow-[0_8px_30px_rgba(0,0,0,0.25),0_0_20px_rgba(217,119,87,0.12)]"
       >
         {/* Chips de Elementos do Preview Selecionados para Edição */}
@@ -292,26 +391,27 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         />
 
         <div className="p-3 sm:p-3.5">
-          {/* Main Textarea */}
+          {/* Main Textarea with Direct Screenshot Paste */}
           <textarea
             ref={textareaRef}
             rows={1}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={
               selectedElements.length > 0
                 ? `Instrua a IA sobre o que alterar no(s) ${selectedElements.length} componente(s) selecionado(s)...`
                 : isPlanMode
                 ? 'Escreva uma mensagem para criar um Plano Estruturado...'
-                : 'Escreva uma mensagem...'
+                : 'Escreva uma mensagem ou cole um print (Ctrl+V)...'
             }
             className="w-full max-h-[160px] sm:max-h-[220px] py-1 px-1 text-sm sm:text-base text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-857f75)] bg-transparent resize-none border-0 focus:outline-none focus:ring-0 leading-relaxed font-sans"
           />
 
           {/* Claude Bottom Toolbar */}
           <div className="flex items-center justify-between gap-2 mt-2 pt-1">
-            {/* Left Tools: Attachment (ALWAYS ENABLED) */}
+            {/* Left Tools: Attachment & Direct Screenshot */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -332,8 +432,23 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 <Paperclip className="w-4 h-4" />
               </button>
 
+              <button
+                type="button"
+                onClick={handleTakeScreenshot}
+                disabled={isLoading}
+                aria-label="Tirar print da tela do PC"
+                title="Tirar print da tela do PC (ou use Ctrl+V para colar)"
+                className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                  isLoading
+                    ? 'text-[color:var(--c-fg-5a554d)] cursor-not-allowed opacity-40'
+                    : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
+                }`}
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+
               {(images.length > 0 || documents.length > 0) && (
-                <span className="text-[11px] font-mono text-[color:var(--c-fg-8c867a)]">
+                <span className="text-[11px] font-mono text-[color:var(--c-fg-8c867a)] ml-0.5">
                   {images.length + documents.length} anexo(s)
                 </span>
               )}
