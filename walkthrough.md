@@ -611,6 +611,44 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
 
+## 47. Motor de Subagentes Nativos e Orquestração Paralela no Chat
+- **Solicitação do Usuário:** *"quero a ia consiga disparar sub agentes para as tarrefas, e skill ou mcp pra isso? gratis e melhor do mercado"* / *"o nome da skill deixa so Subagentes, e ta aprovado pra impenetar"*.
+- **Problema & Decisão Arquitetural:**
+  - Servidores MCP externos servem para dados e ferramentas remotas, não para o ciclo de vida de prompts internos.
+  - A solução ideal é uma **Ferramenta Nativa (`dispatch_subagent`)** combinada com uma **Skill Comportamental (`Subagentes`)**:
+    - **100% Grátis & Custo Zero:** Roda na infraestrutura interna existente (`/api/chat`), sem provedores pagos nem chaves adicionais.
+    - **Herança do Modelo Ativo:** O subagente executa estritamente no modelo atualmente selecionado pelo usuário (ex: Google Gemma 4 31B, GLM 5.3).
+- **Solução Implementada:**
+  1. **Motor de Subagente com TDD (`src/lib/subagent-runner.ts` & `src/lib/subagent-runner.test.ts`):**
+     - Função `runSubagent(config)` com `AbortController` (timeout de 35s), leitura resiliente de stream SSE / JSON e separação de `<think>` do relatório final via `parseSubagentResult`.
+     - 4 testes unitários automatizados cobrindo montagem de prompt, validação de campos obrigatórios e parsing de relatórios.
+  2. **Skill Nativa "Subagentes" (`src/lib/storage.ts` & `src/lib/types.ts`):**
+     - Adicionada ao catálogo padrão com `id: 'subagents'`, `name: 'Subagentes'` e ícone `'bot'`.
+     - System prompt orientando a IA principal a dividir automaticamente tarefas grandes em até 3 subagentes simultâneos com papéis definidos e consolidar o resultado.
+     - Auto-merge inteligente em `loadSkills` preservando preferências do usuário.
+  3. **Tool OpenAI Nativa (`dispatch_subagent` em `src/App.tsx`):**
+     - Registrada em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Execução isolada em `executeGitHubTool` sem exigir repositório ativo, herdando `selectedModel`.
+  4. **Experiência Visual de Subagente no Chat (`src/components/chat-message.tsx`):**
+     - Label animado no accordion: `"Subagente em ação…"`.
+     - Estado em execução animado com `ThinkingOrb` (modo `weaving`, velocidade `2.0x`).
+     - Card concluído em tom esmeralda (`border-emerald-500/25 bg-[color:var(--c-bg-1c211f)]`) com badge de papel, subtarefa, tempo em segundos e botão *"Relatório"* para expandir os detalhes técnicos retornados.
+- **Evidências de Verificação:**
+  - `npm test`: 26/26 testes passando (6 suítes).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 4.46s.
+
+## 48. Renomeação da Aba de Servidores para "MPC"
+- **Solicitação do Usuário:** *"renomeia aba servidores mcp para MPC"*.
+- **Ajuste Realizado (`src/components/extensions/extensions-panel.tsx`):**
+  - O rótulo da sub-aba no painel de Extensões foi alterado de `<span>Servidores MCP</span>` para `<span>MPC</span>`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 26/26 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 2.63s.
+
+
+
 
 
 

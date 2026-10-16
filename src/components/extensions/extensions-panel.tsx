@@ -21,6 +21,7 @@ import {
   GitCommit,
   Smartphone,
   Cloud,
+  Bot,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -127,6 +128,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
         return <Smartphone className="w-4 h-4 text-pink-400" />;
       case 'cloud':
         return <Cloud className="w-4 h-4 text-slate-300" />;
+      case 'bot':
+        return <Bot className="w-4 h-4 text-emerald-400" />;
       default:
         return <Blocks className="w-4 h-4 text-purple-400" />;
     }
@@ -164,7 +167,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
           }`}
         >
           <Server className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span>Servidores MCP</span>
+          <span>MPC</span>
           {connectedMcpCount > 0 && (
             <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
               {connectedMcpCount}

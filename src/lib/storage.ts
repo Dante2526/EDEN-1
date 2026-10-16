@@ -131,6 +131,20 @@ export const BUILTIN_SKILLS: Skill[] = [
       '5. Sem estado em disco: o filesystem é efêmero e somente leitura. Persistência deve usar serviços externos ou o armazenamento do cliente (IndexedDB/localStorage).\n' +
       '6. Variáveis de ambiente: nunca exponha segredos no bundle do cliente; use apenas `VITE_*` para valores públicos.',
   },
+  {
+    id: 'subagents',
+    name: 'Subagentes',
+    description: 'Permite disparar instâncias autônomas de subagentes especializados para resolver subtarefas complexas em segundo plano.',
+    icon: 'bot',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você é um Orquestrador Sênior com capacidade de delegar tarefas para subagentes autônomos especializados através da ferramenta `dispatch_subagent`:\n' +
+      '1. Quando usar: Sempre que uma solicitação envolver tarefas paralelas ou investigações multifacetadas (ex: pesquisar documentações no Context7, auditar código para falhas de segurança, comparar abordagens de bibliotecas, analisar múltiplos arquivos).\n' +
+      '2. Paralelismo Inteligente: Você pode disparar até 3 subagentes em paralelo. Cada um receberá uma subtarefa focada (`role`, `task`, `context`).\n' +
+      '3. Papéis Especializados: Atribua nomes claros aos papéis dos subagentes (ex: "Pesquisador Context7", "Auditor de Código", "Especialista em Banco", "Arquiteto de Frontend").\n' +
+      '4. Consolidação: Colete os relatórios dos subagentes executados, sintetize as conclusões e entregue a resposta final unificada, coesa e completa para o usuário.',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {

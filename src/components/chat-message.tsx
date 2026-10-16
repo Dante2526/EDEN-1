@@ -23,6 +23,8 @@ import {
   Table,
   Brain,
   BookOpen,
+  Bot,
+  ChevronUp,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -264,6 +266,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     switch (toolName) {
       case 'generate_image':
         return 'Criando a imagem…';
+      case 'dispatch_subagent':
+        return 'Subagente em ação…';
       case 'generate_document':
         return 'Compilando documento…';
       case 'save_memory':
@@ -528,9 +532,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisDocGen = tc.name === 'generate_document';
                   const isThisImageGen = tc.name === 'generate_image';
                   const isThisMemory = tc.name === 'save_memory' || tc.name === 'forget_memory';
+                  const isThisSubagent = tc.name === 'dispatch_subagent';
                   const orbState = isThisImageGen
                     ? 'shaping'
-                    : isThisWebSearch || isThisFetchUrl || isThisMemory
+                    : isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent
                     ? 'weaving'
                     : 'composing';
                   const orbLabel = isThisImageGen
@@ -548,6 +553,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando…';
                   const actionTitle = isThisImageGen
                     ? 'Criando Imagem'
+                    : isThisSubagent
+                    ? (parsedArgs.role ? `Subagente: ${parsedArgs.role}` : 'Subagente em Ação')
                     : isThisMemory
                     ? (tc.name === 'save_memory' ? 'Salvando na Memória' : 'Atualizando Memória')
                     : isThisDocGen
@@ -561,6 +568,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando';
                   const actionBadge = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisSubagent
+                    ? 'Orquestração Paralela'
                     : isThisDocGen
                     ? `${parsedArgs.type ? parsedArgs.type.toUpperCase() : 'Office'} Engine`
                     : isThisPython
@@ -574,6 +583,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : getToolActionLabel(tc.name);
                   const actionDescription = isThisImageGen
                     ? 'Gerando arte com Stable Diffusion / Flux em alta resolução…'
+                    : isThisSubagent
+                    ? (parsedArgs.task || 'Executando subtarefa autônoma em segundo plano…')
                     : isThisDocGen
                     ? 'Compilando arquivo binário e preparando link para download no navegador…'
                     : isThisPython
@@ -963,6 +974,94 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       <div className="shrink-0 text-[10px] text-zinc-500 font-mono">
                         forget_memory
                       </div>
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'dispatch_subagent') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = tc.result ? JSON.parse(tc.result) : null;
+                  } catch {}
+
+                  const role = parsedResult?.role || parsedArgs?.role || 'Subagente';
+                  const task = parsedResult?.task || parsedArgs?.task || 'Subtarefa em execução';
+                  const report = parsedResult?.report || (typeof tc.result === 'string' && !parsedResult?.status ? tc.result : '');
+                  const reasoning = parsedResult?.reasoning;
+                  const durationMs = parsedResult?.durationMs;
+                  const isError = tc.status === 'error' || parsedResult?.status === 'error';
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="rounded-2xl my-2 synap-card overflow-hidden border border-emerald-500/25 bg-[color:var(--c-bg-1c211f)] shadow-xs"
+                    >
+                      <div className="p-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                            {isError ? (
+                              <AlertTriangle className="w-4 h-4 text-rose-400" />
+                            ) : (
+                              <Bot className="w-4 h-4 text-emerald-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
+                                Subagente: {role}
+                              </span>
+                              <span
+                                className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold uppercase ${
+                                  isError
+                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                }`}
+                              >
+                                {isError ? 'Falhou' : 'Concluído'}
+                              </span>
+                              {durationMs && (
+                                <span className="text-[10px] text-zinc-500 font-mono">
+                                  {(durationMs / 1000).toFixed(1)}s
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[color:var(--c-fg-8c867a)] truncate max-w-lg mt-0.5" title={task}>
+                              {task}
+                            </p>
+                          </div>
+                        </div>
+
+                        {report && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const el = document.getElementById(`subagent-report-${tc.id}`);
+                              if (el) {
+                                el.classList.toggle('hidden');
+                              }
+                            }}
+                            className="shrink-0 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer font-medium"
+                          >
+                            <span>Relatório</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {report && (
+                        <div
+                          id={`subagent-report-${tc.id}`}
+                          className="hidden p-3.5 text-xs text-[color:var(--c-fg-d8d3c9)] border-t border-emerald-500/20 bg-[color:var(--c-bg-141816)] leading-relaxed space-y-2"
+                        >
+                          {reasoning && (
+                            <div className="text-[11px] text-zinc-400 font-mono italic border-l-2 border-emerald-500/40 pl-2 mb-2">
+                              {reasoning}
+                            </div>
+                          )}
+                          <div className="whitespace-pre-wrap font-sans">
+                            {report}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 }

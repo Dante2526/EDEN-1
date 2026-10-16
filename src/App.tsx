@@ -67,6 +67,7 @@ import {
   testMcpConnection,
   executeMcpToolCall,
 } from './lib/mcp-client';
+import { runSubagent } from './lib/subagent-runner';
 import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } from './lib/theme';
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
@@ -556,8 +557,35 @@ const OPEN_PROJECT_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, ...GITHUB_TOOLS];
+const DISPATCH_SUBAGENT_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'dispatch_subagent',
+    description:
+      'Dispara um subagente autônomo especializado em segundo plano para resolver subtarefas complexas em paralelo (ex: pesquisar documentações, auditar segurança, analisar código, ler múltiplos arquivos ou investigar bugs) e retornar um relatório sintetizado.',
+    parameters: {
+      type: 'object',
+      properties: {
+        role: {
+          type: 'string',
+          description: 'Papel do subagente (ex: "Pesquisador Context7", "Auditor de Código", "Especialista em Banco", "Revisor de Segurança").',
+        },
+        task: {
+          type: 'string',
+          description: 'Instrução precisa do que o subagente deve investigar, analisar ou resolver.',
+        },
+        context: {
+          type: 'string',
+          description: 'Trechos de código, contexto ou dados específicos para o subagente cumprir a missão.',
+        },
+      },
+      required: ['role', 'task'],
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -1824,6 +1852,40 @@ function AppContent() {
       }
     }
 
+    // Disparo de Subagentes Autônomos em Paralelo — NÃO depende de repositório ativo
+    if (name === 'dispatch_subagent') {
+      try {
+        const subagentRes = await runSubagent({
+          role: args.role,
+          task: args.task,
+          context: args.context,
+          model: selectedModel,
+          apiKeySecret: import.meta.env.VITE_API_SECRET || '',
+        });
+
+        return {
+          result: JSON.stringify({
+            status: subagentRes.success ? 'success' : 'error',
+            role: subagentRes.role,
+            task: subagentRes.task,
+            report: subagentRes.report,
+            reasoning: subagentRes.reasoning,
+            durationMs: subagentRes.durationMs,
+            error: subagentRes.error,
+          }),
+        };
+      } catch (err: any) {
+        return {
+          result: JSON.stringify({
+            status: 'error',
+            role: args.role || 'Subagente',
+            task: args.task || 'Indefinida',
+            error: err?.message || 'Falha ao executar subagente.',
+          }),
+        };
+      }
+    }
+
     // Ferramentas remotas Model Context Protocol (MCP) — NÃO dependem de repositório ativo
     if (name.startsWith('mcp__')) {
       const parts = name.split('__');
@@ -2333,7 +2395,8 @@ function AppContent() {
         '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
         '4. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python.\n' +
         '5. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
-        '6. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.';
+        '6. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.\n' +
+        '7. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.';
 
     const planPrompt = activePlan
       ? 'Você é um estrategista e arquiteto de planejamento sênior. O MODO PLANO (FUNÇÃO PLAN) está ATIVADO. Para a solicitação do usuário, crie OBRIGATORIAMENTE um PLANO DE AÇÃO COMPLETO, PRÁTICO E EXECUTÁVEL, formatado estritamente com os seguintes tópicos em Markdown:\n\n' +

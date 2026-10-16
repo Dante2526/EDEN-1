@@ -96,11 +96,11 @@ Registrada em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`:
 
 ---
 
-## 5. Skill Nativa: `subagent-orchestrator`
+## 5. Skill Nativa: `subagents`
 
 Adicionada ao catálogo padrão em `src/lib/storage.ts`:
-- **ID:** `subagent-orchestrator`
-- **Nome:** "Orquestrador de Subagentes"
+- **ID:** `subagents`
+- **Nome:** "Subagentes"
 - **Ícone:** `Bot` (`'bot'`)
 - **System Prompt:**
   Orienta a IA principal sobre quando e como particionar problemas complexos, encorajando o disparo de até 3 subagentes paralelos antes de formular a resposta definitiva ao usuário.

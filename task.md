@@ -1,15 +1,22 @@
-# Checklist de Execução: Integração Direta do Context7 MCP
+# Checklist de Execução: Motor de Subagentes Nativos e Orquestração Paralela
 
-- [x] Task 1: Suporte a SSE e Fallback Robusto em `src/lib/mcp-client.ts`
-  - [x] Criar helper `parseMcpResponsePayload` para parsing de JSON ou SSE (`data: {...}`)
-  - [x] Atualizar `testMcpConnection` e `executeMcpToolCall`
-  - [x] Adicionar teste unitário de parsing SSE em `src/lib/mcp-client.test.ts`
-  - [x] Rodar testes unitários com `npm test` (25/25 passando)
-- [x] Task 2: Adicionar Context7 como Servidor MCP Padrão em `src/lib/storage.ts`
-  - [x] Configurar `DEFAULT_MCP_SERVERS` com Context7 (`https://mcp.context7.com/mcp`)
-  - [x] Fazer auto-merge inteligente no `loadMcpServers`
-  - [x] Tratar execução independente de repositório em `src/App.tsx`
-  - [x] Adicionar feedback visual e badge de documentação em `src/components/chat-message.tsx`
-- [x] Task 3: Verificação Técnica Completa
-  - [x] Rodar `npm run lint && npm test` (0 erros tsc, 25/25 testes)
-  - [x] Rodar `npm run build` (bundle de produção + dist/_worker.js compilados com sucesso)
+- [x] Task 1: Motor de Execução `src/lib/subagent-runner.ts` e Testes Unitários (TDD)
+  - [x] Step 1: Escrever teste unitário falhando (`src/lib/subagent-runner.test.ts`)
+  - [x] Step 2: Executar teste e validar falha (RED)
+  - [x] Step 3: Implementar `src/lib/subagent-runner.ts` com runner, system prompt e timeout
+  - [x] Step 4: Executar teste e validar aprovação (GREEN)
+- [x] Task 2: Skill Nativa `Subagentes` no Catálogo Padrão
+  - [x] Step 1: Declarar a Skill `Subagentes` em `DEFAULT_SKILLS` (`src/lib/storage.ts`)
+  - [x] Step 2: Auto-merge em `loadSkills` preservando dados existentes
+  - [x] Step 3: Verificar integridade de tipos com `npm run lint`
+- [x] Task 3: Tool Nativa `dispatch_subagent` no `src/App.tsx`
+  - [x] Step 1: Declarar schema `dispatch_subagent` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`
+  - [x] Step 2: Integrar execução no `executeToolCall` usando `effectiveModel`
+  - [x] Step 3: Instrução de relato no prompt do assistente
+- [x] Task 4: Feedback Visual e Cartões de Subagente no Chat
+  - [x] Step 1: Atualizar `getToolActionLabel` em `src/components/chat-message.tsx`
+  - [x] Step 2: Renderizar card dedicado de subagente com status e relatório expansível
+- [x] Task 5: Verificação Técnica Completa & Documentação
+  - [x] Step 1: Rodar `npm run lint && npm test` (0 erros tsc, 26/26 testes)
+  - [x] Step 2: Rodar `npm run build` (build verde em 4.46s)
+  - [x] Step 3: Atualizar `task.md` e `walkthrough.md` com a Seção 47
