@@ -516,8 +516,12 @@ export default async function handler(req: Request, envArg?: Env) {
           };
           resetIdleTimer();
 
-          // Instanciado só quando necessário (CF). Para NVIDIA, é null e pulamos o rewrite.
-          const splitter: CloudflareThinkSplitter | null = usingCloudflare ? new CloudflareThinkSplitter() : null;
+          // Instanciado para Cloudflare e modelos que utilizam tags <think> (ex: Gemma, Nemotron com enable_thinking)
+          const needsThinkSplitter =
+            usingCloudflare ||
+            selectedModel === 'google/gemma-4-31b-it' ||
+            selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+          const splitter: CloudflareThinkSplitter | null = needsThinkSplitter ? new CloudflareThinkSplitter() : null;
           // Buffer de linha SSE bruta (para o caso de um chunk cortar no meio de uma linha)
           let sseBuffer = '';
 

@@ -1140,6 +1140,7 @@ function AppContent() {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const isAtBottomRef = useRef<boolean>(true);
   const isUserScrollingRef = useRef<boolean>(false);
+  const isProgrammaticScrollRef = useRef<boolean>(false);
   const userScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastRenderRef = useRef<number>(0);
@@ -1286,6 +1287,14 @@ function AppContent() {
   const handleMessagesScroll = useCallback(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
+    // Se a rolagem foi disparada programaticamente pelo auto-scroll do Synap, não ativa a trava de scroll do usuário
+    if (isProgrammaticScrollRef.current) {
+      isProgrammaticScrollRef.current = false;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      isAtBottomRef.current = distanceFromBottom <= 100;
+      return;
+    }
+
     // Considera que está no fim se estiver a menos de 100px do fundo
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     isAtBottomRef.current = distanceFromBottom <= 100;
@@ -1302,6 +1311,7 @@ function AppContent() {
     const el = messagesContainerRef.current;
     if (!el) return;
     if (force || (isAtBottomRef.current && !isUserScrollingRef.current)) {
+      isProgrammaticScrollRef.current = true;
       if (smooth) {
         el.scrollTo({
           top: el.scrollHeight,
@@ -1319,6 +1329,7 @@ function AppContent() {
       const el = messagesContainerRef.current;
       requestAnimationFrame(() => {
         if (isAtBottomRef.current && !isUserScrollingRef.current && el) {
+          isProgrammaticScrollRef.current = true;
           el.scrollTop = el.scrollHeight;
         }
       });
@@ -1332,10 +1343,8 @@ function AppContent() {
       isUserScrollingRef.current = false;
       const scrollDown = () => {
         if (messagesContainerRef.current) {
+          isProgrammaticScrollRef.current = true;
           messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ block: 'end' });
         }
       };
 
@@ -2612,7 +2621,7 @@ function AppContent() {
     if (continuousVoiceActive) {
       playThinkingSound();
     }
-    setTimeout(() => scrollToBottom(true, true), 50);
+    setTimeout(() => scrollToBottom(true, false), 50);
 
     // Injetar contexto de repositório apenas se vinculado a esta conversa
     const chatActiveRepo = activeRepo || (currentConv?.activeRepo ? currentConv.activeRepo : null);
@@ -4009,7 +4018,7 @@ function AppContent() {
           <div
               ref={messagesContainerRef}
               onScroll={handleMessagesScroll}
-          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain [overflow-anchor:none]"
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain"
         >
           {!activeConversation || activeConversation.messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center px-4 sm:px-6 max-w-2xl mx-auto text-center py-4 sm:py-8 relative">

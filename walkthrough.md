@@ -1059,3 +1059,34 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 57/57 testes passando em 14 suítes.
   - `npm run build`: bundle compilado em 2.48s com artefatos Cloudflare Pages gerados com sucesso.
+
+## 72. Eliminação do Glitch de Rolagem (Sobe e Desce) Durante o Pensamento da IA
+- **Solicitação do Usuário:** Durante a execução/pensamento da IA, a tela ficava dando glitch e pulando para cima e para baixo repetidamente, mesmo sem nenhum texto final gerado. Solicitado teste em simulação automatizada para não ser um "tiro no escuro".
+- **Diagnóstico com Evidência Empírica (`systematic-debugging`):**
+  - Criado script de simulação CDP com Edge headless (`scratch/simulate.js`) monitorando o contêiner de rolagem sob stream de pensamento.
+  - Reproduzido com precisão o glitch de subida e descida:
+    - Step 0: `scrollTop +299px (DOWN)`
+    - Step 1: `scrollTop -122px (UP)` <-- tela subia 122px devido a chunk `\n` desmontando o card `ThinkingOrb` e montando markdown vazio de 0px.
+    - Step 2: `scrollTop +174px (DOWN)` <-- tela descia 174px ao detectar `<think>` e remontar o card.
+    - Step 7: `scrollTop -36px (UP)` <-- tela subia ao término do pensamento pelo colapso do card duplicado.
+  - Causas raízes identificadas:
+    1. Whitespace puro (`\n`, espaços) tratado como conteúdo real (`Boolean('\n') === true`).
+    2. Card duplicado do `ThinkingOrb` (128px) abaixo do markdown competindo com o acordeão de raciocínio no topo.
+    3. `[overflow-anchor:none]` desativando a estabilização nativa de rolagem do navegador.
+    4. Auto-scroll programático ativando a flag `isUserScrollingRef = true` por 250ms, bloqueando frames seguintes.
+- **Solução Implementada:**
+  1. `src/components/chat-message.tsx`:
+     - Implementado `hasRealContent = Boolean(cleanContent && cleanContent.trim().length > 0)`. Espaços e quebras de linha não ocultam o estado de espera.
+     - Unificado o card de conexão/espera com o Acordeão de Raciocínio no mesmo ponto superior do componente com altura idêntica (`min-h-[42px]`), eliminando completamente o card de 128px redundante e quedas bruscas de altura.
+  2. `src/App.tsx`:
+     - Criada flag `isProgrammaticScrollRef` para que rolagens acionadas pelo sistema não travem o auto-scroll como se fossem gestos do usuário.
+     - Substituída a rolagem suave concorrente por rolagem direta no envio de mensagens.
+     - Removida a classe `[overflow-anchor:none]`, restaurando a ancoragem estável nativa do navegador.
+     - Substituído `scrollIntoView` (que afetava elementos externos e viewport) por rolagem interna restrita a `messagesContainerRef`.
+  3. `api/chat.ts`:
+     - Habilitado `CloudflareThinkSplitter` para modelos com `enable_thinking` (Nemotron e Gemma), entregando tokens de pensamento diretamente como `delta.reasoning_content`.
+- **Evidências de Verificação:**
+  - **Simulação CDP no Edge (`scratch/simulate.js`):** 100% dos eventos registrados com `direction: 'DOWN'`. Nenhuma ocorrência de `direction: 'UP'` ou sobressalto visual.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 57/57 testes passando em 14 suítes.
+  - `npm run build`: bundle compilado em 2.20s com artefatos Cloudflare Pages gerados.

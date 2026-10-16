@@ -318,8 +318,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     }
   };
 
+  // Apenas considera que há conteúdo se houver texto real após trim (evita flicker com \n ou espaços)
+  const hasRealContent = Boolean(cleanContent && cleanContent.trim().length > 0);
+
   // Verifica se está na fase inicial de conexão antes de receber tokens de raciocínio ou resposta
-  const isConnecting = isStreaming && !thinkingContent && !displayContent && !hasRunningTool;
+  const isConnecting = isStreaming && !thinkingContent && !hasRealContent && !hasRunningTool;
 
   const handleCopy = async () => {
     try {
@@ -451,13 +454,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             )}
           </div>
 
-          {/* Thinking Process Accordion (Dynamic label reflecting selected mode: low / high / max) */}
-          {thinkingContent && (
+          {/* Thinking Process Accordion or Connecting Status Card */}
+          {thinkingContent ? (
             <div className="w-full mb-3.5 synap-card overflow-hidden backdrop-blur-xs">
               <button
                 type="button"
                 onClick={() => setShowReasoning(!showReasoning)}
-                className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs text-zinc-700 dark:text-[color:var(--c-fg-a39d93)] hover:text-zinc-950 dark:hover:text-[color:var(--c-fg-f3efe6)] hover:bg-zinc-100/70 dark:hover:bg-[color:var(--c-bg-2c2925)]/80 transition-colors cursor-pointer"
+                className="w-full px-3.5 py-2.5 min-h-[42px] flex items-center justify-between text-xs text-zinc-700 dark:text-[color:var(--c-fg-a39d93)] hover:text-zinc-950 dark:hover:text-[color:var(--c-fg-f3efe6)] hover:bg-zinc-100/70 dark:hover:bg-[color:var(--c-bg-2c2925)]/80 transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2 font-mono flex-wrap">
                   {showReasoning ? (
@@ -510,7 +513,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 </div>
               )}
             </div>
-          )}
+          ) : isStreaming && !hasRunningTool && !hasRealContent ? (
+            <div className="w-full mb-3.5 synap-card overflow-hidden backdrop-blur-xs px-3.5 py-2.5 min-h-[42px] flex items-center justify-between text-xs">
+              <span className="flex items-center gap-2 font-mono">
+                <ThinkingOrb state="working" size={20} theme="dark" speed={1.5} />
+                <span className="font-medium text-zinc-900 dark:text-[color:var(--c-fg-c4bfb6)]">
+                  {isAwaitingCompletion
+                    ? 'Concluindo serviço…'
+                    : isConnecting
+                    ? 'Estabelecendo conexão…'
+                    : 'Processando resposta…'}
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#d97757] animate-pulse" />
+              </span>
+              <span className="text-[11px] text-zinc-600 dark:text-[color:var(--c-fg-736e65)] font-mono">
+                {message.isPlanMode ? 'Modo Plano' : 'Pensando…'}
+              </span>
+            </div>
+          ) : null}
 
           {/* Tool Calls Execution Status - 1 orb (último running) + ferramentas concluídas agrupadas */}
           {message.toolCalls && message.toolCalls.length > 0 && (
@@ -1382,7 +1402,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
           {/* Assistant Rendered Markdown */}
           <div className="w-full prose prose-invert max-w-none text-[15px] sm:text-[16px] text-[color:var(--c-fg-f3efe6)] leading-relaxed break-words font-sans">
-            {displayContent ? (
+            {hasRealContent ? (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -1457,49 +1477,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               >
                 {cleanContent}
               </ReactMarkdown>
-            ) : isStreaming && !hasRunningTool ? (
-              <div className="flex flex-col items-start gap-3 py-3 my-1">
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[color:var(--c-bg-24211d)] border border-[color:var(--c-bg-3a352a)] shadow-xs">
-                  <ThinkingOrb
-                    state="working"
-                    size={64}
-                    theme="dark"
-                    speed={1.5}
-                    aria-label={
-                      isAwaitingCompletion
-                        ? 'Aguardando…'
-                        : isConnecting
-                        ? 'Conectando…'
-                        : 'Pensando…'
-                    }
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] flex items-center gap-1.5 font-sans">
-                      <span>
-                        {isAwaitingCompletion
-                          ? 'Aguardando…'
-                          : isConnecting
-                          ? 'Conectando…'
-                          : 'Pensando…'}
-                      </span>
-                      <span className="inline-flex gap-1 text-[color:var(--c-fg-d97757)]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#d97757] animate-pulse" />
-                      </span>
-                    </span>
-                    <span className="text-[11px] text-[color:var(--c-fg-9c9589)] font-mono mt-0.5">
-                      {isAwaitingCompletion
-                        ? 'Aguardando ferramenta em segundo plano para confirmar o serviço concluído…'
-                        : isConnecting
-                        ? 'Estabelecendo conexão com o modelo de IA…'
-                        : thinkingContent
-                        ? `Processando raciocínio (${thinkingContent.length.toLocaleString()} caracteres)`
-                        : message.isPlanMode
-                        ? 'Estruturando plano de ação detalhado'
-                        : 'Analisando contexto e gerando resposta'}
-                    </span>
-                  </div>
-                </div>
-              </div>
             ) : null}
           </div>
 
