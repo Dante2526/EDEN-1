@@ -42,98 +42,100 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   const seed = Math.floor(Math.random() * 10000000);
   const safeAltText = cleanPrompt.replace(/[\n\r\[\]]/g, ' ').trim();
 
-  // 1. Tentar NVIDIA NIM (Qwen-Image / Qwen-Image-Edit) se NVIDIA_API_KEY estiver configurada
+  // Motor Exclusivo: NVIDIA NIM (Qwen-Image / Qwen-Image-Edit)
   const nvidiaKey = env.NVIDIA_API_KEY?.trim();
-  if (nvidiaKey && !nvidiaKey.startsWith('sua_') && !nvidiaKey.startsWith('nvapi-your')) {
-    try {
-      const isEdit = mode === 'edit' && Boolean(imageUrl);
-      const endpoint = isEdit
-        ? 'https://ai.api.nvidia.com/v1/genai/qwen/qwen-image-edit'
-        : 'https://ai.api.nvidia.com/v1/genai/qwen/qwen-image';
-
-      const payload: Record<string, any> = {
-        prompt: cleanPrompt,
-        seed,
-      };
-
-      if (isEdit) {
-        payload.image = imageUrl;
+  if (!nvidiaKey || nvidiaKey.startsWith('sua_') || nvidiaKey.startsWith('nvapi-your')) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'NVIDIA_API_KEY não configurada. Defina sua chave de API da NVIDIA nas variáveis de ambiente do Cloudflare Pages.',
+      }),
+      {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
       }
-
-      const nvidiaRes = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${nvidiaKey}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (nvidiaRes.ok) {
-        const data: any = await nvidiaRes.json();
-        const base64Data = data?.artifacts?.[0]?.base64;
-        if (base64Data) {
-          const dataUri = `data:image/jpeg;base64,${base64Data}`;
-          return new Response(
-            JSON.stringify({
-              success: true,
-              url: dataUri,
-              prompt: cleanPrompt,
-              aspect_ratio: aspectRatio,
-              provider: isEdit ? 'NVIDIA NIM (Qwen-Image-Edit)' : 'NVIDIA NIM (Qwen-Image)',
-              mode: isEdit ? 'edit' : 'generate',
-              markdown: `![${safeAltText}](${dataUri})`,
-            }),
-            {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
-        }
-      } else {
-        console.warn(`[NVIDIA NIM Image] ${nvidiaRes.status} ${nvidiaRes.statusText} — fallback para Pollinations`);
-      }
-    } catch (err) {
-      console.warn('[NVIDIA NIM Image] Erro na requisição:', err);
-    }
+    );
   }
 
-  // 2. Fallback resiliente: Pollinations FLUX
-  let width = 768;
-  let height = 768;
+  try {
+    const isEdit = mode === 'edit' && Boolean(imageUrl);
+    const endpoint = isEdit
+      ? 'https://ai.api.nvidia.com/v1/genai/qwen/qwen-image-edit'
+      : 'https://ai.api.nvidia.com/v1/genai/qwen/qwen-image';
 
-  if (aspectRatio === '16:9') {
-    width = 1024;
-    height = 576;
-  } else if (aspectRatio === '9:16') {
-    width = 576;
-    height = 1024;
-  } else if (aspectRatio === '4:3') {
-    width = 800;
-    height = 600;
-  }
-
-  const safeUrlPrompt = encodeURIComponent(cleanPrompt).replace(
-    /[!'()*]/g,
-    (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  );
-
-  const fallbackUrl = `https://image.pollinations.ai/prompt/${safeUrlPrompt}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      url: fallbackUrl,
+    const payload: Record<string, any> = {
       prompt: cleanPrompt,
-      dimensions: { width, height },
-      aspect_ratio: aspectRatio,
-      provider: 'FLUX (Black Forest Labs)',
-      markdown: `![${safeAltText}](${fallbackUrl})`,
-    }),
-    {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      seed,
+    };
+
+    if (isEdit) {
+      payload.image = imageUrl;
     }
-  );
+
+    const nvidiaRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${nvidiaKey}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (nvidiaRes.ok) {
+      const data: any = await nvidiaRes.json();
+      const base64Data = data?.artifacts?.[0]?.base64;
+      if (base64Data) {
+        const dataUri = `data:image/jpeg;base64,${base64Data}`;
+        return new Response(
+          JSON.stringify({
+            success: true,
+            url: dataUri,
+            prompt: cleanPrompt,
+            aspect_ratio: aspectRatio,
+            provider: isEdit ? 'NVIDIA NIM (Qwen-Image-Edit)' : 'NVIDIA NIM (Qwen-Image)',
+            mode: isEdit ? 'edit' : 'generate',
+            markdown: `![${safeAltText}](${dataUri})`,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Nenhum artefato de imagem base64 retornado pela NVIDIA NIM.',
+        }),
+        {
+          status: 502,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const errorBody = await nvidiaRes.text();
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: `Erro na API da NVIDIA NIM (${nvidiaRes.status} ${nvidiaRes.statusText}): ${errorBody}`,
+      }),
+      {
+        status: nvidiaRes.status >= 400 && nvidiaRes.status < 600 ? nvidiaRes.status : 502,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (err: any) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: `Falha de rede ao conectar com a NVIDIA NIM: ${err?.message || 'Erro desconhecido'}`,
+      }),
+      {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
 }

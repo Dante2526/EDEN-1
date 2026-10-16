@@ -4,6 +4,7 @@ import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
 import { ModelId, ReasoningEffort, AttachedDocument } from '../lib/types';
+import { isVisionModel } from '../lib/models';
 import { fileToBase64, readFileAsText, generateId } from '../lib/utils';
 
 interface ChatInputProps {
@@ -117,8 +118,8 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
           const base64 = await fileToBase64(file);
           newImages.push(base64);
 
-          // Auto-switch para modelo com visão (GLM-5.3 Flash ou Gemma 4 31B)
-          const isVision = selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it';
+          // Preserva modelo se ele já suportar visão (GLM Flash, Gemma 4 31B, Nemotron-3.5 Super VL)
+          const isVision = isVisionModel(selectedModel);
           if (!isVision) {
             onSelectModel('z-ai/glm-5.3-flash');
             switchedToFlash = true;

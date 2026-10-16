@@ -16,7 +16,7 @@ export const ALLOWED_MODELS = [
   'z-ai/glm-5.3-flash',
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
-  'nvidia/nemotron-3-ultra-550b-a55b',
+  'nvidia/nemotron-3.5-super-vl-120b-a12b',
   '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
   '@cf/qwen/qwen2.5-coder-32b-instruct',
 ];
@@ -38,6 +38,7 @@ export function isCloudflareModel(model: string): boolean {
 export const VISION_MODELS = [
   'z-ai/glm-5.3-flash',
   'google/gemma-4-31b-it',
+  'nvidia/nemotron-3.5-super-vl-120b-a12b',
 ];
 
 export function isVisionModel(model: string): boolean {
@@ -49,7 +50,7 @@ export const TOOL_MODELS = [
   'z-ai/glm-5.3-flash',
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
-  'nvidia/nemotron-3-ultra-550b-a55b',
+  'nvidia/nemotron-3.5-super-vl-120b-a12b',
   '@cf/qwen/qwen2.5-coder-32b-instruct',
 ];
 

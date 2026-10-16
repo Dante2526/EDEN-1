@@ -61,10 +61,10 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       badge: 'Flash',
     },
     {
-      id: 'nvidia/nemotron-3-ultra-550b-a55b',
-      title: 'Nemotron-3 Ultra 550B',
-      subtitle: 'NVIDIA 550B Ultra — Raciocínio de escala massiva',
-      badge: 'NVIDIA · 550B',
+      id: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
+      title: 'Nemotron-3.5 Super VL',
+      subtitle: 'NVIDIA 120B Super VL — Visão multimodal e raciocínio avançado',
+      badge: 'NVIDIA · VL',
     },
     {
       id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
@@ -131,8 +131,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'Gemma 4 31B'
                 : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
                 ? 'DeepSeek V4.1'
-                : selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
-                ? 'Nemotron 550B'
+                : selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+                ? 'Nemotron VL'
                 : selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
                 ? 'R1 Distill'
                 : selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'
@@ -186,7 +186,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
           {(() => {
             const activeTokens = conversationTokens?.activeContextTokens || conversationTokens?.totalTokens || 0;
             const totalAccumulated = conversationTokens?.totalTokens || 0;
-            const CONTEXT_LIMIT = selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b' ? 256000 : 128000; // 256k para Gemma 4 e Nemotron 550B, 128k para GLM-5.3
+            const CONTEXT_LIMIT = selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ? 256000 : 128000; // 256k para Gemma 4 e Nemotron VL, 128k para GLM-5.3
             const percent = Math.min(100, (activeTokens / CONTEXT_LIMIT) * 100);
             // Cor conforme % de uso da janela ativa
             const barColor =

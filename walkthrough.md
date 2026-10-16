@@ -1036,3 +1036,26 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 57/57 testes passando em 14 suítes.
   - `npm run build`: bundle compilado em 2.51s com artefatos Cloudflare Pages gerados.
+
+## 71. Remoção Completa do Pollinations e Atualização para Nemotron-3.5 Super VL
+- **Solicitação do Usuário:**
+  1. Remover 100% o Pollinations (`image.pollinations.ai`). Geração e edição de imagens passam a ser exclusivamente via NVIDIA NIM (`qwen-image` e `qwen-image-edit`), com retorno transparente de erro caso a chave não esteja configurada ou ocorra falha.
+  2. Substituir o modelo Nemotron anterior pelo mais novo: `nvidia/nemotron-3.5-super-vl-120b-a12b` (Vision-Language de 120B com raciocínio e visão nativos).
+- **Solução Implementada:**
+  1. **Remoção de Pollinations e Motor Exclusivo NVIDIA NIM (`api/image.ts`):**
+     - Removido todo e qualquer bloco de fallback para `image.pollinations.ai`.
+     - Validação explícita de `NVIDIA_API_KEY`: retorna status `401 Unauthorized` imediato com mensagem orientando configuração da chave no Cloudflare Pages ou ambiente local.
+     - Repasse transparente do código HTTP e corpo de erro (`${nvidiaRes.status}: ${errorBody}`) quando a API da NVIDIA retornar falha, eliminando silenciamento de erros.
+  2. **Atualização para `nvidia/nemotron-3.5-super-vl-120b-a12b`:**
+     - `src/lib/types.ts`: Atualizado `ModelId` com o novo identificador.
+     - `src/lib/models.ts` e `lib/server/_security.ts`: Modelo adicionado em `ALLOWED_MODELS`, `TOOL_MODELS` e `VISION_MODELS` (suporte multimodal a imagens no chat).
+     - `api/chat.ts`: Injetado `chat_template_kwargs: { enable_thinking: true }` para o modelo `nvidia/nemotron-3.5-super-vl-120b-a12b`.
+     - `src/components/model-controls.tsx`: Interface atualizada com o título **Nemotron-3.5 Super VL**, badge **NVIDIA · VL**, pill **Nemotron VL** e janela de 256k tokens.
+     - `src/components/chat-input.tsx`: Verificação `isVisionModel` garantindo que o Nemotron VL aceite anexos de imagem diretamente sem alternar forçadamente para outro modelo.
+     - `src/App.tsx`: Atualizada restauração de `localStorage` e checagem de flag `isFlashModel`.
+  3. **Testes Unitários (`src/lib/models.test.ts`):**
+     - Atualizados testes de paridade validando `isVisionModel` e `isToolCapableModel` para `nvidia/nemotron-3.5-super-vl-120b-a12b`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 57/57 testes passando em 14 suítes.
+  - `npm run build`: bundle compilado em 2.48s com artefatos Cloudflare Pages gerados com sucesso.
