@@ -2679,7 +2679,7 @@ function AppContent() {
     const requestTools = isNoToolsModel ? [] : [...baseTools, ...mcpOpenAiTools];
 
     const basePrompt = isNoToolsModel
-      ? 'Você é o assistente Synap operando com o modelo DeepSeek R1.\n' +
+      ? 'Você é o assistente Éden operando com o modelo DeepSeek R1.\n' +
         buildTextToolProtocolPrompt(
           Boolean(chatActiveRepo),
           chatActiveRepo?.fullName,
@@ -2687,7 +2687,7 @@ function AppContent() {
           mcpOpenAiTools
         ) +
         (chatActiveRepo && graphRagSummary ? `\n\n${graphRagSummary}` : '')
-      : 'Você é o assistente Synap com ferramentas avançadas integradas.\n' +
+      : 'Você é o assistente Éden com ferramentas avançadas integradas.\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n' +
         'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
         'É ESTRITAMENTE PROIBIDO responder apenas prometendo ou anunciando que vai agir (ex: "Vou criar o arquivo...", "Vou listar os arquivos...", "Vou localizar...", "Primeiro vou...", "Deixe-me verificar..."). Emita a chamada de ferramenta na mesma resposta!\n' +
@@ -3486,7 +3486,7 @@ function AppContent() {
                       ...m,
                       content:
                         (m.content || '') +
-                        '\n\n---\n⚠️ **Aviso de Segurança do Synap**: Atingi o limite máximo de 45 rodadas automáticas de ferramentas nesta resposta. Se ainda houver passos adicionais, envie uma mensagem para continuar.',
+                        '\n\n---\n⚠️ **Aviso de Segurança do Éden**: Atingi o limite máximo de 45 rodadas automáticas de ferramentas nesta resposta. Se ainda houver passos adicionais, envie uma mensagem para continuar.',
                     }
                   : m
               ),
@@ -4051,7 +4051,7 @@ function AppContent() {
                 {getGreeting()}, como posso ajudar?
               </h2>
               <p className="text-xs sm:text-sm text-[color:var(--c-fg-a39d93)] max-w-md px-2 leading-relaxed">
-                Synap com modelos <span className="text-[color:var(--c-fg-f3efe6)] font-medium">GLM-5.3</span> e{' '}
+                Éden com modelos <span className="text-[color:var(--c-fg-f3efe6)] font-medium">GLM-5.3</span> e{' '}
                 <span className="text-[color:var(--c-fg-f3efe6)] font-medium">Flash</span>. Source Control Git e Modo Plano integrados.
               </p>
             </div>

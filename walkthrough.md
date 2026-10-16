@@ -1258,3 +1258,26 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 61/61 testes unitários passando em 15 suítes (100% verde).
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 2.29s (Vite + Cloudflare Pages Worker).
+
+## 80. Rebranding da Aplicação: Atualização do Nome para Éden
+- **Solicitação do Usuário:** Alterar o nome oficial do aplicativo de "Synap" para "Éden" em toda a interface do usuário e metadados onde for necessário.
+- **Solução Implementada:**
+  1. **Documento HTML & Metadados PWA (`index.html` & `public/manifest.json`):**
+     - Atualizados `<title>Éden — AI Chat</title>`, descrições OpenGraph, `apple-mobile-web-app-title` e manifest web (`name: "Éden AI Chat"`, `short_name: "Éden"`).
+  2. **Identidade Visual e Layout (`src/components/chat-sidebar.tsx` & `src/components/chat-message.tsx`):**
+     - Título e logo principal da barra lateral atualizados para **Éden**.
+     - Nome do assistente editorial no cabeçalho das respostas atualizado para **Éden**.
+  3. **Telas, Boas-Vindas e Diálogos de Sistema:**
+     - Tela de boas-vindas do chat principal (`src/App.tsx`): *"Éden com modelos GLM-5.3 e Flash"*.
+     - Modal de configurações (`src/components/settings-modal.tsx`): *"Éden • Claude Design System"*, *"Éden Studio ✨"* e rodapé.
+     - Seletor de modelos (`src/components/model-controls.tsx`): *"Selecione o modelo do Éden"*.
+     - Tela de reload de nova versão (`src/components/global-error-boundary.tsx`): *"Nova versão do Éden disponível"*.
+     - MediaSession em background (`src/lib/wake-lock.ts`): *"Éden — Codando em segundo plano..."*.
+     - Emulador Git do Terminal (`src/lib/git-terminal-emulator.ts`): Banners e mensagens de ajuda atualizados para Éden.
+     - Gerador de Documentos (`src/lib/document-generator.ts`): Metadados de autor atualizados para *"Éden Document Engine"*.
+  4. **Preservação de Compatibilidade:**
+     - Mantidas intactas as chaves internas de banco IndexedDB, classes de estilização CSS e protocolos de ferramentas para evitar qualquer quebra ou perda de dados locais do usuário.
+- **Evidências de Verificação:**
+  - `npm test`: 61/61 testes unitários passando em 15 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e workers Cloudflare Pages compilados com 0 erros.

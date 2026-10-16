@@ -352,7 +352,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
           {/* Claude Icon / Header */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <ClaudeLogo className="w-5 h-5 text-[color:var(--c-fg-d97757)]" />
-            <span className="font-serif text-sm font-medium text-[color:var(--c-fg-c4bfb6)]">Synap</span>
+            <span className="font-serif text-sm font-medium text-[color:var(--c-fg-c4bfb6)]">Éden</span>
             {hasRunningTool ? (
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#d97757]/15 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 shadow-2xs">
                 <ThinkingOrb

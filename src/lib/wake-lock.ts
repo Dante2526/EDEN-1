@@ -70,9 +70,9 @@ function setupMediaSession() {
   if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: 'Synap — Codando em segundo plano...',
+        title: 'Éden — Codando em segundo plano...',
         artist: 'Processando com a tela apagada para economizar bateria',
-        album: 'Synap Agent',
+        album: 'Éden Agent',
         artwork: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }

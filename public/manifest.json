@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Synap AI Chat",
-  "short_name": "Synap",
-  "description": "Synap: Chat com IA conectado à API NVIDIA NIM com GLM-5.3 e GLM-5.3 Flash.",
+  "name": "Éden AI Chat",
+  "short_name": "Éden",
+  "description": "Éden: Chat com IA conectado à API NVIDIA NIM com GLM-5.3 e GLM-5.3 Flash.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

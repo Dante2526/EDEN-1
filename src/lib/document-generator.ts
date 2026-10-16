@@ -67,7 +67,7 @@ export function sanitizeFilename(name: string, type: DocumentType): string {
 export function normalizeDocumentSpec(spec: DocumentSpec): DocumentSpec {
   const type = spec.type || 'pdf';
   const filename = sanitizeFilename(spec.filename || `documento`, type);
-  const title = spec.title?.trim() || 'Documento Synap';
+  const title = spec.title?.trim() || 'Documento Éden';
   const content = spec.content || {};
 
   return {
@@ -209,7 +209,7 @@ async function generatePdf(spec: DocumentSpec): Promise<GeneratedDocumentResult>
 async function generateExcel(spec: DocumentSpec): Promise<GeneratedDocumentResult> {
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Synap Document Engine';
+  workbook.creator = 'Éden Document Engine';
   workbook.created = new Date();
 
   const sheets = spec.content.sheets || [];

@@ -245,7 +245,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 </h3>
                 <p className="text-xs text-[color:var(--c-fg-9c9588)] mt-0.5">
                   {openSheet === 'model'
-                    ? 'Selecione o modelo do Synap'
+                    ? 'Selecione o modelo do Éden'
                     : openSheet === 'reasoning'
                     ? 'Nível de raciocínio da IA antes de responder'
                     : 'Estatísticas de consumo de tokens desta conversa'}

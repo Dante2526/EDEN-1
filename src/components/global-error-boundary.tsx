@@ -80,7 +80,7 @@ ${this.state.error.stack || '(sem stack)'}`;
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-[#f3efe6]">Nova versão do Synap disponível</h2>
+                <h2 className="text-base font-semibold text-[#f3efe6]">Nova versão do Éden disponível</h2>
                 <p className="text-xs text-[#a39d93] mt-1 leading-relaxed">
                   Um novo deploy foi publicado enquanto a aba estava aberta. Atualizando automaticamente a aplicação...
                 </p>

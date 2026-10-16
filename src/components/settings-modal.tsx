@@ -157,7 +157,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <ClaudeLogo className="w-5 h-5 text-[color:var(--c-fg-d97757)]" />
             <div>
               <h2 className="text-sm font-semibold text-[color:var(--c-fg-f3efe6)] tracking-tight">Configurações</h2>
-              <p className="text-[11px] text-[color:var(--c-fg-8c867a)]">Synap • Claude Design System</p>
+              <p className="text-[11px] text-[color:var(--c-fg-8c867a)]">Éden • Claude Design System</p>
             </div>
           </div>
           <button
@@ -470,7 +470,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <div className="text-xs sm:text-sm font-medium text-[color:var(--c-fg-f3efe6)]">Synap Studio ✨</div>
+                  <div className="text-xs sm:text-sm font-medium text-[color:var(--c-fg-f3efe6)]">Éden Studio ✨</div>
                   <div className="text-[10px] text-[color:var(--c-fg-8c867a)]">Configure a inteligência de cada agente</div>
                 </div>
               </div>
@@ -613,7 +613,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-[color:var(--c-bg-312f2a)] bg-dark-bg text-[10px] text-[color:var(--c-fg-736e65)] text-center">
-          Synap • Claude Design System • NVIDIA NIM
+          Éden • Claude Design System • NVIDIA NIM
         </div>
       </div>
     </div>

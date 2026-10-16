@@ -178,7 +178,7 @@ export async function executeEmulatedCommand(
     if (command === 'tokens' || command === 'token' || command === 'usage' || command === 'stats') {
       const activeModel = 'GLM-5.3 / GLM-5.3 Flash / Moonshot Kimi K3';
       const output = [
-        '\x1b[38;2;217;119;87m⚡ Synap AI — Monitor de Consumo de Tokens & Contexto\x1b[0m',
+        '\x1b[38;2;217;119;87m⚡ Éden AI — Monitor de Consumo de Tokens & Contexto\x1b[0m',
         '────────────────────────────────────────────────────────',
         'Modelos Conectados:   ' + activeModel,
         'Limite por Resposta:  8.192 tokens (max_tokens de segurança)',
@@ -196,7 +196,7 @@ export async function executeEmulatedCommand(
 
     if (command === 'help' || command === '--help') {
       const helpText = [
-        '\x1b[38;2;217;119;87mSynap Git Terminal & Tool Emulator\x1b[0m',
+        '\x1b[38;2;217;119;87mÉden Git Terminal & Tool Emulator\x1b[0m',
         '────────────────────────────────────────────────────────',
         'Comandos Disponíveis:',
         '  \x1b[33mtokens / stats\x1b[0m    Inspeciona consumo de tokens e contexto da IA',
@@ -246,7 +246,7 @@ export async function executeEmulatedCommand(
       if (args[0] === 'test') {
         return makeResult('✓ 0 falhas nos testes');
       }
-      return makeResult('npm v10.9.0 (Emulador Git Synap)');
+      return makeResult('npm v10.9.0 (Emulador Git Éden)');
     }
 
     if (command === 'echo') {
@@ -264,7 +264,7 @@ export async function executeEmulatedCommand(
       if (!owner || !repo) {
         return makeResult(
           '',
-          'fatal: nenhum repositório GitHub ativo selecionado. Conecte um repositório no Synap.',
+          'fatal: nenhum repositório GitHub ativo selecionado. Conecte um repositório no Éden.',
           1
         );
       }
@@ -386,7 +386,7 @@ export async function executeEmulatedCommand(
 
       if (!subCommand || subCommand === '--help' || subCommand === 'help') {
         const helpText = `git version 2.43.0 (GitHub API Emulator)
-Comandos suportados no Synap:
+Comandos suportados no Éden:
   git status                Mostra o estado das alterações pendentes
   git branch [-a]           Lista as branches do repositório
   git checkout <branch>     Troca de branch
@@ -409,7 +409,7 @@ Comandos suportados no Synap:
       if (!owner || !repo) {
         return makeResult(
           '',
-          'fatal: not a git repository (or any of the parent directories): .git\nSelecione um repositório ativo no painel lateral do Synap.',
+          'fatal: not a git repository (or any of the parent directories): .git\nSelecione um repositório ativo no painel lateral do Éden.',
           128
         );
       }
@@ -563,7 +563,7 @@ Comandos suportados no Synap:
           return makeResult('On branch ' + branch + '\nnothing to commit, working tree clean');
         }
 
-        const msg = (typeof flags['m'] === 'string' ? flags['m'] : null) || args[1] || 'commit via Synap Git Terminal';
+        const msg = (typeof flags['m'] === 'string' ? flags['m'] : null) || args[1] || 'commit via Éden Git Terminal';
 
         if (context.onCommitChanges) {
           try {
@@ -579,14 +579,14 @@ Comandos suportados no Synap:
             return makeResult('', `fatal: erro ao realizar commit: ${err.message}`, 1);
           }
         } else {
-          return makeResult('', 'fatal: manipulador de commit não configurado no Synap.', 1);
+          return makeResult('', 'fatal: manipulador de commit não configurado no Éden.', 1);
         }
       }
 
       // GIT PUSH
       if (subCommand === 'push') {
         return makeResult(
-          `To https://github.com/${owner}/${repo}.git\n   Everything up-to-date (Todos os commits realizados via Synap já estão publicados no GitHub).`
+          `To https://github.com/${owner}/${repo}.git\n   Everything up-to-date (Todos os commits realizados via Éden já estão publicados no GitHub).`
         );
       }
 
