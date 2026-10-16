@@ -26,6 +26,7 @@ import {
   Bot,
   ChevronUp,
   Network,
+  Paintbrush,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -41,9 +42,10 @@ interface ChatMessageProps {
   onOpenTerminal?: () => void;
   onOpenSourceControl?: () => void;
   onOpenGraph?: (focusFile?: string) => void;
+  onOpenImageEditor?: (imageUrl: string) => void;
 }
 
-const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
+const ChatImage: React.FC<{ src?: string; alt?: string; onOpenImageEditor?: (imageUrl: string) => void }> = ({ src, alt, onOpenImageEditor }) => {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 8;
@@ -140,7 +142,19 @@ const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
         )}
 
         {status === 'ready' && (
-          <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-md p-1 rounded-xl z-20">
+          <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-black/75 backdrop-blur-md p-1 rounded-xl z-20">
+            {onOpenImageEditor && (
+              <button
+                type="button"
+                onClick={() => onOpenImageEditor(src)}
+                title="Retocar imagem com Pincel"
+                aria-label="Retocar com Pincel"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-sky-300 hover:text-white bg-sky-950/70 hover:bg-sky-900 border border-sky-500/30 transition shadow-xs cursor-pointer"
+              >
+                <Paintbrush className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-sans">Retocar</span>
+              </button>
+            )}
             <a
               href={src}
               target="_blank"
@@ -194,6 +208,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onOpenTerminal,
   onOpenSourceControl,
   onOpenGraph,
+  onOpenImageEditor,
 }) => {
   const isUser = message.role === 'user';
   const [showReasoning, setShowReasoning] = useState(false);
@@ -332,19 +347,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             {message.images && message.images.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {message.images.map((img, i) => (
-                  <a
-                    key={i}
-                    href={img}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block rounded-xl overflow-hidden border border-[color:var(--c-bg-4a473f)] hover:opacity-90 transition-opacity"
-                  >
+                  <div key={i} className="relative group rounded-xl overflow-hidden border border-[color:var(--c-bg-4a473f)]">
                     <img
                       src={img}
                       alt="Anexo"
                       className="max-h-48 max-w-full rounded-xl object-contain bg-black/40"
                     />
-                  </a>
+                    {onOpenImageEditor && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenImageEditor(img)}
+                        title="Retocar imagem com Pincel"
+                        className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-sky-300 bg-sky-950/85 hover:bg-sky-900 border border-sky-500/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition shadow-md cursor-pointer"
+                      >
+                        <Paintbrush className="w-3 h-3" />
+                        <span>Retocar</span>
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -1339,7 +1359,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     return <div className="my-2.5 leading-relaxed">{children}</div>;
                   },
                   img({ src, alt }) {
-                    return <ChatImage src={src} alt={alt} />;
+                    return <ChatImage src={src} alt={alt} onOpenImageEditor={onOpenImageEditor} />;
                   },
                   a({ href, children }) {
                     return (

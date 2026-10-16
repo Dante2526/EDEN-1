@@ -61,6 +61,7 @@ import { commitStagedChanges } from './lib/github-commit';
 import { StudioPanel } from './studio/studio-panel';
 import { ErrorModal, AppErrorInfo } from './components/error-modal';
 import { GraphModal } from './components/graph-modal';
+import { ImageEditorModal } from './components/image-editor-modal';
 import { buildGraphFromFiles, queryGraphContext, ProjectGraph } from './lib/graphify-engine';
 import { CompactionMarker } from './components/compaction-marker';
 import { executePythonCode, formatPythonOutput } from './lib/pyodide-client';
@@ -712,6 +713,16 @@ function AppContent() {
   // Graphify Architecture Graph (GraphRAG) state
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
   const [graphFocusNodeId, setGraphFocusNodeId] = useState<string | undefined>();
+
+  // Image Editor Retouch Modal state
+  const [imageEditorState, setImageEditorState] = useState<{
+    isOpen: boolean;
+    imageUrl: string;
+  }>({ isOpen: false, imageUrl: '' });
+
+  const handleOpenImageEditor = useCallback((imageUrl: string) => {
+    setImageEditorState({ isOpen: true, imageUrl });
+  }, []);
 
   const projectGraph = useMemo<ProjectGraph>(() => {
     if (activeProject?.files && Object.keys(activeProject.files).length > 0) {
@@ -3505,6 +3516,13 @@ function AppContent() {
     }
   }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
 
+  const handleApplyImageEdit = useCallback(
+    ({ prompt, imageUrl }: { prompt: string; imageUrl: string }) => {
+      handleSendMessage(prompt, [imageUrl], []);
+    },
+    [handleSendMessage]
+  );
+
   // ====== RESUME-AFTER-SCREEN-OFF: retoma quando a tela acender ======
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -3873,6 +3891,7 @@ function AppContent() {
                         setIsSidebarOpen(true);
                       }}
                       onOpenGraph={handleOpenGraph}
+                      onOpenImageEditor={handleOpenImageEditor}
                     />
                   </React.Fragment>
                 );
@@ -3977,6 +3996,14 @@ function AppContent() {
         graph={projectGraph}
         initialFocusNodeId={graphFocusNodeId}
         onSelectFile={handleViewDiffForPath}
+      />
+
+      {/* Image Editor Retouch Modal (Mobile-First) */}
+      <ImageEditorModal
+        isOpen={imageEditorState.isOpen}
+        onClose={() => setImageEditorState((prev) => ({ ...prev, isOpen: false }))}
+        imageUrl={imageEditorState.imageUrl}
+        onApplyEdit={handleApplyImageEdit}
       />
     </div>
   );

@@ -768,6 +768,29 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 2.02s e artefatos de Cloudflare Pages sincronizados.
 
+## 55. Mini-Editor Visual de Imagem e Retoque com Pincel (Mobile-First)
+- **Solicitação do Usuário:** *"eu queria ter a opção de na propria imagem selecionar o objeto que quero alterar, acho que ajuda a ia a entender ne? e possivel com o modelo da nvidia? (...) simm quero e leva em conta os divpositivos moveis pra cirar estruturas"*
+- **Arquitetura & Solução Implementada:**
+  1. **Helper de Processamento Visual (`src/lib/image-mask-helper.ts` com TDD):**
+     - Calcula a Bounding Box normalizada e as porcentagens em relação às dimensões da imagem (`calculateBoundingBox`).
+     - Descreve a região em linguagem natural amigável (`describeRegion`, ex: *"no centro da imagem"*, *"no canto inferior direito"*).
+     - Compõe instrução enriquecida para o `qwen-image-edit` e inpainting (`buildRegionEditPrompt`, ex: `[Foco de edição: no centro da imagem (ocupando aprox. 40% de largura e 35% de altura)]: <instrução do usuário>`).
+     - 5 testes unitários automatizados em `src/lib/image-mask-helper.test.ts`.
+  2. **Modal Touch-Friendly Mobile-First (`src/components/image-editor-modal.tsx`):**
+     - *Prevenção de Scroll Acidental:* `touch-action: none` e Pointer Events nativos (`pointerdown`, `pointermove`, `pointerup`, `setPointerCapture`), permitindo pintar com o dedo no celular sem provocar rolagem da página.
+     - *Ergonomia do Polegar:* Controles inferiores acessíveis ao polegar com touch targets amplos (mínimo 44px), slider de espessura de pincel (10px a 60px), botões "Desfazer", "Limpar" e input direto com botão "Retocar".
+     - *Tinta Ciano Neon Semi-transparente:* Feedback visual claro sobre o que foi selecionado.
+     - *Fullscreen em Telas Pequenas:* `w-full h-full` no mobile e janela modal flutuante centralizada em desktops.
+  3. **Acesso Direto no Chat (`src/components/chat-message.tsx` e `src/App.tsx`):**
+     - Botão flutuante discreto com ícone `Paintbrush` e label *"Retocar"* sobre imagens geradas pela IA e anexos enviados pelo usuário.
+     - Visibilidade garantida no celular (`opacity-100 sm:opacity-0 sm:group-hover:opacity-100`).
+     - Integração direta: ao confirmar o retoque, a mensagem com a imagem e a instrução cirúrgica é despachada automaticamente para o chat.
+- **Evidências de Verificação:**
+  - `npm test`: 43/43 testes passando (10 suítes completas).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 2.88s com artefatos sincronizados para Cloudflare Pages.
+
+
 
 
 
