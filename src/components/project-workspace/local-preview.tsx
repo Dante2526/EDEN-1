@@ -107,7 +107,7 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
           key={refreshKey}
           srcDoc={srcDoc}
           title={project.name || 'Synap Preview'}
-          className="w-full h-full flex-1 border-0 bg-white"
+          className="w-full h-full flex-1 border-0 bg-transparent"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
         />
       )}

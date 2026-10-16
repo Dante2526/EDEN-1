@@ -743,19 +743,13 @@ function AppContent() {
     setIsGraphModalOpen(true);
   }, []);
 
-  // Abre o workspace automaticamente quando um projeto é selecionado
+  // Prepara o workspace quando um projeto é selecionado ou fechado
   useEffect(() => {
     if (activeProject) {
       setShowProjectWorkspace(true);
-      // Quando abre um projeto, pula pra aba Preview
-      setMainViewTab('preview');
-      // Volta a sidebar pra aba Chat (pra usuário ver a lista de conversas
-      // e poder pedir alterações à IA enquanto vê o preview)
-      setSidebarTab('chats');
-      // No mobile, fecha a sidebar pra não tapar o preview
-      if (window.innerWidth < 768) {
-        setIsSidebarOpen(false);
-      }
+      // Não forçamos setMainViewTab('preview') aqui:
+      // Ao abrir conversas ou sincronizar repos, o usuário permanece no chat
+      // e só vai para a aba Preview quando clicar explicitamente no cabeçalho.
     } else {
       setShowProjectWorkspace(false);
       // Se fechou o projeto e estava em Preview, volta pra Chat
@@ -1505,6 +1499,7 @@ function AppContent() {
     setActiveId(null);
     setIsPlanMode(false);
     setActiveRepo(null);
+    setMainViewTab('chat');
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
@@ -1512,6 +1507,7 @@ function AppContent() {
 
   const handleSelectConversation = useCallback((id: string) => {
     setActiveId(id);
+    setMainViewTab('chat');
     const target = conversations.find((c) => c.id === id);
     if (target) {
       if (target.model) setSelectedModel(target.model as ModelId);

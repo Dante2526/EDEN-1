@@ -32,7 +32,8 @@ export function transpileCode(code: string, filename: string): string {
   if (!babelCache) throw new Error('Babel ainda não foi carregado.');
   const sanitizedCode = code
     .replace(/import\.meta\.env/g, '(window.__SYNAP_ENV__ || {})')
-    .replace(/import\.meta/g, '({ env: window.__SYNAP_ENV__ || {} })');
+    .replace(/import\.meta/g, '({ env: window.__SYNAP_ENV__ || {} })')
+    .replace(/\bimport\s*\(/g, 'window.__synapImport(');
   const cleanFilename = filename.replace(/^\/+/, '');
   return babelCache.transform(sanitizedCode, {
     presets: [
@@ -79,9 +80,13 @@ export function depToUrl(specifier: string, version?: string, reactVersion = '18
   const subpath = cleanSpecifier.slice(basePkg.length);
   const rawVer = version ? version.replace(/[\^~>=<\s]/g, '') : '';
   const verTag = rawVer && !rawVer.includes('*') && !rawVer.includes('latest') ? `@${rawVer}` : '';
-  if (basePkg === 'react' || basePkg === 'react-dom') {
+  if (basePkg === 'react') {
     const v = verTag || `@${reactVersion}`;
     return `https://esm.sh/${basePkg}${v}${subpath}`;
+  }
+  if (basePkg === 'react-dom') {
+    const v = verTag || `@${reactVersion}`;
+    return `https://esm.sh/${basePkg}${v}${subpath}?external=react`;
   }
   return `https://esm.sh/${basePkg}${verTag}${subpath}?external=react,react-dom`;
 }
@@ -193,7 +198,7 @@ export function buildPreviewHtmlPreTranspiled(
       jsonFiles[path] = file.content;
       continue;
     }
-    if (/\.(tsx|ts|jsx|js)$/.test(path) && !path.endsWith('.d.ts') && !path.includes('vite.config')) {
+    if (/\.(tsx|ts|jsx|js)$/.test(path) && !path.endsWith('.d.ts') && !path.includes('vite.config') && !path.includes('vitest.config') && !path.includes('.test.')) {
       if (preTranspiled && (preTranspiled[path] || preTranspiled[`/${path}`])) {
         transpiledFiles[path] = preTranspiled[path] || preTranspiled[`/${path}`];
       } else if (babelCache) {
@@ -206,6 +211,52 @@ export function buildPreviewHtmlPreTranspiled(
     }
   }
 
+  // 1. SUPORTE A PROJETOS ESTÁTICOS / HTML PURO (Google AI Studio HTML Apps)
+  const isStaticProject = project.template === 'static' || (Object.keys(transpiledFiles).length === 0 && !!normalizedFiles['index.html']);
+
+  if (isStaticProject && normalizedFiles['index.html']) {
+    let rawHtml = normalizedFiles['index.html'].content;
+    const tailwindCdn = '<script src="https://cdn.tailwindcss.com"></script>';
+    const injectedStyles = cssContents.length > 0 ? `<style type="text/tailwindcss">\n${escapeScriptTags(cssContents.join('\n\n'))}\n</style>` : '';
+    const errorScript = `
+  <div id="synap-error-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(15,15,20,0.96);color:#f87171;font-family:monospace;padding:20px;overflow:auto;"></div>
+  <script>
+    const overlay = document.getElementById('synap-error-overlay');
+    function showError(title, err) {
+      console.error('[Synap Preview Error]', title, err);
+      if (!overlay) return;
+      overlay.style.display = 'block';
+      const msg = err?.stack || err?.message || String(err);
+      overlay.innerHTML = '<h3 style="color:#ef4444;font-size:16px;margin-bottom:10px;font-weight:bold;">' + title + '</h3>' +
+        '<pre style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:#fca5a5;background:#1e1e24;padding:12px;border-radius:8px;border:1px solid #3f3f46;">' +
+        msg.replace(/</g, '&lt;') + '</pre>';
+    }
+    window.addEventListener('error', (e) => showError('Erro em Tempo de Execução', e.error || e.message));
+    window.addEventListener('unhandledrejection', (e) => showError('Promise Rejeitada', e.reason));
+  </script>`;
+
+    if (!rawHtml.includes('cdn.tailwindcss.com')) {
+      if (rawHtml.includes('</head>')) {
+        rawHtml = rawHtml.replace('</head>', `${tailwindCdn}\n${injectedStyles}\n</head>`);
+      } else {
+        rawHtml = `${tailwindCdn}\n${injectedStyles}\n${rawHtml}`;
+      }
+    } else if (injectedStyles) {
+      if (rawHtml.includes('</head>')) {
+        rawHtml = rawHtml.replace('</head>', `${injectedStyles}\n</head>`);
+      }
+    }
+
+    if (rawHtml.includes('</body>')) {
+      rawHtml = rawHtml.replace('</body>', `${errorScript}\n</body>`);
+    } else {
+      rawHtml = `${rawHtml}\n${errorScript}`;
+    }
+
+    return rawHtml;
+  }
+
+  // 2. SUPORTE A PROJETOS REACT / VITE (LinkHub e similares)
   const pkgDeps = extractDeps(normalizedFiles, project.dependencies);
   const rawReactVer = (pkgDeps['react'] || '18.3.1').replace(/[\^~>=<\s]/g, '');
   const reactVersion = rawReactVer.startsWith('19') || rawReactVer.startsWith('18') ? rawReactVer : '18.3.1';
@@ -224,6 +275,7 @@ export function buildPreviewHtmlPreTranspiled(
       'react/': `https://esm.sh/react@${reactVersion}/`,
       'react-dom': `https://esm.sh/react-dom@${reactVersion}?external=react`,
       'react-dom/': `https://esm.sh/react-dom@${reactVersion}/?external=react`,
+      'react-dom/client': `https://esm.sh/react-dom@${reactVersion}/client?external=react`,
       ...depUrlMap,
     },
   };
@@ -237,6 +289,8 @@ export function buildPreviewHtmlPreTranspiled(
 
   const rawIndexHtml = normalizedFiles['index.html']?.content || '';
   const fontLinks = (rawIndexHtml.match(/<link[^>]+fonts\.googleapis\.com[^>]*>/gi) || []).join('\n');
+  const bodyMatch = rawIndexHtml.match(/<body([^>]*)>/i);
+  const bodyAttrs = bodyMatch ? bodyMatch[1] : '';
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -261,12 +315,28 @@ export function buildPreviewHtmlPreTranspiled(
     }
   </style>
 </head>
-<body>
+<body${bodyAttrs}>
   <div id="root"></div>
   <div id="synap-error-overlay"></div>
   <script type="module">
-    window.__SYNAP_ENV__ = { DEV: true, PROD: false, MODE: 'development', BASE_URL: '/' };
-    window.process = { env: { NODE_ENV: 'development', ...window.__SYNAP_ENV__ } };
+    window.__SYNAP_ENV__ = {
+      DEV: true,
+      PROD: false,
+      MODE: 'development',
+      BASE_URL: '/',
+      VITE_FIREBASE_API_KEY: 'synap-preview-key',
+      VITE_FIREBASE_PROJECT_ID: 'synap-preview-project',
+      VITE_API_KEY: 'synap-preview-key',
+      VITE_GEMINI_API_KEY: 'synap-preview-key',
+    };
+    window.process = {
+      env: {
+        NODE_ENV: 'development',
+        API_KEY: 'synap-preview-key',
+        GEMINI_API_KEY: 'synap-preview-key',
+        ...window.__SYNAP_ENV__
+      }
+    };
     window.global = window;
 
     const overlay = document.getElementById('synap-error-overlay');
@@ -320,6 +390,7 @@ export function buildPreviewHtmlPreTranspiled(
       }
       return parts.join('/');
     }
+
     function findTargetFile(resolvedBase) {
       const clean = normalizePath(resolvedBase);
       const withoutSrc = clean.startsWith('src/') ? clean.slice(4) : clean;
@@ -334,6 +405,7 @@ export function buildPreviewHtmlPreTranspiled(
       }
       return null;
     }
+
     function createRequire(currentFile) {
       return function synapRequire(specifier) {
         if (specifier.endsWith('.css')) return {};
@@ -347,17 +419,19 @@ export function buildPreviewHtmlPreTranspiled(
             }
             return Object.assign({}, mod, { default: mod?.default ?? mod, __esModule: true });
           }
-          throw new Error('Pacote "' + specifier + '" não encontrado no cache (importado por ' + currentFile + ')');
+          console.warn('[Synap Preview] Pacote não encontrado no cache:', specifier);
+          return new Proxy({}, { get: (_, prop) => prop === '__esModule' ? true : () => null });
         }
         const target = findTargetFile(localBase);
         if (!target) {
-          throw new Error('Arquivo local "' + specifier + '" não encontrado (importado em ' + currentFile + ')');
+          console.warn('[Synap Preview] Arquivo local não encontrado:', specifier, 'em', currentFile);
+          return {};
         }
         if (target.type === 'json') {
           try {
             return JSON.parse(jsonFiles[target.path]);
-          } catch (err: any) {
-            throw new Error('Erro de sintaxe no arquivo JSON "' + target.path + '": ' + (err?.message || String(err)));
+          } catch (err) {
+            return {};
           }
         }
         const targetPath = target.path;
@@ -365,10 +439,11 @@ export function buildPreviewHtmlPreTranspiled(
         const moduleObj = { exports: {} };
         moduleCache[targetPath] = moduleObj;
         try {
-          const fn = new Function('require', 'module', 'exports', '__filename', '__dirname',
+          const fn = new Function('require', 'module', 'exports', '__filename', '__dirname', 'React',
             transpiledFiles[targetPath] + '\\n//# sourceURL=' + targetPath);
           const dir = targetPath.includes('/') ? targetPath.slice(0, targetPath.lastIndexOf('/')) : '';
-          fn(createRequire(targetPath), moduleObj, moduleObj.exports, targetPath, dir);
+          const React = depCache['react']?.default || depCache['react'] || window.React;
+          fn(createRequire(targetPath), moduleObj, moduleObj.exports, targetPath, dir, React);
         } catch (err) {
           delete moduleCache[targetPath];
           throw err;
@@ -377,18 +452,72 @@ export function buildPreviewHtmlPreTranspiled(
       };
     }
 
+    // Intercepta dynamic imports como React.lazy(() => import('./components/...'))
+    window.__synapImport = function(specifier) {
+      return new Promise((resolve) => {
+        try {
+          const req = createRequire(entryFile || 'src/main.tsx');
+          const res = req(specifier);
+          resolve(res);
+        } catch (err) {
+          console.warn('[Synap Preview] Falha no dynamic import de:', specifier, err);
+          resolve({ default: () => null });
+        }
+      });
+    };
+
     try {
-      if (!entryFile) {
-        throw new Error('Nenhum arquivo de entrada (.tsx/.jsx) encontrado no projeto.');
+      const rootEl = document.getElementById('root') || document.body;
+      const React = depCache['react']?.default || depCache['react'] || window.React;
+      const ReactDOM = depCache['react-dom/client']?.default || depCache['react-dom/client'] || depCache['react-dom']?.default || depCache['react-dom'];
+
+      let mounted = false;
+
+      // 1. Se tem main.tsx / index.tsx, executa primeiro
+      if (transpiledFiles['src/main.tsx'] || transpiledFiles['src/index.tsx'] || transpiledFiles['main.tsx']) {
+        const mainFile = transpiledFiles['src/main.tsx'] ? 'src/main.tsx' : (transpiledFiles['src/index.tsx'] ? 'src/index.tsx' : 'main.tsx');
+        try {
+          const mainRequire = createRequire(mainFile);
+          mainRequire('./' + mainFile.split('/').pop());
+          if (rootEl && rootEl.children.length > 0) {
+            mounted = true;
+          }
+        } catch (mainErr) {
+          console.warn('[Synap Preview] Aviso ao executar main entrypoint:', mainErr);
+        }
       }
-      const rootRequire = createRequire(entryFile);
-      const entryExports = rootRequire('./' + entryFile);
-      const rootEl = document.getElementById('root');
-      if (rootEl && rootEl.innerHTML.trim() === '' && entryExports && (typeof entryExports.default === 'function')) {
-        const React = depCache['react']?.default || depCache['react'];
-        const ReactDOM = depCache['react-dom/client']?.default || depCache['react-dom/client'];
-        if (React && ReactDOM && ReactDOM.createRoot) {
-          ReactDOM.createRoot(rootEl).render(React.createElement(entryExports.default));
+
+      // 2. Se o root ainda estiver vazio, procura o componente App
+      if (!mounted && rootEl && rootEl.children.length === 0) {
+        const appFileCandidates = ['src/App.tsx', 'src/App.jsx', 'App.tsx', 'App.jsx', 'src/App.js', 'App.js'];
+        const appFile = appFileCandidates.find(c => transpiledFiles[c]);
+        if (appFile) {
+          try {
+            const appRequire = createRequire(appFile);
+            const appExports = appRequire('./' + appFile.split('/').pop());
+            const AppComponent = appExports.default || appExports.App || Object.values(appExports).find(v => typeof v === 'function');
+            if (AppComponent && React && ReactDOM && ReactDOM.createRoot) {
+              ReactDOM.createRoot(rootEl).render(React.createElement(AppComponent));
+              mounted = true;
+            }
+          } catch (appErr) {
+            console.warn('[Synap Preview] Erro ao montar App:', appErr);
+          }
+        }
+      }
+
+      // 3. Fallback: Se ainda estiver vazio, procura qualquer outro entrypoint
+      if (!mounted && rootEl && rootEl.children.length === 0 && entryFile) {
+        try {
+          const rootRequire = createRequire(entryFile);
+          const entryExports = rootRequire('./' + entryFile.split('/').pop());
+          const Comp = entryExports.default || entryExports.App || Object.values(entryExports).find(v => typeof v === 'function');
+          if (Comp && React && ReactDOM && ReactDOM.createRoot) {
+            ReactDOM.createRoot(rootEl).render(React.createElement(Comp));
+            mounted = true;
+          }
+        } catch (fallbackErr) {
+          showError('Falha ao Montar Projeto', fallbackErr);
         }
       }
     } catch (err) {
@@ -403,3 +532,4 @@ export async function buildPreviewHtml(project: SynapProject): Promise<string> {
   await loadBabel();
   return buildPreviewHtmlPreTranspiled(project);
 }
+

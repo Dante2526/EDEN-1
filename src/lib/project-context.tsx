@@ -263,15 +263,22 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         const allFiles = Array.isArray(treeData?.tree) ? treeData.tree : [];
 
-        // 2. Detecta se é web: package.json OU index.html na raiz
+        // 2. Detecta se é web: package.json, index.html ou arquivos React/HTML em qualquer nível
         const hasPackageJson = allFiles.some(
           (f: any) => f.path === 'package.json' || f.path === '/package.json'
         );
         const hasIndexHtml = allFiles.some(
-          (f: any) => f.path === 'index.html' || f.path === '/index.html'
+          (f: any) => f.path === 'index.html' || f.path === '/index.html' || f.path?.endsWith('index.html')
+        );
+        const hasReactFiles = allFiles.some(
+          (f: any) =>
+            f.path?.endsWith('App.tsx') ||
+            f.path?.endsWith('App.jsx') ||
+            f.path?.endsWith('main.tsx') ||
+            f.path?.endsWith('main.jsx')
         );
 
-        if (!hasPackageJson && !hasIndexHtml) {
+        if (!hasPackageJson && !hasIndexHtml && !hasReactFiles) {
           return { ok: false, reason: 'not_web' };
         }
 

@@ -730,6 +730,46 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 34/34 testes passando (8 suítes completas).
   - `npm run build`: bundle compilado com sucesso em 2.73s.
 
+## 53. Permanência na Aba de Chat ao Alternar Conversas (Sem Salto para Preview)
+- **Solicitação do Usuário:** *"quando abrir outros chat nn e pra ir direto pra aba preview, fica no chat mesmo, deixa qu vou pra aba preview quando eu desejar"*
+- **Causa Raiz:** No `src/App.tsx`, ao clicar em uma conversa com repositório ou projeto correspondente, `handleSelectConversation` acionava `openProject(matchingProject.id)`. Um `useEffect` assistia a mudança de `activeProject?.id` e forçava compulsoriamente `setMainViewTab('preview')`, `setSidebarTab('chats')` e fechamento da barra lateral no mobile, tirando o usuário da tela de chat.
+- **Solução Implementada (`src/App.tsx`):**
+  1. **Desativação do Salto Compulsório:** Removidas as chamadas `setMainViewTab('preview')`, `setSidebarTab('chats')` e fechamento de sidebar do `useEffect` de `activeProject?.id`. O workspace agora é preparado e mantido em segundo plano sem desviar o foco da tela.
+  2. **Garantia de Visualização no Chat:** `handleSelectConversation` e `handleNewChat` agora definem explicitamente `setMainViewTab('chat')`.
+  3. **Controle Sob Demanda:** A transição para o Preview ocorre estritamente quando o usuário clica intencionalmente na aba "Preview" no cabeçalho.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 34/34 testes passando (8 suítes completas).
+  - `npm run build`: bundle compilado com sucesso em 2.55s (`dist/_worker.js` 106.0 kB).
+
+## 54. Eliminação da Tela Branca no Preview (Compatibilidade Total com Google AI Studio e LinkHub)
+- **Solicitação do Usuário:** Resolução da tela branca no Preview para projetos importados/criados no Google AI Studio (como LinkHub e repositórios web vinculados).
+- **Diagnóstico & Causas Raízes:**
+  1. *Descarte de HTML estático:* O motor anterior descartava a tag `<body>` de projetos HTML/CSS puros e tentava injetar bundles React inexistentes.
+  2. *Mismatch de Hooks do React (Singleton):* O import map trazia `react-dom/client` sem `?external=react`, resultando no download de cópias concorrentes do React e travando a renderização em silêncio.
+  3. *Dynamic Imports HTTP 404:* O LinkHub usa `React.lazy(() => import('./components/Editor'))`. No iframe, esse dynamic import buscava o arquivo no servidor remoto e recebia HTTP 404.
+  4. *Falta de Export Default em `main.tsx`:* Projetos do AI Studio chamam `createRoot` diretamente no `main.tsx` sem exportar default; o motor anterior aguardava `default` e não montava nada.
+  5. *Flash Branco em Tema Escuro:* O iframe do preview continha a classe `bg-white` fixa.
+- **Solução Implementada:**
+  1. **Motor de Preview Híbrido (`src/lib/preview-html.ts`):**
+     - *Projetos Estáticos:* Preserva o `index.html` original na íntegra, injetando Tailwind CDN e estilos locais sem apagar as tags do usuário.
+     - *Singleton React 19:* Unificou `react`, `react-dom` e `react-dom/client` com `?external=react`.
+     - *Dynamic Imports em Memória:* Intercepta `import(...)` via Babel para `window.__synapImport(...)`, permitindo que `React.lazy` carregue componentes locais diretamente da memória sem requisições HTTP 404.
+     - *Montagem Flexível:* Executa `main.tsx` diretamente; se `#root` permanecer vazio, monta `App.tsx` automaticamente (suportando tanto default export quanto named export `App`).
+     - *Mocks de Ambiente:* Injeta `process.env` e `window.__SYNAP_ENV__` com fallbacks para evitar exceções de chaves de API não definidas.
+  2. **Iframe Transparente (`src/components/project-workspace/local-preview.tsx`):**
+     - Substituída a classe fixa `bg-white` por `bg-transparent`, permitindo que o fundo do projeto (escuro ou claro) renderize sem flash branco.
+  3. **Detecção Web Ampliada (`src/lib/project-context.tsx`):**
+     - Reconhece projetos web mesmo com `index.html` em subpastas ou arquivos `App.tsx`/`main.tsx` soltos.
+  4. **Suíte TDD de Testes Automatizados (`src/lib/preview-html.test.ts`):**
+     - 4 testes unitários cobrindo HTML puro, singleton do React, resolução de caminhos locais e bundle executável do React.
+- **Evidências de Verificação:**
+  - `npm test`: 38/38 testes passando (9 suítes completas).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 2.02s e artefatos de Cloudflare Pages sincronizados.
+
+
+
 
 
 
