@@ -77,75 +77,14 @@ import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } fro
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
 import { looksLikeEcho } from './lib/echo-filter';
+import {
+  looksLikeIncompleteWork,
+  looksLikeFileModificationPromise,
+  isRecoverableStreamErrorMessage,
+} from './lib/agentic-patterns';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
-
-// ============================================================================
-// AGENTIC LOOP — detecção de respostas incompletas
-// ============================================================================
-// Quando a IA responde mas o texto indica que ela ia continuar trabalhando
-// (ex.: "vou verificar", "deixa eu checar", "próximo passo"), o sistema
-// auto-injeta um continuation prompt pra ela continuar sem o usuário
-// precisar intervir.
-//
-// A detecção é conservadora pra não disparar em respostas legítimas. Só
-// dispara se o TEXTO FINAL da resposta (últimos 200 chars) casar com um
-// padrão claro de "trabalho pendente".
-// ============================================================================
-
-const INCOMPLETE_PATTERNS = [
-  // "vou verificar X", "deixa eu checar Y"
-  /(?:vou|vou agora|deixa eu|deixe-me|deixa-me)\s+(?:verificar|checar|analisar|examinar|investigar|procurar|ver|tentar)\b/i,
-  // "preciso verificar X", "preciso analisar Y"
-  /preciso\s+(?:verificar|checar|analisar|examinar|investigar|de\s+mais\s+coisas)\b/i,
-  // "para resolver isso, preciso..."
-  /para\s+resolver\s+(?:isso|este\s+problema|a\s+questão)[,\.]?\s*(?:preciso|vou|tenho\s+que)\b/i,
-  // "próximo passo", "em seguida", "agora vou"
-  /(?:pr[oó]ximo\s+passo|em\s+seguida|agora\s+vou)\b/i,
-  // "aguarde um momento", "espere um pouco"
-  /(?:aguarde|espere)\s+(?:um\s+momento|um\s+pouco|instante)\b/i,
-  // "continue...", "deixe-me continuar"
-  /(?:continue|deixe-me\s+continuar|deixa\s+eu\s+continuar)\b/i,
-  // "vou começar", "primeiro vou", "deixa eu começar"
-  /(?:vou\s+começar|primeiro\s+vou|deixa\s+eu\s+começar)\b/i,
-  // "ainda preciso", "ainda falta", "falta ainda"
-  /(?:ainda\s+preciso|ainda\s+falta|falta\s+ainda)\b/i,
-  // "vou criar", "vou alterar", "vou modificar", "vou implementar"
-  /(?:vou|vou\s+agora|deixa\s+eu|deixe-me|deixa-me|vamos|irei)\s+(?:criar|gerar|implementar|fazer|escrever|alterar|modificar|adicionar|configurar|atualizar|ajustar|inserir|colocar)\b/i,
-  // "estou criando", "estou alterando", "estou implementando"
-  /(?:estou|estamos)\s+(?:criando|gerando|implementando|fazendo|escrevendo|alterando|modificando|adicionando|configurando|atualizando)\b/i,
-];
-
-function looksLikeIncompleteWork(text: string): boolean {
-  if (!text || text.length < 20) return false;
-  // Checa tanto a cauda (últimos 350 chars) quanto o texto inteiro se for curto
-  const sample = text.length <= 400 ? text.toLowerCase() : text.slice(-350).toLowerCase();
-  for (const pattern of INCOMPLETE_PATTERNS) {
-    if (pattern.test(sample)) {
-      console.log('[Synap] agentic loop: padrão incompleto casou:', pattern.source);
-      return true;
-    }
-  }
-  return false;
-}
-
-function looksLikeFileModificationPromise(text: string): boolean {
-  if (!text || text.length < 20) return false;
-  const sample = text.length <= 500 ? text.toLowerCase() : text.slice(-400).toLowerCase();
-  const fileActionPatterns = [
-    /(?:vou|vamos|irei|vou\s+agora|deixa\s+eu|deixe-me)\s+(?:criar|adicionar|implementar|fazer|alterar|modificar|inserir|colocar|atualizar|configurar)\b/i,
-    /(?:estou|estamos)\s+(?:criando|adicionando|implementando|fazendo|alterando|modificando|inserindo|colocando|atualizando|configurando)\b/i,
-    /(?:criando|alterando|modificando|adicionando|atualizando)\s+(?:o\s+arquivo|o\s+componente|em|no|na)\b/i,
-    /(?:aqui\s+está\s+o\s+código|alterações\s+feitas|arquivo\s+atualizado)\b/i,
-  ];
-  for (const p of fileActionPatterns) {
-    if (p.test(sample)) {
-      return true;
-    }
-  }
-  return false;
-}
 
 // Tools que funcionam SEM repo ativo (busca global no GitHub)
 const SEARCH_GITHUB_REPOS_TOOL = {
@@ -2703,8 +2642,9 @@ function AppContent() {
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
         `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_architecture_graph e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
         `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
+        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file ou search_code DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame edit_file DIRETAMENTE via tool_call.\n` +
         `ECONOMIA DE TOKENS (GRAPHRAG): Use o mapa de dependências abaixo (e a ferramenta \`query_architecture_graph\` se precisar expandir) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
-        `Ao propor alterações ou códigos para o repositório, utilize OBRIGATORIAMENTE a ferramenta edit_file. ` +
+        `Ao propor alterações, correções, remoções ou códigos para o repositório, utilize OBRIGATORIAMENTE a ferramenta edit_file. ` +
         `A alteração ficará salva localmente no Source Control para o usuário revisar o diff e commitar.\n\n` +
         graphRagSummary
       : 'ATENÇÃO: Nenhum repositório GitHub está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
@@ -2726,9 +2666,9 @@ function AppContent() {
         ) +
         (chatActiveRepo && graphRagSummary ? `\n\n${graphRagSummary}` : '')
       : 'Você é o assistente Synap com ferramentas avançadas integradas.\n' +
-        'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO):\n' +
-        'Sempre que for realizar uma ação (editar arquivo, rodar comando no terminal, pesquisar na web, compilar documento ou rodar python), emita a tool_call IMEDIATAMENTE na primeira resposta.\n' +
-        'NUNCA responda apenas dizendo "Vou criar o arquivo...", "Vou verificar...", "Executando..." sem emitir a chamada de ferramenta na mesma resposta.\n' +
+        'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n' +
+        'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
+        'É ESTRITAMENTE PROIBIDO responder apenas prometendo ou anunciando que vai agir (ex: "Vou criar o arquivo...", "Vou listar os arquivos...", "Vou localizar...", "Primeiro vou...", "Deixe-me verificar..."). Emita a chamada de ferramenta na mesma resposta!\n' +
         'Regras estritas para ferramentas:\n' +
         '1. Geração de Imagens: Quando o usuário pedir qualquer imagem ou ilustração, execute OBRIGATORIAMENTE a ferramenta `generate_image`. NUNCA invente, presuma ou escreva links de imagens ou sintaxe markdown como `![...](https://...)` no seu texto antes da execução da ferramenta.\n' +
         '2. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída.\n' +
@@ -3136,15 +3076,7 @@ function AppContent() {
           // Limpa do iterationText qualquer mensagem de erro injetada por sendErrorAndClose
           iterationText = iterationText.replace(/\n\n⚠️ \*\*Erro:\*\* .*/g, '').trim();
 
-          const isRecoverableStreamError =
-            streamErrorMsg.includes('não enviou dados a tempo') ||
-            streamErrorMsg.includes('não respondeu a tempo') ||
-            streamErrorMsg.includes('Stream interrupted') ||
-            streamErrorMsg.includes('Stream was cancelled') ||
-            streamErrorMsg.includes('stream cancelled') ||
-            streamErrorMsg.includes('stream interrupted') ||
-            streamErrorMsg.includes('connection reset') ||
-            streamErrorMsg.includes('network error');
+          const isRecoverableStreamError = isRecoverableStreamErrorMessage(streamErrorMsg);
 
           if (!iterationText.trim() && Object.keys(toolCallsAccumulator).length === 0 && !isRecoverableStreamError) {
             // Sem texto e sem tool calls — erro real não recuperável, lança exceção
@@ -3161,8 +3093,11 @@ function AppContent() {
               streamingAccumulatedTextRef.current = accumulatedAssistantText;
             }
 
+            const hasCompletedReads = allToolCalls.some((tc) => (tc.name === 'read_file' || tc.name === 'list_files') && tc.status === 'completed');
             const continuationPrompt = chatActiveRepo && !isNoToolsModel
-              ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE as ferramentas necessárias (ex: edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
+              ? hasCompletedReads
+                ? 'Sua conexão foi interrompida momentaneamente pelo servidor. Como as inspeções e leituras de arquivos já foram concluídas com sucesso, execute IMEDIATAMENTE a ferramenta edit_file para aplicar a alteração solicitada no repositório ativo.'
+                : 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE as ferramentas necessárias (ex: edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
               : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.';
 
             currentMessagesForApi = [

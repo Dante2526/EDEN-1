@@ -248,7 +248,7 @@ export default async function handler(req: Request, envArg?: Env) {
           if (!allowToolsInHistory) {
             return { role: 'assistant', content: m.content || 'Executando ferramentas...' };
           }
-          return { role: 'assistant', content: m.content || null, tool_calls: m.tool_calls };
+          return { role: 'assistant', content: m.content ?? '', tool_calls: m.tool_calls };
         }
         if (m.role === 'user' && m.images && Array.isArray(m.images) && m.images.length > 0) {
           if (index === lastUserMsgIndex && isVisionCapable) {
@@ -295,6 +295,8 @@ export default async function handler(req: Request, envArg?: Env) {
       if (includeReasoning && apiEffort && apiEffort !== 'default') {
         if (selectedModel === 'z-ai/glm-5.3') {
           p.reasoning_effort = apiEffort;
+        } else if (selectedModel === 'google/gemma-4-31b-it') {
+          p.chat_template_kwargs = { enable_thinking: true };
         }
       }
       if (hasToolsActive) {
@@ -679,13 +681,22 @@ export default async function handler(req: Request, envArg?: Env) {
           clearInterval(timer);
           if (!req.signal?.aborted) {
             let errMsg = err?.message || 'Falha na conexão com a IA';
+            const isAbortedError =
+              errMsg.includes('The operation was aborted') ||
+              errMsg.includes('operation was aborted') ||
+              errMsg.includes('AbortError') ||
+              errMsg.includes('aborted');
             const isInterruption =
               wasIdleTimeout ||
+              isAbortedError ||
               errMsg.includes('Stream was cancelled') ||
               errMsg.includes('stream cancelled') ||
-              errMsg.includes('Stream interrupted');
+              errMsg.includes('Stream interrupted') ||
+              errMsg.includes('fetch failed');
             if (wasIdleTimeout) {
               errMsg = 'Stream interrupted: A IA demorou mais de 90s para gerar os dados.';
+            } else if (isAbortedError) {
+              errMsg = 'Stream interrupted: Conexão interrompida pelo servidor da IA durante o processamento.';
             }
             sendErrorAndClose(errMsg, isInterruption);
           }

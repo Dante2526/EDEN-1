@@ -954,3 +954,27 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 53/53 testes passando em 13 suítes.
   - `npm run build`: compilado com sucesso em 1.89s.
+
+## 67. Correção de Promessas de Ação da IA Sem Execução e Resiliência a 'The operation was aborted'
+- **Solicitação do Usuário:** O modelo Gemma 4 31B (no modo pensar `low`) prometeu listar arquivos para remover um ícone no componente `Maintenance` e parou sem executar a ferramenta. No turno seguinte, após listar e ler o arquivo, a geração abortou com `⚠️ Erro: The operation was aborted`.
+- **Causas Raízes Identificadas (`systematic-debugging`):**
+  1. O prompt de sistema anti-preâmbulo citava apenas ações de edição, terminal, busca e documentos, mas não proibia expressamente narrativas preliminares em texto para listagem (`list_files`) e leitura (`read_file`).
+  2. As funções de detecção do Agentic Loop (`looksLikeIncompleteWork` e `looksLikeFileModificationPromise`) falhavam em frases com pontuação (`"Primeiro, vou..."`) e não cobriam verbos de remoção/deleção (`remover`, `deletar`, `apagar`) nem de inspeção (`listar`, `ler`, `localizar`).
+  3. Quedas ou interrupções de stream no socket com a NVIDIA disparavam `AbortError: The operation was aborted` no fetch. O backend tratava como encerramento padrão (`finish_reason: 'stop'`) e o frontend exibia o erro em texto puro na tela em vez de classificar como erro recuperável e retomar a geração com os dados das ferramentas já executadas.
+- **Solução Implementada:**
+  - `src/lib/agentic-patterns.ts` + `src/lib/agentic-patterns.test.ts`:
+    - Criado módulo dedicado e testado via TDD com regex abrangente para detectar intenções de listar, localizar, remover e deletar arquivos mesmo com pontuação.
+    - Criada função `isRecoverableStreamErrorMessage` cobrindo `The operation was aborted`, `AbortError`, quedas de stream e resets de socket.
+  - `src/App.tsx`:
+    - Substituída a lógica inlined pela importação de `src/lib/agentic-patterns.ts`.
+    - Atualizados `repoPrompt` e `basePrompt` com a diretriz estrita: *"NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos... Chame as ferramentas diretamente via tool_call"*.
+    - Ao detectar interrupção de stream com leituras já concluídas (`read_file` ou `list_files`), o Synap injeta prompt de continuação cirúrgico ordenando a emissão imediata de `edit_file`.
+  - `api/chat.ts`:
+    - Adicionado suporte a `chat_template_kwargs: { enable_thinking: true }` no payload do `google/gemma-4-31b-it` para canalizar pensamentos antes das ferramentas.
+    - Corrigido `buildFormattedMessages` para enviar `content: ""` em vez de `null` para mensagens de assistente com tool_calls no histórico.
+    - Atualizado o catch do stream para marcar `isInterruption: true` em caso de `AbortError` / socket reset e formatar mensagem descritiva.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 57/57 testes passando em 14 suítes (incluindo testes dedicados de padrões de agentic loop e resiliência de stream).
+  - `npm run build`: bundle compilado com sucesso em 1.77s.
+
