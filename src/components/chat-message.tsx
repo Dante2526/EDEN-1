@@ -301,7 +301,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     <div className="py-4 px-3 sm:px-6 w-full max-w-3xl mx-auto">
       {isUser ? (
         /* ================= USER MESSAGE (Claude warm card on right) ================= */
-        <div className="flex justify-end">
+        <div className="flex flex-col items-end group">
           <div className="bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl px-4 py-2.5 max-w-[90%] sm:max-w-[80%] shadow-xs">
             {message.isPlanMode && (
               <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[color:var(--c-bg-3e3b34)] text-[11px] font-mono font-medium text-[color:var(--c-fg-f09a7d)]">
@@ -345,6 +345,35 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               {displayContent}
             </div>
           </div>
+
+          {/* User Message Action Bar (Copiar mensagem) */}
+          {Boolean(displayContent && displayContent.trim().length > 0) && (
+            <div
+              className={`flex items-center gap-1 mt-1 mr-1 text-[color:var(--c-fg-8c867a)] transition-opacity duration-150 ${
+                copied ? 'opacity-100' : 'opacity-80 sm:opacity-0 sm:group-hover:opacity-100'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={handleCopy}
+                title="Copiar mensagem"
+                aria-label="Copiar mensagem"
+                className="px-2 py-1 rounded-lg hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition-colors cursor-pointer flex items-center gap-1 text-xs"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[11px] text-emerald-400 font-medium">Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="text-[11px]">Copiar</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         /* ================= CLAUDE / ASSISTANT RESPONSE (Editorial Document Style) ================= */

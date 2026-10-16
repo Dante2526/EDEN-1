@@ -1338,3 +1338,15 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 66/66 testes unitários passando em 16 suítes.
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.80s (Vite + Cloudflare Pages Worker).
+
+## 84. Ações de Mensagem: Botão de Copiar Próprias Mensagens do Usuário
+- **Solicitação do Usuário:** Habilitar a capacidade de copiar o texto das próprias mensagens enviadas no chat (recurso ausente na bolha do usuário).
+- **Solução Implementada (`src/components/chat-message.tsx`):**
+  - **Barra de Ações Alinhada:** Envolveu a mensagem do usuário em contêiner flexível (`flex flex-col items-end group`) com barra de ação inferior à direita.
+  - **Botão de Cópia Elegante:** Integrado botão "Copiar" com ícone `Copy` e transição para `Check` + texto verde "Copiado" por 2 segundos.
+  - **Design Responsivo & Hover:** Em desktop, o botão surge suavemente ao passar o mouse sobre a mensagem (`group-hover:opacity-100`). Em telas touch móveis, mantém-se visível e acessível (`opacity-80`).
+  - **Proteção de Conteúdo:** O botão só é exibido quando a mensagem contém texto copiável real.
+- **Evidências de Verificação:**
+  - `npm test`: 66/66 testes unitários passando em 16 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção compilado com sucesso em 1.63s.
