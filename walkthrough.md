@@ -501,6 +501,121 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 25/25 testes passando (6 suítes).
   - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
 
+## 42. Swipe Unificado e Estética Limpa do Lápis (Mobile & Desktop)
+- **Solicitação do Usuário:**
+  - Remover os botões estáticos de arquivar e lixeira da linha de conversa.
+  - Ações por gesto: arrastar para a esquerda deleta (lixeira vermelha), arrastar para a direita arquiva (verde esmeralda).
+  - Manter apenas o lápis de editar centralizado no lado direito.
+  - No celular: não deixar uma fileira de lápis poluindo visualmente a estética dos chats. Tocar no canto direito abre a edição sem bugar.
+- **Solução Implementada (`src/components/chat-sidebar.tsx`):**
+  1. **Componente Deslizável (`SwipeableConversationItem`):**
+     - **Estilo Visual:** Mantém a linha limpa e minimalista aprovada pelo usuário (`px-3 py-2.5 rounded-xl`, borda terracota `#d97757` no ativo).
+     - **Camada de Arraste:**
+       - Arraste para a direita ($offsetX > 60px$): verde esmeralda (`bg-emerald-600/90`) com ícone `Archive` e texto "Arquivar" (ou "Desarquivar").
+       - Arraste para a esquerda ($offsetX < -60px$): vermelho carmim (`bg-rose-600/90`) com ícone `Trash2` e texto "Deletar".
+       - Trava de rolagem vertical para não interromper a navegação em celulares.
+  2. **Estética do Lápis no Mobile e Desktop:**
+     - **Mobile (Celular):** Chats inativos ficam com `opacity-0` no lápis (zero poluição na lista, estética 100% clean). O chat ativo exibe o lápis de forma sutil (`opacity-70`). Tocar no canto direito (`w-8 h-8`) ativa a renomeação imediatamente sem selecionar outra conversa nem bugar.
+     - **Desktop:** O lápis surge suavemente apenas quando o cursor do mouse passa sobre a conversa (`md:opacity-0 md:group-hover:opacity-100`).
+     - Zero outros botões visíveis no corpo do item.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
+
+## 43. Remoção do Switch BB-8 do Cabeçalho Superior
+- **Solicitação do Usuário:** *"Ok, e o botão do BB-8 tu tira lá do canto superior direito, tá? Deixa só lá no inferior do lado de configurações."*
+- **Ajuste Realizado:**
+  - Removido o componente `DarkModeToggle` do canto superior direito de `src/components/chat-header.tsx`, mantendo a barra de topo enxuta e focada em navegação e ferramentas (Terminal, Tabs, Erros).
+  - O switch BB-8 (Star Wars) permanece ativo exclusivamente no rodapé inferior da barra lateral (`src/components/chat-sidebar.tsx`), logo ao lado do botão de Configurações (`size={5.2}`).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
+
+## 44. Realocação e Simplificação do Botão de Deploy
+- **Solicitação do Usuário:** *"Essa confirmação de deploy no ar, coloque em outro local e bota, deixa só 'Deploy', tira o ': no ar'."*
+- **Solução Implementada:**
+  1. **Simplificação de Texto (`deployment-status-badge.tsx`):**
+     - O texto foi padronizado em **"Deploy"** (removido o sufixo `: no ar` e `: compilando`), com ícones temáticos para cada estado (`CheckCircle2` verde em sucesso, `AlertTriangle` vermelho em falha, `CloudUpload` âmbar pulsante em compilação).
+  2. **Realocação no Cabeçalho (`chat-header.tsx`):**
+     - Retirado do lado esquerdo (onde ficava colado ao menu e repositório).
+     - Reposicionado no canto superior direito, harmoniosamente alinhado ao botão `Terminal`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
+
+## 45. Centralização dos Controles Abaixo da Caixa de Chat
+- **Solicitação do Usuário:** *"centraliza esses campos abaixo da caixa de chat"* (referente aos seletores de modelo, pensamento, modo plano e monitor de tokens).
+- **Ajuste Realizado (`src/components/model-controls.tsx`):**
+  - Ajustado o alinhamento da barra de pills (`ModelControls`) de `justify-between` / `justify-start` para `justify-center`, garantindo que tanto o container principal quanto a lista de pills fiquem perfeitamente centralizados horizontalmente sob a caixa de digitação em qualquer largura de tela.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
+
+## 35. Correção de Contraste e Textos Ocultos no Tema Claro (Modo Branco)
+- **Problema:** No tema claro, vários textos sumiram ou ficaram com contraste baixíssimo:
+  1. *Sidebar:* Botões "Projetos" e "Baixar vídeo" com texto invisível sobre o fundo claro.
+  2. *Header:* Badge de status de deploy com texto verde-claro esmaecido sobre o fundo branco.
+  3. *Chat:* Accordion de raciocínio da IA com badge `Modo low`, contagem de caracteres e `Ver processo` quase imperceptíveis; botão "Copiar" da mensagem do usuário com contraste fraco.
+  4. *Controles Inferiores (`ModelControls`):* Rótulos `pensar:`, `Plano`, o badge `OFF` e `tokens` sem contraste nos pills claros.
+- **Causas Raízes:**
+  - Uso de hexadecimais estáticos claros (`text-[#f3efe6]`, `text-emerald-300`, `text-[color:var(--c-fg-a0aec0)]` inexistente) sobre fundos com tons pêssego ou off-white.
+  - Ausência de variantes adaptativas `dark:` para estados semânticos de badges de status.
+- **Solução Implementada:**
+  - `src/components/chat-sidebar.tsx`: `text-[#f3efe6]` substituído por `text-zinc-900 dark:text-[#f3efe6]` em "Projetos" e "Baixar vídeo"; badges de atalho ajustados para `text-[#d97757] font-semibold`; cabeçalho de Recentes ajustado para `text-zinc-600 dark:text-[color:var(--c-fg-8c867a)]`; variáveis inexistentes trocadas por `text-dark-text-secondary`.
+  - `src/components/github/repo-list.tsx`: Botão de criar repositório corrigido com `text-zinc-900 dark:text-[#f3efe6]`.
+  - `src/components/deployments/deployment-status-badge.tsx`: Estados `success`, `failure`, `building` e `idle` agora contam com pares nítidos de cores para os temas claro e escuro (`text-emerald-900 dark:text-emerald-300 bg-emerald-100/90 dark:bg-emerald-950/30 border-emerald-300/80 dark:border-emerald-600/30`).
+  - `src/components/chat-message.tsx`: Badge `Modo low` com `bg-zinc-200/80 text-zinc-800`, contagem com `text-zinc-600`, `Ver processo` nítido com hover sublinhado, e botão `Copiar` no balão do usuário calibrado com `text-zinc-600 dark:text-[color:var(--c-fg-c4bfb6)] hover:text-zinc-900`.
+  - `src/components/model-controls.tsx`: Rótulos `pensar:`, `tokens:`, `Plano` e badge `OFF` agora utilizam `text-zinc-700` e bordas nítidas `border-zinc-300/80` no tema claro.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run build`: bundle compilado em 3.78s e artefatos copiados para `dist/`.
+
+## 36. Padronização de Nomenclatura: "Habilidades" renomeado para "Skills"
+- **Solicitação do Usuário:** *"renomeia o texto habilidades para Skills"*
+- **Ajustes Realizados (`src/components/extensions/extensions-panel.tsx`):**
+  - Sub-aba do painel: `<span>Habilidades</span>` alterado para `<span>Skills</span>`.
+  - Cabeçalho da seção: `Habilidades Comportamentais` alterado para `Skills Comportamentais`.
+  - Tooltips de botões de exclusão e alternância: `Excluir skill` e `Ativar/Desativar skill`.
+  - Modal de criação: `Nova Skill Customizada`, `Nome da Skill` e botão `Salvar Skill`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 25/25 testes passando (6 suítes).
+
+## 46. Conexão Direta do Servidor Remoto Context7 MCP (Documentação Oficial & Exemplos)
+- **Solicitação do Usuário:** *"conecta direto esse mcp ai"* (referente ao Context7 MCP `https://mcp.context7.com/mcp`).
+- **Problema & Desafios Técnicos:**
+  1. *Formato de Transporte:* O endpoint oficial do Context7 (`https://mcp.context7.com/mcp`) opera com Server-Sent Events (SSE) retornando `Content-Type: text/event-stream` com linhas `data: {...}`. Clientes MCP tradicionais com `res.json()` falhavam com `SyntaxError`.
+  2. *Independência de Repositório:* Em `src/App.tsx`, o despachante de ferramentas bloqueava qualquer chamada caso nenhum repositório GitHub estivesse vinculado. Ferramentas de documentação MCP não dependem de repositório e precisavam rodar globalmente.
+  3. *Configuração Zero:* Usuários novos e existentes precisavam ter o servidor ativo automaticamente sem necessidade de digitação manual de URLs.
+- **Solução Implementada:**
+  1. **Motor Híbrido JSON & SSE (`src/lib/mcp-client.ts`):**
+     - Criado o helper `parseMcpResponsePayload(res)` que analisa a resposta HTTP e extrai tanto payloads JSON-RPC tradicionais quanto streams SSE (`data: {...}`).
+     - Atualizados os métodos `testMcpConnection` e `executeMcpToolCall`.
+  2. **Testes Unitários Automatizados (`src/lib/mcp-client.test.ts`):**
+     - Adicionados testes para validação de extração direta de JSON e de pacotes Server-Sent Events com prefixo `data:`.
+  3. **Servidor Padrão Nativo (`src/lib/storage.ts`):**
+     - Adicionado `DEFAULT_MCP_SERVERS` contendo `Context7 Docs` (`https://mcp.context7.com/mcp`) com status `connected`, transporte `sse` e schemas completos de `resolve-library-id` e `query-docs`.
+     - `loadMcpServers` realiza auto-merge inteligente preservando servidores customizados já adicionados pelo usuário.
+  4. **Despacho Global no Chat (`src/App.tsx`):**
+     - Despachante `mcp__` posicionado antes da checagem de repositório ativo, permitindo que a IA consulte documentação técnica em qualquer conversa.
+  5. **Experiência Visual na UI (`src/components/chat-message.tsx`):**
+     - Labels dinâmicos no accordion e status de execução (`Consultando Context7…`).
+     - Card de resultado com ícone de documentação (`<BookOpen />`), título da biblioteca e badge de confirmação.
+- **Evidências de Verificação:**
+  - `npm test`: 25/25 testes passando (6 suítes).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso.
+
+
+
+
+
+
 
 
 

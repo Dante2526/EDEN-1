@@ -67,6 +67,35 @@ export function parseMcpToolResponse(response: any): string {
 }
 
 /**
+ * Faz o parsing de uma resposta MCP, suportando tanto application/json puro quanto Server-Sent Events (SSE: data: {...})
+ */
+export async function parseMcpResponsePayload(res: Response): Promise<any> {
+  const text = await res.text();
+  const trimmed = text.trim();
+
+  // Se for payload SSE (começa com ou contém data: {...})
+  if (trimmed.includes('data:')) {
+    const lines = trimmed.split('\n');
+    for (const line of lines) {
+      const cleanLine = line.trim();
+      if (cleanLine.startsWith('data:')) {
+        const jsonStr = cleanLine.replace(/^data:\s*/, '').trim();
+        if (jsonStr && jsonStr !== '[DONE]') {
+          try {
+            return JSON.parse(jsonStr);
+          } catch {
+            // Continua procurando se houver mais de uma linha de data
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback: tentar JSON.parse direto
+  return JSON.parse(trimmed);
+}
+
+/**
  * Testa a conectividade com um servidor MCP e descobre suas ferramentas (`tools/list`).
  */
 export async function testMcpConnection(server: McpServer): Promise<{
@@ -103,7 +132,7 @@ export async function testMcpConnection(server: McpServer): Promise<{
       };
     }
 
-    const data = await res.json();
+    const data = await parseMcpResponsePayload(res);
     if (data.error) {
       return {
         success: false,
@@ -180,7 +209,7 @@ export async function executeMcpToolCall(
       return `Erro na execução da ferramenta MCP (HTTP ${res.status}): ${res.statusText}`;
     }
 
-    const data = await res.json();
+    const data = await parseMcpResponsePayload(res);
     return parseMcpToolResponse(data);
   } catch (err: any) {
     if (err.name === 'AbortError') {

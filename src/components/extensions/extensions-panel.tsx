@@ -146,7 +146,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
           }`}
         >
           <Blocks className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-          <span>Habilidades</span>
+          <span>Skills</span>
           {activeSkillsCount > 0 && (
             <span className="ml-1 px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold">
               {activeSkillsCount}
@@ -198,7 +198,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             {/* Header / Add Button */}
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">Habilidades Comportamentais</h3>
+                <h3 className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">Skills Comportamentais</h3>
                 <p className="text-[10px] text-[color:var(--c-fg-8c867a)]">Injetam regras e fluxos especializados no chat</p>
               </div>
               <button
@@ -246,7 +246,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                           type="button"
                           onClick={() => onDeleteSkill(skill.id)}
                           className="p-1 rounded text-zinc-500 hover:text-rose-400 transition cursor-pointer"
-                          title="Excluir habilidade"
+                          title="Excluir skill"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -257,7 +257,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                         className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
                           skill.enabled ? 'bg-purple-600' : 'bg-zinc-700'
                         }`}
-                        title={skill.enabled ? 'Desativar habilidade' : 'Ativar habilidade'}
+                        title={skill.enabled ? 'Desativar skill' : 'Ativar skill'}
                       >
                         <span
                           className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -539,7 +539,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             <div className="flex items-center justify-between pb-2 border-b border-[color:var(--c-bg-3b3831)]">
               <span className="font-semibold text-[color:var(--c-fg-f3efe6)] flex items-center gap-1.5">
                 <Blocks className="w-4 h-4 text-purple-400" />
-                Nova Habilidade Customizada
+                Nova Skill Customizada
               </span>
               <button
                 type="button"
@@ -552,7 +552,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
 
             <form onSubmit={handleCreateSkill} className="space-y-3">
               <div>
-                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Nome da Habilidade</label>
+                <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Nome da Skill</label>
                 <input
                   type="text"
                   required
@@ -598,7 +598,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   type="submit"
                   className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-medium shadow-sm cursor-pointer"
                 >
-                  Salvar Habilidade
+                  Salvar Skill
                 </button>
               </div>
             </form>

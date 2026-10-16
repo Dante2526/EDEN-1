@@ -103,8 +103,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
   return (
     <>
       {/* ================= CLAUDE.AI BOTTOM PILL TOOLBAR ================= */}
-      <div className="flex items-center justify-between gap-1.5 mt-2 px-1 text-xs select-none">
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+      <div className="flex items-center justify-center gap-1.5 mt-2 px-1 text-xs select-none">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
           {/* Model Selector Pill (Claude style) */}
           <button
             type="button"
@@ -112,11 +112,11 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             aria-label="Selecionar modelo"
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
               openSheet === 'model'
-                ? 'bg-[color:var(--c-bg-33302a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-4a463d)]'
-                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
+                ? 'bg-[color:var(--c-bg-33302a)] text-zinc-950 dark:text-[color:var(--c-fg-f3efe6)] border border-[#d97757]/50'
+                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-zinc-300/80 dark:border-[color:var(--c-bg-36332d)] text-zinc-800 dark:text-[color:var(--c-fg-b8b3a8)]'
             }`}
           >
-            <span className="font-medium text-[color:var(--c-fg-f3efe6)]">
+            <span className="font-semibold text-zinc-900 dark:text-[color:var(--c-fg-f3efe6)]">
               {selectedModel === 'z-ai/glm-5.3'
                 ? 'GLM-5.3'
                 : selectedModel === 'z-ai/glm-5.3-flash'
@@ -131,7 +131,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'Qwen Coder'
                 : 'GLM-5.3'}
             </span>
-            <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-500 dark:text-[color:var(--c-fg-8c867a)]" />
           </button>
 
           {/* Reasoning / Extended Thinking Pill */}
@@ -141,14 +141,14 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             aria-label="Ajustar pensamento estendido"
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
               openSheet === 'reasoning'
-                ? 'bg-[color:var(--c-bg-33302a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-4a463d)]'
-                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
+                ? 'bg-[color:var(--c-bg-33302a)] text-zinc-950 dark:text-[color:var(--c-fg-f3efe6)] border border-[#d97757]/50'
+                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-zinc-300/80 dark:border-[color:var(--c-bg-36332d)] text-zinc-800 dark:text-[color:var(--c-fg-b8b3a8)]'
             }`}
           >
-            <Brain className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
-            <span className="text-[color:var(--c-fg-8c867a)] text-[11px]">pensar:</span>
-            <span className="text-[color:var(--c-fg-f3efe6)] font-medium">{reasoningEffort}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)]" />
+            <Brain className="w-3.5 h-3.5 text-[#d97757]" />
+            <span className="text-zinc-600 dark:text-[color:var(--c-fg-8c867a)] text-[11px] font-medium">pensar:</span>
+            <span className="text-zinc-900 dark:text-[color:var(--c-fg-f3efe6)] font-semibold">{reasoningEffort}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-500 dark:text-[color:var(--c-fg-8c867a)]" />
           </button>
 
           {/* Plan Mode Pill */}
@@ -159,15 +159,15 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             title="Ativar/Desativar modo de planejamento estruturado"
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer ${
               isPlanMode
-                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40'
-                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-8c867a)]'
+                ? 'bg-[#d97757]/20 text-[#a34423] dark:text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40'
+                : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-zinc-300/80 dark:border-[color:var(--c-bg-36332d)] text-zinc-700 dark:text-[color:var(--c-fg-8c867a)]'
             }`}
           >
-            <ListTodo className={`w-3.5 h-3.5 ${isPlanMode ? 'text-[color:var(--c-fg-d97757)]' : 'text-[color:var(--c-fg-8c867a)]'}`} />
-            <span className={isPlanMode ? 'text-[color:var(--c-fg-f3efe6)]' : ''}>Plano</span>
+            <ListTodo className={`w-3.5 h-3.5 ${isPlanMode ? 'text-[#d97757]' : 'text-zinc-500 dark:text-[color:var(--c-fg-8c867a)]'}`} />
+            <span className={isPlanMode ? 'text-[#a34423] dark:text-[color:var(--c-fg-f3efe6)] font-semibold' : 'text-zinc-800 dark:text-[color:var(--c-fg-f3efe6)] font-medium'}>Plano</span>
             <span
               className={`text-[9px] px-1 py-0.2 rounded font-mono uppercase font-bold ${
-                isPlanMode ? 'bg-[#d97757] text-white' : 'bg-[color:var(--c-bg-2f2d28)] text-[color:var(--c-fg-8c867a)]'
+                isPlanMode ? 'bg-[#d97757] text-white' : 'bg-zinc-200/90 dark:bg-[color:var(--c-bg-2f2d28)] text-zinc-700 dark:text-[color:var(--c-fg-8c867a)] border border-zinc-300/70 dark:border-transparent'
               }`}
             >
               {isPlanMode ? 'ON' : 'OFF'}
@@ -187,10 +187,10 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
               percent >= 50 ? 'bg-yellow-500' :
               'bg-emerald-500';
             const textColor =
-              percent >= 90 ? 'text-red-400' :
-              percent >= 75 ? 'text-orange-400' :
-              percent >= 50 ? 'text-yellow-400' :
-              'text-[color:var(--c-fg-f3efe6)]';
+              percent >= 90 ? 'text-red-600 dark:text-red-400 font-semibold' :
+              percent >= 75 ? 'text-orange-600 dark:text-orange-400 font-semibold' :
+              percent >= 50 ? 'text-amber-600 dark:text-yellow-400 font-semibold' :
+              'text-zinc-900 dark:text-[color:var(--c-fg-f3efe6)] font-semibold';
             const pulseClass = percent >= 90 ? 'animate-pulse' : '';
             return (
               <button
@@ -200,19 +200,19 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 title={`Contexto Ativo: ${activeTokens.toLocaleString()} / ${CONTEXT_LIMIT.toLocaleString()} (${percent.toFixed(1)}%) | Total acumulado na sessão: ${totalAccumulated.toLocaleString()} tokens`}
                 className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg transition-colors text-xs font-medium cursor-pointer whitespace-nowrap ${
                   openSheet === 'tokens'
-                    ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shadow-xs'
-                    : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-[color:var(--c-bg-36332d)] text-[color:var(--c-fg-b8b3a8)]'
+                    ? 'bg-[#d97757]/20 text-[#a34423] dark:text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 shadow-xs'
+                    : 'bg-[color:var(--c-bg-22201d)] hover:bg-[color:var(--c-bg-2c2925)] border border-zinc-300/80 dark:border-[color:var(--c-bg-36332d)] text-zinc-800 dark:text-[color:var(--c-fg-b8b3a8)]'
                 }`}
               >
-                <Zap className={`w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] ${pulseClass} shrink-0`} />
-                <span className="text-[color:var(--c-fg-8c867a)] text-[11px]">tokens:</span>
+                <Zap className={`w-3.5 h-3.5 text-[#d97757] ${pulseClass} shrink-0`} />
+                <span className="text-zinc-600 dark:text-[color:var(--c-fg-8c867a)] text-[11px] font-medium">tokens:</span>
                 <span className={`font-mono font-medium ${textColor} ${pulseClass}`}>
                   {activeTokens.toLocaleString()}
                 </span>
                 {/* Mini barra de progresso — visível no celular e desktop */}
                 {activeTokens > 0 && (
                   <div className="flex items-center gap-1 ml-0.5 shrink-0">
-                    <div className="w-8 sm:w-12 h-1.5 bg-[color:var(--c-bg-2f2d28)] rounded-full overflow-hidden">
+                    <div className="w-8 sm:w-12 h-1.5 bg-zinc-200 dark:bg-[color:var(--c-bg-2f2d28)] rounded-full overflow-hidden">
                       <div
                         className={`h-full ${barColor} transition-all duration-300 ${pulseClass}`}
                         style={{ width: `${Math.max(2, percent)}%` }}

@@ -141,13 +141,13 @@ export const RepoList: React.FC<RepoListProps> = ({
               <button
                 type="button"
                 onClick={() => setIsCreateRepoOpen(true)}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-[#d97757]/15 to-[#d97757]/5 hover:from-[#d97757]/25 hover:to-[#d97757]/10 border border-[#d97757]/30 hover:border-[#d97757]/50 text-[#f3efe6] text-xs font-medium transition-all cursor-pointer group"
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-[#d97757]/15 to-[#d97757]/5 hover:from-[#d97757]/25 hover:to-[#d97757]/10 border border-[#d97757]/30 hover:border-[#d97757]/50 text-zinc-900 dark:text-[#f3efe6] text-xs font-medium transition-all cursor-pointer group"
               >
                 <span className="flex items-center gap-2">
                   <FolderPlus className="w-3.5 h-3.5 text-[#d97757] group-hover:scale-110 transition-transform" />
                   Criar novo repositório
                 </span>
-                <span className="text-[10px] text-[#d97757]/70 font-mono group-hover:text-[#d97757]">
+                <span className="text-[10px] text-[#d97757] dark:text-[#d97757]/80 font-mono font-medium group-hover:underline">
                   do zero
                 </span>
               </button>

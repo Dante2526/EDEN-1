@@ -20,7 +20,6 @@ import { ClaudeLogo } from './claude-logo';
 import { ActiveRepoState } from '../lib/types';
 import { DeploymentStatusBadge } from './deployments/deployment-status-badge';
 import { DeploymentInfo } from '../lib/deployment-service';
-import { DarkModeToggle } from './dark-mode-toggle';
 
 interface ChatHeaderProps {
   onToggleSidebar: () => void;
@@ -117,16 +116,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
             )}
           </div>
         )}
-
-        {/* Cloudflare Pages Deployment Status Badge */}
-        {deployment && (
-          <DeploymentStatusBadge
-            deployment={deployment}
-            isLoading={isLoadingDeployment}
-            onClick={onOpenDeploymentLogs}
-            className="hidden md:inline-flex"
-          />
-        )}
       </div>
 
       {/* Center: Chat / Preview / Studio Switcher */}
@@ -219,6 +208,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           </button>
         )}
 
+        {/* Cloudflare Pages Deployment Status Badge */}
+        {deployment && (
+          <DeploymentStatusBadge
+            deployment={deployment}
+            isLoading={isLoadingDeployment}
+            onClick={onOpenDeploymentLogs}
+          />
+        )}
+
         {onToggleTerminal && (
           <button
             type="button"
@@ -227,30 +225,19 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
             title="Abrir/Fechar Terminal (Ctrl+`)"
             className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-all duration-150 active:scale-[0.97] cursor-pointer select-none ${
               isTerminalOpen
-                ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border-[#d97757]/40 shadow-xs'
-                : 'bg-[color:var(--c-bg-25231f)] hover:bg-[color:var(--c-bg-2e2a24)] text-[color:var(--c-fg-c4bfb6)] hover:text-[color:var(--c-fg-f3efe6)] border-[color:var(--c-bg-36332d)]'
+                ? 'bg-[#d97757]/20 text-[#a34423] dark:text-[color:var(--c-fg-f09a7d)] border-[#d97757]/40 shadow-xs'
+                : 'bg-[color:var(--c-bg-25231f)] hover:bg-[color:var(--c-bg-2e2a24)] text-zinc-800 dark:text-[color:var(--c-fg-c4bfb6)] hover:text-zinc-950 dark:hover:text-[color:var(--c-fg-f3efe6)] border-zinc-300/80 dark:border-[color:var(--c-bg-36332d)]'
             }`}
           >
-            <TerminalIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[color:var(--c-fg-d97757)] shrink-0" />
+            <TerminalIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[#d97757] shrink-0" />
             <span className="hidden sm:inline font-medium">Terminal</span>
             <ChevronDown
-              className={`hidden sm:inline w-3.5 h-3.5 text-[color:var(--c-fg-8c867a)] transition-transform duration-200 ${
-                isTerminalOpen ? 'rotate-180 text-[color:var(--c-fg-d97757)]' : ''
+              className={`hidden sm:inline w-3.5 h-3.5 text-zinc-500 dark:text-[color:var(--c-fg-8c867a)] transition-transform duration-200 ${
+                isTerminalOpen ? 'rotate-180 text-[#d97757]' : ''
               }`}
             />
           </button>
         )}
-
-        {onToggleTheme && (
-          <div className="hidden sm:inline-flex items-center p-0.5">
-            <DarkModeToggle
-              isDarkMode={theme === 'dark'}
-              onToggle={onToggleTheme}
-              size={4.8}
-            />
-          </div>
-        )}
-
       </div>
     </header>
   );

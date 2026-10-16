@@ -244,13 +244,73 @@ export async function saveSkills(skills: Skill[]): Promise<void> {
   }
 }
 
+export const DEFAULT_MCP_SERVERS: McpServer[] = [
+  {
+    id: 'context7',
+    name: 'Context7 Docs',
+    url: 'https://mcp.context7.com/mcp',
+    transport: 'sse',
+    enabled: true,
+    status: 'connected',
+    tools: [
+      {
+        name: 'resolve-library-id',
+        description:
+          'Resolve um nome de biblioteca ou framework para um ID compatível do Context7 (ex: /vercel/next.js, /tailwindlabs/tailwindcss). Deve ser chamada antes de query-docs.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            libraryName: {
+              type: 'string',
+              description: 'Nome da biblioteca (ex: Next.js, Tailwind, React, Zod, Vite, Pyodide)',
+            },
+            query: {
+              type: 'string',
+              description: 'O que você quer resolver ou buscar na documentação',
+            },
+          },
+          required: ['libraryName', 'query'],
+        },
+      },
+      {
+        name: 'query-docs',
+        description:
+          'Obtém documentação oficial e exemplos de código atualizados de qualquer biblioteca via Context7.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            libraryId: {
+              type: 'string',
+              description: 'ID da biblioteca obtido via resolve-library-id (ex: /vercel/next.js)',
+            },
+            query: {
+              type: 'string',
+              description: 'Conceito ou funcionalidade específica que você precisa consultar',
+            },
+            language: {
+              type: 'string',
+              description: 'Linguagem do código (ex: TypeScript, Python, JavaScript)',
+            },
+          },
+          required: ['libraryId', 'query'],
+        },
+      },
+    ],
+  },
+];
+
 export async function loadMcpServers(): Promise<McpServer[]> {
   try {
     const data = await get<McpServer[]>(MCP_SERVERS_KEY);
-    return data || [];
+    if (!data || data.length === 0) {
+      return DEFAULT_MCP_SERVERS;
+    }
+    const existingIds = new Set(data.map((s) => s.id));
+    const missingDefaults = DEFAULT_MCP_SERVERS.filter((d) => !existingIds.has(d.id));
+    return [...data, ...missingDefaults];
   } catch (error) {
     console.error('Failed to load MCP servers from IndexedDB:', error);
-    return [];
+    return DEFAULT_MCP_SERVERS;
   }
 }
 

@@ -22,6 +22,7 @@ import {
   Download,
   Table,
   Brain,
+  BookOpen,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -254,6 +255,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       !hasRunningTool);
 
   const getToolActionLabel = (toolName?: string) => {
+    if (toolName?.startsWith('mcp__context7__')) {
+      return 'Consultando Context7…';
+    }
+    if (toolName?.startsWith('mcp__')) {
+      return 'Consultando MCP…';
+    }
     switch (toolName) {
       case 'generate_image':
         return 'Criando a imagem…';
@@ -354,18 +361,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             </div>
 
             {/* Ações da mensagem do usuário (Copiar) */}
-            <div className="flex justify-end mt-1.5 -mb-0.5 pt-1 border-t border-[color:var(--c-bg-3e3b34)]/40">
+            <div className="flex justify-end mt-1.5 -mb-0.5 pt-1 border-t border-zinc-200/80 dark:border-[color:var(--c-bg-3e3b34)]/40">
               <button
                 type="button"
                 onClick={handleCopy}
                 aria-label="Copiar mensagem"
                 title="Copiar mensagem"
-                className="opacity-70 hover:opacity-100 p-1 rounded-md text-[11px] text-[color:var(--c-fg-c4bfb6)] hover:text-[color:var(--c-fg-f3efe6)] transition flex items-center gap-1 cursor-pointer"
+                className="p-1 rounded-md text-[11px] text-zinc-600 dark:text-[color:var(--c-fg-c4bfb6)] hover:text-zinc-900 dark:hover:text-[color:var(--c-fg-f3efe6)] hover:bg-zinc-100 dark:hover:bg-white/5 transition flex items-center gap-1 cursor-pointer font-medium"
               >
                 {copied ? (
                   <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-[10px] text-emerald-400">Copiado</span>
+                    <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400">Copiado</span>
                   </>
                 ) : (
                   <>
@@ -443,15 +450,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               <button
                 type="button"
                 onClick={() => setShowReasoning(!showReasoning)}
-                className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2c2925)]/80 transition-colors cursor-pointer"
+                className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs text-zinc-700 dark:text-[color:var(--c-fg-a39d93)] hover:text-zinc-950 dark:hover:text-[color:var(--c-fg-f3efe6)] hover:bg-zinc-100/70 dark:hover:bg-[color:var(--c-bg-2c2925)]/80 transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2 font-mono flex-wrap">
                   {showReasoning ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#d97757] flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] flex-shrink-0" />
+                    <ChevronRight className="w-3.5 h-3.5 text-[#d97757] flex-shrink-0" />
                   )}
-                  <span className="font-medium text-[color:var(--c-fg-c4bfb6)]">
+                  <span className="font-medium text-zinc-900 dark:text-[color:var(--c-fg-c4bfb6)]">
                     {message.reasoningEffort === 'low'
                       ? 'Pensamento rápido'
                       : message.reasoningEffort === 'high'
@@ -465,33 +472,33 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   <span
                     className={`px-1.5 py-0.2 rounded text-[10px] font-mono uppercase font-bold border ${
                       message.reasoningEffort === 'max'
-                        ? 'bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border-[#d97757]/40'
+                        ? 'bg-[#d97757]/20 text-[#a34423] dark:text-[color:var(--c-fg-f09a7d)] border-[#d97757]/40'
                         : message.reasoningEffort === 'high'
-                        ? 'bg-[color:var(--c-bg-38332a)] text-[color:var(--c-fg-e0a96d)] border-[color:var(--c-bg-4d4536)]'
-                        : 'bg-[color:var(--c-bg-292723)] text-[color:var(--c-fg-a8a296)] border-[color:var(--c-bg-3d3a33)]'
+                        ? 'bg-amber-100/90 dark:bg-[color:var(--c-bg-38332a)] text-amber-900 dark:text-[color:var(--c-fg-e0a96d)] border-amber-300 dark:border-[color:var(--c-bg-4d4536)]'
+                        : 'bg-zinc-200/80 dark:bg-[color:var(--c-bg-292723)] text-zinc-800 dark:text-[color:var(--c-fg-a8a296)] border-zinc-300/80 dark:border-[color:var(--c-bg-3d3a33)]'
                     }`}
                   >
                     {message.reasoningEffort ? `Modo ${message.reasoningEffort}` : 'Raciocínio'}
                   </span>
 
                   {message.isPlanMode && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 font-medium">
-                      <ListTodo className="w-2.5 h-2.5 text-[color:var(--c-fg-d97757)]" />
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] bg-[#d97757]/20 text-[#a34423] dark:text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 font-medium">
+                      <ListTodo className="w-2.5 h-2.5 text-[#d97757]" />
                       Modo Plano
                     </span>
                   )}
 
-                  <span className="text-[11px] text-[color:var(--c-fg-736e65)]">
+                  <span className="text-[11px] text-zinc-600 dark:text-[color:var(--c-fg-736e65)]">
                     ({thinkingContent.length.toLocaleString()} caracteres)
                   </span>
                 </span>
-                <span className="text-[10px] text-[color:var(--c-fg-736e65)] font-mono flex-shrink-0 ml-2">
+                <span className="text-[10px] text-zinc-600 dark:text-[color:var(--c-fg-736e65)] font-mono font-medium flex-shrink-0 ml-2 hover:underline">
                   {showReasoning ? 'Ocultar' : 'Ver processo'}
                 </span>
               </button>
 
               {showReasoning && (
-                <div className="px-3.5 py-2.5 text-xs text-[color:var(--c-fg-b8b2a5)] font-mono border-t border-[color:var(--c-bg-312f2a)] bg-[color:var(--c-bg-1d1b18)] leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
+                <div className="px-3.5 py-2.5 text-xs text-zinc-800 dark:text-[color:var(--c-fg-b8b2a5)] font-mono border-t border-zinc-200 dark:border-[color:var(--c-bg-312f2a)] bg-zinc-50/80 dark:bg-[color:var(--c-bg-1d1b18)] leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
                   {thinkingContent}
                 </div>
               )}
@@ -956,6 +963,37 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       <div className="shrink-0 text-[10px] text-zinc-500 font-mono">
                         forget_memory
                       </div>
+                    </div>
+                  );
+                }
+
+                if (tc.name.startsWith('mcp__')) {
+                  const parts = tc.name.split('__');
+                  const serverId = parts[1];
+                  const toolName = parts.slice(2).join('__');
+                  const isContext7 = serverId === 'context7';
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="flex items-center gap-2 px-3.5 py-2 synap-card text-xs font-mono text-[color:var(--c-fg-c4bfb6)] my-1.5"
+                    >
+                      {tc.status === 'error' ? (
+                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                      ) : (
+                        <BookOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      )}
+                      <span className="font-semibold text-[color:var(--c-fg-f3efe6)]">
+                        {isContext7 ? `Context7 (${toolName})` : `MCP: ${toolName}`}
+                      </span>
+                      {targetParam && (
+                        <span className="text-[color:var(--c-fg-a39d93)] truncate max-w-[220px] sm:max-w-[360px]" title={targetParam}>
+                          ({targetParam})
+                        </span>
+                      )}
+                      <span className="ml-auto text-[10px] text-[color:var(--c-fg-787268)] shrink-0 font-sans">
+                        {tc.status === 'error' ? 'falhou' : 'documentação consultada'}
+                      </span>
                     </div>
                   );
                 }

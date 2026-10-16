@@ -3,10 +3,11 @@ import {
   convertMcpToolsToOpenAi,
   parseMcpToolResponse,
   buildMcpRpcRequest,
+  parseMcpResponsePayload,
 } from './mcp-client';
 import { McpTool } from './types';
 
-function runTests() {
+async function runTests() {
   console.log('--- Iniciando testes de mcp-client ---');
 
   // Teste 1: buildMcpRpcRequest gera payload JSON-RPC 2.0 padrão
@@ -73,6 +74,23 @@ function runTests() {
   const parsedError = parseMcpToolResponse(rpcErrorResponse);
   assert.ok(parsedError.includes('Tabela não encontrada'));
   console.log('✅ Teste 3 passou: parseMcpToolResponse processa textos e erros RPC');
+
+  // Teste 4: parseMcpResponsePayload com JSON puro
+  const fakeJsonResponse = new Response(JSON.stringify({ result: { status: 'ok' } }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const jsonResult = await parseMcpResponsePayload(fakeJsonResponse);
+  assert.strictEqual(jsonResult.result.status, 'ok');
+  console.log('✅ Teste 4 passou: parseMcpResponsePayload processa JSON puro com sucesso');
+
+  // Teste 5: parseMcpResponsePayload com SSE (Context7 format: data: {...})
+  const sseRawText = 'event: message\ndata: {"jsonrpc":"2.0","result":{"tools":[{"name":"query-docs"}]},"id":1}\n\n';
+  const fakeSseResponse = new Response(sseRawText, {
+    headers: { 'Content-Type': 'text/event-stream' },
+  });
+  const sseResult = await parseMcpResponsePayload(fakeSseResponse);
+  assert.strictEqual(sseResult.result.tools[0].name, 'query-docs');
+  console.log('✅ Teste 5 passou: parseMcpResponsePayload processa SSE com sucesso');
 
   console.log('🎉 Todos os testes de mcp-client passaram com sucesso!');
 }

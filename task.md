@@ -1,26 +1,15 @@
-# Checklist de Execução: Monitor de Deploy da Cloudflare & Correção com IA
+# Checklist de Execução: Integração Direta do Context7 MCP
 
-- [x] **Task 1: Endpoint de Backend (`api/deployments.ts`) e Roteamento**
-  - [x] Step 1: Criar o endpoint `api/deployments.ts` com handlers `action=status` e `action=logs`
-  - [x] Step 2: Adicionar rota `/api/deployments` no `server.ts` (Express)
-  - [x] Step 3: Mapear rota `/api/deployments` no `_worker.ts` (Cloudflare Pages)
-  - [x] Step 4: Validar build e tipos com `npm run lint`
-- [x] **Task 2: Cliente Frontend TDD e Módulo de Extração de Erros (`src/lib/deployment-service.ts`)**
-  - [x] Step 1: Escrever teste unitário para normalização de deploys e extração de erro (RED)
-  - [x] Step 2: Implementar `src/lib/deployment-service.ts` (GREEN)
-  - [x] Step 3: Rodar testes com `npm test` e verificar sucesso (100% GREEN)
-- [x] **Task 3: Modal de Logs de Terminal do Deploy (`src/components/deployments/deployment-log-modal.tsx`)**
-  - [x] Step 1: Construir modal no estilo console escuro (`.synap-card`)
-  - [x] Step 2: Testar acessibilidade e responsividade mobile
-- [x] **Task 4: Card de Alerta no Chat com Ação Sob Demanda (`src/components/deployments/deployment-error-card.tsx`)**
-  - [x] Step 1: Criar componente de card de falha no design system `.synap-card`
-  - [x] Step 2: Integrar botões "Ver Logs Completos" e "⚡ Corrigir Erro com IA"
-- [x] **Task 5: Badge de Status Refinado no Cabeçalho (`src/components/deployments/deployment-status-badge.tsx`)**
-  - [x] Step 1: Criar o componente `DeploymentStatusBadge` com ícones Lucide modernos
-  - [x] Step 2: Integrar o badge no `chat-header.tsx` ao lado da branch
-- [x] **Task 6: Integração no Chat (`src/App.tsx`), Verificação e Documentação**
-  - [x] Step 1: Integrar o monitor de deploy no `src/App.tsx` e callback de correção com IA
-  - [x] Step 2: Executar testes automatizados (`npm test`)
-  - [x] Step 3: Executar checagem de tipos estritos (`npm run lint`)
-  - [x] Step 4: Executar build de produção (`npm run build`)
-  - [x] Step 5: Documentar a entrega na Seção 35 de `walkthrough.md`
+- [x] Task 1: Suporte a SSE e Fallback Robusto em `src/lib/mcp-client.ts`
+  - [x] Criar helper `parseMcpResponsePayload` para parsing de JSON ou SSE (`data: {...}`)
+  - [x] Atualizar `testMcpConnection` e `executeMcpToolCall`
+  - [x] Adicionar teste unitário de parsing SSE em `src/lib/mcp-client.test.ts`
+  - [x] Rodar testes unitários com `npm test` (25/25 passando)
+- [x] Task 2: Adicionar Context7 como Servidor MCP Padrão em `src/lib/storage.ts`
+  - [x] Configurar `DEFAULT_MCP_SERVERS` com Context7 (`https://mcp.context7.com/mcp`)
+  - [x] Fazer auto-merge inteligente no `loadMcpServers`
+  - [x] Tratar execução independente de repositório em `src/App.tsx`
+  - [x] Adicionar feedback visual e badge de documentação em `src/components/chat-message.tsx`
+- [x] Task 3: Verificação Técnica Completa
+  - [x] Rodar `npm run lint && npm test` (0 erros tsc, 25/25 testes)
+  - [x] Rodar `npm run build` (bundle de produção + dist/_worker.js compilados com sucesso)

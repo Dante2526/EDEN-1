@@ -1824,6 +1824,31 @@ function AppContent() {
       }
     }
 
+    // Ferramentas remotas Model Context Protocol (MCP) — NÃO dependem de repositório ativo
+    if (name.startsWith('mcp__')) {
+      const parts = name.split('__');
+      const serverId = parts[1];
+      const toolName = parts.slice(2).join('__');
+      const targetServer = mcpServers.find((s) => s.id === serverId);
+      if (!targetServer) {
+        return {
+          result: JSON.stringify({
+            error: `Servidor MCP '${serverId}' não encontrado ou inativo no Synap.`,
+          }),
+        };
+      }
+      try {
+        const mcpResult = await executeMcpToolCall(targetServer, toolName, args);
+        return { result: mcpResult };
+      } catch (err: any) {
+        return {
+          result: JSON.stringify({
+            error: `Erro na execução da ferramenta MCP (${toolName}): ${err?.message || 'Falha de comunicação'}`,
+          }),
+        };
+      }
+    }
+
     if (!currentRepo) {
       return {
         result: JSON.stringify({
