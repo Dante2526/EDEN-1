@@ -112,18 +112,18 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
 
   return (
     <div className="relative w-full h-full flex flex-col bg-[#09090b] overflow-hidden">
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 p-1 rounded-xl bg-[color:var(--c-bg-181714,#181714)]/90 backdrop-blur-md border border-[color:var(--c-bg-2d2b26,#2d2b26)]/80 shadow-lg">
         <button
           onClick={handleRefresh}
           title="Recarregar Preview"
-          className="p-2 rounded-lg bg-white/90 hover:bg-white text-zinc-800 shadow-md border border-zinc-200 transition cursor-pointer"
+          className="p-1.5 sm:p-2 rounded-lg text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-[color:var(--c-fg-f3efe6,#f3efe6)] hover:bg-[color:var(--c-bg-25231e,#25231e)] active:scale-95 transition-all cursor-pointer"
         >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#d97757]' : ''}`} />
         </button>
         <button
           onClick={handleOpenNewTab}
           title="Abrir em nova aba"
-          className="p-2 rounded-lg bg-white/90 hover:bg-white text-zinc-800 shadow-md border border-zinc-200 transition cursor-pointer"
+          className="p-1.5 sm:p-2 rounded-lg text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-[color:var(--c-fg-f3efe6,#f3efe6)] hover:bg-[color:var(--c-bg-25231e,#25231e)] active:scale-95 transition-all cursor-pointer"
         >
           <ExternalLink className="w-4 h-4" />
         </button>

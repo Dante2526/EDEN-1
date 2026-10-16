@@ -940,3 +940,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 53/53 testes passando em 13 suítes.
   - `npm run build`: compilado em 1.84s.
+
+## 66. Harmonização Visual dos Botões Flutuantes do Preview e Workspace
+- **Solicitação do Usuário:** Adaptar os botões flutuantes de ação do Preview (recarregar e abrir em nova aba) ao padrão visual escuro, elegante e consistente do Synap (removendo o estilo branco quadrado).
+- **Solução Implementada:**
+  - `src/components/project-workspace/local-preview.tsx`:
+    - Substituído o container branco por card pill flutuante com blur: `bg-[color:var(--c-bg-181714,#181714)]/90 backdrop-blur-md border border-[color:var(--c-bg-2d2b26,#2d2b26)]/80 shadow-lg p-1 rounded-xl`.
+    - Botões de recarregar e abrir em nova aba estilizados com: `text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-[color:var(--c-fg-f3efe6,#f3efe6)] hover:bg-[color:var(--c-bg-25231e,#25231e)] active:scale-95 transition-all`.
+    - Ao recarregar, o ícone de `RefreshCw` gira destacando a cor de destaque âmbar/laranja do Synap (`text-[#d97757]`).
+  - `src/components/project-workspace/project-workspace.tsx`:
+    - Botão flutuante de fechar (`X`) no canto superior esquerdo harmonizado com o mesmo design pill escuro com blur e microinteração `active:scale-95`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 53/53 testes passando em 13 suítes.
+  - `npm run build`: compilado com sucesso em 1.89s.
