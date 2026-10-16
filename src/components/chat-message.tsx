@@ -214,6 +214,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   const [showReasoning, setShowReasoning] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showTokenDetails, setShowTokenDetails] = useState(false);
+  const [isToolsExpanded, setIsToolsExpanded] = useState(false);
 
   // Extract reasoning if formatted with <think>...</think> tags or message.reasoning
   let thinkingContent = message.reasoning || '';
@@ -511,17 +512,31 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             </div>
           )}
 
-          {/* Tool Calls Execution Status - 1 orb (último running) + histórico compacto */}
+          {/* Tool Calls Execution Status - 1 orb (último running) + ferramentas concluídas agrupadas */}
           {message.toolCalls && message.toolCalls.length > 0 && (
             <div className="w-full mb-3 space-y-2">
               {(() => {
                 const all = message.toolCalls || [];
                 const running = all.filter(tc => tc.status === 'running');
-                // Se tem running: mostra completed como chips + só o último running com orb
-                // Se não tem running: mostra todos (renderização original)
-                const toShow = running.length > 0 ? [...all.filter(tc => tc.status !== 'running'), running[running.length - 1]] : all;
-                return toShow.map((tc) => {
-                let parsedArgs: any = {};
+                const waiting = all.filter(tc => tc.status === 'waiting' || tc.status === 'pending');
+                const activeRunning = running.length > 0 ? running[running.length - 1] : null;
+
+                const isChipTool = (tc: any) => {
+                  if (tc.name === 'run_terminal_command' || tc.name === 'terminal') return false;
+                  if (tc.name === 'run_python') return false;
+                  if (tc.name === 'generate_document') return false;
+                  if (tc.name === 'save_memory' || tc.name === 'forget_memory') return false;
+                  if (tc.name === 'dispatch_subagent') return false;
+                  if (tc.name === 'query_code_graph') return false;
+                  return true;
+                };
+
+                const completedTools = all.filter(tc => tc.status !== 'running' && tc.status !== 'waiting' && tc.status !== 'pending');
+                const completedChipTools = completedTools.filter(isChipTool);
+                const completedRichTools = completedTools.filter(tc => !isChipTool(tc));
+
+                const renderToolItem = (tc: any) => {
+                  let parsedArgs: any = {};
                 try {
                   parsedArgs = JSON.parse(tc.arguments || '{}');
                 } catch {}
@@ -1160,8 +1175,67 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       {tc.status === 'error' ? 'falhou' : 'concluído'}
                     </span>
                   </div>
+                  );
+                };
+
+                return (
+                  <>
+                    {/* Tool ativa em execução com orb animado */}
+                    {activeRunning && renderToolItem(activeRunning)}
+
+                    {/* Tools aguardando confirmação em segundo plano */}
+                    {waiting.map((tc) => renderToolItem(tc))}
+
+                    {/* Ferramentas ricas concluídas (terminal, python, doc, memória, subagente, grafo) */}
+                    {completedRichTools.map((tc) => renderToolItem(tc))}
+
+                    {/* Ferramentas concluídas agrupadas (list_files, read_file, edit_file, etc.) */}
+                    {completedChipTools.length > 0 && (
+                      <div className="w-full space-y-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setIsToolsExpanded((prev) => !prev)}
+                          className="w-full rounded-xl bg-[color:var(--c-bg-201e1a)] hover:bg-[color:var(--c-bg-27241f)] border border-[color:var(--c-bg-383329)] transition-colors p-2.5 text-xs select-none cursor-pointer flex items-center justify-between gap-2.5 shadow-2xs group"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-5 h-5 rounded-md bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                              <Check className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
+                              {completedChipTools.length === 1
+                                ? '1 ferramenta executada'
+                                : `${completedChipTools.length} ferramentas executadas`}
+                            </span>
+                            <div className="hidden sm:flex items-center gap-1.5 flex-wrap">
+                              {Array.from(new Set(completedChipTools.map((t) => t.name))).map((toolName) => (
+                                <span
+                                  key={toolName}
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[color:var(--c-bg-27241f)] text-[color:var(--c-fg-a39d93)] border border-[color:var(--c-bg-3e392f)]"
+                                >
+                                  {toolName}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-f3efe6)] transition shrink-0 ml-auto">
+                            <span>{isToolsExpanded ? 'Recolher' : 'Expandir'}</span>
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                isToolsExpanded ? 'rotate-180 text-[color:var(--c-fg-d97757)]' : ''
+                              }`}
+                            />
+                          </div>
+                        </button>
+
+                        {isToolsExpanded && (
+                          <div className="space-y-1.5 pt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                            {completedChipTools.map((tc) => renderToolItem(tc))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 );
-              });
               })()}
             </div>
           )}

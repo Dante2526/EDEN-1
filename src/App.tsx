@@ -897,11 +897,6 @@ function AppContent() {
   }, [theme]);
 
   const [diffViewingChange, setDiffViewingChange] = useState<PendingChange | null>(null);
-  const [toastNotification, setToastNotification] = useState<{
-    message: string;
-    actionLabel?: string;
-    onAction?: () => void;
-  } | null>(null);
 
   // Model & Reasoning Effort
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
@@ -2231,18 +2226,6 @@ function AppContent() {
         newContent: content || '',
       });
 
-      // Show toast
-      setToastNotification({
-        message: `IA editou ${path} — revise em Source Control`,
-        actionLabel: 'Ver Diff',
-        onAction: () => {
-          handleViewDiffForPath(path);
-        },
-      });
-
-      setTimeout(() => {
-        setToastNotification(null);
-      }, 5000);
 
       const editedFile: MessageEditedFile = {
         path,
@@ -2304,18 +2287,6 @@ function AppContent() {
         });
       }
 
-      setToastNotification({
-        message: `IA refatorou ${processedFiles.length} arquivos — revise em Source Control`,
-        actionLabel: 'Ver Source Control',
-        onAction: () => {
-          setSidebarTab('source-control');
-          setIsSidebarOpen(true);
-        },
-      });
-
-      setTimeout(() => {
-        setToastNotification(null);
-      }, 5000);
 
       return {
         result: JSON.stringify({
@@ -3815,26 +3786,6 @@ function AppContent() {
         </div>
       )}
 
-      {/* Toast notification for AI edits */}
-      {toastNotification && (
-        <div className="fixed bottom-24 right-4 z-50 max-w-sm p-3 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[#d97757]/50 shadow-2xl flex items-center justify-between gap-3 text-xs animate-in slide-in-from-bottom-2 fade-in">
-          <div className="flex items-center gap-2">
-            <FileCode className="w-4 h-4 text-[color:var(--c-fg-d97757)] shrink-0" />
-            <span className="text-[color:var(--c-fg-f3efe6)] font-medium leading-tight">
-              {toastNotification.message}
-            </span>
-          </div>
-          {toastNotification.onAction && toastNotification.actionLabel && (
-            <button
-              type="button"
-              onClick={toastNotification.onAction}
-              className="px-2.5 py-1 rounded-lg bg-[#d97757] hover:bg-[#c26647] text-white text-[11px] font-medium transition cursor-pointer shrink-0"
-            >
-              {toastNotification.actionLabel}
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Sidebar with Chats, Repos, Source Control and Skills tabs */}
       <ChatSidebar

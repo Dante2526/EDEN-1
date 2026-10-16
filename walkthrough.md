@@ -997,3 +997,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado com sucesso em 2.57s.
 
 
+
+## 69. Remoção do Toast Flutuante Sobreposto e Agrupamento Recolhível de Ferramentas Concluídas
+- **Solicitação do Usuário:**
+  1. Remover o toast flutuante no canto inferior direito que sobrepunha o chat durante a edição de arquivos, mantendo exclusivamente o card de arquivo editado que já é exibido no corpo da mensagem com o botão "Ver diff".
+  2. Agrupar os chips de ferramentas concluídas (`list_files`, `read_file`, `edit_file`, etc.) dentro de um acordeão recolhível, iniciando fechado/agrupado por padrão e permitindo ao usuário expandir quando quiser para ver todos os arquivos lidos e editados.
+- **Solução Implementada:**
+  1. **Remoção do Toast Flutuante Redundante (`src/App.tsx`):**
+     - Removidos o estado `toastNotification`, seus disparos em `edit_file` e `batch_edit_files`, e o bloco JSX `fixed bottom-24 right-4 z-50` que sobrepunha a caixa de entrada do chat.
+     - Preservado integralmente o card de arquivo editado incorporado na mensagem (`ChatMessage`).
+  2. **Acordeão Recolhível de Ferramentas Concluídas (`src/components/chat-message.tsx`):**
+     - Criado estado `isToolsExpanded` (iniciando em `false`).
+     - Separadas as ferramentas ativas (`running`), ferramentas aguardando (`waiting`) e ferramentas concluídas.
+     - Ferramentas de inspeção e manipulação de arquivos concluídas (`list_files`, `read_file`, `edit_file`, `search_code`, etc.) agora são agrupadas em um card compacto com contagem e tags das ferramentas (`X ferramentas executadas`), acompanhado de botão de expandir/recolher e chevron animado.
+     - Ao clicar, o grupo expande suavemente exibindo a lista detalhada com checks e caminhos de arquivos.
+     - Ferramentas em execução mantêm o `ThinkingOrb` animado ativo em tempo real.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 57/57 testes passando em 14 suítes.
+  - `npm run build`: bundle de produção e artefatos Cloudflare Pages gerados com sucesso.
