@@ -1016,3 +1016,23 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 57/57 testes passando em 14 suítes.
   - `npm run build`: bundle de produção e artefatos Cloudflare Pages gerados com sucesso.
+
+## 70. Integração Completa do Modelo NVIDIA Nemotron-3 Ultra 550B (Frontend e Backend)
+- **Solicitação do Usuário:** Adicionar o modelo `nvidia/nemotron-3-ultra-550b-a55b` com autenticação via `NVIDIA_API_KEY`, habilitando-o de ponta a ponta no frontend e no backend.
+- **Solução Implementada:**
+  1. **Tipagem e Matriz de Segurança (`src/lib/types.ts`, `src/lib/models.ts` e `lib/server/_security.ts`):**
+     - Adicionado `'nvidia/nemotron-3-ultra-550b-a55b'` ao `ModelId`, `ALLOWED_MODELS` e `TOOL_MODELS` no cliente e servidor, permitindo o uso de ferramentas nativas e do `text-tool-parser`.
+  2. **Roteamento de Chat e Pensamento Estendido (`api/chat.ts`):**
+     - Injetado `p.chat_template_kwargs = { enable_thinking: true }` no payload da API da NVIDIA para o modelo `nvidia/nemotron-3-ultra-550b-a55b`.
+     - Suporte a até 16.384 tokens de resposta no modo `max`.
+  3. **Interface e Monitoramento de Contexto (`src/components/model-controls.tsx` e `src/App.tsx`):**
+     - Adicionado ao dropdown de modelos com o título **Nemotron-3 Ultra 550B**, subtítulo e badge **NVIDIA · 550B**.
+     - Configurado label abreviado **Nemotron 550B** no botão pill do seletor.
+     - Limite de contexto ampliado para 256.000 tokens no monitor de tokens.
+     - Persistência e restauração do modelo via `localStorage` em `src/App.tsx`.
+  4. **Testes de Paridade (`src/lib/models.test.ts`):**
+     - Testes unitários atualizados validando a paridade de capacidades entre cliente e servidor com 100% de cobertura.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 57/57 testes passando em 14 suítes.
+  - `npm run build`: bundle compilado em 2.51s com artefatos Cloudflare Pages gerados.

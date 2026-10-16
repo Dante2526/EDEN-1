@@ -295,7 +295,7 @@ export default async function handler(req: Request, envArg?: Env) {
       if (includeReasoning && apiEffort && apiEffort !== 'default') {
         if (selectedModel === 'z-ai/glm-5.3') {
           p.reasoning_effort = apiEffort;
-        } else if (selectedModel === 'google/gemma-4-31b-it') {
+        } else if (selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b') {
           p.chat_template_kwargs = { enable_thinking: true };
         }
       }

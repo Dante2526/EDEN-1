@@ -3,6 +3,7 @@ export const ALLOWED_MODELS = [
   'z-ai/glm-5.3-flash',
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
+  'nvidia/nemotron-3-ultra-550b-a55b',
   '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
   '@cf/qwen/qwen2.5-coder-32b-instruct',
 ] as const;
@@ -33,14 +34,15 @@ export function isCloudflareModel(model: string): boolean {
 
 /**
  * Modelos que suportam execução nativa de ferramentas (OpenAI Function Calling).
- * Inclui GLM-5.3, GLM-5.3-Flash, Gemma 4 31B, DeepSeek V4.1 Flash (NVIDIA)
- * e Qwen 2.5 Coder 32B (Cloudflare).
+ * Inclui GLM-5.3, GLM-5.3-Flash, Gemma 4 31B, DeepSeek V4.1 Flash,
+ * Nemotron-3 Ultra 550B (NVIDIA) e Qwen 2.5 Coder 32B (Cloudflare).
  */
 export const TOOL_MODELS = [
   'z-ai/glm-5.3',
   'z-ai/glm-5.3-flash',
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
+  'nvidia/nemotron-3-ultra-550b-a55b',
   '@cf/qwen/qwen2.5-coder-32b-instruct',
 ] as const;
 
