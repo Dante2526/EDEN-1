@@ -189,11 +189,10 @@ export function buildTextToolProtocolPrompt(
 
   const generalToolsSection = [
     'PROTOCOLO DE EXECUÇÃO DE FERRAMENTAS DO SYNAP:',
-    'Sempre que precisar executar uma ferramenta geral (pesquisa web, leitura de URL, Python, imagens ou memória), emita a tag correspondente:',
+    'Sempre que precisar executar uma ferramenta geral (pesquisa web, leitura de URL, Python ou memória), emita a tag correspondente:',
     '- Pesquisa Web: <synap_tool name="web_search">{"query": "sua pesquisa"}</synap_tool>',
     '- Ler URL: <synap_tool name="fetch_url">{"url": "https://..."}</synap_tool>',
     '- Rodar Python: <synap_tool name="run_python">{"code": "print(2 + 2)"}</synap_tool>',
-    '- Gerar Imagem: <synap_tool name="generate_image">{"prompt": "descrição detalhada"}</synap_tool>',
     '- Salvar Memória: <synap_tool name="save_memory">{"fact": "fato importante", "category": "preference"}</synap_tool>',
     mcpSection,
     '',

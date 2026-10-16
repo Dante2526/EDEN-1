@@ -26,7 +26,6 @@ import {
   Bot,
   ChevronUp,
   Network,
-  Paintbrush,
   Sparkles,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
@@ -43,10 +42,9 @@ interface ChatMessageProps {
   onOpenTerminal?: () => void;
   onOpenSourceControl?: () => void;
   onOpenGraph?: (focusFile?: string) => void;
-  onOpenImageEditor?: (imageUrl: string) => void;
 }
 
-const ChatImage: React.FC<{ src?: string; alt?: string; onOpenImageEditor?: (imageUrl: string) => void }> = ({ src, alt, onOpenImageEditor }) => {
+const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 8;
@@ -144,18 +142,6 @@ const ChatImage: React.FC<{ src?: string; alt?: string; onOpenImageEditor?: (ima
 
         {status === 'ready' && (
           <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-black/75 backdrop-blur-md p-1 rounded-xl z-20">
-            {onOpenImageEditor && (
-              <button
-                type="button"
-                onClick={() => onOpenImageEditor(src)}
-                title="Retocar imagem com Pincel"
-                aria-label="Retocar com Pincel"
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-sky-300 hover:text-white bg-sky-950/70 hover:bg-sky-900 border border-sky-500/30 transition shadow-xs cursor-pointer"
-              >
-                <Paintbrush className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-sans">Retocar</span>
-              </button>
-            )}
             <a
               href={src}
               target="_blank"
@@ -209,7 +195,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onOpenTerminal,
   onOpenSourceControl,
   onOpenGraph,
-  onOpenImageEditor,
 }) => {
   const isUser = message.role === 'user';
   const [showReasoning, setShowReasoning] = useState(false);
@@ -236,37 +221,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   const hasRunningTool = Boolean(runningTool);
   const isEditingFile = runningTool?.name === 'edit_file';
   const isWebSearch = runningTool?.name === 'web_search' || runningTool?.name === 'search_web';
-  const isImageGen = runningTool?.name === 'generate_image';
 
   // Normaliza markdown de imagens para evitar quebras de linha entre ![...] e (...)
   let cleanContent = displayContent.replace(
     /!\[([^\]]*)\]\s*\n+\s*\((https?:\/\/[^\s)]+)\)/g,
     '![$1]($2)'
   );
-
-  // Se houver chamada a generate_image nesta mensagem (em execução, pendente ou concluída),
-  // impede que imagens alucinadas / geradas prematuramente no texto apareçam antes da hora
-  const imageGenCall = message.toolCalls?.find((tc) => tc.name === 'generate_image');
-  if (imageGenCall) {
-    if (imageGenCall.status !== 'completed') {
-      cleanContent = cleanContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-    } else if (imageGenCall.status === 'completed' && imageGenCall.result) {
-      try {
-        const parsed = JSON.parse(imageGenCall.result);
-        const validUrl = parsed.url;
-        if (validUrl) {
-          cleanContent = cleanContent.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, (match, alt, url) => {
-            if (url === validUrl || url.includes(validUrl) || validUrl.includes(url)) {
-              return match;
-            }
-            return '';
-          });
-        }
-      } catch {}
-    }
-  } else if (hasRunningTool && isImageGen) {
-    cleanContent = cleanContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-  }
 
   // Remove tags de declaração [Habilidade: ...] do texto bruto (elas são renderizadas nas badges visuais)
   cleanContent = cleanContent.replace(/\[Habilidade(?:s)?(?:\s*Usada(?:s)?)?:\s*[^\]]+\]/gi, '').trimEnd();
@@ -290,8 +250,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       return 'Consultando MCP…';
     }
     switch (toolName) {
-      case 'generate_image':
-        return 'Criando a imagem…';
       case 'query_code_graph':
       case 'query_architecture_graph':
         return 'Mapeando arquitetura…';
@@ -362,17 +320,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       alt="Anexo"
                       className="max-h-48 max-w-full rounded-xl object-contain bg-black/40"
                     />
-                    {onOpenImageEditor && (
-                      <button
-                        type="button"
-                        onClick={() => onOpenImageEditor(img)}
-                        title="Retocar imagem com Pincel"
-                        className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-sky-300 bg-sky-950/85 hover:bg-sky-900 border border-sky-500/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition shadow-md cursor-pointer"
-                      >
-                        <Paintbrush className="w-3 h-3" />
-                        <span>Retocar</span>
-                      </button>
-                    )}
                   </div>
                 ))}
               </div>
@@ -409,23 +356,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             {hasRunningTool ? (
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#d97757]/15 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/30 shadow-2xs">
                 <ThinkingOrb
-                  state={isImageGen ? 'shaping' : isWebSearch ? 'weaving' : 'composing'}
+                  state={isWebSearch ? 'weaving' : 'composing'}
                   size={20}
                   theme="dark"
                   speed={1.5}
                   aria-label={
-                    isImageGen
-                      ? 'Criando a imagem…'
-                      : isWebSearch
+                    isWebSearch
                       ? 'Juntando as fontes…'
                       : 'Executando…'
                   }
                 />
-                <span>{isImageGen ? 'Criando imagem' : isWebSearch ? 'Pesquisando' : 'Executando'}</span>
+                <span>{isWebSearch ? 'Pesquisando' : 'Executando'}</span>
                 <span className="px-1.5 py-0.2 rounded bg-[#d97757]/25 text-[color:var(--c-fg-f3efe6)] text-[9px] border border-[#d97757]/40">
-                  {isImageGen
-                    ? 'Criando a imagem…'
-                    : isEditingFile
+                  {isEditingFile
                     ? 'Editando arquivo…'
                     : isWebSearch
                     ? 'Juntando as fontes…'
@@ -555,18 +498,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisFetchUrl = tc.name === 'fetch_url';
                   const isThisPython = tc.name === 'run_python';
                   const isThisDocGen = tc.name === 'generate_document';
-                  const isThisImageGen = tc.name === 'generate_image';
                   const isThisMemory = tc.name === 'save_memory' || tc.name === 'forget_memory';
                   const isThisSubagent = tc.name === 'dispatch_subagent';
                   const isThisGraph = tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph';
-                  const orbState = isThisImageGen
-                    ? 'shaping'
-                    : isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph
+                  const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph
                     ? 'weaving'
                     : 'composing';
-                  const orbLabel = isThisImageGen
-                    ? 'Criando a imagem…'
-                    : isThisGraph
+                  const orbLabel = isThisGraph
                     ? 'Mapeando arquitetura…'
                     : isThisMemory
                     ? (tc.name === 'save_memory' ? 'Guardando na memória…' : 'Atualizando memória…')
@@ -579,9 +517,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Juntando as fontes…'
                     : 'Executando…';
-                  const actionTitle = isThisImageGen
-                    ? 'Criando Imagem'
-                    : isThisGraph
+                  const actionTitle = isThisGraph
                     ? 'Mapeando Arquitetura do Projeto'
                     : isThisSubagent
                     ? (parsedArgs.role ? `Subagente: ${parsedArgs.role}` : 'Subagente em Ação')
@@ -596,9 +532,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Pesquisando na Internet'
                     : 'Executando';
-                  const actionBadge = isThisImageGen
-                    ? 'Criando a imagem…'
-                    : isThisGraph
+                  const actionBadge = isThisGraph
                     ? 'Graphify (GraphRAG)'
                     : isThisSubagent
                     ? 'Orquestração Paralela'
@@ -613,9 +547,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : tc.name === 'edit_file'
                     ? 'Editando arquivo…'
                     : getToolActionLabel(tc.name);
-                  const actionDescription = isThisImageGen
-                    ? 'Gerando arte com Stable Diffusion / Flux em alta resolução…'
-                    : isThisSubagent
+                  const actionDescription = isThisSubagent
                     ? (parsedArgs.task || 'Executando subtarefa autônoma em segundo plano…')
                     : isThisDocGen
                     ? 'Compilando arquivo binário e preparando link para download no navegador…'
@@ -652,7 +584,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                         </div>
                         {targetParam && (
                           <span className="text-[11px] text-[color:var(--c-fg-f09a7d)] font-mono mt-0.5 truncate max-w-[260px] sm:max-w-[420px]">
-                            {isThisWebSearch || isThisImageGen ? `"${targetParam}"` : targetParam}
+                            {isThisWebSearch ? `"${targetParam}"` : targetParam}
                           </span>
                         )}
                         <span className="text-[10px] text-[color:var(--c-fg-8c867a)] mt-1 font-sans">
@@ -1488,7 +1420,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     return <div className="my-2.5 leading-relaxed">{children}</div>;
                   },
                   img({ src, alt }) {
-                    return <ChatImage src={src} alt={alt} onOpenImageEditor={onOpenImageEditor} />;
+                    return <ChatImage src={src} alt={alt} />;
                   },
                   a({ href, children }) {
                     return (

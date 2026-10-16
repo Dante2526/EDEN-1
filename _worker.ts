@@ -21,7 +21,6 @@ import chatTestHandler from './api/chat-test';
 import downloadHandler from './api/download';
 import fetchUrlHandler from './api/fetch-url';
 import githubHandler from './api/github';
-import imageHandler from './api/image';
 import searchHandler from './api/search';
 import statusHandler from './api/status';
 import ttsHandler from './api/tts';
@@ -51,9 +50,6 @@ export default {
       }
       if (path === '/api/github' || path === '/api/github/') {
         return await githubHandler(request, env);
-      }
-      if (path === '/api/image' || path === '/api/image/') {
-        return await imageHandler(request, env);
       }
       if (path === '/api/search' || path === '/api/search/') {
         return await searchHandler(request, env);

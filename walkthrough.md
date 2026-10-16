@@ -1160,3 +1160,27 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção e artefatos Cloudflare Pages compilados em 2.37s.
 
+## 76. Remoção Completa das Ferramentas e Recursos de Geração e Edição de Imagens
+- **Solicitação do Usuário:** Remover os modelos e ferramentas de geração e edição de imagens, uma vez que modelos de imagem locais (como Qwen-Image / Qwen-Image-Edit da NVIDIA) não possuem endpoints de inferência serverless online gratuitos, mantendo o Synap focado 100% em desenvolvimento de software, código, arquitetura, terminal e documentos.
+- **Solução Implementada:**
+  1. **Exclusão de Arquivos e Módulos Obsoletos:**
+     - Deletado `api/image.ts` (backend da rota de imagens).
+     - Deletado `src/components/image-editor-modal.tsx` (modal com canvas de inpainting).
+     - Deletado `src/lib/image-mask-helper.ts` e sua suíte de testes `src/lib/image-mask-helper.test.ts`.
+  2. **Limpeza de Rotas de Servidor (`server.ts` e `_worker.ts`):**
+     - Removidos imports de `imageHandler` e roteamentos de `/api/image` no Express local e no Cloudflare Pages Worker.
+  3. **Limpeza do Frontend Core (`src/App.tsx`):**
+     - Removida a ferramenta `IMAGE_GEN_TOOL` (`generate_image`) de `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Removido o handler de execução da ferramenta.
+     - Removida a diretriz de geração de imagens do System Prompt (`repoPrompt`), renumerando as regras remanescentes de 1 a 6.
+     - Removidos estados e callbacks de `ImageEditorModal`.
+  4. **Limpeza de UI e Protocolo Textual (`chat-message.tsx` e `text-tool-parser.ts`):**
+     - Removido o botão de "Retocar" com ícone de pincel sobre imagens.
+     - Removidas referências a `generate_image` no parser de ferramentas textuais.
+     - Preservado o componente `ChatImage` para renderização, zoom/lightbox e download de anexos enviados pelo usuário ou diagramas/imagens pré-existentes.
+- **Evidências de Verificação:**
+  - `npm test`: 56/56 testes unitários passando em 14 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção compilado em 1.67s com economia de ~12 kB no bundle principal.
+
+

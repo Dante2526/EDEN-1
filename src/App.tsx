@@ -60,7 +60,6 @@ import { commitStagedChanges } from './lib/github-commit';
 import { StudioPanel } from './studio/studio-panel';
 import { ErrorModal, AppErrorInfo } from './components/error-modal';
 import { GraphModal } from './components/graph-modal';
-import { ImageEditorModal } from './components/image-editor-modal';
 import { buildGraphFromFiles, queryGraphContext, ProjectGraph } from './lib/graphify-engine';
 import { CompactionMarker } from './components/compaction-marker';
 import { executePythonCode, formatPythonOutput } from './lib/pyodide-client';
@@ -318,32 +317,6 @@ const DOCUMENT_GEN_TOOL = {
   },
 };
 
-const IMAGE_GEN_TOOL = {
-  type: 'function',
-  function: {
-    name: 'generate_image',
-    description:
-      'Gera ou edita imagens artísticas, ilustrações e fotos de alta qualidade com os modelos Qwen-Image / Qwen-Image-Edit (NVIDIA) e FLUX. ' +
-      'Use SEMPRE esta ferramenta para gerar ou editar imagens. NUNCA gere ou invente URLs ou sintaxe markdown antes de chamar a ferramenta.',
-    parameters: {
-      type: 'object',
-      properties: {
-        prompt: { type: 'string', description: 'Descrição detalhada da imagem a ser gerada ou das alterações a serem feitas na imagem existente' },
-        aspect_ratio: {
-          type: 'string',
-          enum: ['1:1', '16:9', '9:16', '4:3'],
-          description: 'Proporção da imagem (padrão 1:1)',
-        },
-        image_url: {
-          type: 'string',
-          description: 'URL ou base64 da imagem existente a ser editada (opcional, para usar qwen-image-edit)',
-        },
-      },
-      required: ['prompt'],
-    },
-  },
-};
-
 const TERMINAL_TOOL = {
   type: 'function',
   function: {
@@ -563,8 +536,8 @@ const QUERY_ARCHITECTURE_GRAPH_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, ...GITHUB_TOOLS];
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -671,16 +644,6 @@ function AppContent() {
   // Graphify Architecture Graph (GraphRAG) state
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
   const [graphFocusNodeId, setGraphFocusNodeId] = useState<string | undefined>();
-
-  // Image Editor Retouch Modal state
-  const [imageEditorState, setImageEditorState] = useState<{
-    isOpen: boolean;
-    imageUrl: string;
-  }>({ isOpen: false, imageUrl: '' });
-
-  const handleOpenImageEditor = useCallback((imageUrl: string) => {
-    setImageEditorState({ isOpen: true, imageUrl });
-  }, []);
 
   const projectGraph = useMemo<ProjectGraph>(() => {
     const fileMap = new Map<string, string>();
@@ -1949,36 +1912,6 @@ function AppContent() {
       }
     }
 
-    if (name === 'generate_image') {
-      try {
-        const prompt = args.prompt || '';
-        const aspect_ratio = args.aspect_ratio || '1:1';
-        const image_url = args.image_url || args.image || '';
-        const res = await fetch('/api/image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': import.meta.env.VITE_API_SECRET || '',
-          },
-          body: JSON.stringify({ prompt, aspect_ratio, image_url }),
-        });
-        if (!res.ok) throw new Error(`Falha ao gerar imagem (${res.status})`);
-        const imgData = await res.json();
-        return {
-          result: JSON.stringify({
-            status: 'success',
-            url: imgData.url,
-            prompt: imgData.prompt,
-            markdown: imgData.markdown,
-            instruction:
-              `A imagem já foi pré-renderizada e está disponível no servidor. Apresente-a usando exatamente: ${imgData.markdown} sem quebrar linha entre [ e (.`,
-          }),
-        };
-      } catch (err: any) {
-        return { result: JSON.stringify({ error: err?.message || 'Erro ao gerar imagem' }) };
-      }
-    }
-
     if (name === 'run_terminal_command' || name === 'terminal') {
       try {
         const cmd = args.command || args.cmd || '';
@@ -2707,13 +2640,12 @@ function AppContent() {
         'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
         'É ESTRITAMENTE PROIBIDO responder apenas prometendo ou anunciando que vai agir (ex: "Vou criar o arquivo...", "Vou listar os arquivos...", "Vou localizar...", "Primeiro vou...", "Deixe-me verificar..."). Emita a chamada de ferramenta na mesma resposta!\n' +
         'Regras estritas para ferramentas:\n' +
-        '1. Geração de Imagens: Quando o usuário pedir qualquer imagem ou ilustração, execute OBRIGATORIAMENTE a ferramenta `generate_image`. NUNCA invente, presuma ou escreva links de imagens ou sintaxe markdown como `![...](https://...)` no seu texto antes da execução da ferramenta.\n' +
-        '2. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída. ATENÇÃO: O terminal é um emulador Git e NÃO suporta redirecionamento de shell (`>`, `>>`, `cat >`, heredocs `<< EOF`, `touch`, `nano`, `vi` ou `find`). NUNCA tente criar ou gravar arquivos através do terminal — para criar ou editar arquivos use SEMPRE a ferramenta `edit_file` ou `batch_edit_files`.\n' +
-        '3. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
-        '4. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python. Ela opera em sandbox no navegador e NÃO tem acesso aos arquivos do repositório GitHub nem ao disco local; NUNCA use Python para tentar manipular ou decodificar arquivos de código.\n' +
-        '5. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
-        '6. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.\n' +
-        '7. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.';
+        '1. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída. ATENÇÃO: O terminal é um emulador Git e NÃO suporta redirecionamento de shell (`>`, `>>`, `cat >`, heredocs `<< EOF`, `touch`, `nano`, `vi` ou `find`). NUNCA tente criar ou gravar arquivos através do terminal — para criar ou editar arquivos use SEMPRE a ferramenta `edit_file` ou `batch_edit_files`.\n' +
+        '2. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
+        '3. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python. Ela opera em sandbox no navegador e NÃO tem acesso aos arquivos do repositório GitHub nem ao disco local; NUNCA use Python para tentar manipular ou decodificar arquivos de código.\n' +
+        '4. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
+        '5. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.\n' +
+        '6. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.';
 
     const planPrompt = activePlan
       ? 'Você é um estrategista e arquiteto de planejamento sênior. O MODO PLANO (FUNÇÃO PLAN) está ATIVADO. Para a solicitação do usuário, crie OBRIGATORIAMENTE um PLANO DE AÇÃO COMPLETO, PRÁTICO E EXECUTÁVEL, formatado estritamente com os seguintes tópicos em Markdown:\n\n' +
@@ -3183,11 +3115,6 @@ function AppContent() {
             completionTokens,
             totalTokens: promptTokens + completionTokens,
           };
-        }
-
-        // Se a iteração chamou generate_image, remove qualquer markdown de imagem acidental que o modelo tenha colocado antes da chamada da ferramenta
-        if (detectedCalls.some((c) => c.name === 'generate_image')) {
-          iterationText = iterationText.replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim();
         }
 
         // Store accumulated content across iterations
@@ -3743,13 +3670,6 @@ function AppContent() {
     }
   }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
 
-  const handleApplyImageEdit = useCallback(
-    ({ prompt, imageUrl }: { prompt: string; imageUrl: string }) => {
-      handleSendMessage(prompt, [imageUrl], []);
-    },
-    [handleSendMessage]
-  );
-
   // ====== RESUME-AFTER-SCREEN-OFF: retoma quando a tela acender ======
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -4105,7 +4025,6 @@ function AppContent() {
                         setIsSidebarOpen(true);
                       }}
                       onOpenGraph={handleOpenGraph}
-                      onOpenImageEditor={handleOpenImageEditor}
                     />
                   </React.Fragment>
                 );
@@ -4209,14 +4128,6 @@ function AppContent() {
         graph={projectGraph}
         initialFocusNodeId={graphFocusNodeId}
         onSelectFile={handleViewDiffForPath}
-      />
-
-      {/* Image Editor Retouch Modal (Mobile-First) */}
-      <ImageEditorModal
-        isOpen={imageEditorState.isOpen}
-        onClose={() => setImageEditorState((prev) => ({ ...prev, isOpen: false }))}
-        imageUrl={imageEditorState.imageUrl}
-        onApplyEdit={handleApplyImageEdit}
       />
     </div>
   );
