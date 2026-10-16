@@ -74,6 +74,7 @@ import {
 } from './lib/mcp-client';
 import { runSubagent } from './lib/subagent-runner';
 import { isVisionModel, isToolCapableModel } from './lib/models';
+import { extractTextToolCalls, buildTextToolProtocolPrompt } from './lib/text-tool-parser';
 import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } from './lib/theme';
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
@@ -2493,9 +2494,7 @@ function AppContent() {
     const isNoToolsModel = !isToolCapableModel(effectiveModel);
 
     const repoPrompt = isNoToolsModel
-      ? chatActiveRepo
-        ? `O repositório "${chatActiveRepo.fullName}" (branch "${chatActiveRepo.branch}") está selecionado nesta conversa, mas este modelo opera em Modo Consulta (sem ferramentas de edição direta). Forneça os blocos de código completos em Markdown prontos para uso e NUNCA diga que está executando edit_file ou comandos automaticamente.`
-        : undefined
+      ? undefined
       : chatActiveRepo
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
         `Você tem acesso às ferramentas de código: read_file, list_files, search_code e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
@@ -2507,8 +2506,7 @@ function AppContent() {
 
     const basePrompt = isNoToolsModel
       ? 'Você é o assistente Synap operando com o modelo DeepSeek R1.\n' +
-        'MODO CONSULTA: Este modelo opera em modo analítico e textual, sem ferramentas externas ativas.\n' +
-        'NUNCA diga que vai criar arquivos, rodar comandos ou fazer alterações no sistema. Forneça o raciocínio aprofundado e o código completo pronto para cópia diretamente no texto.'
+        buildTextToolProtocolPrompt(Boolean(chatActiveRepo), chatActiveRepo?.fullName, chatActiveRepo?.branch)
       : 'Você é o assistente Synap com ferramentas avançadas integradas.\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO):\n' +
         'Sempre que for realizar uma ação (editar arquivo, rodar comando no terminal, pesquisar na web, compilar documento ou rodar python), emita a tool_call IMEDIATAMENTE na primeira resposta.\n' +
@@ -2972,8 +2970,15 @@ function AppContent() {
           }
         }
 
-        // Process tool calls if any were returned
-        const detectedCalls = Object.values(toolCallsAccumulator).filter((c) => c && c.name);
+        // Process tool calls if any were returned (native or text-based fallback)
+        let detectedCalls = Object.values(toolCallsAccumulator).filter((c) => c && c.name);
+        if (detectedCalls.length === 0 && iterationText) {
+          const extracted = extractTextToolCalls(iterationText);
+          if (extracted.toolCalls.length > 0) {
+            detectedCalls = extracted.toolCalls;
+            iterationText = extracted.cleanedText;
+          }
+        }
 
         // Se o streaming não enviou usage nos chunks, calcular estimativa precisa baseada em caracteres/tokens
         if (!iterationTokenUsage) {
@@ -2993,26 +2998,6 @@ function AppContent() {
           };
         }
 
-        // Garante que a mensagem do assistente receba o tokenUsage finalizado
-        setConversations((prev) =>
-          prev.map((c) => {
-            if (c.id !== currentConvId) return c;
-            return {
-              ...c,
-              messages: c.messages.map((m) =>
-                m.id === assistantMessageId
-                  ? {
-                      ...m,
-                      tokenUsage: iterationTokenUsage,
-                      isTruncated: iterationFinishReason === 'length',
-                      streamError: streamErrorMsg || undefined,
-                    }
-                  : m
-              ),
-            };
-          })
-        );
-
         // Se a iteração chamou generate_image, remove qualquer markdown de imagem acidental que o modelo tenha colocado antes da chamada da ferramenta
         if (detectedCalls.some((c) => c.name === 'generate_image')) {
           iterationText = iterationText.replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim();
@@ -3031,6 +3016,28 @@ function AppContent() {
             : iterationReasoning;
           streamingAccumulatedReasoningRef.current = accumulatedReasoningText;
         }
+
+        // Garante que a mensagem do assistente receba o texto limpo e o tokenUsage finalizado
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== currentConvId) return c;
+            return {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === assistantMessageId
+                  ? {
+                      ...m,
+                      content: accumulatedAssistantText,
+                      reasoning: accumulatedReasoningText || undefined,
+                      tokenUsage: iterationTokenUsage,
+                      isTruncated: iterationFinishReason === 'length',
+                      streamError: streamErrorMsg || undefined,
+                    }
+                  : m
+              ),
+            };
+          })
+        );
 
         if (detectedCalls.length > 0) {
           hasToolCallsToProcess = true;
@@ -3249,7 +3256,6 @@ function AppContent() {
           iterationText.trim() &&
           loopCount < MAX_TOOL_ITERATIONS &&
           chatActiveRepo &&
-          !isNoToolsModel &&
           allEditedFiles.length === 0 &&
           detectedCalls.length === 0 &&
           looksLikeFileModificationPromise(iterationText)
@@ -3260,9 +3266,10 @@ function AppContent() {
             { role: 'assistant', content: iterationText },
             {
               role: 'user',
-              content:
-                'Você descreveu alterações mas ainda não executou a ferramenta (edit_file ou create_file). ' +
-                'Execute IMEDIATAMENTE a ferramenta apropriada agora para aplicar as alterações solicitadas no repositório ativo.',
+              content: isNoToolsModel
+                ? 'Você descreveu alterações mas ainda não emitiu o bloco <synap_edit path="..." type="modified">. Emita IMEDIATAMENTE o bloco <synap_edit path="caminho/do/arquivo" type="modified"> com o código completo para aplicar as alterações solicitadas no repositório ativo.'
+                : 'Você descreveu alterações mas ainda não executou a ferramenta (edit_file ou create_file). ' +
+                  'Execute IMEDIATAMENTE a ferramenta apropriada agora para aplicar as alterações solicitadas no repositório ativo.',
             },
           ];
           hasToolCallsToProcess = true;

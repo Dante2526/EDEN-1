@@ -811,6 +811,20 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 46/46 testes passando (11 suítes, incluindo `src/lib/models.test.ts` e o novo teste de loop de tools em `src/lib/subagent-runner.test.ts`).
   - `npm run build`: bundle de produção e `dist/_worker.js` (106.2 kB) gerados com sucesso.
 
+## 57. Extrator de Ferramentas e Edição de Repositório em 100% dos Modelos (`text-tool-parser.ts`)
+- **Solicitação do Usuário:** Habilitar também o 6º modelo (`@cf/deepseek-ai/deepseek-r1-distill-qwen-32b` na Cloudflare Workers AI) para ler e alterar o código do repositório vinculado no chat (100% dos modelos operacionais).
+- **Solução Implementada:**
+  1. **Motor `src/lib/text-tool-parser.ts` (TDD com 5 testes em `src/lib/text-tool-parser.test.ts`):**
+     - `extractTextToolCalls(text)`: Extrai blocos multilinhas `<synap_edit path="..." type="modified|added|deleted">...código...</synap_edit>` (sem exigir escape JSON de quebras de linha ou aspas), tags `<synap_tool name="...">...JSON...</synap_tool>` para qualquer ferramenta (`read_file`, `list_files`, `search_code`, `run_terminal_command`, `web_search`, `fetch_url`, `run_python`, `submit_plan`, `submit_review`) e blocos de código Markdown anotados com `path="..."`.
+     - `buildTextToolProtocolPrompt(...)`: Instrui modelos sem Function Calling nativo sobre como ler e editar arquivos do repositório ativo via tags estruturadas.
+  2. **Integração no Chat (`src/App.tsx`), Studio (`src/studio/studio-engine.ts`) e Subagentes (`src/lib/subagent-runner.ts`):**
+     - Quando um modelo não retorna `tool_calls` nativas no JSON/SSE, o Synap extrai automaticamente as chamadas do texto, limpa as tags brutas da mensagem exibida, aplica as alterações diretamente no **Source Control** (com toast de diff) e realimenta o resultado no loop agentic.
+     - Agora **todos os 6 modelos (100%)** conseguem ler, inspecionar e editar repositórios vinculados no Chat, no Studio e em Subagentes.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 51/51 testes passando em 12 suítes.
+  - `npm run build`: bundle compilado em 1.75s com artefatos Cloudflare Pages gerados.
+
 
 
 

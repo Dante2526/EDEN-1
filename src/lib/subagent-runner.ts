@@ -1,4 +1,5 @@
 import { ModelId } from './types';
+import { extractTextToolCalls } from './text-tool-parser';
 
 export interface SubagentConfig {
   role: string;
@@ -211,6 +212,14 @@ export async function runSubagent(config: SubagentConfig): Promise<SubagentResul
         }
       }
 
+      let detectedCalls = Object.values(toolCallsAccumulator).filter((c) => c && c.name);
+      if (detectedCalls.length === 0 && turnText) {
+        const extracted = extractTextToolCalls(turnText);
+        if (extracted.toolCalls.length > 0) {
+          detectedCalls = extracted.toolCalls;
+          turnText = extracted.cleanedText;
+        }
+      }
       if (turnText) {
         finalAccumulatedText = finalAccumulatedText ? `${finalAccumulatedText}\n\n${turnText}` : turnText;
       }
@@ -220,7 +229,6 @@ export async function runSubagent(config: SubagentConfig): Promise<SubagentResul
           : turnReasoning;
       }
 
-      const detectedCalls = Object.values(toolCallsAccumulator).filter((c) => c && c.name);
       if (detectedCalls.length > 0 && config.onExecuteTool) {
         messages.push({
           role: 'assistant',

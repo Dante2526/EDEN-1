@@ -3,6 +3,8 @@ import { ActiveRepoState } from '../lib/types';
 import { StudioAgent, StudioStep, StudioReview } from './studio-types';
 import { generateId } from '../lib/utils';
 import { getClientAuthHeaders } from '../lib/github';
+import { isToolCapableModel } from '../lib/models';
+import { extractTextToolCalls } from '../lib/text-tool-parser';
 
 // Tools definitions no formato OpenAI/NVIDIA
 const READ_TOOLS = [
@@ -95,8 +97,24 @@ async function callChat(
   agent: StudioAgent,
   tools: any[]
 ): Promise<{ content: string; toolCalls: Array<{ id: string; name: string; arguments: string }> }> {
-  // Injeta system prompt no início das messages (formato esperado por /api/chat)
-  const payloadMessages = messages;
+  const supportsNativeTools = isToolCapableModel(agent.model);
+  const payloadMessages = supportsNativeTools
+    ? messages
+    : messages.map((m, idx) => {
+        if (idx === 0 && m.role === 'system') {
+          const toolNames = tools.map((t) => t?.function?.name).filter(Boolean).join(', ');
+          return {
+            ...m,
+            content:
+              `${m.content}\n\n` +
+              `PROTOCOLO DE FERRAMENTAS EM TEXTO (obrigatório para este modelo):\n` +
+              `- Para invocar qualquer ferramenta (${toolNames}), emita: <synap_tool name="NOME_DA_FERRAMENTA">{...json...}</synap_tool>\n` +
+              `- Para editar ou criar um arquivo com edit_file, você também pode emitir:\n` +
+              `<synap_edit path="caminho/do/arquivo" type="modified">\n...conteúdo completo...\n</synap_edit>`,
+          };
+        }
+        return m;
+      });
 
   const response = await fetch('/api/chat', {
     method: 'POST',
@@ -108,7 +126,7 @@ async function callChat(
       messages: payloadMessages,
       model: agent.model,
       reasoning_effort: agent.reasoningEffort, // ← snake_case (correto)
-      tools,
+      tools: supportsNativeTools ? tools : undefined,
     }),
   });
 
@@ -166,9 +184,19 @@ async function callChat(
     }
   }
 
+  let finalToolCalls = Object.values(toolCallsMap).filter((tc) => tc && tc.name);
+  let finalContent = content;
+  if (finalToolCalls.length === 0 && content) {
+    const extracted = extractTextToolCalls(content);
+    if (extracted.toolCalls.length > 0) {
+      finalToolCalls = extracted.toolCalls;
+      finalContent = extracted.cleanedText;
+    }
+  }
+
   return {
-    content,
-    toolCalls: Object.values(toolCallsMap),
+    content: finalContent,
+    toolCalls: finalToolCalls,
   };
 }
 
