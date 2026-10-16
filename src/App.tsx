@@ -636,8 +636,15 @@ function AppContent() {
     clearCommitted,
   } = usePendingChanges();
 
+  const ACTIVE_CONV_STORAGE_KEY = 'synap_active_conv_id';
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('synap_active_conv_id');
+    }
+    return null;
+  });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -887,6 +894,37 @@ function AppContent() {
     }
     return hasDiff ? { ...activeProject, files: mergedFiles } : activeProject;
   }, [activeProject, changes, activeRepo]);
+
+  // Auto-associação resiliente do repositório ativo com seu projeto no F5 / recarregamento
+  useEffect(() => {
+    if (!activeRepo) return;
+    // Se já tem activeProject para este repositório, não precisa reabrir
+    if (
+      activeProject &&
+      (activeProject as any).sourceRepoFullName === activeRepo.fullName &&
+      (activeProject as any).sourceRepoBranch === activeRepo.branch
+    ) {
+      return;
+    }
+    const matchingProject = projectsIndex.find(
+      (p: any) =>
+        p.sourceRepoFullName === activeRepo.fullName &&
+        p.sourceRepoBranch === activeRepo.branch
+    );
+    if (matchingProject) {
+      openProject(matchingProject.id);
+    } else if (activeId) {
+      syncRepoToProject({
+        repoFullName: activeRepo.fullName,
+        owner: activeRepo.owner,
+        repo: activeRepo.repo,
+        branch: activeRepo.branch,
+        conversationId: activeId,
+      }).catch((err) => {
+        console.warn('[Synap] Auto-sync no F5 falhou:', err);
+      });
+    }
+  }, [activeRepo?.fullName, activeRepo?.branch, projectsIndex, activeProject, openProject, syncRepoToProject, activeId]);
 
   // Prepara o workspace quando um projeto é selecionado ou fechado
   useEffect(() => {
@@ -1259,11 +1297,14 @@ function AppContent() {
       }));
       setConversations(enhanced);
       if (enhanced.length > 0) {
-        setActiveId(enhanced[0].id);
-        if (enhanced[0].model) setSelectedModel(enhanced[0].model as ModelId);
-        if (enhanced[0].reasoningEffort) setReasoningEffort(enhanced[0].reasoningEffort);
-        if (enhanced[0].isPlanMode !== undefined) setIsPlanMode(enhanced[0].isPlanMode);
-        if (enhanced[0].activeRepo) setActiveRepo(enhanced[0].activeRepo);
+        const savedActiveId = localStorage.getItem('synap_active_conv_id');
+        const initialConv = (savedActiveId && enhanced.find((c) => c.id === savedActiveId)) || enhanced[0];
+        setActiveId(initialConv.id);
+        localStorage.setItem('synap_active_conv_id', initialConv.id);
+        if (initialConv.model) setSelectedModel(initialConv.model as ModelId);
+        if (initialConv.reasoningEffort) setReasoningEffort(initialConv.reasoningEffort);
+        if (initialConv.isPlanMode !== undefined) setIsPlanMode(initialConv.isPlanMode);
+        if (initialConv.activeRepo) setActiveRepo(initialConv.activeRepo);
         else setActiveRepo(null);
       }
     });
@@ -1647,6 +1688,7 @@ function AppContent() {
 
   const handleNewChat = useCallback(() => {
     setActiveId(null);
+    try { localStorage.removeItem('synap_active_conv_id'); } catch {}
     setIsPlanMode(false);
     setActiveRepo(null);
     setMainViewTab('chat');
@@ -1657,6 +1699,7 @@ function AppContent() {
 
   const handleSelectConversation = useCallback((id: string) => {
     setActiveId(id);
+    try { localStorage.setItem('synap_active_conv_id', id); } catch {}
     setMainViewTab('chat');
     const target = conversations.find((c) => c.id === id);
     if (target) {

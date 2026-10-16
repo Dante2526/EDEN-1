@@ -912,3 +912,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 53/53 testes passando em 13 suítes (+ `preview-html.test.ts` verde).
   - `npm run build`: bundle compilado em 1.62s.
+
+## 64. Correção de Desabilitação do Preview ao Recarregar a Página (F5)
+- **Solicitação do Usuário:** Ao estar dentro de um chat e dar F5 (recarregar a página), o botão de Preview desabilitava e exigia clicar no chat novamente pela barra lateral para voltar a funcionar.
+- **Causa Raiz Identificada (`systematic-debugging`):**
+  1. Ao dar F5, o React inicializava `activeId` como `null`, e o `useEffect` de carregamento inicial pegava apenas `enhanced[0].id` ignorando qual conversa o usuário estava realmente usando.
+  2. Mais crítico: a sincronização e abertura automática do projeto Sandpack (`openProject(matchingProject.id)`) só existia dentro do clique manual `handleSelectConversation`. No carregamento inicial por F5, `activeProject` continuava `null`, fazendo o botão de Preview desabilitar (`disabled={!activeProjectName}`).
+- **Solução Implementada:**
+  - `src/App.tsx`:
+    - Criada persistência de `synap_active_conv_id` no `localStorage`, restaurando no F5 exatamente a mesma conversa que você estava vendo.
+    - Criado `useEffect` de auto-associação reativa: assim que `activeRepo` e `projectsIndex` carregam na montagem inicial (F5), ele localiza o projeto do repositório e chama `openProject` automaticamente (ou dispara `syncRepoToProject`), garantindo que o Preview já nasça habilitado e pronto.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 53/53 testes passando em 13 suítes.
+  - `npm run build`: bundle compilado em 1.78s.
