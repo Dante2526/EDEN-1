@@ -18,7 +18,6 @@ const mockGraph: ProjectGraph = {
       inDegree: 0,
       outDegree: 2,
       community: 'src',
-      exports: ['App'],
     },
     {
       id: 'src/lib/types.ts',
@@ -28,7 +27,6 @@ const mockGraph: ProjectGraph = {
       inDegree: 2,
       outDegree: 0,
       community: 'src/lib',
-      exports: ['ModelId'],
     },
     {
       id: 'src/lib/models.ts',
@@ -38,7 +36,6 @@ const mockGraph: ProjectGraph = {
       inDegree: 1,
       outDegree: 1,
       community: 'src/lib',
-      exports: ['ALLOWED_MODELS'],
     },
   ],
   edges: [
@@ -55,14 +52,12 @@ const mockGraph: ProjectGraph = {
       inDegree: 2,
       outDegree: 0,
       community: 'src/lib',
-      exports: ['ModelId'],
     },
   ],
   communities: {
     src: ['src/App.tsx'],
     'src/lib': ['src/lib/types.ts', 'src/lib/models.ts'],
   },
-  generatedAt: Date.now(),
 };
 
 describe('graph-3d-engine (3D Force-Directed & Perspective Projection Engine)', () => {

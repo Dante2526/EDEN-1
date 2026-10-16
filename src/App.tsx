@@ -727,29 +727,128 @@ function AppContent() {
   }, []);
 
   const projectGraph = useMemo<ProjectGraph>(() => {
+    const fileMap = new Map<string, string>();
+
     if (activeProject?.files && Object.keys(activeProject.files).length > 0) {
-      const files = Object.entries(activeProject.files).map(([path, content]) => ({
-        path,
-        content: typeof content === 'string' ? content : '',
-      }));
-      return buildGraphFromFiles(files);
+      for (const [rawPath, fileEntry] of Object.entries(activeProject.files)) {
+        const cleanPath = rawPath.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+        const content =
+          typeof fileEntry === 'string'
+            ? fileEntry
+            : fileEntry && typeof fileEntry === 'object' && typeof fileEntry.content === 'string'
+              ? fileEntry.content
+              : '';
+        fileMap.set(cleanPath, content);
+      }
+    } else {
+      // Grafo completo da arquitetura real do Synap caso nenhum projeto externo esteja aberto
+      const defaultWorkspaceFiles = [
+        {
+          path: 'src/main.tsx',
+          content: "import App from './App';\nimport './index.css';",
+        },
+        {
+          path: 'src/App.tsx',
+          content: [
+            "import { ChatHeader } from './components/chat-header';",
+            "import { ChatMessage } from './components/chat-message';",
+            "import { ChatInput } from './components/chat-input';",
+            "import { GraphModal } from './components/graph-modal';",
+            "import { StudioPanel } from './studio/studio-panel';",
+            "import { buildGraphFromFiles, queryGraphContext } from './lib/graphify-engine';",
+            "import { extractTextToolCalls, buildTextToolProtocolPrompt } from './lib/text-tool-parser';",
+            "import { runSubagent } from './lib/subagent-runner';",
+            "import { convertMcpToolsToOpenAi } from './lib/mcp-client';",
+            "import { formatSkillsPrompt } from './lib/skills-manager';",
+            "import { loadConversations, saveConversations } from './lib/storage';",
+            "import { AVAILABLE_MODELS, modelSupportsTools } from './lib/models';",
+            "import { formatFileSize } from './lib/utils';",
+            "import type { Conversation, Message, SynapProject } from './lib/types';",
+          ].join('\n'),
+        },
+        {
+          path: 'src/components/chat-header.tsx',
+          content: "import type { ModelOption } from '../lib/types';\nimport { AVAILABLE_MODELS } from '../lib/models';\nimport { cn } from '../lib/utils';",
+        },
+        {
+          path: 'src/components/chat-message.tsx',
+          content: "import type { Message } from '../lib/types';\nimport { formatFileSize, cn } from '../lib/utils';",
+        },
+        {
+          path: 'src/components/chat-input.tsx',
+          content: "import type { Attachment } from '../lib/types';\nimport { formatFileSize, cn } from '../lib/utils';",
+        },
+        {
+          path: 'src/components/graph-modal.tsx',
+          content: "import type { ProjectGraph, GraphNode } from '../lib/graphify-engine';\nimport { compute3DLayout, step3DForceSimulation, project3DNodes, findClosestProjectedNode } from '../lib/graph-3d-engine';",
+        },
+        {
+          path: 'src/lib/graph-3d-engine.ts',
+          content: "import type { ProjectGraph, GraphNode, GraphEdge } from './graphify-engine';",
+        },
+        {
+          path: 'src/lib/graphify-engine.ts',
+          content: "export function buildGraphFromFiles() {}\nexport function queryGraphContext() {}",
+        },
+        {
+          path: 'src/lib/text-tool-parser.ts',
+          content: "export function extractTextToolCalls() {}\nexport function buildTextToolProtocolPrompt() {}",
+        },
+        {
+          path: 'src/lib/subagent-runner.ts',
+          content: "import { extractTextToolCalls, buildTextToolProtocolPrompt } from './text-tool-parser';\nimport { modelSupportsTools } from './models';",
+        },
+        {
+          path: 'src/studio/studio-panel.tsx',
+          content: "import { runPlanner, runReviewer, runImplementer } from './studio-engine';\nimport type { Skill, McpServerConfig } from '../lib/types';",
+        },
+        {
+          path: 'src/studio/studio-engine.ts',
+          content: "import { convertMcpToolsToOpenAi } from '../lib/mcp-client';\nimport { formatSkillsPrompt } from '../lib/skills-manager';\nimport type { Skill, McpServerConfig } from '../lib/types';",
+        },
+        {
+          path: 'src/lib/mcp-client.ts',
+          content: "import type { McpServerConfig, McpTool } from './types';",
+        },
+        {
+          path: 'src/lib/skills-manager.ts',
+          content: "import type { Skill } from './types';\nimport { loadSkills } from './storage';",
+        },
+        {
+          path: 'src/lib/models.ts',
+          content: "import type { ModelOption } from './types';",
+        },
+        {
+          path: 'src/lib/storage.ts',
+          content: "import type { Conversation, Message, AppSettings, Skill } from './types';",
+        },
+        {
+          path: 'src/lib/types.ts',
+          content: "export interface Message {}\nexport interface Conversation {}\nexport interface SynapProject {}",
+        },
+        {
+          path: 'src/lib/utils.ts',
+          content: "export function cn() {}\nexport function formatFileSize() {}",
+        },
+      ];
+      for (const f of defaultWorkspaceFiles) {
+        fileMap.set(f.path, f.content);
+      }
     }
 
-    // Grafo padrão da aplicação Synap caso nenhum projeto Sandpack esteja aberto
-    const defaultWorkspaceFiles = [
-      { path: 'src/App.tsx', content: "import { ChatHeader } from './components/chat-header';\nimport { ChatMessage } from './components/chat-message';\nimport { GraphModal } from './components/graph-modal';\nimport { buildGraphFromFiles } from './lib/graphify-engine';" },
-      { path: 'src/components/chat-header.tsx', content: "import { Network } from 'lucide-react';" },
-      { path: 'src/components/chat-message.tsx', content: "import { Network } from 'lucide-react';\nimport { formatFileSize } from '../lib/utils';" },
-      { path: 'src/components/graph-modal.tsx', content: "import { ProjectGraph } from '../lib/graphify-engine';" },
-      { path: 'src/lib/graphify-engine.ts', content: "export function buildGraphFromFiles() {}\nexport function queryGraphContext() {}" },
-      { path: 'src/lib/storage.ts', content: "import { Message } from './types';" },
-      { path: 'src/lib/types.ts', content: "export interface Message {}" },
-      { path: 'src/lib/utils.ts', content: "export function formatFileSize() {}" },
-      { path: 'src/lib/mcp-client.ts', content: "import { McpServerConfig } from './types';" },
-      { path: 'src/lib/subagent-runner.ts', content: "export function runSubagent() {}" },
-    ];
-    return buildGraphFromFiles(defaultWorkspaceFiles);
-  }, [activeProject]);
+    // Mescla alterações pendentes (Source Control) em tempo real sobre o grafo
+    for (const change of changes) {
+      const cleanPath = change.path.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+      if (change.type === 'deleted') {
+        fileMap.delete(cleanPath);
+      } else if (typeof change.newContent === 'string') {
+        fileMap.set(cleanPath, change.newContent);
+      }
+    }
+
+    const files = Array.from(fileMap.entries()).map(([path, content]) => ({ path, content }));
+    return buildGraphFromFiles(files);
+  }, [activeProject, changes]);
 
   const handleOpenGraph = useCallback((focusFile?: string) => {
     setGraphFocusNodeId(focusFile);

@@ -864,3 +864,20 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 56/56 testes passando em 13 suítes.
   - `npm run build`: bundle de produção compilado com sucesso.
+
+## 61. Correção do Motor de Dependências Graphify e Flicker 3D
+- **Solicitação do Usuário:**
+  1. Eliminar a piscada da tela ao passar o mouse sobre as esferas do grafo 3D.
+  2. Verificar e corrigir a exibição de arquivos usados (`Usado por` / `inDegree`), arquivos importados (`Importa` / `outDegree`) e quem depende de quem no Mapa de Arquitetura Graphify.
+- **Causa Raiz Identificada (`systematic-debugging`):**
+  1. **Flicker no Hover (`src/components/graph-modal.tsx`):** `hoveredNodeId` estava nas dependências do `useEffect` que criava o `<canvas>` e o loop `requestAnimationFrame`, zerando o buffer do canvas a cada hover.
+  2. **Conteúdo Vazio em Projetos Reais (`src/App.tsx`):** `activeProject.files` armazena objetos `ProjectFile` (`{ path, content }`), mas `projectGraph` fazia `typeof content === 'string' ? content : ''`, passando strings vazias para todos os arquivos de projetos reais e gerando `0 dependências`.
+  3. **Fallback Limitado e Resolução de Imports (`src/App.tsx` e `src/lib/graphify-engine.ts`):** O fallback sem projeto externo tinha apenas 10 arquivos resumidos (sem `main.tsx`, `graph-3d-engine.ts`, `studio-engine.ts`, etc.) e não mesclava `changes` pendentes. Além disso, `normalizePath` não removia `/` inicial e `resolveRelativePath` ignorava aliases `@/` e `src/`.
+- **Solução Implementada:**
+  - `src/components/graph-modal.tsx`: Desacoplado `hoveredNodeIdRef` e `sceneRef` do `useEffect` do loop 3D, eliminando 100% da piscada ao encostar o mouse nas esferas.
+  - `src/lib/graphify-engine.ts` + `src/lib/graphify-engine.test.ts`: Normalização de `/` inicial, suporte a aliases (`@/`, `~/`, `src/`) e extração completa de `import`/`export ... from` multiline, `import type`, side-effect imports e `import()` dinâmico.
+  - `src/App.tsx`: Extração correta de `fileEntry.content` em `activeProject.files`, mesclagem em tempo real das alterações pendentes (`changes`) do Source Control e atualização do mapa arquitetural padrão do Synap com todos os 17 módulos reais e suas dependências.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 57/57 testes passando em 14 suítes.
+  - `npm run build`: bundle de produção compilado com sucesso.

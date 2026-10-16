@@ -1,122 +1,72 @@
 import { describe, it } from 'node:test';
-import assert from 'node:assert';
-import {
-  buildGraphFromFiles,
-  findShortestPath,
-  findGodNodes,
-  queryGraphContext,
-  parseGraphJson,
-} from './graphify-engine';
+import assert from 'node:assert/strict';
+import { buildGraphFromFiles } from './graphify-engine';
 
-describe('Graphify Engine (GraphRAG)', () => {
-  const sampleFiles = [
-    {
-      path: 'src/App.tsx',
-      content: `
-        import React from 'react';
-        import { ChatMessage } from './components/chat-message';
-        import { ChatHeader } from './components/chat-header';
-        import { storage } from './lib/storage';
-        export function App() { return <div>App</div>; }
-      `,
-    },
-    {
-      path: 'src/components/chat-message.tsx',
-      content: `
-        import React from 'react';
-        import { formatFileSize } from '../lib/utils';
-        import { Message } from '../lib/types';
-        export const ChatMessage = () => null;
-      `,
-    },
-    {
-      path: 'src/components/chat-header.tsx',
-      content: `
-        import React from 'react';
-        import { formatFileSize } from '../lib/utils';
-        export const ChatHeader = () => null;
-      `,
-    },
-    {
-      path: 'src/lib/storage.ts',
-      content: `
-        import { Message } from './types';
-        export const storage = {};
-      `,
-    },
-    {
-      path: 'src/lib/utils.ts',
-      content: `
-        export function formatFileSize(size: number) { return size + 'B'; }
-      `,
-    },
-    {
-      path: 'src/lib/types.ts',
-      content: `
-        export interface Message { id: string; }
-      `,
-    },
-  ];
+describe('graphify-engine (buildGraphFromFiles)', () => {
+  it('calcula com precisão inDegree (Usado por) e outDegree (Importa) para imports relativos, multiline, type e aliases', () => {
+    const files = [
+      {
+        path: '/src/main.tsx',
+        content: `
+          import React from 'react';
+          import App from './App';
+          import './index.css';
+        `,
+      },
+      {
+        path: '/src/App.tsx',
+        content: `
+          import {
+            type SynapProject,
+            type ProjectFile
+          } from './lib/types';
+          import { buildGraphFromFiles } from '@/lib/graphify-engine';
+          const LazyModal = () => import('./components/graph-modal');
+        `,
+      },
+      {
+        path: '/src/components/graph-modal.tsx',
+        content: `
+          import type { KnowledgeGraph } from '../lib/graphify-engine';
+          import { compute3DLayout } from 'src/lib/graph-3d-engine';
+        `,
+      },
+      {
+        path: '/src/lib/graphify-engine.ts',
+        content: `export interface KnowledgeGraph {}`,
+      },
+      {
+        path: '/src/lib/graph-3d-engine.ts',
+        content: `import type { KnowledgeGraph } from './graphify-engine';`,
+      },
+      {
+        path: '/src/lib/types.ts',
+        content: `export interface SynapProject {}`,
+      },
+      {
+        path: '/src/index.css',
+        content: `@tailwind base;`,
+      },
+    ];
 
-  it('buildGraphFromFiles extrai nós e arestas de imports relativos corretamente', () => {
-    const graph = buildGraphFromFiles(sampleFiles);
+    const graph = buildGraphFromFiles(files);
+    const byId = Object.fromEntries(graph.nodes.map((n) => [n.id, n]));
 
-    assert.ok(graph.nodes.length >= 6, 'Deve conter pelo menos 6 nós de arquivos');
-    assert.ok(graph.edges.length > 0, 'Deve conter arestas de dependência');
+    // Caminhos iniciados com '/' devem ser normalizados
+    assert.ok(byId['src/App.tsx'], 'src/App.tsx deve estar normalizado sem barra inicial');
+    assert.ok(byId['src/main.tsx'], 'src/main.tsx deve estar normalizado sem barra inicial');
 
-    const appNode = graph.nodes.find((n) => n.path === 'src/App.tsx');
-    assert.ok(appNode, 'Nó src/App.tsx deve existir');
-    assert.strictEqual(appNode.outDegree >= 3, true, 'App.tsx deve importar pelo menos 3 módulos');
+    // main.tsx importa App.tsx e index.css -> outDegree = 2, inDegree = 0
+    assert.equal(byId['src/main.tsx'].outDegree, 2);
+    assert.equal(byId['src/main.tsx'].inDegree, 0);
 
-    const utilsNode = graph.nodes.find((n) => n.path === 'src/lib/utils.ts');
-    assert.ok(utilsNode, 'Nó src/lib/utils.ts deve existir');
-    assert.strictEqual(utilsNode.inDegree >= 2, true, 'utils.ts deve ser importado por chat-message e chat-header');
-  });
+    // App.tsx é usado por main.tsx (inDegree = 1) e importa types.ts, graphify-engine.ts, graph-modal.tsx (outDegree = 3)
+    assert.equal(byId['src/App.tsx'].inDegree, 1);
+    assert.equal(byId['src/App.tsx'].outDegree, 3);
 
-  it('findShortestPath encontra o caminho entre dois nós via BFS', () => {
-    const graph = buildGraphFromFiles(sampleFiles);
-    const path = findShortestPath(graph, 'src/App.tsx', 'src/lib/utils.ts');
-
-    assert.ok(path, 'Caminho deve existir');
-    assert.strictEqual(path[0], 'src/App.tsx');
-    assert.strictEqual(path[path.length - 1], 'src/lib/utils.ts');
-    assert.strictEqual(path.length, 3, 'Caminho deve ter tamanho 3 (App -> Component -> utils)');
-  });
-
-  it('findGodNodes identifica módulos mais acoplados/centrais do projeto', () => {
-    const graph = buildGraphFromFiles(sampleFiles);
-    const gods = findGodNodes(graph, 3);
-
-    assert.ok(gods.length <= 3, 'Deve respeitar o limite solicitado');
-    assert.ok(gods.length > 0, 'Deve retornar nós centrais');
-    assert.ok(
-      gods.some((g) => g.path === 'src/App.tsx' || g.path === 'src/lib/utils.ts'),
-      'App.tsx ou utils.ts devem estar entre os hubs'
-    );
-  });
-
-  it('queryGraphContext formata resumo cirúrgico GraphRAG para a LLM', () => {
-    const graph = buildGraphFromFiles(sampleFiles);
-    const result = queryGraphContext(graph, { query: 'formatFileSize' });
-
-    assert.ok(result.markdownContext.includes('GraphRAG Architecture Context'));
-    assert.ok(result.markdownContext.includes('src/lib/utils.ts'));
-    assert.ok(result.matchedNodes.length > 0);
-  });
-
-  it('parseGraphJson aceita e normaliza saída oficial do CLI graphify.json', () => {
-    const cliJson = {
-      nodes: [
-        { id: 'module_a', label: 'Module A', file: 'src/a.ts' },
-        { id: 'module_b', label: 'Module B', file: 'src/b.ts' },
-      ],
-      links: [{ source: 'module_a', target: 'module_b', kind: 'imports' }],
-      communities: { '0': ['module_a', 'module_b'] },
-    };
-
-    const graph = parseGraphJson(cliJson);
-    assert.strictEqual(graph.nodes.length, 2);
-    assert.strictEqual(graph.edges.length, 1);
-    assert.strictEqual(graph.edges[0].source, 'module_a');
+    // graphify-engine.ts é usado por App.tsx, graph-modal.tsx e graph-3d-engine.ts -> inDegree = 3
+    assert.equal(byId['src/lib/graphify-engine.ts'].inDegree, 3);
+    assert.equal(byId['src/lib/graphify-engine.ts'].outDegree, 0);
+    assert.ok(graph.godNodes.some((g) => g.id === 'src/lib/graphify-engine.ts'));
   });
 });

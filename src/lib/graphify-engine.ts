@@ -54,7 +54,7 @@ export interface FileInput {
  * Normaliza caminhos no formato POSIX (barras normais)
  */
 export function normalizePath(p: string): string {
-  return p.replace(/\\/g, '/').replace(/^\.\//, '');
+  return p.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
 }
 
 /**
@@ -78,29 +78,37 @@ function detectNodeKind(filePath: string, content: string): NodeKind {
 }
 
 /**
- * Resolve um caminho de importação relativo a partir do arquivo importador
+ * Resolve um caminho de importação relativo ou alias (@/, src/) a partir do arquivo importador
  */
 function resolveRelativePath(importerPath: string, importSpec: string, allPaths: Set<string>): string | null {
-  if (!importSpec.startsWith('.')) {
+  let candidate = '';
+
+  if (importSpec.startsWith('.')) {
+    const parts = normalizePath(importerPath).split('/');
+    parts.pop(); // Remove o arquivo atual para ficar na pasta base
+
+    const specParts = importSpec.split('/');
+    for (const part of specParts) {
+      if (part === '.' || part === '') continue;
+      if (part === '..') {
+        parts.pop();
+      } else {
+        parts.push(part);
+      }
+    }
+    candidate = parts.join('/');
+  } else if (importSpec.startsWith('@/')) {
+    candidate = 'src/' + importSpec.slice(2);
+  } else if (importSpec.startsWith('~/')) {
+    candidate = 'src/' + importSpec.slice(2);
+  } else if (importSpec.startsWith('src/') || importSpec.startsWith('/src/')) {
+    candidate = normalizePath(importSpec);
+  } else {
     // Import de pacote externo (ex: 'react', 'lucide-react')
     return null;
   }
 
-  const parts = normalizePath(importerPath).split('/');
-  parts.pop(); // Remove o arquivo atual para ficar na pasta base
-
-  const specParts = importSpec.split('/');
-  for (const part of specParts) {
-    if (part === '.' || part === '') continue;
-    if (part === '..') {
-      parts.pop();
-    } else {
-      parts.push(part);
-    }
-  }
-
-  const candidate = parts.join('/');
-  const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '.mjs', '/index.ts', '/index.tsx', '/index.js'];
+  const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.json', '.css', '/index.ts', '/index.tsx', '/index.js'];
 
   for (const ext of extensions) {
     const full = candidate + ext;
@@ -109,24 +117,50 @@ function resolveRelativePath(importerPath: string, importSpec: string, allPaths:
     }
   }
 
+  // Fallback: tenta casar sem o prefixo 'src/' caso o projeto tenha arquivos na raiz
+  if (candidate.startsWith('src/')) {
+    const rootCandidate = candidate.slice(4);
+    for (const ext of extensions) {
+      const full = rootCandidate + ext;
+      if (allPaths.has(full)) {
+        return full;
+      }
+    }
+  }
+
   return candidate;
 }
 
 /**
- * Extrai todos os caminhos importados por um arquivo de código
+ * Extrai todos os caminhos importados por um arquivo de código (estáticos, multiline, type, side-effect e dinâmicos)
  */
 function extractImports(content: string): string[] {
-  const imports: string[] = [];
-  const regex = /(?:import|export)\s+(?:(?:\{[\s\S]*?\}|\*[\s\S]*?as\s+[\w$]+|[\w$]+)\s*,?\s*)*(?:from\s+)?['"]([^'"]+)['"]/g;
-  let match: RegExpExecArray | null;
+  const imports = new Set<string>();
+  // Remove comentários de bloco e de linha para evitar falsos positivos
+  const cleaned = content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
 
-  while ((match = regex.exec(content)) !== null) {
-    if (match[1]) {
-      imports.push(match[1]);
-    }
+  // 1. import/export ... from 'spec' (incluindo import type e multiline)
+  const fromRegex = /\b(?:import|export)\s+[\s\S]*?\bfrom\s*['"]([^'"]+)['"]/g;
+  let match: RegExpExecArray | null;
+  while ((match = fromRegex.exec(cleaned)) !== null) {
+    if (match[1]) imports.add(match[1].trim());
   }
 
-  return imports;
+  // 2. side-effect import 'spec'
+  const sideEffectRegex = /\bimport\s*['"]([^'"]+)['"]/g;
+  while ((match = sideEffectRegex.exec(cleaned)) !== null) {
+    if (match[1]) imports.add(match[1].trim());
+  }
+
+  // 3. dynamic import('spec') ou require('spec')
+  const dynamicRegex = /\b(?:import|require)\(\s*['"]([^'"]+)['"]\s*\)/g;
+  while ((match = dynamicRegex.exec(cleaned)) !== null) {
+    if (match[1]) imports.add(match[1].trim());
+  }
+
+  return Array.from(imports);
 }
 
 /**
