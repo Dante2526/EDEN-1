@@ -790,6 +790,27 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 2.88s com artefatos sincronizados para Cloudflare Pages.
 
+## 56. Alinhamento Total da Matriz de IAs, Execução de Ferramentas e Subagentes Autônomos
+- **Problema Identificado na Auditoria:**
+  1. `deepseek-ai/deepseek-v4.1-flash` recebia o System Prompt de execução imediata de ferramentas no frontend, mas tinha suas `tools` bloqueadas em `api/chat.ts`.
+  2. `google/gemma-4-31b-it` perdia a seleção e trocava à força para `z-ai/glm-5.3-flash` ao anexar uma imagem devido a uma checagem estática em `src/App.tsx`.
+  3. Modelos em Modo Consulta (`@cf/deepseek-ai/deepseek-r1-distill-qwen-32b`) caíam na trava `looksLikeFileModificationPromise` exigindo `edit_file` quando havia repositório ativo.
+  4. Subagentes (`dispatch_subagent` / `runSubagent`) operavam sem acesso a ferramentas de leitura ou pesquisa.
+- **Solução Implementada:**
+  1. **Matriz Unificada de Capacidades (`src/lib/models.ts`, `lib/server/_security.ts`, `api/chat.ts`):**
+     - Exportados `TOOL_MODELS` e `isToolCapableModel(model)` com paridade testada entre cliente e servidor, habilitando ferramentas no `deepseek-ai/deepseek-v4.1-flash`.
+     - `api/chat.ts` atualizado para consultar `isVisionModel` e `isToolCapableModel`.
+  2. **Preservação do Gemma 4 31B e Blindagem de Modelos Sem Tools (`src/App.tsx`):**
+     - `handleSendMessage` agora usa `isVisionModel(selectedModel)`, mantendo o `google/gemma-4-31b-it` ativo ao enviar fotos.
+     - Sincronizado `isNoToolsModel = !isToolCapableModel(effectiveModel)` para omitir o envio de `tools`, adaptar o `repoPrompt` e desativar `looksLikeFileModificationPromise` em modelos de consulta.
+  3. **Loop Autônomo de Ferramentas nos Subagentes (`src/lib/subagent-runner.ts` e `src/App.tsx`):**
+     - `runSubagent` agora suporta `tools` e `onExecuteTool` com até 5 iterações autônomas (compatível com SSE e JSON).
+     - `dispatch_subagent` equipa cada subagente com ferramentas seguras de leitura e pesquisa (`web_search`, `fetch_url`, `run_python`, `search_github_repos`, `read_github_file`, `query_code_graph`, `read_file`, `list_files`, `search_code`).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 46/46 testes passando (11 suítes, incluindo `src/lib/models.test.ts` e o novo teste de loop de tools em `src/lib/subagent-runner.test.ts`).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.2 kB) gerados com sucesso.
+
 
 
 

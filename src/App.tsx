@@ -73,6 +73,7 @@ import {
   executeMcpToolCall,
 } from './lib/mcp-client';
 import { runSubagent } from './lib/subagent-runner';
+import { isVisionModel, isToolCapableModel } from './lib/models';
 import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } from './lib/theme';
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
@@ -1923,12 +1924,31 @@ function AppContent() {
     // Disparo de Subagentes Autônomos em Paralelo — NÃO depende de repositório ativo
     if (name === 'dispatch_subagent') {
       try {
+        const readOnlyRepoTools = currentRepo
+          ? GITHUB_TOOLS.filter((t) => ['read_file', 'list_files', 'search_code'].includes(t.function.name))
+          : [];
+        const subagentTools = [
+          WEB_SEARCH_TOOL,
+          FETCH_URL_TOOL,
+          PYTHON_TOOL,
+          SEARCH_GITHUB_REPOS_TOOL,
+          READ_GITHUB_FILE_TOOL,
+          QUERY_CODE_GRAPH_TOOL,
+          ...readOnlyRepoTools,
+        ];
+        const subagentModel: ModelId = isToolCapableModel(selectedModel) ? selectedModel : 'z-ai/glm-5.3-flash';
+
         const subagentRes = await runSubagent({
           role: args.role,
           task: args.task,
           context: args.context,
-          model: selectedModel,
+          model: subagentModel,
           apiKeySecret: import.meta.env.VITE_API_SECRET || '',
+          tools: subagentTools,
+          onExecuteTool: async (subToolName, subToolArgs) => {
+            const subExec = await executeGitHubTool(subToolName, subToolArgs, currentRepo);
+            return subExec.result;
+          },
         });
 
         return {
@@ -2383,9 +2403,8 @@ function AppContent() {
     const activePlan = overridePlanMode !== undefined ? overridePlanMode : isPlanMode;
 
     let effectiveModel = selectedModel;
-    const isVisionModel = selectedModel === 'z-ai/glm-5.3-flash';
-    if (images.length > 0 && !isVisionModel) {
-      // Auto-switch pra GLM-5.3 Flash (único modelo vision restante) quando usuário anexa imagem
+    if (images.length > 0 && !isVisionModel(selectedModel)) {
+      // Auto-switch pra GLM-5.3 Flash quando usuário anexa imagem em modelo sem visão
       effectiveModel = 'z-ai/glm-5.3-flash';
       setSelectedModel('z-ai/glm-5.3-flash');
       localStorage.setItem(MODEL_STORAGE_KEY, 'z-ai/glm-5.3-flash');
@@ -2471,9 +2490,13 @@ function AppContent() {
     // Injetar contexto de repositório apenas se vinculado a esta conversa
     const chatActiveRepo = activeRepo || (currentConv?.activeRepo ? currentConv.activeRepo : null);
 
-    const isCfNoTools = effectiveModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b';
+    const isNoToolsModel = !isToolCapableModel(effectiveModel);
 
-    const repoPrompt = chatActiveRepo
+    const repoPrompt = isNoToolsModel
+      ? chatActiveRepo
+        ? `O repositório "${chatActiveRepo.fullName}" (branch "${chatActiveRepo.branch}") está selecionado nesta conversa, mas este modelo opera em Modo Consulta (sem ferramentas de edição direta). Forneça os blocos de código completos em Markdown prontos para uso e NUNCA diga que está executando edit_file ou comandos automaticamente.`
+        : undefined
+      : chatActiveRepo
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
         `Você tem acesso às ferramentas de código: read_file, list_files, search_code e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
         `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
@@ -2482,7 +2505,7 @@ function AppContent() {
       : 'ATENÇÃO: Nenhum repositório GitHub está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
         'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior.';
 
-    const basePrompt = isCfNoTools
+    const basePrompt = isNoToolsModel
       ? 'Você é o assistente Synap operando com o modelo DeepSeek R1.\n' +
         'MODO CONSULTA: Este modelo opera em modo analítico e textual, sem ferramentas externas ativas.\n' +
         'NUNCA diga que vai criar arquivos, rodar comandos ou fazer alterações no sistema. Forneça o raciocínio aprofundado e o código completo pronto para cópia diretamente no texto.'
@@ -2524,7 +2547,7 @@ function AppContent() {
     const activeMcpServers = mcpServers.filter((s) => s.enabled && s.status === 'connected' && s.tools.length > 0);
     const mcpOpenAiTools = activeMcpServers.flatMap((s) => convertMcpToolsToOpenAi(s.tools, s.id));
     const baseTools = chatActiveRepo ? ALL_CHAT_TOOLS : DEFAULT_CHAT_TOOLS;
-    const requestTools = [...baseTools, ...mcpOpenAiTools];
+    const requestTools = isNoToolsModel ? [] : [...baseTools, ...mcpOpenAiTools];
 
     const convForPayload: Conversation = currentConv
       ? { ...currentConv, messages: [...currentConv.messages, userMessage] }
@@ -2928,7 +2951,7 @@ function AppContent() {
               streamingAccumulatedTextRef.current = accumulatedAssistantText;
             }
 
-            const continuationPrompt = chatActiveRepo
+            const continuationPrompt = chatActiveRepo && !isNoToolsModel
               ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE as ferramentas necessárias (ex: edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
               : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.';
 
@@ -3216,7 +3239,7 @@ function AppContent() {
             { role: 'assistant', content: cleanText || '[Ação interrompida pelo servidor]' },
             {
               role: 'user',
-              content: chatActiveRepo
+              content: chatActiveRepo && !isNoToolsModel
                 ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE a ferramenta (edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
                 : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou sem introdução.',
             },
@@ -3226,6 +3249,7 @@ function AppContent() {
           iterationText.trim() &&
           loopCount < MAX_TOOL_ITERATIONS &&
           chatActiveRepo &&
+          !isNoToolsModel &&
           allEditedFiles.length === 0 &&
           detectedCalls.length === 0 &&
           looksLikeFileModificationPromise(iterationText)

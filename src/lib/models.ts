@@ -30,3 +30,20 @@ export const CLOUDFLARE_MODELS = [
 export function isCloudflareModel(model: string): boolean {
   return CLOUDFLARE_MODELS.includes(model as any);
 }
+
+/**
+ * Modelos que suportam execução nativa de ferramentas (OpenAI Function Calling).
+ * Inclui GLM-5.3, GLM-5.3-Flash, Gemma 4 31B, DeepSeek V4.1 Flash (NVIDIA)
+ * e Qwen 2.5 Coder 32B (Cloudflare).
+ */
+export const TOOL_MODELS = [
+  'z-ai/glm-5.3',
+  'z-ai/glm-5.3-flash',
+  'google/gemma-4-31b-it',
+  'deepseek-ai/deepseek-v4.1-flash',
+  '@cf/qwen/qwen2.5-coder-32b-instruct',
+] as const;
+
+export function isToolCapableModel(model: string): boolean {
+  return TOOL_MODELS.includes(model as any);
+}

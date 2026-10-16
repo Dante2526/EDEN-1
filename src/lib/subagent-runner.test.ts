@@ -60,6 +60,79 @@ async function runTests() {
     assert.ok(successResult.report.includes('Nenhum vazamento'), 'Deve conter o texto retornado');
     assert.strictEqual(successResult.role, 'Auditor');
     console.log('✅ Teste 4 passou: runSubagent executa e retorna SubagentResult estruturado');
+
+    // Teste 5: runSubagent executa ferramentas (tool_calls) via onExecuteTool e consolida relatório final
+    let fetchTurn = 0;
+    const executedTools: Array<{ name: string; args: any }> = [];
+
+    globalThis.fetch = async (_url: any, init: any) => {
+      fetchTurn++;
+      const parsedBody = JSON.parse(init.body);
+      assert.ok(Array.isArray(parsedBody.tools), 'Payload deve enviar lista de tools ao /api/chat');
+
+      if (fetchTurn === 1) {
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: '',
+                  tool_calls: [
+                    {
+                      id: 'call_sub_1',
+                      type: 'function',
+                      function: {
+                        name: 'read_file',
+                        arguments: JSON.stringify({ path: 'src/lib/models.ts' }),
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Turno 2: verifica se o resultado da tool foi anexado às mensagens
+      const hasToolResult = parsedBody.messages.some(
+        (m: any) => m.role === 'tool' && m.tool_call_id === 'call_sub_1' && m.content.includes('ALLOWED_MODELS')
+      );
+      assert.ok(hasToolResult, 'Segundo turno deve incluir mensagem role=tool com o retorno da ferramenta');
+
+      return new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: 'Relatório final: models.ts exporta ALLOWED_MODELS corretamente.',
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    };
+
+    const toolSubagentResult = await runSubagent({
+      role: 'Inspetor de Código',
+      task: 'Verificar exportações em src/lib/models.ts',
+      model: 'z-ai/glm-5.3-flash',
+      apiKeySecret: 'mock_secret',
+      tools: [{ type: 'function', function: { name: 'read_file' } }],
+      onExecuteTool: async (name, args) => {
+        executedTools.push({ name, args });
+        return 'export const ALLOWED_MODELS = ["z-ai/glm-5.3"];';
+      },
+    });
+
+    assert.strictEqual(toolSubagentResult.success, true, 'Subagente com tools deve retornar sucesso');
+    assert.strictEqual(executedTools.length, 1, 'Deve ter executado 1 ferramenta');
+    assert.strictEqual(executedTools[0].name, 'read_file');
+    assert.strictEqual(executedTools[0].args.path, 'src/lib/models.ts');
+    assert.ok(toolSubagentResult.report.includes('ALLOWED_MODELS corretamente'), 'Deve retornar relatório consolidado pós-tool');
+    console.log('✅ Teste 5 passou: runSubagent executa loop de ferramentas autônomo');
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit, ALLOWED_MODELS, isCloudflareModel } from '../lib/server/_security';
+import { checkAuthAndRateLimit, ALLOWED_MODELS, isCloudflareModel, isVisionModel, isToolCapableModel } from '../lib/server/_security';
 import { Env, getEnv } from '../lib/server/env';
 
 export const config = {
@@ -220,12 +220,9 @@ export default async function handler(req: Request, envArg?: Env) {
       lastUserMsg.images.length > 0
     );
 
-    // Validação de visão: GLM-5.3-Flash, Kimi K3 e Gemma 4 31B suportam imagens.
+    // Validação de visão: GLM-5.3-Flash e Gemma 4 31B suportam imagens.
     // Só bloqueamos se a última mensagem do usuário (a atual) tiver imagem.
-    const isVisionCapable =
-      selectedModel === 'z-ai/glm-5.3-flash' ||
-      selectedModel === 'moonshotai/kimi-k3' ||
-      selectedModel === 'google/gemma-4-31b-it';
+    const isVisionCapable = isVisionModel(selectedModel);
     if (lastUserHasImages && !isVisionCapable) {
       return new Response(
         JSON.stringify({ error: 'Este modelo não suporta imagens. Use GLM-5.3-Flash ou Gemma 4 31B.' }),
@@ -273,12 +270,8 @@ export default async function handler(req: Request, envArg?: Env) {
       });
     };
 
-    // Modelos que suportam tools:
-    // NVIDIA: GLM-5.3, GLM-5.3-Flash e Gemma 4 31B.
-    // Cloudflare: Qwen 2.5 Coder 32B (@cf/qwen/qwen2.5-coder-32b-instruct).
-    const modelSupportsTools = usingCloudflare
-      ? selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'
-      : (selectedModel === 'z-ai/glm-5.3' || selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it');
+    // Modelos que suportam tools (centralizados em TOOL_MODELS):
+    const modelSupportsTools = isToolCapableModel(selectedModel);
 
     // ====== BUILDER DE PAYLOAD — NUVEM (NVIDIA) ======
     const createNvidiaPayload = (includeReasoning = true, includeTools = true, safeTokenLimit = false) => {

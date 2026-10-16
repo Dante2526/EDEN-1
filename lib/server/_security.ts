@@ -43,6 +43,18 @@ export function isVisionModel(model: string): boolean {
   return VISION_MODELS.includes(model);
 }
 
+export const TOOL_MODELS = [
+  'z-ai/glm-5.3',
+  'z-ai/glm-5.3-flash',
+  'google/gemma-4-31b-it',
+  'deepseek-ai/deepseek-v4.1-flash',
+  '@cf/qwen/qwen2.5-coder-32b-instruct',
+];
+
+export function isToolCapableModel(model: string): boolean {
+  return TOOL_MODELS.includes(model);
+}
+
 export function getHeader(req: any, name: string): string | null {
   if (!req || !req.headers) return null;
   if (typeof req.headers.get === 'function') {
