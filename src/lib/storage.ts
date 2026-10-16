@@ -15,7 +15,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     name: 'Test-Driven Development (TDD)',
     description: 'Exige escrita de testes antes de implementar código (RED ➔ GREEN ➔ REFACTOR).',
     icon: 'flask',
-    enabled: false,
+    enabled: true,
     isBuiltin: true,
     systemPrompt:
       'Você está operando sob a regra estrita de Test-Driven Development (TDD):\n' +
@@ -29,7 +29,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     name: 'Systematic Debugging',
     description: 'Investiga causa raiz com método científico: hipótese ➔ evidência ➔ conclusão (zero chutes).',
     icon: 'bug',
-    enabled: false,
+    enabled: true,
     isBuiltin: true,
     systemPrompt:
       'Você está operando sob a diretriz de Systematic Debugging:\n' +
@@ -43,7 +43,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     name: 'Code Review & Segurança',
     description: 'Auditoria contínua de vulnerabilidades OWASP, tipagem estrita no TypeScript e robustez.',
     icon: 'shield',
-    enabled: false,
+    enabled: true,
     isBuiltin: true,
     systemPrompt:
       'Você está atuando como Auditor de Código e Segurança Sênior:\n' +
@@ -56,7 +56,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     name: 'Performance & Otimização',
     description: 'Otimiza concorrência, divide bundles, previne re-renderizações e minimiza latência.',
     icon: 'zap',
-    enabled: false,
+    enabled: true,
     isBuiltin: true,
     systemPrompt:
       'Você é um especialista em Performance e Arquitetura de Alto Desempenho:\n' +
@@ -256,6 +256,19 @@ export async function loadSkills(): Promise<Skill[]> {
     const existingIds = new Set(migrated.map((s) => s.id));
     const missingBuiltins = BUILTIN_SKILLS.filter((b) => !existingIds.has(b.id));
     const result = [...migrated, ...missingBuiltins];
+
+    // Se as habilidades de engenharia essenciais estiverem desativadas por estado legado, ativa-as compulsoriamente
+    const hasAnyCoreEnabled = result.some(
+      (s) => ['tdd', 'debugging', 'security', 'perf'].includes(s.id) && s.enabled
+    );
+    if (!hasAnyCoreEnabled) {
+      result.forEach((s) => {
+        if (['tdd', 'debugging', 'security', 'perf'].includes(s.id)) {
+          s.enabled = true;
+        }
+      });
+      await saveSkills(result);
+    }
 
     // Se houve migração do id legado, persiste a atualização no IndexedDB
     if (data.some((s) => s.id === 'vercel-edge')) {

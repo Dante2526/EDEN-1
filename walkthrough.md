@@ -1109,3 +1109,31 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 57/57 testes unitários passando em 14 suítes.
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado em 2.12s com chunk isolado do worker `pyodide-worker-LDet7bQ4.js` (0.88 kB).
+
+## 74. Obrigatoriedade do Grafo de Arquitetura e Exibição Visual de Habilidades no Chat
+- **Solicitação do Usuário:** O usuário notou em chat anterior que a IA não havia consultado o grafo de arquitetura (`query_architecture_graph`) antes de alterar arquivos e que as habilidades deveriam ser compulsórias, com exibição explícita na tela de qual habilidade foi usada em cada resposta/alteração.
+- **Diagnóstico & Causas Raízes:**
+  1. *Mismatch de nome de ferramenta:* O System Prompt instruía o uso de `query_architecture_graph`, mas a ferramenta estava registrada no catálogo OpenAI apenas como `query_code_graph`.
+  2. *Habilidades essenciais desativadas por padrão:* As habilidades `tdd`, `debugging`, `security` e `perf` estavam com `enabled: false` por padrão em `src/lib/storage.ts`.
+  3. *Ausência de feedback visual de habilidades:* A interface do chat não possuía elementos visuais para indicar quais habilidades estavam sendo aplicadas na resposta ou edição de código.
+- **Solução Implementada:**
+  1. **Unificação e Obrigatoriedade do Grafo de Arquitetura:**
+     - Criado e registrado o alias formal `QUERY_ARCHITECTURE_GRAPH_TOOL` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS` em `src/App.tsx`.
+     - Tratamento unificado em `executeGitHubTool` para `query_code_graph` e `query_architecture_graph`.
+     - Injeção obrigatória no `repoPrompt`: instrução imperativa de que o modelo DEVE consultar o grafo antes de qualquer edição de arquivo.
+     - Injeção automática das conexões de nós (`queryGraphContext`) diretamente no retorno das ferramentas `edit_file` e `batch_edit_files`.
+     - Suporte em `chat-message.tsx` para renderizar o card de visualização do grafo GraphRAG para ambos os nomes.
+  2. **Ativação Compulsória das Habilidades Essenciais:**
+     - Habilitadas por padrão (`enabled: true`) em `BUILTIN_SKILLS` (`tdd`, `debugging`, `security`, `perf`) em `src/lib/storage.ts`.
+     - `loadSkills()` garante a ativação automática caso perfis legados no IndexedDB estivessem com elas desativadas.
+     - Diretriz mandatória no `skillsPrompt` exigindo declaração de habilidades via `[Habilidade: <Nome>]`.
+  3. **Módulo de Extração e Testes Unitários TDD (`src/lib/skills-extractor.ts`):**
+     - Extrai habilidades declaradas ou associa habilidades ativas pertinentes caso arquivos tenham sido alterados.
+     - 4 testes unitários automatizados em `src/lib/skills-extractor.test.ts`.
+  4. **Componente Visual de Habilidades Aplicadas (`src/components/chat-message.tsx`):**
+     - Adicionado card visual com ícone `Sparkles`, bordas âmbar e pills com os nomes das habilidades aplicadas na resposta da IA.
+     - Limpeza automática de tags brutas `[Habilidade: ...]` do corpo de texto para apresentação limpa e sem ruídos.
+- **Evidências de Verificação:**
+  - `npm test`: 61/61 testes unitários passando em 15 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado em 2.15s com sucesso.

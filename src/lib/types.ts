@@ -156,6 +156,7 @@ export interface Message {
   fallbackWarning?: string;
   isTruncated?: boolean;
   streamError?: string;
+  usedSkills?: string[]; // Habilidades aplicadas pela IA nesta resposta/alteração
 }
 
 export interface ContextCompaction {

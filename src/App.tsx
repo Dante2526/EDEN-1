@@ -42,6 +42,7 @@ import { lazyWithRetry } from './lib/lazy-retry';
 
 import { ProjectWorkspace } from './components/project-workspace/project-workspace';
 import { loadBabel } from './lib/preview-html';
+import { extractUsedSkills } from './lib/skills-extractor';
 const ProjectsPanel = lazyWithRetry(() =>
   import('./components/project-workspace/projects-panel').then((m) => ({ default: m.ProjectsPanel }))
 );
@@ -551,8 +552,19 @@ const QUERY_CODE_GRAPH_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, ...GITHUB_TOOLS];
+const QUERY_ARCHITECTURE_GRAPH_TOOL = {
+  type: 'function' as const,
+  function: {
+    ...QUERY_CODE_GRAPH_TOOL.function,
+    name: 'query_architecture_graph',
+    description:
+      'Consulta o Grafo de Conhecimento e Arquitetura do projeto (Graphify / GraphRAG). ' +
+      'Mapeia dependências entre arquivos, nós centrais (God Nodes), quem importa quem e caminhos de impacto antes de propor alterações.',
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -2093,6 +2105,7 @@ function AppContent() {
           SEARCH_GITHUB_REPOS_TOOL,
           READ_GITHUB_FILE_TOOL,
           QUERY_CODE_GRAPH_TOOL,
+          QUERY_ARCHITECTURE_GRAPH_TOOL,
           ...readOnlyRepoTools,
           ...mcpOpenAiTools,
         ];
@@ -2135,7 +2148,7 @@ function AppContent() {
     }
 
     // Consulta ao Grafo de Arquitetura (Graphify / GraphRAG) — NÃO depende de repositório ativo
-    if (name === 'query_code_graph') {
+    if (name === 'query_code_graph' || name === 'query_architecture_graph') {
       try {
         const queryResult = queryGraphContext(projectGraph, {
           query: args.query,
@@ -2241,10 +2254,20 @@ function AppContent() {
         type: (type as ChangeType) || 'modified',
       };
 
+      let graphImpact = '';
+      if (projectGraph && projectGraph.nodes && projectGraph.nodes.length > 0) {
+        try {
+          const gContext = queryGraphContext(projectGraph, { focusFile: path, maxNodes: 6 });
+          if (gContext.matchedNodes.length > 0) {
+            graphImpact = `\n\n[Conexões de Arquitetura no Grafo]:\n${gContext.markdownContext}`;
+          }
+        } catch {}
+      }
+
       return {
         result: JSON.stringify({
           success: true,
-          message: `Arquivo '${path}' alterado com sucesso e salvo no Source Control local para revisão do usuário.`,
+          message: `Arquivo '${path}' alterado com sucesso e salvo no Source Control local para revisão do usuário.${graphImpact}`,
         }),
         editedFile,
       };
@@ -2296,6 +2319,15 @@ function AppContent() {
         });
       }
 
+      let graphBatchImpact = '';
+      if (projectGraph && projectGraph.nodes && projectGraph.nodes.length > 0 && processedFiles.length > 0) {
+        try {
+          const gContext = queryGraphContext(projectGraph, { focusFile: processedFiles[0].path, maxNodes: 6 });
+          if (gContext.matchedNodes.length > 0) {
+            graphBatchImpact = `\n\n[Conexões de Arquitetura no Grafo]:\n${gContext.markdownContext}`;
+          }
+        } catch {}
+      }
 
       return {
         result: JSON.stringify({
@@ -2303,7 +2335,7 @@ function AppContent() {
           summary,
           filesCount: processedFiles.length,
           files: processedFiles.map((f) => f.path),
-          message: `Refatoração multi-arquivo concluída com sucesso (${processedFiles.length} arquivos preparados para revisão no Source Control).`,
+          message: `Refatoração multi-arquivo concluída com sucesso (${processedFiles.length} arquivos preparados para revisão no Source Control).${graphBatchImpact}`,
         }),
         editedFiles: processedFiles,
         batchRefactor: {
@@ -2642,10 +2674,12 @@ function AppContent() {
       ? undefined
       : chatActiveRepo
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
-        `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_architecture_graph e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
+        `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_code_graph, query_architecture_graph e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
         `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
-        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file ou search_code DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame edit_file DIRETAMENTE via tool_call.\n` +
-        `ECONOMIA DE TOKENS (GRAPHRAG): Use o mapa de dependências abaixo (e a ferramenta \`query_architecture_graph\` se precisar expandir) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
+        `REGRA OBRIGATÓRIA DE GRAFO (GRAPH-FIRST ARCHITECTURE - USO COMPULSÓRIO):\n` +
+        `Antes de propor qualquer alteração de código (edit_file ou batch_edit_files) ou leitura profunda de múltiplos arquivos, você DEVE OBRIGATORIAMENTE consultar o grafo de arquitetura do projeto via ferramenta query_code_graph (ou query_architecture_graph) passando o caminho do arquivo no parâmetro focus_file ou termo no query. Analise quem importa o arquivo, quem depende dele e quais são os impactos antes de alterar.\n` +
+        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame edit_file DIRETAMENTE via tool_call.\n` +
+        `ECONOMIA DE TOKENS (GRAPHRAG): Use o mapa de dependências abaixo (e a ferramenta \`query_code_graph\`) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
         `Ao propor alterações, correções, remoções ou códigos para o repositório, utilize OBRIGATORIAMENTE a ferramenta edit_file (ou batch_edit_files). ` +
         `Envie SEMPRE o código-fonte legível e completo em texto claro (TypeScript, JSX, CSS, etc.). É ESTRITAMENTE PROIBIDO codificar arquivos em Base64, usar scripts Python para decodificação ou usar comandos Bash para criar arquivos. ` +
         `A alteração ficará salva localmente no Source Control para o usuário revisar o diff e commitar.\n\n` +
@@ -2693,7 +2727,10 @@ function AppContent() {
     // Injetar habilidades modulares ativas (Skills)
     const activeSkills = skills.filter((s) => s.enabled);
     const skillsPrompt = activeSkills.length > 0
-      ? '--- HABILIDADES MODULARES ATIVAS (SKILLS) ---\n' +
+      ? '--- HABILIDADES MODULARES COMPULSÓRIAS (SKILLS ATIVAS) ---\n' +
+        'REGRA OBRIGATÓRIA DE HABILIDADES: Você DEVE aplicar com rigor as habilidades ativas abaixo ao diagnosticar, planejar, revisar ou modificar código.\n' +
+        'SEMPRE que você aplicar as diretrizes de uma habilidade em uma resposta ou alteração de arquivo, declare OBRIGATORIAMENTE na resposta qual habilidade foi aplicada utilizando o formato exato: [Habilidade: <Nome da Habilidade>].\n' +
+        'Exemplo: "[Habilidade: Systematic Debugging]", "[Habilidade: Code Review & Segurança]", "[Habilidade: Conventional Commits]", "[Habilidade: Mobile-First Design & UX]".\n\n' +
         activeSkills
           .map((s) => `### Habilidade: ${s.name}\n${s.systemPrompt}`)
           .join('\n\n')
@@ -3167,7 +3204,14 @@ function AppContent() {
           streamingAccumulatedReasoningRef.current = accumulatedReasoningText;
         }
 
-        // Garante que a mensagem do assistente receba o texto limpo e o tokenUsage finalizado
+        const currentActiveSkills = skills.filter((s) => s.enabled);
+        const currentUsedSkills = extractUsedSkills(
+          accumulatedAssistantText,
+          currentActiveSkills,
+          allEditedFiles.length > 0
+        );
+
+        // Garante que a mensagem do assistente receba o texto limpo, habilidades usadas e o tokenUsage finalizado
         setConversations((prev) =>
           prev.map((c) => {
             if (c.id !== currentConvId) return c;
@@ -3182,6 +3226,7 @@ function AppContent() {
                       tokenUsage: iterationTokenUsage,
                       isTruncated: iterationFinishReason === 'length',
                       streamError: streamErrorMsg || undefined,
+                      usedSkills: currentUsedSkills.length > 0 ? currentUsedSkills : m.usedSkills,
                     }
                   : m
               ),
@@ -3301,6 +3346,7 @@ function AppContent() {
                         editedFiles: allEditedFiles.length > 0 ? allEditedFiles : undefined,
                         batchRefactor: currentBatchRefactor,
                         toolCalls: [...allToolCalls],
+                        usedSkills: currentUsedSkills.length > 0 ? currentUsedSkills : m.usedSkills,
                       }
                     : m
                 ),

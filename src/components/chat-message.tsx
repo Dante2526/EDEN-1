@@ -27,6 +27,7 @@ import {
   ChevronUp,
   Network,
   Paintbrush,
+  Sparkles,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -267,6 +268,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     cleanContent = cleanContent.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
   }
 
+  // Remove tags de declaração [Habilidade: ...] do texto bruto (elas são renderizadas nas badges visuais)
+  cleanContent = cleanContent.replace(/\[Habilidade(?:s)?(?:\s*Usada(?:s)?)?:\s*[^\]]+\]/gi, '').trimEnd();
+
   // Quando ferramentas já foram acionadas e a IA está aguardando conclusão em segundo plano para dar o OK do serviço
   const isAwaitingCompletion =
     Boolean(waitingTool) ||
@@ -286,6 +290,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       case 'generate_image':
         return 'Criando a imagem…';
       case 'query_code_graph':
+      case 'query_architecture_graph':
         return 'Mapeando arquitetura…';
       case 'dispatch_subagent':
         return 'Subagente em ação…';
@@ -547,7 +552,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   if (tc.name === 'generate_document') return false;
                   if (tc.name === 'save_memory' || tc.name === 'forget_memory') return false;
                   if (tc.name === 'dispatch_subagent') return false;
-                  if (tc.name === 'query_code_graph') return false;
+                  if (tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph') return false;
                   return true;
                 };
 
@@ -570,13 +575,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisImageGen = tc.name === 'generate_image';
                   const isThisMemory = tc.name === 'save_memory' || tc.name === 'forget_memory';
                   const isThisSubagent = tc.name === 'dispatch_subagent';
+                  const isThisGraph = tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph';
                   const orbState = isThisImageGen
                     ? 'shaping'
-                    : isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent
+                    : isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph
                     ? 'weaving'
                     : 'composing';
                   const orbLabel = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisGraph
+                    ? 'Mapeando arquitetura…'
                     : isThisMemory
                     ? (tc.name === 'save_memory' ? 'Guardando na memória…' : 'Atualizando memória…')
                     : isThisDocGen
@@ -590,6 +598,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando…';
                   const actionTitle = isThisImageGen
                     ? 'Criando Imagem'
+                    : isThisGraph
+                    ? 'Mapeando Arquitetura do Projeto'
                     : isThisSubagent
                     ? (parsedArgs.role ? `Subagente: ${parsedArgs.role}` : 'Subagente em Ação')
                     : isThisMemory
@@ -605,6 +615,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : 'Executando';
                   const actionBadge = isThisImageGen
                     ? 'Criando a imagem…'
+                    : isThisGraph
+                    ? 'Graphify (GraphRAG)'
                     : isThisSubagent
                     ? 'Orquestração Paralela'
                     : isThisDocGen
@@ -1134,7 +1146,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   );
                 }
 
-                if (tc.name === 'query_code_graph') {
+                if (tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph') {
                   return (
                     <div
                       key={tc.id}
@@ -1259,6 +1271,46 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               })()}
             </div>
           )}
+
+          {/* Habilidades Aplicadas pela IA */}
+          {(() => {
+            let skillsToDisplay: string[] = message.usedSkills || [];
+            if (skillsToDisplay.length === 0 && message.content) {
+              const regex = /\[Habilidade(?:s)?(?:\s*Usada(?:s)?)?:\s*([^\]]+)\]/gi;
+              let match: RegExpExecArray | null;
+              const set = new Set<string>();
+              while ((match = regex.exec(message.content)) !== null) {
+                match[1].split(/[,;e]/).forEach((n) => {
+                  const c = n.trim();
+                  if (c) set.add(c);
+                });
+              }
+              skillsToDisplay = Array.from(set);
+            }
+
+            if (skillsToDisplay.length === 0) return null;
+
+            return (
+              <div className="flex flex-wrap items-center gap-1.5 my-2.5">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs shadow-2xs">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="font-semibold text-amber-200 text-[11px]">
+                    Habilidade(s) Aplicada(s):
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1 ml-0.5">
+                    {skillsToDisplay.map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-100"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Edited Files Cards / Batch Refactoring Card */}
           {message.editedFiles && message.editedFiles.length > 0 && (
