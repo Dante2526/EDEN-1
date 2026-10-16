@@ -1330,13 +1330,35 @@ function AppContent() {
     }
   }, [conversations, isStreaming]);
 
-  // Reset scroll to bottom when switching conversation
+  // Ancoragem automática no fim do chat ao carregar conversa ou alternar abas (ex: vindo de Preview ou Studio)
   useEffect(() => {
-    isAtBottomRef.current = true;
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    if (mainViewTab === 'chat' && !isStudioMode) {
+      isAtBottomRef.current = true;
+      isUserScrollingRef.current = false;
+      const scrollDown = () => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ block: 'end' });
+        }
+      };
+
+      // 1. Imediato
+      scrollDown();
+      // 2. Próximo frame de layout do navegador
+      const rafId = requestAnimationFrame(scrollDown);
+      // 3. Após renderização completa de componentes filhos (markdown, blocos de código)
+      const t1 = setTimeout(scrollDown, 40);
+      const t2 = setTimeout(scrollDown, 120);
+
+      return () => {
+        cancelAnimationFrame(rafId);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
-  }, [activeId]);
+  }, [mainViewTab, isStudioMode, activeId]);
 
   // Active conversation helper
   const activeConversation = conversations.find((c) => c.id === activeId) || null;
@@ -4022,10 +4044,18 @@ function AppContent() {
               Ver lista de projetos
             </button>
           </div>
-        ) : mainViewTab === 'preview' && previewProject && showProjectWorkspace ? null : (
-          <>
-            {/* Messages or Empty State */}
-            <div
+        ) : null}
+
+        {/* Chat Main View — mantido montado no DOM para preservar rolagem, renderização e input */}
+        <div
+          className={
+            mainViewTab === 'chat' && !isStudioMode
+              ? 'flex-1 flex flex-col min-h-0 relative'
+              : 'hidden'
+          }
+        >
+          {/* Messages or Empty State */}
+          <div
               ref={messagesContainerRef}
               onScroll={handleMessagesScroll}
           className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain [overflow-anchor:none]"
@@ -4109,8 +4139,7 @@ function AppContent() {
           onContinuousVoiceTranscript={handleContinuousVoiceTranscript}
           onContinuousVoiceInterim={handleContinuousVoiceInterim}
         />
-          </>
-        )}
+        </div>
 
         {/* Terminal Drawer Panel (Hardware-accelerated smooth drawer) */}
         <TerminalPanel

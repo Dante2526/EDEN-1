@@ -978,3 +978,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 57/57 testes passando em 14 suítes (incluindo testes dedicados de padrões de agentic loop e resiliência de stream).
   - `npm run build`: bundle compilado com sucesso em 1.77s.
 
+## 68. Ancoragem Automática no Fim do Chat ao Voltar de Preview e Studio
+- **Solicitação do Usuário:** Ao ir para a aba Preview ou Studio e retornar ao Chat clicando nas abas superiores, o chat abria posicionado no topo da conversa, forçando a rolar manualmente até o fim para ver as mensagens mais recentes.
+- **Causas Raízes Identificadas (`systematic-debugging`):**
+  1. O contêiner de mensagens do Chat era desmontado do DOM (`null`) enquanto a aba Preview ou Studio estava ativa. Ao retornar para "Chat", o elemento recém-montado nascia com `scrollTop = 0` (topo).
+  2. O efeito de auto-scroll só respondia a novas mensagens de streaming ou troca de conversa (`activeId`), inexistindo gatilho para a alternância entre abas (`mainViewTab`).
+- **Solução Implementada:**
+  - `src/App.tsx`:
+    - O contêiner do Chat agora permanece montado no DOM alternando classe `hidden` vs `flex-1 flex flex-col min-h-0 relative`, preservando o estado e evitando remontagens custosas.
+    - Criado `useEffect` dedicado monitorando `[mainViewTab, isStudioMode, activeId]`:
+      - Reseta flags de scroll do usuário (`isAtBottomRef.current = true; isUserScrollingRef.current = false;`).
+      - Executa scroll imediato para `messagesContainerRef.current.scrollHeight`.
+      - Executa ancoragem precisa em `requestAnimationFrame` e via `messagesEndRef.current.scrollIntoView({ block: 'end' })`.
+      - Timers de segurança (40ms e 120ms) garantem o alinhamento no rodapé mesmo com renderização assíncrona de blocos de markdown e código.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 57/57 testes passando em 14 suítes.
+  - `npm run build`: bundle compilado com sucesso em 2.57s.
+
+
