@@ -840,3 +840,13 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 52/52 testes passando em 12 suítes.
   - `npm run build`: bundle compilado em 2.39s com artefatos Cloudflare Pages gerados.
+
+## 59. Ajuste Visual: Cor do Ícone do Botão "Grafo"
+- **Solicitação do Usuário:** Alterar o ícone do botão "Grafo" para a cor azul.
+- **Solução Implementada:**
+  - Atualizado `src/components/chat-header.tsx` para trocar a classe do ícone `Network` de `text-emerald-400` (verde) para `text-sky-400` (azul vibrante com alta legibilidade).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 52/52 testes passando.
+  - `npm run build`: bundle compilado com sucesso.
+
