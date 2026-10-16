@@ -239,3 +239,12 @@ export interface KnowledgeFact {
   updatedAt?: number;
 }
 
+export interface SelectedPreviewElement {
+  id: string;
+  tagName: string;
+  className?: string;
+  textContent?: string;
+  selector?: string;
+  outerHtmlSnippet?: string;
+}
+

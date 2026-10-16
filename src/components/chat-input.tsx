@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, Paperclip, AudioLines } from 'lucide-react';
+import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X } from 'lucide-react';
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
-import { ModelId, ReasoningEffort, AttachedDocument } from '../lib/types';
+import { ModelId, ReasoningEffort, AttachedDocument, SelectedPreviewElement } from '../lib/types';
 import { isVisionModel } from '../lib/models';
 import { fileToBase64, readFileAsText, generateId } from '../lib/utils';
 
@@ -29,6 +29,9 @@ interface ChatInputProps {
   /** Handler específico pra transcrição do modo contínuo (interrompe TTS antes de enviar) */
   onContinuousVoiceTranscript?: (text: string) => void;
   onContinuousVoiceInterim?: (text: string) => void;
+  selectedElements?: SelectedPreviewElement[];
+  onRemoveSelectedElement?: (id: string) => void;
+  onClearSelectedElements?: () => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = React.memo(({
@@ -48,6 +51,9 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   onToggleContinuousVoice,
   onContinuousVoiceTranscript,
   onContinuousVoiceInterim,
+  selectedElements = [],
+  onRemoveSelectedElement,
+  onClearSelectedElements,
 }) => {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -81,7 +87,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
     if (e) e.preventDefault();
     if (isLoading) return;
 
-    if (!content.trim() && images.length === 0 && documents.length === 0) return;
+    if (!content.trim() && images.length === 0 && documents.length === 0 && selectedElements.length === 0) return;
 
     onSendMessage(content.trim(), images, documents);
     setContent('');
@@ -198,7 +204,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
     }
   };
 
-  const canSend = content.trim().length > 0 || images.length > 0 || documents.length > 0;
+  const canSend = content.trim().length > 0 || images.length > 0 || documents.length > 0 || selectedElements.length > 0;
 
   return (
     <div className="w-full max-w-3xl mx-auto px-3 sm:px-4 pb-3 sm:pb-5">
@@ -233,6 +239,50 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         onDragOver={handleDragOver}
         className="relative rounded-2xl border border-gray-800/60 dark:border-white/10 bg-dark-card shadow-xl transition-all duration-200 focus-within:border-[#d97757]/60 focus-within:ring-2 focus-within:ring-[#d97757]/20 focus-within:shadow-[0_8px_30px_rgba(0,0,0,0.25),0_0_20px_rgba(217,119,87,0.12)]"
       >
+        {/* Chips de Elementos do Preview Selecionados para Edição */}
+        {selectedElements && selectedElements.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 px-3 pt-3 pb-2 border-b border-gray-800/60 dark:border-white/10">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#d97757] mr-1 shrink-0">
+              <MousePointerClick className="w-3.5 h-3.5 animate-pulse" />
+              <span>Preview:</span>
+            </div>
+            {selectedElements.map((el) => (
+              <div
+                key={el.id}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[#d97757]/15 border border-[#d97757]/40 text-[#f3efe6] text-xs max-w-[260px] shadow-sm animate-in fade-in zoom-in-95"
+              >
+                <span className="font-mono text-[#d97757] font-semibold text-[11px]">
+                  &lt;{el.tagName}&gt;
+                </span>
+                {el.textContent && (
+                  <span className="truncate text-xs text-[color:var(--c-fg-a39d93,#a39d93)]" title={el.textContent}>
+                    "{el.textContent}"
+                  </span>
+                )}
+                {onRemoveSelectedElement && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveSelectedElement(el.id)}
+                    className="p-0.5 rounded hover:bg-[#d97757]/30 text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-white transition-colors cursor-pointer ml-0.5"
+                    title="Remover este componente"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {onClearSelectedElements && selectedElements.length > 1 && (
+              <button
+                type="button"
+                onClick={onClearSelectedElements}
+                className="text-[11px] text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-rose-400 underline decoration-dotted ml-auto transition-colors cursor-pointer"
+              >
+                Limpar todos
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Previews for attached images and documents */}
         <FileAttachmentPreviews
           images={images}
@@ -250,7 +300,9 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              isPlanMode
+              selectedElements.length > 0
+                ? `Instrua a IA sobre o que alterar no(s) ${selectedElements.length} componente(s) selecionado(s)...`
+                : isPlanMode
                 ? 'Escreva uma mensagem para criar um Plano Estruturado...'
                 : 'Escreva uma mensagem...'
             }

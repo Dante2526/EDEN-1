@@ -16,6 +16,7 @@ import {
   McpServer,
   KnowledgeFact,
   KnowledgeCategory,
+  SelectedPreviewElement,
 } from './lib/types';
 import {
   loadConversations,
@@ -640,6 +641,23 @@ function AppContent() {
     syncRepoToProject,
   } = useProjects();
   const [showProjectWorkspace, setShowProjectWorkspace] = useState(false);
+
+  // Elementos do Preview selecionados para edição com IA (estilo Element Inspector)
+  const [selectedPreviewElements, setSelectedPreviewElements] = useState<SelectedPreviewElement[]>([]);
+
+  const handleSelectPreviewElement = useCallback((element: SelectedPreviewElement) => {
+    setSelectedPreviewElements((prev) => {
+      const exists = prev.some(
+        (el) => el.selector === element.selector && el.tagName === element.tagName
+      );
+      if (exists) return prev;
+      return [...prev, element];
+    });
+  }, []);
+
+  const handleRemoveSelectedPreviewElement = useCallback((id: string) => {
+    setSelectedPreviewElements((prev) => prev.filter((el) => el.id !== id));
+  }, []);
 
   // Graphify Architecture Graph (GraphRAG) state
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
@@ -2498,7 +2516,7 @@ function AppContent() {
     documents: AttachedDocument[] = [],
     overridePlanMode?: boolean
   ) => {
-    if (!text && images.length === 0 && documents.length === 0) return;
+    if (!text && images.length === 0 && documents.length === 0 && selectedPreviewElements.length === 0) return;
     setErrorMessage(null);
 
     const activePlan = overridePlanMode !== undefined ? overridePlanMode : isPlanMode;
@@ -2511,10 +2529,33 @@ function AppContent() {
       localStorage.setItem(MODEL_STORAGE_KEY, 'z-ai/glm-5.3-flash');
     }
 
+    let finalText = text;
+    if (selectedPreviewElements.length > 0) {
+      const elementsSummary = selectedPreviewElements
+        .map((el, idx) => {
+          const parts = [
+            `Componente #${idx + 1}: <${el.tagName}>`,
+            el.className ? `Classes CSS: ${el.className}` : null,
+            el.selector ? `Seletor CSS: ${el.selector}` : null,
+            el.textContent ? `Texto interno: "${el.textContent}"` : null,
+            el.outerHtmlSnippet ? `Snippet HTML: \`${el.outerHtmlSnippet.trim()}\`` : null,
+          ]
+            .filter(Boolean)
+            .join('\n  ');
+          return `[Elemento ${idx + 1}]\n  ${parts}`;
+        })
+        .join('\n\n');
+
+      const userInstruction = text.trim() || 'Modifique os componentes selecionados no preview conforme boas práticas.';
+      finalText = `${userInstruction}\n\n### [Componentes Selecionados no Preview para Edição]\nO usuário inspecionou e selecionou visualmente os seguintes elementos no preview da aplicação:\n${elementsSummary}\n\nPor favor, aplique as modificações solicitadas focando exatamente nesses componentes e seus respectivos arquivos de código.`;
+
+      setSelectedPreviewElements([]);
+    }
+
     const userMessage: Message = {
       id: generateId(),
       role: 'user',
-      content: text,
+      content: finalText,
       images: images.length > 0 ? images : undefined,
       documents: documents.length > 0 ? documents : undefined,
       isPlanMode: activePlan,
@@ -3668,7 +3709,7 @@ function AppContent() {
       currentAssistantMessageIdRef.current = '';
       currentConversationIdRef.current = '';
     }
-  }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts]);
+  }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts, selectedPreviewElements]);
 
   // ====== RESUME-AFTER-SCREEN-OFF: retoma quando a tela acender ======
   useEffect(() => {
@@ -3881,6 +3922,8 @@ function AppContent() {
           >
             <ProjectWorkspace
               project={previewProject}
+              selectedElementsCount={selectedPreviewElements.length}
+              onSelectElement={handleSelectPreviewElement}
               onClose={() => {
                 setMainViewTab('chat');
               }}
@@ -4064,6 +4107,9 @@ function AppContent() {
           onToggleContinuousVoice={handleContinuousVoiceToggle}
           onContinuousVoiceTranscript={handleContinuousVoiceTranscript}
           onContinuousVoiceInterim={handleContinuousVoiceInterim}
+          selectedElements={selectedPreviewElements}
+          onRemoveSelectedElement={handleRemoveSelectedPreviewElement}
+          onClearSelectedElements={() => setSelectedPreviewElements([])}
         />
         </div>
 

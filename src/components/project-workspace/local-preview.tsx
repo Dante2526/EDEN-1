@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { RefreshCw, ExternalLink, AlertCircle } from 'lucide-react';
-import { SynapProject } from '../../lib/types';
+import { RefreshCw, ExternalLink, AlertCircle, MousePointerClick, MessageSquare } from 'lucide-react';
+import { SynapProject, SelectedPreviewElement } from '../../lib/types';
 import {
   isBabelLoaded,
   loadBabel,
@@ -11,6 +11,9 @@ import {
 
 interface LocalPreviewProps {
   project: SynapProject;
+  selectedElementsCount?: number;
+  onSelectElement?: (element: SelectedPreviewElement) => void;
+  onNavigateToChat?: () => void;
 }
 
 function buildTranspiledHtmlSync(
@@ -40,8 +43,14 @@ function buildTranspiledHtmlSync(
   return buildPreviewHtmlPreTranspiled(project, preTranspiled);
 }
 
-export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
+export const LocalPreview: React.FC<LocalPreviewProps> = ({
+  project,
+  selectedElementsCount = 0,
+  onSelectElement,
+  onNavigateToChat,
+}) => {
   const transpiledCacheRef = useRef<Record<string, { raw: string; compiled: string }>>({});
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Se o Babel já estiver em memória (ou projeto estático HTML puro), compila sincronamente no 1º render (0ms)
   const [srcDoc, setSrcDoc] = useState<string>(() => {
@@ -59,6 +68,7 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [isInspectActive, setIsInspectActive] = useState<boolean>(false);
 
   const compileProject = useCallback(async () => {
     try {
@@ -86,16 +96,34 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
     compileProject();
   }, [compileProject, refreshKey]);
 
-  // Escuta confirmação de renderização do iframe (__SYNAP_PREVIEW_READY__) para revelar sem flash branco
+  // Escuta mensagens do iframe: confirmação de prontidão e seleção de elementos
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === '__SYNAP_PREVIEW_READY__') {
         setIsReady(true);
+      } else if (event.data && event.data.type === '__SYNAP_ELEMENT_SELECTED__') {
+        if (event.data.element && onSelectElement) {
+          onSelectElement(event.data.element);
+        }
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [onSelectElement]);
+
+  // Sincroniza o modo de inspeção visual com o iframe
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          { type: '__SYNAP_SET_INSPECT_MODE__', active: isInspectActive },
+          '*'
+        );
+      } catch (err) {
+        console.warn('[LocalPreview] Falha ao sincronizar modo de inspeção com o iframe:', err);
+      }
+    }
+  }, [isInspectActive, isReady]);
 
   const handleRefresh = () => {
     transpiledCacheRef.current = {};
@@ -113,7 +141,46 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
   return (
     <div className="relative w-full h-full flex flex-col bg-[#09090b] overflow-hidden">
       <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 p-1 rounded-xl bg-[color:var(--c-bg-181714,#181714)]/90 backdrop-blur-md border border-[color:var(--c-bg-2d2b26,#2d2b26)]/80 shadow-lg">
+        {/* Botão de Modo Seleção de Componentes (estilo Google AI Studio / Element Inspector) */}
         <button
+          type="button"
+          onClick={() => setIsInspectActive((prev) => !prev)}
+          title={isInspectActive ? 'Modo Seleção Ativo: clique em elementos do preview' : 'Ativar Modo Seleção de Componentes'}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+            isInspectActive
+              ? 'bg-[#d97757]/20 text-[#d97757] border border-[#d97757]/60 shadow-[0_0_12px_rgba(217,119,87,0.3)]'
+              : 'text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-[color:var(--c-fg-f3efe6,#f3efe6)] hover:bg-[color:var(--c-bg-25231e,#25231e)]'
+          }`}
+        >
+          <MousePointerClick className={`w-4 h-4 ${isInspectActive ? 'animate-pulse text-[#d97757]' : ''}`} />
+          <span className="hidden sm:inline">
+            {isInspectActive ? 'Selecionando...' : 'Selecionar'}
+          </span>
+        </button>
+
+        {/* Pill de Elementos Selecionados */}
+        {selectedElementsCount > 0 && (
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#d97757]/15 border border-[#d97757]/40 text-[#d97757] text-xs animate-in fade-in zoom-in-95 duration-150">
+            <span className="font-semibold">{selectedElementsCount}</span>
+            <span className="hidden sm:inline">selecionado{selectedElementsCount > 1 ? 's' : ''}</span>
+            {onNavigateToChat && (
+              <button
+                type="button"
+                onClick={onNavigateToChat}
+                title="Voltar ao Chat com os componentes selecionados"
+                className="ml-1 px-1.5 py-0.5 rounded bg-[#d97757] text-white hover:bg-[#c56546] font-medium flex items-center gap-1 cursor-pointer transition-colors text-[11px]"
+              >
+                <MessageSquare className="w-3 h-3" />
+                <span>Chat</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="w-[1px] h-4 bg-[color:var(--c-bg-2d2b26,#2d2b26)] mx-0.5" />
+
+        <button
+          type="button"
           onClick={handleRefresh}
           title="Recarregar Preview"
           className="p-1.5 sm:p-2 rounded-lg text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-[color:var(--c-fg-f3efe6,#f3efe6)] hover:bg-[color:var(--c-bg-25231e,#25231e)] active:scale-95 transition-all cursor-pointer"
@@ -121,6 +188,7 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#d97757]' : ''}`} />
         </button>
         <button
+          type="button"
           onClick={handleOpenNewTab}
           title="Abrir em nova aba"
           className="p-1.5 sm:p-2 rounded-lg text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-[color:var(--c-fg-f3efe6,#f3efe6)] hover:bg-[color:var(--c-bg-25231e,#25231e)] active:scale-95 transition-all cursor-pointer"
@@ -141,6 +209,7 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
         </div>
       ) : srcDoc ? (
         <iframe
+          ref={iframeRef}
           key={refreshKey}
           srcDoc={srcDoc}
           title={project.name || 'Synap Preview'}

@@ -1183,4 +1183,32 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção compilado em 1.67s com economia de ~12 kB no bundle principal.
 
+## 77. Seletor Visual Multi-Componentes no Preview (Estilo Google AI Studio / Element Inspector)
+- **Solicitação do Usuário:** Adicionar recurso no Preview para inspecionar e selecionar visualmente componentes da aplicação. Ao clicar em um elemento, ele deve ser selecionado e enviado ao chat em segundo plano. O usuário pode selecionar múltiplos componentes consecutivamente sem sair do Preview (ex: 2 ou 3 componentes), retornando manualmente para o Chat quando desejar, onde os elementos aparecem como chips de contexto para que a IA saiba com precisão cirúrgica o que alterar. Além disso, incluir botão liga/desliga da ferramenta no Preview para permitir navegação livre sem seleções acidentais.
+- **Solução Implementada:**
+  1. **Tipagem do Elemento Selecionado (`src/lib/types.ts`):**
+     - Criada a interface `SelectedPreviewElement` com `id`, `tagName`, `className`, `textContent`, `selector` e `outerHtmlSnippet`.
+  2. **Script de Inspeção no Iframe com Capture Event (`src/lib/preview-html.ts`):**
+     - Desenvolvido `getInspectorScriptHtml()` injetado antes de `</body>` tanto em projetos estáticos quanto em projetos React pré-transpilados.
+     - Escuta eventos `postMessage` com `{ type: '__SYNAP_SET_INSPECT_MODE__', active: boolean }` para alternar o cursor para `crosshair` e ativar o overlay visual (#d97757 com badge flutuante de tag e classes).
+     - Intercepta cliques com `{ capture: true }` chamando `e.preventDefault()`, `e.stopPropagation()` e `e.stopImmediatePropagation()`, prevenindo navegação acidental ou disparo de handlers internos da aplicação.
+     - Suporte robusto para classes de elementos SVG (`SVGAnimatedString`).
+     - Emite `{ type: '__SYNAP_ELEMENT_SELECTED__', element }` para a janela mãe (`window.parent`).
+  3. **Controles na Barra de Ferramentas do Preview (`src/components/project-workspace/local-preview.tsx`):**
+     - Botão toggle com ícone `MousePointerClick`: visual escuro discreto quando desligado e destaque âmbar pulsante quando ligado.
+     - Pill de contagem em tempo real exibindo `N selecionado(s)` e botão de atalho `Ir para o Chat →`.
+     - Sincronização automática via `postMessage` com a janela do iframe.
+  4. **Acúmulo de Seleções e Injeção no Prompt (`src/App.tsx`):**
+     - Estado `selectedPreviewElements` no núcleo da aplicação com proteção contra seleção duplicada do mesmo elemento.
+     - No `handleSendMessage`, formata um bloco estruturado `### [Componentes Selecionados no Preview para Edição]` com seletores CSS, tags, classes, texto visível e snippets HTML de todos os elementos inspecionados, limpando a seleção após o envio.
+  5. **Chips Visuais no Chat Input (`src/components/chat-input.tsx`):**
+     - Renderização de chips elegantes com ícone de mira, tag `<button>`, preview de texto e botão de remoção individual `✕`.
+     - Botão de atalho "Limpar todos" quando houver 2 ou mais elementos.
+     - Placeholder contextual inteligente: *"Instrua a IA sobre o que alterar no(s) N componente(s) selecionado(s)..."*.
+- **Evidências de Verificação:**
+  - `npm test`: 57/57 testes unitários passando em 14 suítes (incluindo teste específico de injeção do inspetor).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e workers Cloudflare Pages compilados com 0 erros em 1.78s.
+
+
 

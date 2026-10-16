@@ -119,4 +119,48 @@ describe('Preview HTML Generator', () => {
     assert.match(html, /background-color:\s*#09090b/);
     assert.match(html, /__SYNAP_PREVIEW_READY__/);
   });
+
+  it('deve injetar o script do inspetor visual de componentes em projeto estático e React', () => {
+    const staticProj: SynapProject = {
+      id: 'static-proj',
+      name: 'Site Estático',
+      template: 'static',
+      files: {
+        'index.html': {
+          path: 'index.html',
+          content: '<!DOCTYPE html><html><head></head><body><button id="btn-login">Login</button></body></html>',
+        },
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const staticHtml = buildPreviewHtmlPreTranspiled(staticProj, {});
+    assert.match(staticHtml, /synap-element-inspector-script/);
+    assert.match(staticHtml, /__SYNAP_SET_INSPECT_MODE__/);
+    assert.match(staticHtml, /__SYNAP_ELEMENT_SELECTED__/);
+    assert.match(staticHtml, /synap-inspect-overlay-box/);
+
+    const reactProj: SynapProject = {
+      id: 'react-proj',
+      name: 'React App',
+      template: 'react-ts',
+      files: {
+        'src/App.tsx': {
+          path: 'src/App.tsx',
+          content: 'export default function App() { return <div>Ok</div>; }',
+        },
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const reactHtml = buildPreviewHtmlPreTranspiled(reactProj, {
+      'src/App.tsx': 'exports.default = function App() { return React.createElement("div", null, "Ok"); };',
+    });
+    assert.match(reactHtml, /synap-element-inspector-script/);
+    assert.match(reactHtml, /__SYNAP_SET_INSPECT_MODE__/);
+    assert.match(reactHtml, /__SYNAP_ELEMENT_SELECTED__/);
+    assert.match(reactHtml, /synap-inspect-overlay-box/);
+  });
 });

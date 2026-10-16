@@ -177,6 +177,155 @@ function collectBareImports(transpiledMap: Record<string, string>): string[] {
   return Array.from(bareImports);
 }
 
+export function getInspectorScriptHtml(): string {
+  return `
+<script id="synap-element-inspector-script">
+(function() {
+  var isInspectMode = false;
+  var hoveredEl = null;
+
+  var box = document.createElement('div');
+  box.id = 'synap-inspect-overlay-box';
+  box.style.cssText = 'position:fixed;pointer-events:none;z-index:999999;border:2px solid #d97757;background:rgba(217,119,87,0.14);border-radius:6px;transition:top 35ms ease-out, left 35ms ease-out, width 35ms ease-out, height 35ms ease-out;display:none;box-shadow:0 0 0 1px rgba(0,0,0,0.5);';
+
+  var tagBadge = document.createElement('div');
+  tagBadge.id = 'synap-inspect-tag-badge';
+  tagBadge.style.cssText = 'position:absolute;top:-24px;left:0;background:#d97757;color:#ffffff;font-size:10px;font-family:monospace;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,0.3);display:none;pointer-events:none;';
+  box.appendChild(tagBadge);
+
+  function ensureMounted() {
+    if (document.body && !document.body.contains(box)) {
+      document.body.appendChild(box);
+    }
+  }
+
+  function getSelector(el) {
+    if (!el || el === document.body) return 'body';
+    if (el.id) return '#' + el.id;
+    var path = [];
+    var curr = el;
+    while (curr && curr.nodeType === Node.ELEMENT_NODE && curr !== document.body && curr !== document.documentElement) {
+      var selector = curr.tagName.toLowerCase();
+      if (curr.id) {
+        selector += '#' + curr.id;
+        path.unshift(selector);
+        break;
+      }
+      if (curr.className && typeof curr.className === 'string') {
+        var firstClass = curr.className.trim().split(/\\s+/)[0];
+        if (firstClass && !firstClass.includes(':') && !firstClass.includes('[') && !firstClass.includes('/')) {
+          selector += '.' + firstClass;
+        }
+      }
+      var sibling = curr;
+      var nth = 1;
+      while (sibling = sibling.previousElementSibling) {
+        if (sibling.tagName === curr.tagName) nth++;
+      }
+      if (nth > 1) selector += ':nth-of-type(' + nth + ')';
+      path.unshift(selector);
+      curr = curr.parentElement;
+    }
+    return path.join(' > ');
+  }
+
+  function highlight(el) {
+    if (!el || el === document.body || el === document.documentElement || el === box || box.contains(el)) {
+      box.style.display = 'none';
+      tagBadge.style.display = 'none';
+      return;
+    }
+    ensureMounted();
+    var rect = el.getBoundingClientRect();
+    box.style.display = 'block';
+    box.style.top = rect.top + 'px';
+    box.style.left = rect.left + 'px';
+    box.style.width = rect.width + 'px';
+    box.style.height = rect.height + 'px';
+
+    var tagName = el.tagName ? el.tagName.toLowerCase() : '';
+    var classes = (typeof el.className === 'string' && el.className.trim())
+      ? '.' + el.className.trim().split(/\\s+/).slice(0, 2).join('.')
+      : '';
+    tagBadge.textContent = '<' + tagName + classes + '>';
+    tagBadge.style.display = 'block';
+    tagBadge.style.top = rect.top < 26 ? '2px' : '-24px';
+  }
+
+  function onMouseMove(e) {
+    if (!isInspectMode) return;
+    var target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target && target !== hoveredEl && target !== box && !box.contains(target)) {
+      hoveredEl = target;
+      highlight(hoveredEl);
+    }
+  }
+
+  function onClick(e) {
+    if (!isInspectMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    var target = hoveredEl || e.target;
+    if (!target || target === box || box.contains(target) || target === document.body) return;
+
+    // Feedback visual animado de clique (pulso azul)
+    box.style.borderColor = '#38bdf8';
+    box.style.backgroundColor = 'rgba(56,189,248,0.35)';
+    setTimeout(function() {
+      box.style.borderColor = '#d97757';
+      box.style.backgroundColor = 'rgba(217,119,87,0.14)';
+    }, 200);
+
+    var tagName = target.tagName ? target.tagName.toLowerCase() : '';
+    var className = typeof target.className === 'string'
+      ? target.className.trim()
+      : (target.className && typeof target.className.baseVal === 'string' ? target.className.baseVal.trim() : '');
+    var textContent = (target.innerText || target.textContent || '').trim().slice(0, 100);
+    var selector = getSelector(target);
+    var outerHtmlSnippet = (target.outerHTML || '').slice(0, 350);
+
+    try {
+      window.parent.postMessage({
+        type: '__SYNAP_ELEMENT_SELECTED__',
+        element: {
+          id: 'elem_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          tagName: tagName,
+          className: className,
+          textContent: textContent,
+          selector: selector,
+          outerHtmlSnippet: outerHtmlSnippet,
+        }
+      }, '*');
+    } catch (err) {
+      console.warn('[Synap Inspector] Erro ao emitir elemento:', err);
+    }
+  }
+
+  window.addEventListener('message', function(ev) {
+    if (ev.data && ev.data.type === '__SYNAP_SET_INSPECT_MODE__') {
+      isInspectMode = Boolean(ev.data.active);
+      if (isInspectMode) {
+        document.documentElement.style.cursor = 'crosshair';
+        if (document.body) document.body.style.cursor = 'crosshair';
+        ensureMounted();
+      } else {
+        document.documentElement.style.cursor = '';
+        if (document.body) document.body.style.cursor = '';
+        box.style.display = 'none';
+        tagBadge.style.display = 'none';
+        hoveredEl = null;
+      }
+    }
+  });
+
+  window.addEventListener('mousemove', onMouseMove, { passive: true, capture: true });
+  window.addEventListener('click', onClick, { capture: true });
+})();
+</script>`;
+}
+
 export function buildPreviewHtmlPreTranspiled(
   project: SynapProject,
   preTranspiled?: Record<string, string>
@@ -258,10 +407,11 @@ export function buildPreviewHtmlPreTranspiled(
       rawHtml = rawHtml.replace('</head>', `${antiFlashStyle}\n${injectedStyles}\n</head>`);
     }
 
+    const inspectorScript = getInspectorScriptHtml();
     if (rawHtml.includes('</body>')) {
-      rawHtml = rawHtml.replace('</body>', `${errorScript}\n</body>`);
+      rawHtml = rawHtml.replace('</body>', `${errorScript}\n${inspectorScript}\n</body>`);
     } else {
-      rawHtml = `${rawHtml}\n${errorScript}`;
+      rawHtml = `${rawHtml}\n${errorScript}\n${inspectorScript}`;
     }
 
     return rawHtml;
@@ -540,6 +690,7 @@ export function buildPreviewHtmlPreTranspiled(
       try { window.parent.postMessage({ type: '__SYNAP_PREVIEW_READY__' }, '*'); } catch {}
     }
   <\/script>
+  ${getInspectorScriptHtml()}
 </body>
 </html>`;
 }

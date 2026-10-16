@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, AlertCircle } from 'lucide-react';
-import { SynapProject } from '../../lib/types';
+import { SynapProject, SelectedPreviewElement } from '../../lib/types';
 import { LocalPreview } from './local-preview';
 
 interface ProjectWorkspaceProps {
@@ -10,11 +10,15 @@ interface ProjectWorkspaceProps {
   onRename: (newName: string) => void;
   /** Callback chamado quando o usuário edita arquivos no editor */
   onFileChange?: (path: string, content: string) => void;
+  selectedElementsCount?: number;
+  onSelectElement?: (element: SelectedPreviewElement) => void;
 }
 
 export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
   project,
   onClose,
+  selectedElementsCount,
+  onSelectElement,
 }) => {
   // Diagnóstico: verifica se o projeto tem conteúdo visível
   const diagnosticInfo = useMemo(() => {
@@ -56,7 +60,12 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
     <div className="flex flex-col h-full bg-[#09090b] overflow-hidden">
       {/* Preview em tela cheia — sem header, sem footer */}
       <div className="flex-1 min-h-0 relative">
-        <LocalPreview project={project} />
+        <LocalPreview
+          project={project}
+          selectedElementsCount={selectedElementsCount}
+          onSelectElement={onSelectElement}
+          onNavigateToChat={onClose}
+        />
 
         {/* Botão flutuante: fechar (voltar ao chat) */}
         <button
