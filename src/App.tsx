@@ -3983,7 +3983,7 @@ function AppContent() {
           {!activeConversation || activeConversation.messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center px-4 sm:px-6 max-w-2xl mx-auto text-center py-4 sm:py-8 relative">
               <div className="mb-3 sm:mb-4 flex items-center justify-center">
-                <ClaudeLogo className="w-10 h-10 sm:w-12 sm:h-12 text-[color:var(--c-fg-d97757)]" />
+                <ClaudeLogo className="w-14 h-14 sm:w-16 sm:h-16" />
               </div>
 
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[color:var(--c-fg-f3efe6)] tracking-tight mb-2">

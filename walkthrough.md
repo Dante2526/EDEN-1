@@ -1321,3 +1321,20 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 66/66 testes unitários passando.
   - `npm run lint`: 0 erros no TypeScript.
   - `npm run build`: Vite build e compilação Cloudflare Pages com 0 erros.
+
+## 83. Identidade Visual: Logo do Bonsai Japonês em Todo o Chat
+- **Solicitação do Usuário:** Aplicar o bonsai japonês como logo oficial em todos os pontos dentro do chat e da interface do Éden.
+- **Solução Implementada:**
+  1. **Componente de Arte Vetorial (`src/components/claude-logo.tsx` & `src/components/eden-logo.tsx`):**
+     - Refatoração do componente `<EdenBonsaiLogo>` (com alias `<ClaudeLogo>` para compatibilidade total).
+     - Renderização em SVG vetorial autônomo com viewBox otimizado (`85 70 340 355`), destacando o vaso cerâmico tradicional (*Hachi*), tronco sinuoso (*Moyogi*) em madeira nobre, nuvens de folhagem (*Matsu*) verde esmeralda e anel zen solar terracota (`#d97757`).
+     - Geração de IDs dinâmicos e isolados via `React.useId()` para gradientes SVG, prevenindo qualquer conflito de renderização entre mensagens simultâneas na tela.
+  2. **Pontos de Presença no Chat:**
+     - **Mensagens do Assistente:** Avatar do assistente ao lado do título "Éden" em todas as respostas (`src/components/chat-message.tsx`).
+     - **Tela de Boas-Vindas:** Destaque hero ampliado no centro do chat vazio (`src/App.tsx`).
+     - **Barra Lateral:** Logo oficial no cabeçalho superior da barra de conversas (`src/components/chat-sidebar.tsx`).
+     - **Modal de Configurações:** Insígnia da marca no cabeçalho de configurações (`src/components/settings-modal.tsx`).
+- **Evidências de Verificação:**
+  - `npm test`: 66/66 testes unitários passando em 16 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.80s (Vite + Cloudflare Pages Worker).
