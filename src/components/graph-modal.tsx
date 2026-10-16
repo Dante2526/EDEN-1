@@ -100,13 +100,13 @@ export const GraphModal: React.FC<GraphModalProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [is3D, setIs3D] = useState(true);
   const [autoRotate, setAutoRotate] = useState(true);
   const [zoom, setZoom] = useState(1.08);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const hoveredNodeIdRef = useRef<string | null>(null);
 
   // Estado mutável de alta frequência da câmera 3D para 60 FPS sem re-renders do React
   const cameraRef = useRef({
@@ -172,6 +172,26 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     );
   }, [graph.nodes, search]);
 
+  // Referência sincronizada para o loop de 60 FPS ler sem reiniciar o canvas
+  const sceneRef = useRef({
+    nodes3D,
+    graph,
+    selectedNodeId,
+    is3D,
+    autoRotate,
+    godSet,
+    matchingNodeIds,
+  });
+  sceneRef.current = {
+    nodes3D,
+    graph,
+    selectedNodeId,
+    is3D,
+    autoRotate,
+    godSet,
+    matchingNodeIds,
+  };
+
   const selectedNode = useMemo(() => {
     return graph.nodes.find((n) => n.id === selectedNodeId) || null;
   }, [graph.nodes, selectedNodeId]);
@@ -213,7 +233,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     cameraRef.current.velRotY = 0;
   }, []);
 
-  // Loop de renderização 3D a 60 FPS no Canvas HiDPI
+  // Loop de renderização 3D contínuo a 60 FPS no Canvas HiDPI (sem reiniciar em hover/click)
   useEffect(() => {
     if (!isOpen) return;
     const canvas = canvasRef.current;
@@ -221,18 +241,26 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     if (!canvas || !container) return;
 
     let animationFrameId = 0;
-    let width = container.clientWidth || 900;
-    let height = container.clientHeight || 650;
+    let width = Math.max(300, container.clientWidth || 900);
+    let height = Math.max(300, container.clientHeight || 650);
 
     const updateCanvasSize = () => {
       if (!container || !canvas) return;
-      width = Math.max(300, container.clientWidth);
-      height = Math.max(300, container.clientHeight);
+      const nextWidth = Math.max(300, container.clientWidth);
+      const nextHeight = Math.max(300, container.clientHeight);
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
+      const targetPixelWidth = Math.floor(nextWidth * dpr);
+      const targetPixelHeight = Math.floor(nextHeight * dpr);
+
+      width = nextWidth;
+      height = nextHeight;
+
+      if (canvas.width !== targetPixelWidth || canvas.height !== targetPixelHeight) {
+        canvas.width = targetPixelWidth;
+        canvas.height = targetPixelHeight;
+        canvas.style.width = `${nextWidth}px`;
+        canvas.style.height = `${nextHeight}px`;
+      }
     };
 
     updateCanvasSize();
@@ -242,6 +270,17 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     const renderFrame = (time: number) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
+
+      const {
+        nodes3D: curNodes3D,
+        graph: curGraph,
+        selectedNodeId: curSelectedId,
+        is3D: curIs3D,
+        autoRotate: curAutoRotate,
+        godSet: curGodSet,
+        matchingNodeIds: curMatchingIds,
+      } = sceneRef.current;
+      const curHoveredId = hoveredNodeIdRef.current;
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       ctx.save();
@@ -261,7 +300,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
             cam.targetRotX = null;
           }
         } else {
-          if (autoRotate && is3D) {
+          if (curAutoRotate && curIs3D) {
             cam.rotY += 0.0032;
           }
           cam.rotY += cam.velRotY;
@@ -288,7 +327,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
       ctx.fillRect(0, 0, width, height);
 
       // 3. Desenha anéis orbitais 3D holográficos de referência no espaço
-      if (is3D) {
+      if (curIs3D) {
         const orbitalRadii = [115, 250];
         const cosX = Math.cos(cam.rotX);
         const sinX = Math.sin(cam.rotX);
@@ -320,7 +359,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
       }
 
       // 4. Projeta todos os nós 3D para 2D com ordenação Z
-      const projected = project3DNodes(nodes3D, {
+      const projected = project3DNodes(curNodes3D, {
         width,
         height,
         rotX: cam.rotX,
@@ -328,7 +367,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
         zoom: cam.zoom,
         panX: cam.panX,
         panY: cam.panY,
-        is3D,
+        is3D: curIs3D,
       });
       projectedNodesRef.current = projected;
 
@@ -339,25 +378,26 @@ export const GraphModal: React.FC<GraphModalProps> = ({
 
       // 5. Renderiza Arestas 3D + Partículas de Fluxo de Dados
       const pulsePhase = (time * 0.00065) % 1;
-      for (let i = 0; i < graph.edges.length; i++) {
-        const edge = graph.edges[i];
+      for (let i = 0; i < curGraph.edges.length; i++) {
+        const edge = curGraph.edges[i];
         const s = projMap.get(edge.source);
         const t = projMap.get(edge.target);
         if (!s || !t) continue;
 
-        const isOutgoingFromSelected = selectedNodeId === edge.source;
-        const isIncomingToSelected = selectedNodeId === edge.target;
+        const isOutgoingFromSelected = curSelectedId === edge.source;
+        const isIncomingToSelected = curSelectedId === edge.target;
         const isHoveredEdge =
-          hoveredNodeId && (edge.source === hoveredNodeId || edge.target === hoveredNodeId);
+          curHoveredId && (edge.source === curHoveredId || edge.target === curHoveredId);
         const isHighlighted = isOutgoingFromSelected || isIncomingToSelected || isHoveredEdge;
 
         const avgAlpha = (s.alpha + t.alpha) * 0.5;
         const searchDim =
-          matchingNodeIds && !matchingNodeIds.has(s.id) && !matchingNodeIds.has(t.id) ? 0.2 : 1;
+          curMatchingIds && !curMatchingIds.has(s.id) && !curMatchingIds.has(t.id) ? 0.2 : 1;
 
         // Curva suave 3D em direção ao centro
         const midX = (s.screenX + t.screenX) * 0.5;
-        const midY = (s.screenY + t.screenY) * 0.5 - (is3D ? 12 * ((s.scale + t.scale) * 0.5) : 0);
+        const midY =
+          (s.screenY + t.screenY) * 0.5 - (curIs3D ? 12 * ((s.scale + t.scale) * 0.5) : 0);
 
         ctx.save();
         ctx.beginPath();
@@ -405,21 +445,21 @@ export const GraphModal: React.FC<GraphModalProps> = ({
       const pulseScale = 1 + Math.sin(time * 0.004) * 0.08;
 
       for (const node of projected) {
-        const isSelected = node.id === selectedNodeId;
-        const isHovered = node.id === hoveredNodeId;
+        const isSelected = node.id === curSelectedId;
+        const isHovered = node.id === curHoveredId;
         const isConnectedToSelected =
-          selectedNodeId &&
-          graph.edges.some(
+          curSelectedId &&
+          curGraph.edges.some(
             (e) =>
-              (e.source === selectedNodeId && e.target === node.id) ||
-              (e.target === selectedNodeId && e.source === node.id)
+              (e.source === curSelectedId && e.target === node.id) ||
+              (e.target === curSelectedId && e.source === node.id)
           );
 
-        const isSearchMatch = !matchingNodeIds || matchingNodeIds.has(node.id);
+        const isSearchMatch = !curMatchingIds || curMatchingIds.has(node.id);
         const dimFactor = isSearchMatch ? 1 : 0.22;
         const finalAlpha = Math.max(0.15, Math.min(1, node.alpha * dimFactor));
 
-        const palette = getNodePalette(node, selectedNodeId, godSet);
+        const palette = getNodePalette(node, curSelectedId, curGodSet);
         const r =
           node.projectedRadius *
           (isSelected ? 1.32 : isHovered ? 1.18 : 1);
@@ -484,7 +524,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
           node.isGod ||
           isConnectedToSelected ||
           node.scale > 0.78 ||
-          graph.nodes.length <= 28;
+          curGraph.nodes.length <= 28;
 
         if (shouldShowLabel) {
           const fontSize = Math.max(9.5, Math.min(13.5, (isSelected ? 12 : 10.5) * node.scale));
@@ -533,17 +573,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
       window.cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
     };
-  }, [
-    isOpen,
-    nodes3D,
-    graph,
-    selectedNodeId,
-    hoveredNodeId,
-    is3D,
-    autoRotate,
-    godSet,
-    matchingNodeIds,
-  ]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -565,6 +595,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     cam.dragStartX = e.clientX;
     cam.dragStartY = e.clientY;
     cam.pointerMovedDistance = 0;
+    e.currentTarget.style.cursor = 'grabbing';
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -574,7 +605,8 @@ export const GraphModal: React.FC<GraphModalProps> = ({
 
     if (!cam.isDragging) {
       const hovered = findClosestProjectedNode(projectedNodesRef.current, x, y);
-      setHoveredNodeId(hovered ? hovered.id : null);
+      hoveredNodeIdRef.current = hovered ? hovered.id : null;
+      e.currentTarget.style.cursor = hovered ? 'pointer' : 'grab';
       return;
     }
 
@@ -600,6 +632,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     const cam = cameraRef.current;
     const wasClick = cam.pointerMovedDistance < 6;
     cam.isDragging = false;
+    e.currentTarget.style.cursor = hoveredNodeIdRef.current ? 'pointer' : 'grab';
 
     if (wasClick) {
       const { x, y } = getPointerCoords(e.clientX, e.clientY);
@@ -724,12 +757,13 @@ export const GraphModal: React.FC<GraphModalProps> = ({
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
+              onPointerLeave={() => {
+                hoveredNodeIdRef.current = null;
+              }}
               onWheel={handleWheel}
               onContextMenu={(e) => e.preventDefault()}
               style={{ touchAction: 'none' }}
-              className={`w-full h-full block ${
-                hoveredNodeId ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
-              }`}
+              className="w-full h-full block cursor-grab"
             />
 
             {/* Dica de Interação Orbital & Legenda 3D */}
