@@ -3991,8 +3991,9 @@ function AppContent() {
             className={
               mainViewTab === 'preview' && !isStudioMode && showProjectWorkspace
                 ? 'flex-1 flex flex-col min-h-0 bg-[#09090b] overflow-hidden'
-                : 'hidden'
+                : 'absolute -left-[9999px] top-0 w-[1280px] h-[800px] pointer-events-none opacity-0 overflow-hidden'
             }
+            aria-hidden={mainViewTab !== 'preview'}
           >
             <ProjectWorkspace
               project={previewProject}

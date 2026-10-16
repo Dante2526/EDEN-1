@@ -5,6 +5,9 @@ import {
   saveProject,
   deleteProject,
   loadProjectIndex,
+  getCachedActiveProject,
+  setCachedActiveProject,
+  getCachedProjectIndex,
 } from './project-storage';
 
 interface ProjectContextType {
@@ -116,9 +119,14 @@ const TEMPLATE_STARTERS: Record<ProjectTemplate, Record<string, string>> = {
 };
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeProject, setActiveProject] = useState<SynapProject | null>(null);
-  const [projectsIndex, setProjectsIndex] = useState<ProjectContextType['projectsIndex']>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeProject, setActiveProjectState] = useState<SynapProject | null>(() => getCachedActiveProject());
+  const [projectsIndex, setProjectsIndex] = useState<ProjectContextType['projectsIndex']>(() => getCachedProjectIndex());
+  const [loading, setLoading] = useState(false);
+
+  const setActiveProject = useCallback((proj: SynapProject | null) => {
+    setActiveProjectState(proj);
+    setCachedActiveProject(proj);
+  }, []);
 
   const refreshIndex = useCallback(async () => {
     const idx = await loadProjectIndex();
@@ -130,15 +138,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [refreshIndex]);
 
   const openProject = useCallback(async (id: string) => {
+    // Se já é o projeto ativo e carregado, evita re-render desnecessário
+    if (activeProject && activeProject.id === id) return;
     const project = await loadProject(id);
     if (project) {
       setActiveProject(project);
     }
-  }, []);
+  }, [activeProject, setActiveProject]);
 
   const closeProject = useCallback(() => {
     setActiveProject(null);
-  }, []);
+  }, [setActiveProject]);
 
   const createProject = useCallback<ProjectContextType['createProject']>(
     async (params) => {

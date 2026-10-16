@@ -3,8 +3,41 @@ import { SynapProject, ProjectFile } from './types';
 
 const PROJECTS_KEY_PREFIX = 'synap_project_';
 const PROJECTS_INDEX_KEY = 'synap_projects_index';
+const ACTIVE_PROJECT_CACHE_KEY = 'synap_cached_active_project';
+const INDEX_CACHE_KEY = 'synap_cached_projects_index';
 
-interface ProjectIndexItem {
+export function getCachedActiveProject(): SynapProject | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(ACTIVE_PROJECT_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCachedActiveProject(project: SynapProject | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (project) {
+      localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(project));
+    } else {
+      localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+    }
+  } catch {}
+}
+
+export function getCachedProjectIndex(): ProjectIndexItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(INDEX_CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export interface ProjectIndexItem {
   id: string;
   name: string;
   template: string;
@@ -18,10 +51,14 @@ interface ProjectIndexItem {
 export async function loadProjectIndex(): Promise<ProjectIndexItem[]> {
   try {
     const idx = await get<ProjectIndexItem[]>(PROJECTS_INDEX_KEY);
-    return (idx || []).sort((a, b) => b.updatedAt - a.updatedAt);
+    const sorted = (idx || []).sort((a, b) => b.updatedAt - a.updatedAt);
+    try {
+      localStorage.setItem(INDEX_CACHE_KEY, JSON.stringify(sorted.slice(0, 20)));
+    } catch {}
+    return sorted;
   } catch (err) {
     console.error('Failed to load project index:', err);
-    return [];
+    return getCachedProjectIndex();
   }
 }
 
@@ -39,28 +76,38 @@ async function updateProjectIndex(project: SynapProject): Promise<void> {
     sourceRepoBranch: project.sourceRepoBranch,
   });
   await set(PROJECTS_INDEX_KEY, filtered.slice(0, 100));
+  try {
+    localStorage.setItem(INDEX_CACHE_KEY, JSON.stringify(filtered.slice(0, 20)));
+  } catch {}
 }
 
 async function removeFromIndex(projectId: string): Promise<void> {
   const idx = await loadProjectIndex();
-  await set(
-    PROJECTS_INDEX_KEY,
-    idx.filter((p) => p.id !== projectId)
-  );
+  const updated = idx.filter((p) => p.id !== projectId);
+  await set(PROJECTS_INDEX_KEY, updated);
+  try {
+    localStorage.setItem(INDEX_CACHE_KEY, JSON.stringify(updated.slice(0, 20)));
+  } catch {}
 }
 
 export async function loadProject(id: string): Promise<SynapProject | null> {
   try {
-    return (await get<SynapProject>(`${PROJECTS_KEY_PREFIX}${id}`)) || null;
+    const proj = (await get<SynapProject>(`${PROJECTS_KEY_PREFIX}${id}`)) || null;
+    if (proj) {
+      setCachedActiveProject(proj);
+    }
+    return proj;
   } catch (err) {
     console.error('Failed to load project:', err);
-    return null;
+    const cached = getCachedActiveProject();
+    return cached && cached.id === id ? cached : null;
   }
 }
 
 export async function saveProject(project: SynapProject): Promise<void> {
   try {
     project.updatedAt = Date.now();
+    setCachedActiveProject(project);
     await set(`${PROJECTS_KEY_PREFIX}${project.id}`, project);
     await updateProjectIndex(project);
   } catch (err) {

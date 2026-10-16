@@ -926,3 +926,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 53/53 testes passando em 13 suítes.
   - `npm run build`: bundle compilado em 1.78s.
+
+## 65. Cache Síncrono de Inicialização e Pré-Renderização Off-Screen (0ms Real)
+- **Solicitação do Usuário:** Eliminar o tempo em que o botão Preview fica em preto e branco ao dar F5 e eliminar o tempo de tela preta ao clicar em Preview pela primeira vez.
+- **Causa Raiz Identificada (`systematic-debugging`):**
+  1. **Botão P&B no F5:** O estado inicial de `activeProject` e `projectsIndex` vinha do IndexedDB assíncrono. Até o Promise resolver, o React renderizava sem projeto ativo.
+  2. **Tela Preta no 1º Clique:** O Keep-Alive usava `display: none` (`hidden`). Navegadores congelam iframes invisíveis via `display: none`, adiando o download dos scripts/módulos para o momento exato em que o usuário clica em Preview.
+- **Solução Implementada:**
+  - `src/lib/project-storage.ts`: Adicionado cache síncrono no `localStorage` (`synap_cached_active_project` e `synap_cached_projects_index`).
+  - `src/lib/project-context.tsx`: `ProjectProvider` inicializa `activeProject` e `projectsIndex` diretamente do cache síncrono no milissegundo zero da montagem.
+  - `src/App.tsx`: A camada Keep-Alive agora renderiza o preview em modo off-screen invisível (`absolute -left-[9999px] pointer-events-none opacity-0`) enquanto você conversa no chat. O iframe carrega React, Tailwind e pacotes em background; ao clicar em Preview, a página já está 100% montada e salta na tela instantaneamente.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 53/53 testes passando em 13 suítes.
+  - `npm run build`: compilado em 1.84s.
