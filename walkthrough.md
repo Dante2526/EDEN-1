@@ -895,3 +895,20 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: todas as suítes passando.
   - `npm run build`: bundle de produção compilado com sucesso.
+
+## 63. Otimização Máxima do Preview Web (Zero "Compilando", Zero Glitch Branco e 0ms Keep-Alive)
+- **Solicitação do Usuário:** Otimização máxima da função de Preview: ao clicar, ver a página web imediatamente, sem overlay de "Compilando preview..." e sem o glitch de tela branca antes de carregar.
+- **Causa Raiz Identificada (`systematic-debugging`):**
+  1. O `<ProjectWorkspace>` era completamente desmontado ao voltar para o chat e reconstruído do zero ao clicar em Preview, adicionando um atraso artificial de `setTimeout(..., 250)` no `local-preview.tsx`.
+  2. O `<iframe>` iniciava com `srcDoc=""` (`about:blank` padrão branco dos browsers), disparando um flash branco perceptível antes do Tailwind e do React montarem.
+  3. Havia 591 KB de imports não utilizados do `@codesandbox/sandpack-react` em `project-workspace.tsx`.
+  4. As alterações em tempo real feitas pela IA no chat (`changes` no Source Control) não eram refletidas no Preview antes do commit.
+- **Solução Implementada:**
+  - `src/App.tsx`: Pré-aquecimento automático do Babel em background (`loadBabel()`), mesclagem instantânea das edições pendentes (`changes`) da IA sobre o `previewProject` e **Keep-Alive em background**: a aba de preview permanece renderizada no DOM (com alternância `hidden` vs `flex`), permitindo que a troca de abas ocorra instantaneamente em 0ms.
+  - `src/components/project-workspace/local-preview.tsx`: Removido o overlay "Compilando preview..." e o atraso de 250ms. Compilação síncrona imediata quando o Babel já está em cache; fundo `#09090b` travado e `opacity: 0` até receber `__SYNAP_PREVIEW_READY__` ou evento `onLoad`, eliminando 100% do flash branco.
+  - `src/lib/preview-html.ts` + `src/lib/preview-html.test.ts`: CSS anti-flash imediato injetado no `<head>` (`html, body { background-color: #09090b; }`) e notificação `postMessage({ type: '__SYNAP_PREVIEW_READY__' })` logo após a montagem do React ou término do HTML estático.
+  - `src/components/project-workspace/project-workspace.tsx`: Removido todo o bundle obsoleto do Sandpack (591 KB eliminados).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 53/53 testes passando em 13 suítes (+ `preview-html.test.ts` verde).
+  - `npm run build`: bundle compilado em 1.62s.

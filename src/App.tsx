@@ -40,10 +40,8 @@ import { DeploymentLogModal } from './components/deployments/deployment-log-moda
 import { ChatSidebar } from './components/chat-sidebar';
 import { lazyWithRetry } from './lib/lazy-retry';
 
-// Lazy load Sandpack components resiliente a deploys (só baixa quando usuário abre projetos)
-const ProjectWorkspace = lazyWithRetry(() =>
-  import('./components/project-workspace/project-workspace').then((m) => ({ default: m.ProjectWorkspace }))
-);
+import { ProjectWorkspace } from './components/project-workspace/project-workspace';
+import { loadBabel } from './lib/preview-html';
 const ProjectsPanel = lazyWithRetry(() =>
   import('./components/project-workspace/projects-panel').then((m) => ({ default: m.ProjectsPanel }))
 );
@@ -855,16 +853,47 @@ function AppContent() {
     setIsGraphModalOpen(true);
   }, []);
 
+  // Pré-aquece o Babel em background assim que o app abre ou um projeto é ativado
+  useEffect(() => {
+    loadBabel().catch(() => {
+      // Silencioso: tentará novamente sob demanda se offline
+    });
+  }, [activeProject?.id]);
+
+  // Mescla alterações pendentes da IA (Source Control) em tempo real sobre o projeto do Preview
+  const previewProject = useMemo(() => {
+    if (!activeProject) return null;
+    if (changes.length === 0) return activeProject;
+
+    const mergedFiles = { ...activeProject.files };
+    let hasDiff = false;
+    for (const change of changes) {
+      if (activeRepo && change.repo && change.repo !== activeRepo.fullName) continue;
+      const cleanPath = change.path.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+      if (change.type === 'deleted') {
+        if (mergedFiles[cleanPath] || mergedFiles[`/${cleanPath}`]) {
+          delete mergedFiles[cleanPath];
+          delete mergedFiles[`/${cleanPath}`];
+          hasDiff = true;
+        }
+      } else if (typeof change.newContent === 'string') {
+        mergedFiles[cleanPath] = {
+          ...(mergedFiles[cleanPath] || {}),
+          path: cleanPath,
+          content: change.newContent,
+        };
+        hasDiff = true;
+      }
+    }
+    return hasDiff ? { ...activeProject, files: mergedFiles } : activeProject;
+  }, [activeProject, changes, activeRepo]);
+
   // Prepara o workspace quando um projeto é selecionado ou fechado
   useEffect(() => {
     if (activeProject) {
       setShowProjectWorkspace(true);
-      // Não forçamos setMainViewTab('preview') aqui:
-      // Ao abrir conversas ou sincronizar repos, o usuário permanece no chat
-      // e só vai para a aba Preview quando clicar explicitamente no cabeçalho.
     } else {
       setShowProjectWorkspace(false);
-      // Se fechou o projeto e estava em Preview, volta pra Chat
       setMainViewTab((curr) => (curr === 'preview' ? 'chat' : curr));
     }
   }, [activeProject?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -3873,7 +3902,6 @@ function AppContent() {
             setMainViewTab(tab);
             if (tab === 'chat') {
               setIsStudioMode(false);
-              if (activeProject) setShowProjectWorkspace(false);
             } else if (tab === 'preview') {
               if (!activeProject) {
                 setSidebarTab('projects');
@@ -3885,7 +3913,6 @@ function AppContent() {
               setShowProjectWorkspace(true);
             } else if (tab === 'agentes') {
               setIsStudioMode(true);
-              if (activeProject) setShowProjectWorkspace(false);
             }
           }}
           activeProjectName={activeProject?.name ?? null}
@@ -3915,6 +3942,30 @@ function AppContent() {
           </div>
         )}
 
+        {/* Keep-Alive Preview Layer: mantém o iframe pré-compilado e montado em background para abrir em 0ms */}
+        {previewProject && (
+          <div
+            className={
+              mainViewTab === 'preview' && !isStudioMode && showProjectWorkspace
+                ? 'flex-1 flex flex-col min-h-0 bg-[#09090b] overflow-hidden'
+                : 'hidden'
+            }
+          >
+            <ProjectWorkspace
+              project={previewProject}
+              onClose={() => {
+                setMainViewTab('chat');
+              }}
+              onDelete={() => {
+                removeProject(previewProject.id);
+                setMainViewTab('chat');
+              }}
+              onRename={(newName) => renameProject(previewProject.id, newName)}
+              onFileChange={(path, content) => updateFileContent(path, content)}
+            />
+          </div>
+        )}
+
         {/* Conditional render based on mainViewTab */}
         {mainViewTab === 'agentes' || isStudioMode ? (
           <StudioPanel
@@ -3935,7 +3986,7 @@ function AppContent() {
               setMainViewTab('chat');
             }}
           />
-        ) : mainViewTab === 'preview' && !activeProject ? (
+        ) : mainViewTab === 'preview' && !previewProject ? (
           /* Preview selecionado mas nenhum projeto ativo — mostra mensagem em vez de tela preta */
           <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center bg-dark-bg">
             <div className="w-16 h-16 rounded-2xl bg-[#22201d] border border-[#3b3831] flex items-center justify-center">
@@ -3992,33 +4043,7 @@ function AppContent() {
               Ver lista de projetos
             </button>
           </div>
-        ) : mainViewTab === 'preview' && activeProject && showProjectWorkspace ? (
-          <div className="flex-1 flex flex-col min-h-0 bg-dark-bg overflow-hidden">
-            <React.Suspense
-              fallback={
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-[#8c867a]">
-                  <div className="w-8 h-8 border-2 border-[#d97757]/30 border-t-[#d97757] rounded-full animate-spin" />
-                  <span className="text-xs">Carregando editor Sandpack...</span>
-                </div>
-              }
-            >
-              <ProjectWorkspace
-                project={activeProject}
-                onClose={() => {
-                  setShowProjectWorkspace(false);
-                  closeProject();
-                  setMainViewTab('chat');
-                }}
-                onDelete={() => {
-                  removeProject(activeProject.id);
-                  setMainViewTab('chat');
-                }}
-                onRename={(newName) => renameProject(activeProject.id, newName)}
-                onFileChange={(path, content) => updateFileContent(path, content)}
-              />
-            </React.Suspense>
-          </div>
-        ) : (
+        ) : mainViewTab === 'preview' && previewProject && showProjectWorkspace ? null : (
           <>
             {/* Messages or Empty State */}
             <div

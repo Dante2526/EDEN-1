@@ -1,61 +1,105 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { RefreshCw, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
+import { RefreshCw, ExternalLink, AlertCircle } from 'lucide-react';
 import { SynapProject } from '../../lib/types';
-import { loadBabel, transpileCode, buildPreviewHtmlPreTranspiled, normalizePath } from '../../lib/preview-html';
+import {
+  isBabelLoaded,
+  loadBabel,
+  transpileCode,
+  buildPreviewHtmlPreTranspiled,
+  normalizePath,
+} from '../../lib/preview-html';
 
 interface LocalPreviewProps {
   project: SynapProject;
 }
 
+function buildTranspiledHtmlSync(
+  project: SynapProject,
+  cache: Record<string, { raw: string; compiled: string }>
+): string {
+  const preTranspiled: Record<string, string> = {};
+  for (const [rawPath, file] of Object.entries(project.files || {})) {
+    const path = normalizePath(rawPath);
+    const content = typeof file === 'string' ? file : file.content;
+    if (
+      /\.(tsx|ts|jsx|js)$/.test(path) &&
+      !path.endsWith('.d.ts') &&
+      !path.includes('vite.config') &&
+      !path.includes('vitest.config') &&
+      !path.includes('.test.')
+    ) {
+      if (cache[path] && cache[path].raw === content) {
+        preTranspiled[path] = cache[path].compiled;
+      } else {
+        const compiled = transpileCode(content, path);
+        cache[path] = { raw: content, compiled };
+        preTranspiled[path] = compiled;
+      }
+    }
+  }
+  return buildPreviewHtmlPreTranspiled(project, preTranspiled);
+}
+
 export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
-  const [srcDoc, setSrcDoc] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
+  const transpiledCacheRef = useRef<Record<string, { raw: string; compiled: string }>>({});
+
+  // Se o Babel já estiver em memória (ou projeto estático HTML puro), compila sincronamente no 1º render (0ms)
+  const [srcDoc, setSrcDoc] = useState<string>(() => {
+    try {
+      if (project.template === 'static' || isBabelLoaded()) {
+        return buildTranspiledHtmlSync(project, transpiledCacheRef.current);
+      }
+    } catch {
+      // Fallback para compilação assíncrona no useEffect
+    }
+    return '';
+  });
+
+  const [isReady, setIsReady] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
-  const transpiledCacheRef = useRef<Record<string, { raw: string; compiled: string }>>({});
-
   const compileProject = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
-      await loadBabel();
-
-      const preTranspiled: Record<string, string> = {};
-      const cache = transpiledCacheRef.current;
-
-      for (const [rawPath, file] of Object.entries(project.files || {})) {
-        const path = normalizePath(rawPath);
-        const content = typeof file === 'string' ? file : file.content;
-        if (/\.(tsx|ts|jsx|js)$/.test(path) && !path.endsWith('.d.ts') && !path.includes('vite.config')) {
-          if (cache[path] && cache[path].raw === content) {
-            preTranspiled[path] = cache[path].compiled;
-          } else {
-            const compiled = transpileCode(content, path);
-            cache[path] = { raw: content, compiled };
-            preTranspiled[path] = compiled;
-          }
-        }
+      if (project.template !== 'static' && !isBabelLoaded()) {
+        await loadBabel();
       }
-
-      const html = buildPreviewHtmlPreTranspiled(project, preTranspiled);
-      setSrcDoc(html);
-      setLoading(false);
+      const html = buildTranspiledHtmlSync(project, transpiledCacheRef.current);
+      setSrcDoc((prev) => {
+        if (prev !== html) {
+          return html;
+        }
+        return prev;
+      });
+      setIsRefreshing(false);
     } catch (err: any) {
       setError(err?.message || 'Erro ao transpilar o projeto.');
-      setLoading(false);
+      setIsRefreshing(false);
+      setIsReady(true);
     }
   }, [project]);
 
+  // Compila imediatamente sem atraso artificial de 250ms
   useEffect(() => {
-    const timer = setTimeout(() => {
-      compileProject();
-    }, 250);
-    return () => clearTimeout(timer);
+    compileProject();
   }, [compileProject, refreshKey]);
+
+  // Escuta confirmação de renderização do iframe (__SYNAP_PREVIEW_READY__) para revelar sem flash branco
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === '__SYNAP_PREVIEW_READY__') {
+        setIsReady(true);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const handleRefresh = () => {
     transpiledCacheRef.current = {};
+    setIsRefreshing(true);
     setRefreshKey((k) => k + 1);
   };
 
@@ -67,14 +111,14 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-zinc-950 overflow-hidden">
+    <div className="relative w-full h-full flex flex-col bg-[#09090b] overflow-hidden">
       <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
         <button
           onClick={handleRefresh}
           title="Recarregar Preview"
           className="p-2 rounded-lg bg-white/90 hover:bg-white text-zinc-800 shadow-md border border-zinc-200 transition cursor-pointer"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
         <button
           onClick={handleOpenNewTab}
@@ -84,13 +128,6 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
           <ExternalLink className="w-4 h-4" />
         </button>
       </div>
-
-      {loading && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-sm text-zinc-300 gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-          <span className="text-xs font-medium">Compilando preview...</span>
-        </div>
-      )}
 
       {error ? (
         <div className="p-6 text-red-400 flex flex-col gap-2 bg-zinc-900 m-4 rounded-xl border border-red-500/30">
@@ -102,15 +139,21 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({ project }) => {
             {error}
           </pre>
         </div>
-      ) : (
+      ) : srcDoc ? (
         <iframe
           key={refreshKey}
           srcDoc={srcDoc}
           title={project.name || 'Synap Preview'}
-          className="w-full h-full flex-1 border-0 bg-transparent"
+          onLoad={() => setIsReady(true)}
+          style={{
+            backgroundColor: '#09090b',
+            opacity: isReady ? 1 : 0,
+            transition: 'opacity 80ms ease-out',
+          }}
+          className="w-full h-full flex-1 border-0"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
         />
-      )}
+      ) : null}
     </div>
   );
 };

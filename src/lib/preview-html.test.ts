@@ -96,4 +96,27 @@ describe('Preview HTML Generator', () => {
     assert.match(html, /<div id="root"><\/div>/);
     assert.match(html, /synapRequire/);
   });
+
+  it('deve injetar proteção anti-glitch branco no head e emitir evento __SYNAP_PREVIEW_READY__ após montar', () => {
+    const project: SynapProject = {
+      id: 'instant-proj',
+      name: 'Instant App',
+      template: 'react-ts',
+      files: {
+        'src/App.tsx': {
+          path: 'src/App.tsx',
+          content: 'export default function App() { return <div>Ok</div>; }',
+        },
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const html = buildPreviewHtmlPreTranspiled(project, {
+      'src/App.tsx': 'exports.default = function App() { return React.createElement("div", null, "Ok"); };',
+    });
+
+    assert.match(html, /background-color:\s*#09090b/);
+    assert.match(html, /__SYNAP_PREVIEW_READY__/);
+  });
 });

@@ -3,6 +3,15 @@ import { SynapProject } from './types';
 let babelCache: any = null;
 let babelLoadingPromise: Promise<any> | null = null;
 
+export function isBabelLoaded(): boolean {
+  if (babelCache) return true;
+  if (typeof window !== 'undefined' && (window as any).Babel) {
+    babelCache = (window as any).Babel;
+    return true;
+  }
+  return false;
+}
+
 export async function loadBabel(): Promise<any> {
   if (babelCache) return babelCache;
   if (babelLoadingPromise) return babelLoadingPromise;
@@ -216,6 +225,7 @@ export function buildPreviewHtmlPreTranspiled(
 
   if (isStaticProject && normalizedFiles['index.html']) {
     let rawHtml = normalizedFiles['index.html'].content;
+    const antiFlashStyle = '<style>html, body { background-color: #09090b; }</style>';
     const tailwindCdn = '<script src="https://cdn.tailwindcss.com"></script>';
     const injectedStyles = cssContents.length > 0 ? `<style type="text/tailwindcss">\n${escapeScriptTags(cssContents.join('\n\n'))}\n</style>` : '';
     const errorScript = `
@@ -233,18 +243,19 @@ export function buildPreviewHtmlPreTranspiled(
     }
     window.addEventListener('error', (e) => showError('Erro em Tempo de Execução', e.error || e.message));
     window.addEventListener('unhandledrejection', (e) => showError('Promise Rejeitada', e.reason));
+    requestAnimationFrame(() => {
+      try { window.parent.postMessage({ type: '__SYNAP_PREVIEW_READY__' }, '*'); } catch {}
+    });
   </script>`;
 
     if (!rawHtml.includes('cdn.tailwindcss.com')) {
       if (rawHtml.includes('</head>')) {
-        rawHtml = rawHtml.replace('</head>', `${tailwindCdn}\n${injectedStyles}\n</head>`);
+        rawHtml = rawHtml.replace('</head>', `${antiFlashStyle}\n${tailwindCdn}\n${injectedStyles}\n</head>`);
       } else {
-        rawHtml = `${tailwindCdn}\n${injectedStyles}\n${rawHtml}`;
+        rawHtml = `${antiFlashStyle}\n${tailwindCdn}\n${injectedStyles}\n${rawHtml}`;
       }
-    } else if (injectedStyles) {
-      if (rawHtml.includes('</head>')) {
-        rawHtml = rawHtml.replace('</head>', `${injectedStyles}\n</head>`);
-      }
+    } else if (rawHtml.includes('</head>')) {
+      rawHtml = rawHtml.replace('</head>', `${antiFlashStyle}\n${injectedStyles}\n</head>`);
     }
 
     if (rawHtml.includes('</body>')) {
@@ -298,6 +309,15 @@ export function buildPreviewHtmlPreTranspiled(
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${project.name || 'Synap Preview'}</title>
+  <style>
+    html, body { background-color: #09090b; margin: 0; }
+    #synap-error-overlay {
+      display: none; position: fixed; inset: 0; z-index: 99999;
+      background: rgba(15, 15, 20, 0.96); color: #f87171;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      padding: 20px; overflow: auto;
+    }
+  </style>
   ${fontLinks}
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">
@@ -305,14 +325,6 @@ export function buildPreviewHtmlPreTranspiled(
   </script>
   <style type="text/tailwindcss">
   ${escapeScriptTags(cssContents.join('\n\n'))}
-  </style>
-  <style>
-    #synap-error-overlay {
-      display: none; position: fixed; inset: 0; z-index: 99999;
-      background: rgba(15, 15, 20, 0.96); color: #f87171;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      padding: 20px; overflow: auto;
-    }
   </style>
 </head>
 <body${bodyAttrs}>
@@ -520,8 +532,12 @@ export function buildPreviewHtmlPreTranspiled(
           showError('Falha ao Montar Projeto', fallbackErr);
         }
       }
+      requestAnimationFrame(() => {
+        try { window.parent.postMessage({ type: '__SYNAP_PREVIEW_READY__' }, '*'); } catch {}
+      });
     } catch (err) {
       showError('Falha ao Compilar / Executar Projeto', err);
+      try { window.parent.postMessage({ type: '__SYNAP_PREVIEW_READY__' }, '*'); } catch {}
     }
   <\/script>
 </body>
