@@ -1,8 +1,5 @@
 // Web Worker para execução segura e não-bloqueante de Python via Pyodide WASM
 
-declare function importScripts(...urls: string[]): void;
-declare function loadPyodide(config?: any): Promise<any>;
-
 let pyodideInstance: any = null;
 let initPromise: Promise<any> | null = null;
 
@@ -11,8 +8,9 @@ async function getPyodide(): Promise<any> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    // Carrega o script Pyodide via importScripts dentro do worker (lazy-load sob demanda)
-    importScripts('https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js');
+    // Carrega o módulo Pyodide via import() dinâmico compatível com Web Workers ESM (type: 'module')
+    // @ts-ignore
+    const { loadPyodide } = await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.mjs');
     const pyodide = await loadPyodide({
       indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/',
     });

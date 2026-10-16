@@ -1090,3 +1090,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: 57/57 testes passando em 14 suítes.
   - `npm run build`: bundle compilado em 2.20s com artefatos Cloudflare Pages gerados.
+
+## 73. Correção do Pyodide ESM no Web Worker e Blindagem Anti-Base64 de Edição de Código
+- **Problema Relatado:** Ao editar arquivos em repositórios conectados, a IA falhou ao tentar rodar Python no navegador com a exceção `Failed to execute 'importScripts' on 'WorkerGlobalScope': Module scripts don't support importScripts()`, codificou arquivos em Base64 bruto quebrando componentes React (Erro #130) e tentou comandos bash de Linux (`cat > ... << 'EOF'`, `find`) no emulador Git.
+- **Causas Raízes:**
+  1. *Pyodide Web Worker:* O worker foi instanciado com `{ type: 'module' }`. Pela especificação da Web (W3C/MDN), Workers do tipo módulo proíbem `importScripts()`.
+  2. *Contorno errôneo da IA:* A IA tentou usar `run_python` e comandos Bash de redirecionamento para gravar arquivos em vez de chamar diretamente a ferramenta nativa `edit_file` com o código JSX limpo.
+- **Solução Implementada:**
+  1. **Carregador ESM do Pyodide (`src/workers/pyodide-worker.ts`):**
+     - Substituída a chamada `importScripts(...)` por import dinâmico ESM oficial com diretiva `/* @vite-ignore */`:
+       `const { loadPyodide } = await import('https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.mjs');`
+     - Elimina 100% da incompatibilidade de Web Workers de módulo no navegador.
+  2. **Blindagem do System Prompt (`src/App.tsx` & `src/lib/text-tool-parser.ts`):**
+     - Adicionada regra estrita anti-Base64: arquivos devem ser criados e alterados OBRIGATORIAMENTE em texto claro legível (TypeScript, JSX, CSS) via `edit_file` / `batch_edit_files`.
+     - Esclarecidos os limites do emulador de terminal Git: proibição de comandos de shell Linux com redirecionamento (`>`, `cat >`, heredocs `<< EOF`, `touch`, `nano`, `find`).
+     - Delimitado o sandbox do `run_python`: exclusivo para cálculos matemáticos e testes de algoritmos, sem acesso ao repositório ou disco.
+- **Evidências de Verificação:**
+  - `npm test`: 57/57 testes unitários passando em 14 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado em 2.12s com chunk isolado do worker `pyodide-worker-LDet7bQ4.js` (0.88 kB).

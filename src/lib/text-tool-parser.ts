@@ -195,7 +195,7 @@ export function buildTextToolProtocolPrompt(
     '- Salvar Memória: <synap_tool name="save_memory">{"fact": "fato importante", "category": "preference"}</synap_tool>',
     mcpSection,
     '',
-    'REGRA DE OURO: Quando o usuário pedir para alterar ou criar arquivos no repositório ativo, emita OBRIGATORIAMENTE o bloco <synap_edit path="..." type="..."> com o código completo.',
+    'REGRA DE OURO: Quando o usuário pedir para alterar ou criar arquivos no repositório ativo, emita OBRIGATORIAMENTE o bloco <synap_edit path="..." type="..."> com o código completo em texto claro (JSX/TS/CSS). NUNCA envie código em Base64 e NUNCA tente usar o terminal para gravar arquivos.',
   ]
     .filter(Boolean)
     .join('\n');
