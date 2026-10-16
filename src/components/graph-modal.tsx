@@ -1,22 +1,27 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   X,
   Search,
   Network,
-  Maximize2,
-  Minimize2,
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Layers,
   ArrowRight,
   ArrowLeft,
   FileCode,
   Box,
-  Cpu,
-  Sparkles,
+  Orbit,
+  Pause,
+  Play,
 } from 'lucide-react';
 import { ProjectGraph, GraphNode } from '../lib/graphify-engine';
+import {
+  compute3DLayout,
+  project3DNodes,
+  findClosestProjectedNode,
+  Node3D,
+  ProjectedNode3D,
+} from '../lib/graph-3d-engine';
 
 interface GraphModalProps {
   isOpen: boolean;
@@ -24,6 +29,66 @@ interface GraphModalProps {
   graph: ProjectGraph;
   initialFocusNodeId?: string;
   onSelectFile?: (filePath: string) => void;
+}
+
+interface ColorPalette {
+  main: string;
+  light: string;
+  dark: string;
+  glow: string;
+}
+
+function getNodePalette(
+  node: GraphNode,
+  selectedNodeId: string | null,
+  godSet: Set<string>
+): ColorPalette {
+  if (node.id === selectedNodeId) {
+    return {
+      main: '#f97316',
+      light: '#ffedd5',
+      dark: '#9a3412',
+      glow: 'rgba(249, 115, 22, 0.55)',
+    };
+  }
+  if (godSet.has(node.id)) {
+    return {
+      main: '#10b981',
+      light: '#d1fae5',
+      dark: '#065f46',
+      glow: 'rgba(16, 185, 129, 0.45)',
+    };
+  }
+  if (node.kind === 'component') {
+    return {
+      main: '#38bdf8',
+      light: '#e0f2fe',
+      dark: '#0369a1',
+      glow: 'rgba(56, 189, 248, 0.4)',
+    };
+  }
+  if (node.kind === 'hook') {
+    return {
+      main: '#a855f7',
+      light: '#f3e8ff',
+      dark: '#581c87',
+      glow: 'rgba(168, 85, 247, 0.4)',
+    };
+  }
+  if (node.kind === 'type') {
+    return {
+      main: '#f59e0b',
+      light: '#fef3c7',
+      dark: '#92400e',
+      glow: 'rgba(245, 158, 11, 0.4)',
+    };
+  }
+  return {
+    main: '#94a3b8',
+    light: '#f1f5f9',
+    dark: '#334155',
+    glow: 'rgba(148, 163, 184, 0.28)',
+  };
 }
 
 export const GraphModal: React.FC<GraphModalProps> = ({
@@ -35,18 +100,54 @@ export const GraphModal: React.FC<GraphModalProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [is3D, setIs3D] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const [zoom, setZoom] = useState(1.08);
 
-  // Inicializa com o foco inicial, se fornecido
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Estado mutável de alta frequência da câmera 3D para 60 FPS sem re-renders do React
+  const cameraRef = useRef({
+    rotX: 0.28,
+    rotY: -0.45,
+    targetRotX: null as number | null,
+    targetRotY: null as number | null,
+    velRotX: 0,
+    velRotY: 0,
+    panX: 0,
+    panY: 0,
+    zoom: 1.08,
+    isDragging: false,
+    dragMode: 'orbit' as 'orbit' | 'pan',
+    dragStartX: 0,
+    dragStartY: 0,
+    pointerMovedDistance: 0,
+  });
+
+  const projectedNodesRef = useRef<ProjectedNode3D[]>([]);
+
   useEffect(() => {
+    cameraRef.current.zoom = zoom;
+  }, [zoom]);
+
+  const godSet = useMemo(() => new Set(graph.godNodes.map((g) => g.id)), [graph.godNodes]);
+
+  // Layout 3D calculado com física de forças
+  const nodes3D = useMemo<Node3D[]>(() => {
+    return compute3DLayout(graph, 55);
+  }, [graph]);
+
+  // Inicializa foco no nó principal
+  useEffect(() => {
+    if (!isOpen) return;
     if (initialFocusNodeId && graph.nodes.some((n) => n.id === initialFocusNodeId)) {
       setSelectedNodeId(initialFocusNodeId);
     } else if (graph.godNodes.length > 0 && !selectedNodeId) {
       setSelectedNodeId(graph.godNodes[0].id);
+    } else if (graph.nodes.length > 0 && !selectedNodeId) {
+      setSelectedNodeId(graph.nodes[0].id);
     }
   }, [initialFocusNodeId, graph, isOpen]);
 
@@ -61,12 +162,13 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Filtra nós pela busca
-  const filteredNodes = useMemo(() => {
-    if (!search.trim()) return graph.nodes;
+  const matchingNodeIds = useMemo(() => {
+    if (!search.trim()) return null;
     const q = search.toLowerCase();
-    return graph.nodes.filter(
-      (n) => n.path.toLowerCase().includes(q) || n.label.toLowerCase().includes(q)
+    return new Set(
+      graph.nodes
+        .filter((n) => n.path.toLowerCase().includes(q) || n.label.toLowerCase().includes(q))
+        .map((n) => n.id)
     );
   }, [graph.nodes, search]);
 
@@ -74,7 +176,6 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     return graph.nodes.find((n) => n.id === selectedNodeId) || null;
   }, [graph.nodes, selectedNodeId]);
 
-  // Dependentes e dependências do nó selecionado
   const { incomingEdges, outgoingEdges } = useMemo(() => {
     if (!selectedNodeId) return { incomingEdges: [], outgoingEdges: [] };
     return {
@@ -83,103 +184,466 @@ export const GraphModal: React.FC<GraphModalProps> = ({
     };
   }, [graph.edges, selectedNodeId]);
 
-  // Layout determinístico do grafo (posicionamento orgânico em grid/órbita)
-  const nodePositions = useMemo(() => {
-    const positions = new Map<string, { x: number; y: number }>();
-    const total = graph.nodes.length;
-    if (total === 0) return positions;
+  // Centraliza suavemente a câmera 3D na direção do nó escolhido
+  const focusCameraOnNode = useCallback(
+    (nodeId: string) => {
+      setSelectedNodeId(nodeId);
+      const target = nodes3D.find((n) => n.id === nodeId);
+      if (!target || !is3D) return;
 
-    const width = 1200;
-    const height = 800;
-    const centerX = width / 2;
-    const centerY = height / 2;
+      // Calcula ângulos yaw/pitch para trazer o nó para a frente (z negativo)
+      const targetYaw = Math.atan2(-target.x, -target.z);
+      const horizDist = Math.sqrt(target.x * target.x + target.z * target.z) || 1;
+      const targetPitch = Math.max(-0.85, Math.min(0.85, Math.atan2(target.y, horizDist) * 0.55));
 
-    // Hubs (God Nodes) no centro
-    const godSet = new Set(graph.godNodes.map((g) => g.id));
-    const nonGods = graph.nodes.filter((n) => !godSet.has(n.id));
+      cameraRef.current.targetRotY = targetYaw;
+      cameraRef.current.targetRotX = targetPitch;
+    },
+    [nodes3D, is3D]
+  );
 
-    // Posiciona hubs em um círculo interior
-    graph.godNodes.forEach((node, i) => {
-      const angle = (i / Math.max(1, graph.godNodes.length)) * 2 * Math.PI;
-      const radius = 120;
-      positions.set(node.id, {
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius,
+  const resetView = useCallback(() => {
+    setZoom(1.08);
+    cameraRef.current.zoom = 1.08;
+    cameraRef.current.panX = 0;
+    cameraRef.current.panY = 0;
+    cameraRef.current.targetRotX = 0.28;
+    cameraRef.current.targetRotY = -0.45;
+    cameraRef.current.velRotX = 0;
+    cameraRef.current.velRotY = 0;
+  }, []);
+
+  // Loop de renderização 3D a 60 FPS no Canvas HiDPI
+  useEffect(() => {
+    if (!isOpen) return;
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    let animationFrameId = 0;
+    let width = container.clientWidth || 900;
+    let height = container.clientHeight || 650;
+
+    const updateCanvasSize = () => {
+      if (!container || !canvas) return;
+      width = Math.max(300, container.clientWidth);
+      height = Math.max(300, container.clientHeight);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+    };
+
+    updateCanvasSize();
+    const resizeObserver = new ResizeObserver(updateCanvasSize);
+    resizeObserver.observe(container);
+
+    const renderFrame = (time: number) => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      const cam = cameraRef.current;
+
+      // 1. Atualiza física de câmera (interpolação suave ou auto-rotação)
+      if (!cam.isDragging) {
+        if (cam.targetRotY !== null && cam.targetRotX !== null) {
+          const diffY = cam.targetRotY - cam.rotY;
+          const diffX = cam.targetRotX - cam.rotX;
+          cam.rotY += diffY * 0.12;
+          cam.rotX += diffX * 0.12;
+          if (Math.abs(diffY) < 0.003 && Math.abs(diffX) < 0.003) {
+            cam.targetRotY = null;
+            cam.targetRotX = null;
+          }
+        } else {
+          if (autoRotate && is3D) {
+            cam.rotY += 0.0032;
+          }
+          cam.rotY += cam.velRotY;
+          cam.rotX = Math.max(-1.25, Math.min(1.25, cam.rotX + cam.velRotX));
+          cam.velRotY *= 0.92;
+          cam.velRotX *= 0.92;
+        }
+      }
+
+      // 2. Fundo espacial profundo com vinheta radial 3D
+      ctx.clearRect(0, 0, width, height);
+      const bgGrad = ctx.createRadialGradient(
+        width / 2 + cam.panX * 0.3,
+        height / 2 + cam.panY * 0.3,
+        20,
+        width / 2,
+        height / 2,
+        Math.max(width, height) * 0.75
+      );
+      bgGrad.addColorStop(0, '#1e1c18');
+      bgGrad.addColorStop(0.55, '#141310');
+      bgGrad.addColorStop(1, '#0c0b09');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // 3. Desenha anéis orbitais 3D holográficos de referência no espaço
+      if (is3D) {
+        const orbitalRadii = [115, 250];
+        const cosX = Math.cos(cam.rotX);
+        const sinX = Math.sin(cam.rotX);
+        const centerX = width / 2 + cam.panX;
+        const centerY = height / 2 + cam.panY;
+
+        for (const r of orbitalRadii) {
+          ctx.save();
+          ctx.beginPath();
+          const steps = 64;
+          for (let s = 0; s <= steps; s++) {
+            const angle = (s / steps) * Math.PI * 2 + cam.rotY;
+            const ox = Math.cos(angle) * r;
+            const oz = Math.sin(angle) * r;
+            const oy2 = -oz * sinX;
+            const oz2 = oz * cosX;
+            const persp = (780 / Math.max(180, 780 + oz2)) * cam.zoom;
+            const sx = centerX + ox * persp;
+            const sy = centerY + oy2 * persp;
+            if (s === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.strokeStyle = r === 115 ? 'rgba(16, 185, 129, 0.11)' : 'rgba(56, 189, 248, 0.08)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 6]);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // 4. Projeta todos os nós 3D para 2D com ordenação Z
+      const projected = project3DNodes(nodes3D, {
+        width,
+        height,
+        rotX: cam.rotX,
+        rotY: cam.rotY,
+        zoom: cam.zoom,
+        panX: cam.panX,
+        panY: cam.panY,
+        is3D,
       });
-    });
+      projectedNodesRef.current = projected;
 
-    // Posiciona os demais nós por comunidade em anéis externos
-    const communities = Object.keys(graph.communities);
-    nonGods.forEach((node, i) => {
-      const commIdx = communities.indexOf(node.community || 'root');
-      const baseAngle = (commIdx / Math.max(1, communities.length)) * 2 * Math.PI;
-      const offsetAngle = ((i % 12) / 12) * (Math.PI / 2) - Math.PI / 4;
-      const radius = 260 + (i % 3) * 80;
+      const projMap = new Map<string, ProjectedNode3D>();
+      for (const p of projected) {
+        projMap.set(p.id, p);
+      }
 
-      const finalAngle = baseAngle + offsetAngle;
-      positions.set(node.id, {
-        x: centerX + Math.cos(finalAngle) * radius,
-        y: centerY + Math.sin(finalAngle) * radius,
-      });
-    });
+      // 5. Renderiza Arestas 3D + Partículas de Fluxo de Dados
+      const pulsePhase = (time * 0.00065) % 1;
+      for (let i = 0; i < graph.edges.length; i++) {
+        const edge = graph.edges[i];
+        const s = projMap.get(edge.source);
+        const t = projMap.get(edge.target);
+        if (!s || !t) continue;
 
-    return positions;
-  }, [graph]);
+        const isOutgoingFromSelected = selectedNodeId === edge.source;
+        const isIncomingToSelected = selectedNodeId === edge.target;
+        const isHoveredEdge =
+          hoveredNodeId && (edge.source === hoveredNodeId || edge.target === hoveredNodeId);
+        const isHighlighted = isOutgoingFromSelected || isIncomingToSelected || isHoveredEdge;
+
+        const avgAlpha = (s.alpha + t.alpha) * 0.5;
+        const searchDim =
+          matchingNodeIds && !matchingNodeIds.has(s.id) && !matchingNodeIds.has(t.id) ? 0.2 : 1;
+
+        // Curva suave 3D em direção ao centro
+        const midX = (s.screenX + t.screenX) * 0.5;
+        const midY = (s.screenY + t.screenY) * 0.5 - (is3D ? 12 * ((s.scale + t.scale) * 0.5) : 0);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(s.screenX, s.screenY);
+        ctx.quadraticCurveTo(midX, midY, t.screenX, t.screenY);
+
+        if (isHighlighted) {
+          const edgeColor = isIncomingToSelected
+            ? 'rgba(16, 185, 129, 0.88)' // Verde Esmeralda = Quem depende deste arquivo
+            : 'rgba(249, 115, 22, 0.9)'; // Coral = Módulos que este arquivo importa
+          ctx.strokeStyle = edgeColor;
+          ctx.lineWidth = Math.max(1.6, 2.4 * ((s.scale + t.scale) * 0.5));
+          ctx.shadowColor = isIncomingToSelected ? '#10b981' : '#f97316';
+          ctx.shadowBlur = 8;
+        } else {
+          ctx.strokeStyle = `rgba(148, 163, 184, ${(0.22 * avgAlpha * searchDim).toFixed(3)})`;
+          ctx.lineWidth = Math.max(0.8, 1.1 * ((s.scale + t.scale) * 0.5));
+        }
+
+        if (edge.kind === 'depends_on') {
+          ctx.setLineDash([4, 4]);
+        }
+        ctx.stroke();
+
+        // Partículas luminosas fluindo nas conexões ativas (source -> target)
+        if (isHighlighted) {
+          for (let pIdx = 0; pIdx < 2; pIdx++) {
+            const u = (pulsePhase + pIdx * 0.5 + (i % 5) * 0.13) % 1;
+            const invU = 1 - u;
+            const px = invU * invU * s.screenX + 2 * invU * u * midX + u * u * t.screenX;
+            const py = invU * invU * s.screenY + 2 * invU * u * midY + u * u * t.screenY;
+
+            ctx.beginPath();
+            ctx.arc(px, py, 2.8 * ((s.scale + t.scale) * 0.5), 0, Math.PI * 2);
+            ctx.fillStyle = isIncomingToSelected ? '#6ee7b7' : '#fed7aa';
+            ctx.shadowColor = isIncomingToSelected ? '#10b981' : '#f97316';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+
+      // 6. Renderiza Esferas 3D Volumétricas (ordenadas de trás para frente)
+      const pulseScale = 1 + Math.sin(time * 0.004) * 0.08;
+
+      for (const node of projected) {
+        const isSelected = node.id === selectedNodeId;
+        const isHovered = node.id === hoveredNodeId;
+        const isConnectedToSelected =
+          selectedNodeId &&
+          graph.edges.some(
+            (e) =>
+              (e.source === selectedNodeId && e.target === node.id) ||
+              (e.target === selectedNodeId && e.source === node.id)
+          );
+
+        const isSearchMatch = !matchingNodeIds || matchingNodeIds.has(node.id);
+        const dimFactor = isSearchMatch ? 1 : 0.22;
+        const finalAlpha = Math.max(0.15, Math.min(1, node.alpha * dimFactor));
+
+        const palette = getNodePalette(node, selectedNodeId, godSet);
+        const r =
+          node.projectedRadius *
+          (isSelected ? 1.32 : isHovered ? 1.18 : 1);
+
+        ctx.save();
+        ctx.globalAlpha = finalAlpha;
+
+        // Halo volumétrico externo para Hubs, Selecionado ou Hover
+        if (isSelected || node.isGod || isHovered) {
+          const haloRadius = r * (isSelected ? 2.35 * pulseScale : 1.85);
+          const haloGrad = ctx.createRadialGradient(
+            node.screenX,
+            node.screenY,
+            r * 0.4,
+            node.screenX,
+            node.screenY,
+            haloRadius
+          );
+          haloGrad.addColorStop(0, palette.glow);
+          haloGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.beginPath();
+          ctx.arc(node.screenX, node.screenY, haloRadius, 0, Math.PI * 2);
+          ctx.fillStyle = haloGrad;
+          ctx.fill();
+        }
+
+        // Corpo da Esfera 3D com iluminação especular (fonte de luz superior esquerda)
+        const lightOffsetX = -r * 0.35;
+        const lightOffsetY = -r * 0.35;
+        const sphereGrad = ctx.createRadialGradient(
+          node.screenX + lightOffsetX,
+          node.screenY + lightOffsetY,
+          r * 0.12,
+          node.screenX,
+          node.screenY,
+          r
+        );
+        sphereGrad.addColorStop(0, palette.light);
+        sphereGrad.addColorStop(0.38, palette.main);
+        sphereGrad.addColorStop(1, palette.dark);
+
+        ctx.beginPath();
+        ctx.arc(node.screenX, node.screenY, r, 0, Math.PI * 2);
+        ctx.fillStyle = sphereGrad;
+        ctx.shadowColor = palette.glow;
+        ctx.shadowBlur = isSelected ? 18 : node.isGod ? 10 : 4;
+        ctx.fill();
+
+        // Anel orbital ao redor do nó selecionado
+        if (isSelected) {
+          ctx.beginPath();
+          ctx.arc(node.screenX, node.screenY, r + 4.5, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255, 237, 213, 0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // Rótulo 3D flutuante com pílula translúcida de alto contraste
+        const shouldShowLabel =
+          isSelected ||
+          isHovered ||
+          node.isGod ||
+          isConnectedToSelected ||
+          node.scale > 0.78 ||
+          graph.nodes.length <= 28;
+
+        if (shouldShowLabel) {
+          const fontSize = Math.max(9.5, Math.min(13.5, (isSelected ? 12 : 10.5) * node.scale));
+          ctx.font = `${isSelected || node.isGod ? '600' : '500'} ${fontSize.toFixed(1)}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`;
+          const textWidth = ctx.measureText(node.label).width;
+          const labelY = node.screenY + r + fontSize + 4;
+          const padX = 6;
+          const padY = 3;
+
+          // Pílula de fundo
+          ctx.fillStyle = isSelected
+            ? 'rgba(249, 115, 22, 0.22)'
+            : 'rgba(20, 19, 16, 0.78)';
+          ctx.strokeStyle = isSelected
+            ? 'rgba(249, 115, 22, 0.65)'
+            : 'rgba(62, 59, 52, 0.65)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(
+            node.screenX - textWidth / 2 - padX,
+            labelY - fontSize + 1 - padY,
+            textWidth + padX * 2,
+            fontSize + padY * 2,
+            6
+          );
+          ctx.fill();
+          ctx.stroke();
+
+          // Texto do módulo
+          ctx.fillStyle = isSelected ? '#ffffff' : isHovered ? '#f8fafc' : '#e5e0d5';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText(node.label, node.screenX, labelY);
+        }
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+      animationFrameId = window.requestAnimationFrame(renderFrame);
+    };
+
+    animationFrameId = window.requestAnimationFrame(renderFrame);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
+    };
+  }, [
+    isOpen,
+    nodes3D,
+    graph,
+    selectedNodeId,
+    hoveredNodeId,
+    is3D,
+    autoRotate,
+    godSet,
+    matchingNodeIds,
+  ]);
 
   if (!isOpen) return null;
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  const getPointerCoords = (clientX: number, clientY: number) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPan({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const cam = cameraRef.current;
+    cam.isDragging = true;
+    cam.targetRotX = null;
+    cam.targetRotY = null;
+    cam.dragMode = e.button === 2 || e.shiftKey || !is3D ? 'pan' : 'orbit';
+    cam.dragStartX = e.clientX;
+    cam.dragStartY = e.clientY;
+    cam.pointerMovedDistance = 0;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const cam = cameraRef.current;
+    const { x, y } = getPointerCoords(e.clientX, e.clientY);
+
+    if (!cam.isDragging) {
+      const hovered = findClosestProjectedNode(projectedNodesRef.current, x, y);
+      setHoveredNodeId(hovered ? hovered.id : null);
+      return;
+    }
+
+    const dx = e.clientX - cam.dragStartX;
+    const dy = e.clientY - cam.dragStartY;
+    cam.dragStartX = e.clientX;
+    cam.dragStartY = e.clientY;
+    cam.pointerMovedDistance += Math.hypot(dx, dy);
+
+    if (cam.dragMode === 'orbit' && is3D) {
+      const rotSpeed = 0.0065;
+      cam.rotY += dx * rotSpeed;
+      cam.rotX = Math.max(-1.25, Math.min(1.25, cam.rotX - dy * rotSpeed));
+      cam.velRotY = dx * rotSpeed * 0.35;
+      cam.velRotX = -dy * rotSpeed * 0.35;
+    } else {
+      cam.panX += dx;
+      cam.panY += dy;
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const cam = cameraRef.current;
+    const wasClick = cam.pointerMovedDistance < 6;
+    cam.isDragging = false;
+
+    if (wasClick) {
+      const { x, y } = getPointerCoords(e.clientX, e.clientY);
+      const clickedNode = findClosestProjectedNode(projectedNodesRef.current, x, y, 10);
+      if (clickedNode) {
+        focusCameraOnNode(clickedNode.id);
+      }
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    setZoom((prev) => {
+      const next = Math.max(0.45, Math.min(2.8, prev * factor));
+      cameraRef.current.zoom = next;
+      return next;
     });
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const resetView = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
-
-  const getNodeColor = (node: GraphNode) => {
-    if (node.id === selectedNodeId) return '#d97757'; // Coral Claude
-    if (graph.godNodes.some((g) => g.id === node.id)) return '#10b981'; // Esmeralda Hub
-    if (node.kind === 'component') return '#3b82f6'; // Azul
-    if (node.kind === 'hook') return '#8b5cf6'; // Roxo
-    if (node.kind === 'type') return '#f59e0b'; // Âmbar
-    return '#64748b'; // Neutro
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-6xl h-[90vh] bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[color:var(--c-fg-f3efe6)] font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-6xl h-[92vh] bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[color:var(--c-fg-f3efe6)] font-sans">
         {/* Top Header Bar */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-1c1a17)]/90">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3 border-b border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-1c1a17)]/95">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-d97757)]">
+            <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 shadow-inner">
               <Network className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-serif font-semibold text-base text-[color:var(--c-fg-f3efe6)]">
-                  Mapa de Arquitetura (Graphify)
+                <h2 className="font-serif font-semibold text-sm sm:text-base text-[color:var(--c-fg-f3efe6)]">
+                  Mapa de Arquitetura 3D (Graphify)
                 </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 font-mono">
+                  3D Engine · 60 FPS
+                </span>
+                <span className="hidden md:inline-block text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono">
                   GraphRAG Ativo
                 </span>
               </div>
               <p className="text-xs text-[color:var(--c-fg-8c867a)]">
-                {graph.nodes.length} módulos · {graph.edges.length} dependências · {Object.keys(graph.communities).length} agrupamentos
+                {graph.nodes.length} módulos · {graph.edges.length} dependências ·{' '}
+                {Object.keys(graph.communities).length} agrupamentos
               </p>
             </div>
           </div>
@@ -193,14 +657,45 @@ export const GraphModal: React.FC<GraphModalProps> = ({
                 placeholder="Buscar arquivo ou módulo…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-8c867a)] focus:outline-none focus:border-[color:var(--c-fg-d97757)] w-56"
+                className="pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-8c867a)] focus:outline-none focus:border-sky-400 w-52"
               />
             </div>
+
+            {/* Botão 3D / 2D */}
+            <button
+              type="button"
+              onClick={() => setIs3D((prev) => !prev)}
+              title={is3D ? 'Alternar para visão 2D Plana' : 'Alternar para Esfera 3D'}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-mono transition cursor-pointer ${
+                is3D
+                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
+                  : 'bg-[color:var(--c-bg-302e2a)] border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-c4bfb6)]'
+              }`}
+            >
+              <Box className="w-3.5 h-3.5" />
+              <span>{is3D ? '3D' : '2D'}</span>
+            </button>
+
+            {/* Botão Auto-Giro 3D */}
+            {is3D && (
+              <button
+                type="button"
+                onClick={() => setAutoRotate((prev) => !prev)}
+                title={autoRotate ? 'Pausar rotação orbital' : 'Ativar rotação orbital automática'}
+                className={`p-2 rounded-xl border transition cursor-pointer ${
+                  autoRotate
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                    : 'bg-[color:var(--c-bg-302e2a)] border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-c4bfb6)] hover:text-white'
+                }`}
+              >
+                {autoRotate ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </button>
+            )}
 
             <button
               type="button"
               onClick={resetView}
-              title="Resetar visão"
+              title="Resetar câmera 3D"
               className="p-2 rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] hover:bg-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
@@ -218,130 +713,65 @@ export const GraphModal: React.FC<GraphModalProps> = ({
         </div>
 
         {/* Main Content Area */}
-        <div className="relative flex-1 flex overflow-hidden">
-          {/* Interactive Graph Canvas / SVG */}
+        <div className="relative flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* Interactive 3D Canvas Viewport */}
           <div
             ref={containerRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            className={`flex-1 relative bg-[color:var(--c-bg-1c1a17)] overflow-hidden cursor-${isDragging ? 'grabbing' : 'grab'}`}
+            className="flex-1 relative bg-[#0c0b09] overflow-hidden select-none min-h-[340px]"
           >
-            {/* Background grid pattern */}
-            <div
-              className="absolute inset-0 pointer-events-none opacity-20"
-              style={{
-                backgroundImage: `radial-gradient(circle, var(--c-bg-4a473f) 1px, transparent 1px)`,
-                backgroundSize: '24px 24px',
-              }}
+            <canvas
+              ref={canvasRef}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onWheel={handleWheel}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{ touchAction: 'none' }}
+              className={`w-full h-full block ${
+                hoveredNodeId ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
+              }`}
             />
 
-            <svg
-              className="w-full h-full"
-              viewBox="0 0 1200 800"
-              style={{
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                transformOrigin: 'center center',
-                transition: isDragging ? 'none' : 'transform 0.15s ease-out',
-              }}
-            >
-              {/* Edges */}
-              <g className="edges">
-                {graph.edges.map((edge, i) => {
-                  const s = nodePositions.get(edge.source);
-                  const t = nodePositions.get(edge.target);
-                  if (!s || !t) return null;
-
-                  const isHighlighted =
-                    selectedNodeId &&
-                    (edge.source === selectedNodeId || edge.target === selectedNodeId);
-
-                  return (
-                    <line
-                      key={`${edge.source}->${edge.target}-${i}`}
-                      x1={s.x}
-                      y1={s.y}
-                      x2={t.x}
-                      y2={t.y}
-                      stroke={isHighlighted ? '#d97757' : 'var(--c-bg-3e3b34)'}
-                      strokeWidth={isHighlighted ? 2.5 : 1}
-                      strokeOpacity={isHighlighted ? 0.9 : 0.4}
-                      strokeDasharray={edge.kind === 'depends_on' ? '4 4' : undefined}
-                    />
-                  );
-                })}
-              </g>
-
-              {/* Nodes */}
-              <g className="nodes">
-                {graph.nodes.map((node) => {
-                  const pos = nodePositions.get(node.id);
-                  if (!pos) return null;
-
-                  const isSelected = node.id === selectedNodeId;
-                  const isGod = graph.godNodes.some((g) => g.id === node.id);
-                  const radius = isSelected ? 18 : isGod ? 14 : 10;
-                  const color = getNodeColor(node);
-
-                  return (
-                    <g
-                      key={node.id}
-                      transform={`translate(${pos.x}, ${pos.y})`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedNodeId(node.id);
-                      }}
-                      className="cursor-pointer group"
-                    >
-                      {/* Glow for selected/hub */}
-                      {(isSelected || isGod) && (
-                        <circle
-                          r={radius + 6}
-                          fill={color}
-                          opacity={isSelected ? 0.35 : 0.15}
-                          className="animate-pulse"
-                        />
-                      )}
-
-                      <circle
-                        r={radius}
-                        fill={color}
-                        stroke="#1c1a17"
-                        strokeWidth={2}
-                        className="transition-transform duration-200 group-hover:scale-125"
-                      />
-
-                      <text
-                        y={radius + 14}
-                        textAnchor="middle"
-                        fill={isSelected ? '#ffffff' : 'var(--c-fg-c4bfb6)'}
-                        fontSize={isSelected ? 12 : 10}
-                        fontWeight={isSelected || isGod ? 'bold' : 'normal'}
-                        className="pointer-events-none select-none"
-                      >
-                        {node.label}
-                      </text>
-                    </g>
-                  );
-                })}
-              </g>
-            </svg>
+            {/* Dica de Interação Orbital & Legenda 3D */}
+            <div className="absolute bottom-3 left-3 pointer-events-none flex flex-col gap-1.5">
+              <div className="px-3 py-1.5 rounded-xl bg-black/65 border border-white/10 backdrop-blur-md flex flex-wrap items-center gap-3 text-[11px] text-zinc-300">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]" />
+                  Selecionado
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+                  Hub Central
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
+                  Componente
+                </span>
+                <span className="hidden sm:flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  Tipo / Hook
+                </span>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/50 text-[10px] text-zinc-400 font-mono">
+                <Orbit className="w-3 h-3 text-sky-400" />
+                <span>Arraste para girar em 360° · Scroll para Zoom · Clique num módulo para focar</span>
+              </div>
+            </div>
 
             {/* Float Controls (Zoom In / Out) */}
-            <div className="absolute bottom-4 right-4 flex flex-col gap-1.5 p-1.5 rounded-xl bg-[color:var(--c-bg-23211d)]/90 border border-[color:var(--c-bg-3e3b34)] shadow-lg backdrop-blur-sm">
+            <div className="absolute bottom-3 right-3 flex flex-col gap-1.5 p-1.5 rounded-xl bg-[color:var(--c-bg-23211d)]/90 border border-[color:var(--c-bg-3e3b34)] shadow-lg backdrop-blur-sm">
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.min(2.5, z + 0.2))}
-                title="Aumentar zoom"
+                onClick={() => setZoom((z) => Math.min(2.8, z + 0.2))}
+                title="Aumentar zoom 3D"
                 className="p-1.5 rounded-lg hover:bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.max(0.4, z - 0.2))}
-                title="Diminuir zoom"
+                onClick={() => setZoom((z) => Math.max(0.45, z - 0.2))}
+                title="Diminuir zoom 3D"
                 className="p-1.5 rounded-lg hover:bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
               >
                 <ZoomOut className="w-4 h-4" />
@@ -350,19 +780,21 @@ export const GraphModal: React.FC<GraphModalProps> = ({
           </div>
 
           {/* Right Sidebar: Selected Node Details */}
-          <div className="w-80 sm:w-96 border-l border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-23211d)] p-4 flex flex-col overflow-y-auto">
+          <div className="w-full lg:w-88 xl:w-96 max-h-[42vh] lg:max-h-none border-t lg:border-t-0 lg:border-l border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-23211d)] p-4 flex flex-col overflow-y-auto">
             {selectedNode ? (
               <div className="space-y-4">
                 <div className="pb-3 border-b border-[color:var(--c-bg-3e3b34)]">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span
                       className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getNodeColor(selectedNode) }}
+                      style={{
+                        backgroundColor: getNodePalette(selectedNode, selectedNodeId, godSet).main,
+                      }}
                     />
                     <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-8c867a)] uppercase tracking-wider">
                       {selectedNode.kind}
                     </span>
-                    {graph.godNodes.some((g) => g.id === selectedNode.id) && (
+                    {godSet.has(selectedNode.id) && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">
                         Hub Central
                       </span>
@@ -417,12 +849,12 @@ export const GraphModal: React.FC<GraphModalProps> = ({
                         <button
                           key={e.source}
                           type="button"
-                          onClick={() => setSelectedNodeId(e.source)}
+                          onClick={() => focusCameraOnNode(e.source)}
                           className="w-full text-left p-1.5 rounded-lg bg-[color:var(--c-bg-1c1a17)] hover:bg-[color:var(--c-bg-302e2a)] border border-transparent hover:border-[color:var(--c-bg-3e3b34)] text-xs text-[color:var(--c-fg-c4bfb6)] hover:text-white transition flex items-center justify-between group cursor-pointer"
                         >
                           <span className="truncate">{e.source.split('/').pop()}</span>
-                          <span className="text-[10px] text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-d97757)] font-mono">
-                            Ver nó →
+                          <span className="text-[10px] text-[color:var(--c-fg-8c867a)] group-hover:text-sky-400 font-mono">
+                            Focar 3D →
                           </span>
                         </button>
                       ))}
@@ -446,12 +878,12 @@ export const GraphModal: React.FC<GraphModalProps> = ({
                         <button
                           key={e.target}
                           type="button"
-                          onClick={() => setSelectedNodeId(e.target)}
+                          onClick={() => focusCameraOnNode(e.target)}
                           className="w-full text-left p-1.5 rounded-lg bg-[color:var(--c-bg-1c1a17)] hover:bg-[color:var(--c-bg-302e2a)] border border-transparent hover:border-[color:var(--c-bg-3e3b34)] text-xs text-[color:var(--c-fg-c4bfb6)] hover:text-white transition flex items-center justify-between group cursor-pointer"
                         >
                           <span className="truncate">{e.target.split('/').pop()}</span>
-                          <span className="text-[10px] text-[color:var(--c-fg-8c867a)] group-hover:text-[color:var(--c-fg-d97757)] font-mono">
-                            Ver nó →
+                          <span className="text-[10px] text-[color:var(--c-fg-8c867a)] group-hover:text-sky-400 font-mono">
+                            Focar 3D →
                           </span>
                         </button>
                       ))}
@@ -480,7 +912,9 @@ export const GraphModal: React.FC<GraphModalProps> = ({
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center text-[color:var(--c-fg-8c867a)]">
                 <Network className="w-8 h-8 mb-2 opacity-40" />
-                <p className="text-xs">Clique em qualquer nó do mapa para ver suas dependências e métricas de acoplamento.</p>
+                <p className="text-xs">
+                  Clique em qualquer esfera 3D do mapa para focar a câmera e inspecionar suas conexões.
+                </p>
               </div>
             )}
           </div>

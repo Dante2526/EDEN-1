@@ -850,3 +850,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 52/52 testes passando.
   - `npm run build`: bundle compilado com sucesso.
 
+## 60. Mapa de Arquitetura Graphify 3D de Alta Performance (60 FPS no Navegador)
+- **Solicitação do Usuário:** Evoluir o Mapa de Arquitetura (Graphify) para um modelo 3D de alta performance e qualidade visual rodando diretamente no navegador.
+- **Solução Implementada:**
+  1. **Motor Físico e Matemático 3D (`src/lib/graph-3d-engine.ts` + `src/lib/graph-3d-engine.test.ts`):**
+     - `compute3DLayout`: Distribuição esférica de Fibonacci + cascas orbitais 3D (Hubs centrais no núcleo interno e comunidades nas órbitas externas) combinada com simulação física 3D (`step3DForceSimulation` com repulsão de Coulomb e molas elásticas de Hooke).
+     - `project3DNodes` e `findClosestProjectedNode`: Projeção em perspectiva 3D com distância focal (`fov`), matriz de rotação orbital (`rotX`, `rotY`), ordenação de profundidade `z-sorting` (Painter's Algorithm), efeito de profundidade atmosférica (*Depth of Field*) e hit-testing 3D preciso.
+  2. **Renderizador 3D Interativo HiDPI a 60 FPS (`src/components/graph-modal.tsx`):**
+     - Substituído o SVG 2D estático por um `<canvas>` acelerado em HiDPI (`devicePixelRatio`) a 60 FPS com zero peso extra de bibliotecas externas.
+     - **Qualidade Visual 3D:** Esferas volumétricas com iluminação especular, halo neon pulsante nos Hubs, anéis orbitais 3D holográficos e **partículas luminosas de fluxo de dados** viajando pelas conexões do módulo selecionado.
+     - **Controles 3D:** Rotação 360° com inércia via mouse/touch, auto-giro orbital ativável, alternância 3D/2D, zoom suave e transição animada de câmera (*Focar 3D*) ao selecionar qualquer arquivo.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 56/56 testes passando em 13 suítes.
+  - `npm run build`: bundle de produção compilado com sucesso.
