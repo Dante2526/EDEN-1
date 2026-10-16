@@ -1304,3 +1304,20 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 66/66 testes unitários passando em 16 suítes.
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção e workers Cloudflare Pages compilados com 0 erros em 7.50s.
+
+## 82. Identidade Visual: Favicon SVG do Bonsai Japonês do Éden
+- **Solicitação do Usuário:** Criar um favicon em formato vetorial SVG de um bonsai japonês para uso na aplicação e aba do navegador.
+- **Design & Conceito Zen:**
+  - **Paleta Harmônica:** Fundo zen escuro suave com cantos arredondados (`#1a1815` a `#0d0c0a`), borda e sol sutil com anel tracejado no terracota oficial do Éden (`#d97757`).
+  - **Tronco Sinuoso (Moyogi):** Tronco orgânico de bonsai japonês com curvatura sinuosa clássica, nós e galhos laterais estilizados em degradê de madeira nobre.
+  - **Nuvens de Folhagem (Matsu):** Quatro copas de folhagem em degradê verde esmeralda e jade com brilhos e profundidade em camadas.
+  - **Vaso Cerâmico Tradicional (Hachi):** Vaso raso com borda chanfrada, pés de apoio e leito de musgo verde.
+- **Arquivos & Integração:**
+  - `public/favicon.svg`: Arquivo raiz padrão para navegadores modernos.
+  - `public/icons/icon.svg`: Ícone PWA e favicon alternativo.
+  - `index.html`: Links `<link rel="icon" type="image/svg+xml" href="/favicon.svg" />` e `<link rel="alternate icon" href="/icons/icon.svg" />`.
+  - `public/manifest.json`: Alinhamento do `theme_color` com a identidade terracota (`#d97757`).
+- **Evidências de Verificação:**
+  - `npm test`: 66/66 testes unitários passando.
+  - `npm run lint`: 0 erros no TypeScript.
+  - `npm run build`: Vite build e compilação Cloudflare Pages com 0 erros.
