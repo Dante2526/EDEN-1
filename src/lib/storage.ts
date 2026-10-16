@@ -116,20 +116,20 @@ export const BUILTIN_SKILLS: Skill[] = [
       '5. Tailwind Responsivo: Desenvolva com foco móvel padrão (ex: `w-full sm:w-auto`, `flex-col sm:flex-row`, `p-3 sm:p-6`, `text-sm sm:text-base`).',
   },
   {
-    id: 'vercel-edge',
-    name: 'Vercel Edge Awareness',
-    description: 'Respeita limites da Vercel Hobby: Edge Runtime, timeouts, payload de 4.5MB e cold starts.',
+    id: 'cloudflare-pages',
+    name: 'Cloudflare Pages Awareness',
+    description: 'Respeita a arquitetura do Cloudflare Pages: Workers (V8 Isolates), _worker.ts, _routes.json e Web Standards.',
     icon: 'cloud',
     enabled: true,
     isBuiltin: true,
     systemPrompt:
-      'Você conhece profundamente as limitações da Vercel (plano Hobby) e DEVE respeitá-las em todo código de backend/API:\n' +
-      '1. Edge Runtime: rotas em `/api` rodam com `runtime: "edge"`. Use apenas Web Standard APIs (`Request`, `Response`, `fetch`, `URL`, `crypto`). PROIBIDO `fs`, `path`, `child_process` ou pacotes dependentes de Node.js nativo.\n' +
-      '2. Timeouts: funções serverless Hobby têm limite curto (10s a 60s com `maxDuration`). Operações longas devem usar streaming (SSE) ou ser divididas em chamadas curtas.\n' +
-      '3. Payload: o corpo de requisição/resposta é limitado a ~4.5MB. Comprima imagens no cliente e evite enviar arquivos grandes em Base64 pelo servidor.\n' +
-      '4. Cold Starts: mantenha bundles de funções enxutos. Prefira pacotes leves (ex: `@octokit/rest` em vez de `octokit`) e use imports dinâmicos para libs pesadas.\n' +
-      '5. Sem estado em disco: o filesystem é efêmero e somente leitura. Persistência deve usar serviços externos ou o armazenamento do cliente (IndexedDB/localStorage).\n' +
-      '6. Variáveis de ambiente: nunca exponha segredos no bundle do cliente; use apenas `VITE_*` para valores públicos.',
+      'Você conhece profundamente a arquitetura do Cloudflare Pages e Workers e DEVE respeitá-la em todo código de backend/API:\n' +
+      '1. Workers & V8 Isolates: As APIs rodam em runtime Web Standard puro no Cloudflare Workers (`_worker.ts`). Use `Request`, `Response`, `fetch`, `crypto` e Streams (SSE). Não use módulos exclusivos do Node.js puro (`fs`, `child_process`).\n' +
+      '2. Roteamento Declarativo: Rotas de API são declaradas em `_routes.json` ou capturadas em `_worker.ts`. Mantenha as rotas estáticas servidas pelo Pages e as rotas `/api/*` despachadas pelo Worker.\n' +
+      '3. Cold Start Zero: O runtime da Cloudflare executa em V8 Isolates sem os cold starts pesados de contêineres/serverless tradicionais. Mantenha os módulos compactos e com imports claros.\n' +
+      '4. Streaming Infinito: Cloudflare Workers suportam streams contínuas de Server-Sent Events (SSE) sem o teto rígido de timeout de 10s da Vercel. Aproveite para streaming suave de tokens e tool calls.\n' +
+      '5. Secrets e Variáveis: Segredos de produção (como API keys) são injetados pelo Cloudflare Pages Dashboard nas variáveis de ambiente do Worker. No front-end, use apenas variáveis prefixadas com `VITE_`.\n' +
+      '6. Sem estado em disco: O ambiente é distribuído e efêmero. Persistência permanente deve residir no cliente (IndexedDB) ou serviços externos.',
   },
   {
     id: 'subagents',
@@ -241,9 +241,28 @@ export async function loadSkills(): Promise<Skill[]> {
     if (!data || data.length === 0) {
       return BUILTIN_SKILLS;
     }
-    const existingIds = new Set(data.map((s) => s.id));
+
+    // Auto-migração: substitui a antiga skill vercel-edge pela nova cloudflare-pages preservando o estado enabled do usuário
+    const migrated = data.map((s) => {
+      if (s.id === 'vercel-edge') {
+        const cfSkill = BUILTIN_SKILLS.find((b) => b.id === 'cloudflare-pages');
+        if (cfSkill) {
+          return { ...cfSkill, enabled: s.enabled };
+        }
+      }
+      return s;
+    });
+
+    const existingIds = new Set(migrated.map((s) => s.id));
     const missingBuiltins = BUILTIN_SKILLS.filter((b) => !existingIds.has(b.id));
-    return [...data, ...missingBuiltins];
+    const result = [...migrated, ...missingBuiltins];
+
+    // Se houve migração do id legado, persiste a atualização no IndexedDB
+    if (data.some((s) => s.id === 'vercel-edge')) {
+      await saveSkills(result);
+    }
+
+    return result;
   } catch (error) {
     console.error('Failed to load skills from IndexedDB:', error);
     return BUILTIN_SKILLS;

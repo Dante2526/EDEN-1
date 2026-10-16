@@ -647,6 +647,66 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 26/26 testes passando (6 suítes).
   - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 2.63s.
 
+## 49. Restauração do Balão de Mensagem do Usuário ao Modelo Original
+- **Solicitação do Usuário:** *"retorna o modelo desse cartão para oque era antes tbm"* (com print do balão de mensagem do usuário).
+- **Problema:** A adição experimental da classe `.synap-card` e de um botão interno "Copiar" com borda superior divisória dentro do balão da mensagem do usuário causava desproporção visual em mensagens curtas (como *"oi"*).
+- **Ajustes Realizados (`src/components/chat-message.tsx`):**
+  - Removida a classe `.synap-card` e o padding inflado.
+  - Restaurada a estilização original limpa e arredondada: `bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl px-4 py-2.5 max-w-[90%] sm:max-w-[80%] shadow-xs`.
+  - Removida a divisória interna e o botão de cópia dentro do balão do usuário.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 26/26 testes passando (6 suítes).
+  - `npm run build`: bundle de produção e `dist/_worker.js` (106.0 kB) compilados com sucesso em 2.67s.
+
+## 50. Integração do Motor de Contexto Graphify (GraphRAG) e Modal Visual
+- **Solicitação do Usuário:** *"graphify roda no navegador? daria pro app? (...) pl, pode fazer, ai esse mapa nn vai botar naquela barra que tem chat, repr, e git ta nn bota la que ja tem muita coisa"*
+- **Problema & Decisão Arquitetural:**
+  - Evitar sobrecarregar a barra lateral principal do Synap (`[Chat] | [Repos] | [Git] | [MPC]`), que já contém navegação densa.
+  - Entregar à IA um motor de **GraphRAG** para mapeamento de dependências, nós centrais ("God Nodes") e caminhos de impacto antes de propor código ou refatorações.
+  - Disponibilizar um mapa interativo completo acessível via botão discreto no cabeçalho (`ChatHeader`) e diretamente nos cards de resposta do chat (`ChatMessage`).
+- **Solução Implementada:**
+  1. **Motor de Grafos e GraphRAG (`src/lib/graphify-engine.ts` com TDD):**
+     - Extração de dependências de código (`imports/exports`), cálculo de nós centrais (God Nodes) e busca de menor caminho via BFS (`findShortestPath`).
+     - Função `queryGraphContext` que gera resumos estruturados em Markdown sem estourar a janela de contexto.
+     - Parser `parseGraphJson` compatível com os arquivos de saída gerados pelo CLI Python do Graphify.
+     - Suíte de 5 testes unitários automatizados em `src/lib/graphify-engine.test.ts`.
+  2. **Modal Interativo em Tela Cheia (`src/components/graph-modal.tsx`):**
+     - Visualizador interativo SVG com layout orgânico (hubs centrais em órbita interna, nós periféricos por comunidade).
+     - Controles de zoom, pan arrastável, busca por módulos/símbolos e painel lateral de dependências (quem importa e o que o arquivo importa).
+     - Acesso direto ao editor de código.
+  3. **Ferramenta de IA (`query_code_graph` em `src/App.tsx`):**
+     - Registrada em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Permite que a IA consulte relacionamentos arquiteturais do projeto ativo sob demanda.
+  4. **Integração na Interface:**
+     - Botão discreto `[Grafo]` com ícone `Network` no `ChatHeader` (lado direito, ao lado do terminal).
+     - Card estilizado em `chat-message.tsx` com botão *"Abrir Mapa"* quando a ferramenta for acionada.
+     - Zero alterações na barra lateral, respeitando estritamente a solicitação.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 31/31 testes passando (7 suítes completas).
+  - `npm run build`: bundle compilado em 3.16s e artefatos de Cloudflare Pages copiados para `dist/`.
+
+## 51. Migração da Skill Nativa para Cloudflare Pages Awareness
+- **Solicitação do Usuário:** *"se estamos na cloaudfire agr essa skill aqui ainda e necessaria? ela meciona vercel"* (Usuário escolheu opção 1: atualizar para Cloudflare).
+- **Problema:** A skill antiga `vercel-edge` orientava a IA com restrições e regras exclusivas da Vercel Hobby (limite de 4.5MB, serverless tradicional, `vercel.json`), gerando inconsistências com o runtime real do projeto.
+- **Ajustes Realizados (`src/lib/storage.ts`):**
+  - Substituída a skill nativa `vercel-edge` por `cloudflare-pages` (`Cloudflare Pages Awareness`).
+  - Atualizada a descrição e o system prompt para cobrir:
+    1. Runtime Web Standard puro em V8 Isolates (`_worker.ts`).
+    2. Roteamento estático + worker via `_routes.json`.
+    3. Cold start zero em V8 Isolates.
+    4. Streaming de Server-Sent Events (SSE) sem teto restritivo de timeout.
+    5. Injeção de variáveis de ambiente e secrets via Cloudflare Dashboard.
+  - Implementada auto-migração suave na função `loadSkills`: se o IndexedDB do usuário contiver o ID legado `vercel-edge`, ele é automaticamente substituído por `cloudflare-pages` preservando o status ativo (`enabled`) e persistido.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 31/31 testes passando (7 suítes completas).
+  - `npm run build`: bundle compilado com sucesso e artefatos copiados para `dist/`.
+
+
+
+
 
 
 

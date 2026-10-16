@@ -1,22 +1,17 @@
-# Checklist de Execução: Motor de Subagentes Nativos e Orquestração Paralela
+# Checklist de Execução: Motor Graphify (GraphRAG) e Modal Visual de Contexto
 
-- [x] Task 1: Motor de Execução `src/lib/subagent-runner.ts` e Testes Unitários (TDD)
-  - [x] Step 1: Escrever teste unitário falhando (`src/lib/subagent-runner.test.ts`)
-  - [x] Step 2: Executar teste e validar falha (RED)
-  - [x] Step 3: Implementar `src/lib/subagent-runner.ts` com runner, system prompt e timeout
-  - [x] Step 4: Executar teste e validar aprovação (GREEN)
-- [x] Task 2: Skill Nativa `Subagentes` no Catálogo Padrão
-  - [x] Step 1: Declarar a Skill `Subagentes` em `DEFAULT_SKILLS` (`src/lib/storage.ts`)
-  - [x] Step 2: Auto-merge em `loadSkills` preservando dados existentes
-  - [x] Step 3: Verificar integridade de tipos com `npm run lint`
-- [x] Task 3: Tool Nativa `dispatch_subagent` no `src/App.tsx`
-  - [x] Step 1: Declarar schema `dispatch_subagent` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`
-  - [x] Step 2: Integrar execução no `executeToolCall` usando `effectiveModel`
-  - [x] Step 3: Instrução de relato no prompt do assistente
-- [x] Task 4: Feedback Visual e Cartões de Subagente no Chat
-  - [x] Step 1: Atualizar `getToolActionLabel` em `src/components/chat-message.tsx`
-  - [x] Step 2: Renderizar card dedicado de subagente com status e relatório expansível
-- [x] Task 5: Verificação Técnica Completa & Documentação
-  - [x] Step 1: Rodar `npm run lint && npm test` (0 erros tsc, 26/26 testes)
-  - [x] Step 2: Rodar `npm run build` (build verde em 4.46s)
-  - [x] Step 3: Atualizar `task.md` e `walkthrough.md` com a Seção 47
+- [x] Task 1: Motor Graphify GraphRAG (`src/lib/graphify-engine.ts`) com TDD
+  - [x] Step 1.1: Criar teste unitário falhando (`src/lib/graphify-engine.test.ts`) (RED)
+  - [x] Step 1.2: Implementar `src/lib/graphify-engine.ts` com parser de imports, BFS e formatador GraphRAG (GREEN)
+  - [x] Step 1.3: Rodar testes unitários e validar aprovação
+- [x] Task 2: Componente Modal de Visualização do Grafo (`src/components/graph-modal.tsx`)
+  - [x] Step 2.1: Criar `src/components/graph-modal.tsx` com visualizador interativo SVG, busca, zoom e dependências
+- [x] Task 3: Integração no ChatHeader e Tool da IA no `src/App.tsx`
+  - [x] Step 3.1: Integrar ferramenta OpenAI `query_code_graph` em `src/App.tsx`
+  - [x] Step 3.2: Adicionar botão discreto no `ChatHeader` (`src/components/chat-header.tsx`)
+  - [x] Step 3.3: Adicionar card e botão no `src/components/chat-message.tsx`
+- [x] Task 4: Verificação e Documentação
+  - [x] Step 4.1: Executar `npm run lint` (`tsc --noEmit`)
+  - [x] Step 4.2: Executar `npm test` (garantir todas as suítes verdes)
+  - [x] Step 4.3: Executar `npm run build` (garantir bundle compilado)
+  - [x] Step 4.4: Atualizar `walkthrough.md` com a Seção 50

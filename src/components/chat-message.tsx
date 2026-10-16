@@ -25,6 +25,7 @@ import {
   BookOpen,
   Bot,
   ChevronUp,
+  Network,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message } from '../lib/types';
@@ -39,6 +40,7 @@ interface ChatMessageProps {
   onViewDiff?: (path: string) => void;
   onOpenTerminal?: () => void;
   onOpenSourceControl?: () => void;
+  onOpenGraph?: (focusFile?: string) => void;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -191,6 +193,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onViewDiff,
   onOpenTerminal,
   onOpenSourceControl,
+  onOpenGraph,
 }) => {
   const isUser = message.role === 'user';
   const [showReasoning, setShowReasoning] = useState(false);
@@ -266,6 +269,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     switch (toolName) {
       case 'generate_image':
         return 'Criando a imagem…';
+      case 'query_code_graph':
+        return 'Mapeando arquitetura…';
       case 'dispatch_subagent':
         return 'Subagente em ação…';
       case 'generate_document':
@@ -315,7 +320,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
       {isUser ? (
         /* ================= USER MESSAGE (Claude warm card on right) ================= */
         <div className="flex justify-end">
-          <div className="synap-card text-[color:var(--c-fg-f3efe6)] px-4.5 py-3 max-w-[90%] sm:max-w-[80%] leading-relaxed tracking-normal">
+          <div className="bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-f3efe6)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl px-4 py-2.5 max-w-[90%] sm:max-w-[80%] shadow-xs">
             {message.isPlanMode && (
               <div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-[color:var(--c-bg-3e3b34)] text-[11px] font-mono font-medium text-[color:var(--c-fg-f09a7d)]">
                 <ListTodo className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
@@ -362,29 +367,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
             <div className="text-[15px] leading-relaxed break-words whitespace-pre-wrap font-sans">
               {displayContent}
-            </div>
-
-            {/* Ações da mensagem do usuário (Copiar) */}
-            <div className="flex justify-end mt-1.5 -mb-0.5 pt-1 border-t border-zinc-200/80 dark:border-[color:var(--c-bg-3e3b34)]/40">
-              <button
-                type="button"
-                onClick={handleCopy}
-                aria-label="Copiar mensagem"
-                title="Copiar mensagem"
-                className="p-1 rounded-md text-[11px] text-zinc-600 dark:text-[color:var(--c-fg-c4bfb6)] hover:text-zinc-900 dark:hover:text-[color:var(--c-fg-f3efe6)] hover:bg-zinc-100 dark:hover:bg-white/5 transition flex items-center gap-1 cursor-pointer font-medium"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400">Copiado</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span className="text-[10px]">Copiar</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </div>
@@ -1093,6 +1075,47 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                       <span className="ml-auto text-[10px] text-[color:var(--c-fg-787268)] shrink-0 font-sans">
                         {tc.status === 'error' ? 'falhou' : 'documentação consultada'}
                       </span>
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'query_code_graph') {
+                  return (
+                    <div
+                      key={tc.id}
+                      className="flex items-center justify-between gap-3 px-3.5 py-2 synap-card border-emerald-500/30 bg-[color:var(--c-bg-1c211f)] text-xs text-[color:var(--c-fg-c4bfb6)] my-1.5"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                          <Network className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-white">
+                              Graphify (Contexto de Arquitetura)
+                            </span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                              GraphRAG
+                            </span>
+                          </div>
+                          {targetParam && (
+                            <span className="text-[11px] text-[color:var(--c-fg-8c867a)] font-mono truncate block">
+                              Consulta: {targetParam}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {onOpenGraph && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenGraph(parsedArgs?.focus_file || parsedArgs?.query)}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                        >
+                          <Network className="w-3 h-3" />
+                          <span>Abrir Mapa</span>
+                        </button>
+                      )}
                     </div>
                   );
                 }

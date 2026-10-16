@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check, Eye, RefreshCw } from 'lucide-react';
 import {
   Conversation,
@@ -58,6 +58,8 @@ import { executeEmulatedCommand } from './lib/git-terminal-emulator';
 import { commitStagedChanges } from './lib/github-commit';
 import { StudioPanel } from './studio/studio-panel';
 import { ErrorModal, AppErrorInfo } from './components/error-modal';
+import { GraphModal } from './components/graph-modal';
+import { buildGraphFromFiles, queryGraphContext, ProjectGraph } from './lib/graphify-engine';
 import { CompactionMarker } from './components/compaction-marker';
 import { executePythonCode, formatPythonOutput } from './lib/pyodide-client';
 import { generateDocumentBlob } from './lib/document-generator';
@@ -584,8 +586,31 @@ const DISPATCH_SUBAGENT_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, ...GITHUB_TOOLS];
+const QUERY_CODE_GRAPH_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'query_code_graph',
+    description:
+      'Consulta o Grafo de Conhecimento e Arquitetura do projeto (Graphify / GraphRAG). ' +
+      'Mapeia dependências entre arquivos, nós centrais (God Nodes), quem importa quem e caminhos de impacto antes de propor refatorações ou ao responder dúvidas sobre como os módulos se conectam.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Termo de busca, símbolo, função ou conceito arquitetural a ser localizado no grafo.',
+        },
+        focus_file: {
+          type: 'string',
+          description: 'Caminho específico de um arquivo para inspecionar dependências diretas de entrada e saída (ex: "src/App.tsx").',
+        },
+      },
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, IMAGE_GEN_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -681,6 +706,40 @@ function AppContent() {
     syncRepoToProject,
   } = useProjects();
   const [showProjectWorkspace, setShowProjectWorkspace] = useState(false);
+
+  // Graphify Architecture Graph (GraphRAG) state
+  const [isGraphModalOpen, setIsGraphModalOpen] = useState(false);
+  const [graphFocusNodeId, setGraphFocusNodeId] = useState<string | undefined>();
+
+  const projectGraph = useMemo<ProjectGraph>(() => {
+    if (activeProject?.files && Object.keys(activeProject.files).length > 0) {
+      const files = Object.entries(activeProject.files).map(([path, content]) => ({
+        path,
+        content: typeof content === 'string' ? content : '',
+      }));
+      return buildGraphFromFiles(files);
+    }
+
+    // Grafo padrão da aplicação Synap caso nenhum projeto Sandpack esteja aberto
+    const defaultWorkspaceFiles = [
+      { path: 'src/App.tsx', content: "import { ChatHeader } from './components/chat-header';\nimport { ChatMessage } from './components/chat-message';\nimport { GraphModal } from './components/graph-modal';\nimport { buildGraphFromFiles } from './lib/graphify-engine';" },
+      { path: 'src/components/chat-header.tsx', content: "import { Network } from 'lucide-react';" },
+      { path: 'src/components/chat-message.tsx', content: "import { Network } from 'lucide-react';\nimport { formatFileSize } from '../lib/utils';" },
+      { path: 'src/components/graph-modal.tsx', content: "import { ProjectGraph } from '../lib/graphify-engine';" },
+      { path: 'src/lib/graphify-engine.ts', content: "export function buildGraphFromFiles() {}\nexport function queryGraphContext() {}" },
+      { path: 'src/lib/storage.ts', content: "import { Message } from './types';" },
+      { path: 'src/lib/types.ts', content: "export interface Message {}" },
+      { path: 'src/lib/utils.ts', content: "export function formatFileSize() {}" },
+      { path: 'src/lib/mcp-client.ts', content: "import { McpServerConfig } from './types';" },
+      { path: 'src/lib/subagent-runner.ts', content: "export function runSubagent() {}" },
+    ];
+    return buildGraphFromFiles(defaultWorkspaceFiles);
+  }, [activeProject]);
+
+  const handleOpenGraph = useCallback((focusFile?: string) => {
+    setGraphFocusNodeId(focusFile);
+    setIsGraphModalOpen(true);
+  }, []);
 
   // Abre o workspace automaticamente quando um projeto é selecionado
   useEffect(() => {
@@ -1881,6 +1940,39 @@ function AppContent() {
             role: args.role || 'Subagente',
             task: args.task || 'Indefinida',
             error: err?.message || 'Falha ao executar subagente.',
+          }),
+        };
+      }
+    }
+
+    // Consulta ao Grafo de Arquitetura (Graphify / GraphRAG) — NÃO depende de repositório ativo
+    if (name === 'query_code_graph') {
+      try {
+        const queryResult = queryGraphContext(projectGraph, {
+          query: args.query,
+          focusFile: args.focus_file,
+          maxNodes: 10,
+        });
+
+        return {
+          result: JSON.stringify({
+            status: 'success',
+            query: args.query || args.focus_file || 'geral',
+            nodesFound: queryResult.matchedNodes.length,
+            matchedNodes: queryResult.matchedNodes.map((n) => ({
+              path: n.path,
+              kind: n.kind,
+              inDegree: n.inDegree,
+              outDegree: n.outDegree,
+            })),
+            architectureSummary: queryResult.markdownContext,
+          }),
+        };
+      } catch (err: any) {
+        return {
+          result: JSON.stringify({
+            status: 'error',
+            error: err?.message || 'Falha ao consultar o grafo de arquitetura.',
           }),
         };
       }
@@ -3617,6 +3709,7 @@ function AppContent() {
           onOpenDeploymentLogs={() => setIsDeploymentLogsOpen(true)}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          onOpenGraph={() => handleOpenGraph()}
         />
 
         {/* Global Error Banner */}
@@ -3781,6 +3874,7 @@ function AppContent() {
                         setSidebarTab('source-control');
                         setIsSidebarOpen(true);
                       }}
+                      onOpenGraph={handleOpenGraph}
                     />
                   </React.Fragment>
                 );
@@ -3876,6 +3970,15 @@ function AppContent() {
         onClose={() => setIsDeploymentLogsOpen(false)}
         deployment={deployment}
         onFixWithAi={handleFixBuildError}
+      />
+
+      {/* Graphify Architecture Graph Modal */}
+      <GraphModal
+        isOpen={isGraphModalOpen}
+        onClose={() => setIsGraphModalOpen(false)}
+        graph={projectGraph}
+        initialFocusNodeId={graphFocusNodeId}
+        onSelectFile={handleViewDiffForPath}
       />
     </div>
   );
