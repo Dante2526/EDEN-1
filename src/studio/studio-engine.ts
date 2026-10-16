@@ -1,10 +1,32 @@
 // src/studio/studio-engine.ts
-import { ActiveRepoState } from '../lib/types';
+import { ActiveRepoState, Skill, McpServer } from '../lib/types';
 import { StudioAgent, StudioStep, StudioReview } from './studio-types';
 import { generateId } from '../lib/utils';
 import { getClientAuthHeaders } from '../lib/github';
 import { isToolCapableModel } from '../lib/models';
 import { extractTextToolCalls } from '../lib/text-tool-parser';
+import { convertMcpToolsToOpenAi, executeMcpToolCall } from '../lib/mcp-client';
+
+export interface StudioRuntimeContext {
+  skills?: Skill[];
+  mcpServers?: McpServer[];
+}
+
+function buildStudioSkillsSection(skills?: Skill[]): string {
+  const activeSkills = (skills || []).filter((s) => s.enabled);
+  if (activeSkills.length === 0) return '';
+  return (
+    '\n\n--- HABILIDADES MODULARES ATIVAS (SKILLS) ---\n' +
+    activeSkills.map((s) => `### Habilidade: ${s.name}\n${s.systemPrompt}`).join('\n\n')
+  );
+}
+
+function buildStudioMcpTools(mcpServers?: McpServer[]): any[] {
+  const activeServers = (mcpServers || []).filter(
+    (s) => s.enabled && s.status === 'connected' && s.tools.length > 0
+  );
+  return activeServers.flatMap((s) => convertMcpToolsToOpenAi(s.tools, s.id));
+}
 
 // Tools definitions no formato OpenAI/NVIDIA
 const READ_TOOLS = [
@@ -200,13 +222,22 @@ async function callChat(
   };
 }
 
-// Helper: executa uma tool (read_file, list_files, edit_file) localmente
+// Helper: executa uma tool (read_file, list_files, edit_file, mcp__*) localmente
 async function executeTool(
   name: string,
   args: any,
   activeRepo: ActiveRepoState,
-  onEditFile?: (path: string, content: string, type: 'create' | 'modify' | 'delete') => Promise<void>
+  onEditFile?: (path: string, content: string, type: 'create' | 'modify' | 'delete') => Promise<void>,
+  mcpServers?: McpServer[]
 ): Promise<string> {
+  if (name.startsWith('mcp__')) {
+    const targetServer = (mcpServers || []).find((s) => name.startsWith(`mcp__${s.id}__`));
+    if (!targetServer) {
+      return `Erro: Servidor MCP correspondente a ${name} não encontrado ou inativo.`;
+    }
+    return executeMcpToolCall(targetServer, name, args || {});
+  }
+
   const githubHeaders = {
     ...getClientAuthHeaders(),
     'x-api-key': import.meta.env.VITE_API_SECRET || '',
@@ -253,12 +284,16 @@ export async function runPlanner(
   task: string,
   activeRepo: ActiveRepoState,
   agent: StudioAgent,
-  feedback?: string
+  feedback?: string,
+  runtime?: StudioRuntimeContext
 ): Promise<StudioStep[]> {
+  const skillsSection = buildStudioSkillsSection(runtime?.skills);
+  const mcpTools = buildStudioMcpTools(runtime?.mcpServers);
+
   const systemPrompt = `Você é um Arquiteto de Software Sênior. Analise o repositório ativo (${activeRepo.owner}/${activeRepo.repo}, branch ${activeRepo.branch}) e a tarefa do usuário.
 
 REGRAS:
-1. Use as ferramentas read_file e list_files livremente para entender o repo antes de planejar
+1. Use as ferramentas read_file, list_files e ferramentas MCP conectadas livremente para entender o repo antes de planejar
 2. Quando terminar a análise, chame a ferramenta submit_plan com o plano completo
 3. Máximo 8 passos. Cada passo deve ser concreto e executável
 4. Para cada passo, especifique o arquivo alvo (targetFile) e a ação (create/modify/delete/read/analyze)
@@ -270,7 +305,7 @@ ${
     : ''
 }
 
-TAREFA DO USUÁRIO: ${task}`;
+TAREFA DO USUÁRIO: ${task}${skillsSection}`;
 
   const messages: any[] = [
     { role: 'system', content: systemPrompt },
@@ -280,7 +315,7 @@ TAREFA DO USUÁRIO: ${task}`;
   // Loop de tool calls até chamar submit_plan (máx 10 iterações)
   let currentMessages = [...messages];
   for (let i = 0; i < 10; i++) {
-    const result = await callChat(currentMessages, agent, [...READ_TOOLS, SUBMIT_PLAN_TOOL]);
+    const result = await callChat(currentMessages, agent, [...READ_TOOLS, ...mcpTools, SUBMIT_PLAN_TOOL]);
 
     if (result.toolCalls.length === 0) {
       // IA não chamou tools — tenta forçar de novo
@@ -317,8 +352,8 @@ TAREFA DO USUÁRIO: ${task}`;
         planSubmitted = true;
         submittedSteps = parsedArgs.steps || [];
       } else {
-        // Executa read_file ou list_files
-        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo);
+        // Executa read_file, list_files ou mcp__*
+        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo, undefined, runtime?.mcpServers);
         currentMessages.push({
           role: 'tool',
           content: toolResult,
@@ -348,8 +383,12 @@ export async function runReviewer(
   plan: StudioStep[],
   task: string,
   activeRepo: ActiveRepoState,
-  agent: StudioAgent
+  agent: StudioAgent,
+  runtime?: StudioRuntimeContext
 ): Promise<StudioReview> {
+  const skillsSection = buildStudioSkillsSection(runtime?.skills);
+  const mcpTools = buildStudioMcpTools(runtime?.mcpServers);
+
   const planJson = JSON.stringify(
     plan.map((s) => ({
       step: s.index,
@@ -364,7 +403,7 @@ export async function runReviewer(
   const systemPrompt = `Você é um Code Reviewer Sênior. Analise o plano abaixo e identifique riscos, sugestões e aprovações.
 
 REGRAS:
-1. Use read_file para validar arquivos citados no plano (se necessário)
+1. Use read_file e ferramentas MCP conectadas para validar arquivos citados no plano (se necessário)
 2. Seja crítico mas construtivo
 3. Marque approved=false se algum passo tem risco grave
 4. Quando terminar, chame submit_review com o parecer
@@ -372,7 +411,7 @@ REGRAS:
 TAREFA ORIGINAL: ${task}
 
 PLANO PARA REVISAR:
-${planJson}`;
+${planJson}${skillsSection}`;
 
   const messages: any[] = [
     { role: 'system', content: systemPrompt },
@@ -381,7 +420,7 @@ ${planJson}`;
 
   let currentMessages = [...messages];
   for (let i = 0; i < 10; i++) {
-    const result = await callChat(currentMessages, agent, [...READ_TOOLS, SUBMIT_REVIEW_TOOL]);
+    const result = await callChat(currentMessages, agent, [...READ_TOOLS, ...mcpTools, SUBMIT_REVIEW_TOOL]);
 
     if (result.toolCalls.length === 0) {
       currentMessages.push({ role: 'assistant', content: result.content });
@@ -416,7 +455,7 @@ ${planJson}`;
         reviewSubmitted = true;
         submittedReview = parsedArgs;
       } else {
-        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo);
+        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo, undefined, runtime?.mcpServers);
         currentMessages.push({
           role: 'tool',
           content: toolResult,
@@ -447,8 +486,12 @@ export async function runImplementer(
   activeRepo: ActiveRepoState,
   agent: StudioAgent,
   onProgress: (step: StudioStep) => void,
-  onEditFile: (path: string, content: string, type: 'create' | 'modify' | 'delete') => Promise<void>
+  onEditFile: (path: string, content: string, type: 'create' | 'modify' | 'delete') => Promise<void>,
+  runtime?: StudioRuntimeContext
 ): Promise<void> {
+  const skillsSection = buildStudioSkillsSection(runtime?.skills);
+  const mcpTools = buildStudioMcpTools(runtime?.mcpServers);
+
   const EDIT_TOOL = {
     type: 'function' as const,
     function: {
@@ -482,7 +525,7 @@ REGRAS:
 - Faça a alteração mínima necessária
 - Não tente commitar — o Synap cuida disso
 
-Após executar, responda com texto curto confirmando o que fez.`;
+Após executar, responda com texto curto confirmando o que fez.${skillsSection}`;
 
       const messages: any[] = [
         { role: 'system', content: systemPrompt },
@@ -493,7 +536,7 @@ Após executar, responda com texto curto confirmando o que fez.`;
       let stepDone = false;
 
       for (let i = 0; i < 5 && !stepDone; i++) {
-        const result = await callChat(currentMessages, agent, [...READ_TOOLS, EDIT_TOOL]);
+        const result = await callChat(currentMessages, agent, [...READ_TOOLS, ...mcpTools, EDIT_TOOL]);
 
         if (result.toolCalls.length === 0) {
           const requiresEdit = step.action === 'create' || step.action === 'modify' || step.action === 'delete';
@@ -527,7 +570,13 @@ Após executar, responda com texto curto confirmando o que fez.`;
             parsedArgs = JSON.parse(tc.arguments || '{}');
           } catch {}
 
-          const toolResult = await executeTool(tc.name, parsedArgs, activeRepo, onEditFile);
+          const toolResult = await executeTool(
+            tc.name,
+            parsedArgs,
+            activeRepo,
+            onEditFile,
+            runtime?.mcpServers
+          );
           currentMessages.push({
             role: 'tool',
             content: toolResult,
@@ -559,3 +608,4 @@ Após executar, responda com texto curto confirmando o que fez.`;
     }
   }
 }
+

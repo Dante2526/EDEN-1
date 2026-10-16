@@ -23,7 +23,7 @@ import {
   RotateCcw,
   MessageSquare,
 } from 'lucide-react';
-import { ActiveRepoState, AttachedDocument } from '../lib/types';
+import { ActiveRepoState, AttachedDocument, Skill, McpServer } from '../lib/types';
 import { StudioSession, StudioStep, StudioTimelineEntry, TimelineActor } from './studio-types';
 import { loadStudioConfig } from '../lib/studio-config';
 import { generateId, fileToBase64, readFileAsText } from '../lib/utils';
@@ -35,6 +35,8 @@ import { ThinkingOrb } from 'thinking-orbs';
 
 interface Props {
   activeRepo: ActiveRepoState | null;
+  skills?: Skill[];
+  mcpServers?: McpServer[];
   onOpenRepoSelector?: () => void;
   onOpenSourceControl?: () => void;
   onOpenSettings?: () => void;
@@ -54,6 +56,8 @@ const ACTOR_CONFIG: Record<
 
 export const StudioPanel: React.FC<Props> = ({
   activeRepo,
+  skills,
+  mcpServers,
   onOpenRepoSelector,
   onOpenSourceControl,
   onBackToChat,
@@ -261,7 +265,10 @@ export const StudioPanel: React.FC<Props> = ({
     });
 
     try {
-      const plan = await runPlanner(enrichedTask, activeRepo, config.planner, customFeedback);
+      const plan = await runPlanner(enrichedTask, activeRepo, config.planner, customFeedback, {
+        skills,
+        mcpServers,
+      });
 
       // Atualiza card do Planner com o plano gerado
       updateEntry(plannerEntryId, {
@@ -284,7 +291,10 @@ export const StudioPanel: React.FC<Props> = ({
         content: 'Validando riscos, impacto arquitetural e integridade...',
       });
 
-      const review = await runReviewer(plan, enrichedTask, activeRepo, config.reviewer);
+      const review = await runReviewer(plan, enrichedTask, activeRepo, config.reviewer, {
+        skills,
+        mcpServers,
+      });
 
       updateEntry(reviewerEntryId, {
         title: `Revisão de ${config.reviewer.model}`,
@@ -369,6 +379,10 @@ export const StudioPanel: React.FC<Props> = ({
             type: type === 'create' ? 'added' : type === 'delete' ? 'deleted' : 'modified',
             originalContent: '',
           });
+        },
+        {
+          skills,
+          mcpServers,
         }
       );
 

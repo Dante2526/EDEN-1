@@ -9,13 +9,19 @@ import {
 async function runTests() {
   console.log('--- Iniciando testes de subagent-runner ---');
 
-  // Teste 1: buildSubagentSystemPrompt gera instruções específicas com papel e contexto
-  const prompt = buildSubagentSystemPrompt('Pesquisador de Docs', 'Pesquisar API do TanStack Query v5', 'Versão 5.12');
+  // Teste 1: buildSubagentSystemPrompt gera instruções específicas com papel, contexto e skills ativas
+  const prompt = buildSubagentSystemPrompt(
+    'Pesquisador de Docs',
+    'Pesquisar API do TanStack Query v5',
+    'Versão 5.12',
+    '### Habilidade: Clean Code\nEscreva código limpo.'
+  );
   assert.ok(prompt.includes('Pesquisador de Docs'), 'Deve conter o papel');
   assert.ok(prompt.includes('Pesquisar API do TanStack Query v5'), 'Deve conter a tarefa');
   assert.ok(prompt.includes('Versão 5.12'), 'Deve conter o contexto');
+  assert.ok(prompt.includes('### Habilidade: Clean Code'), 'Deve conter as skills ativas');
   assert.ok(prompt.includes('DIRETRIZES DO SUBAGENTE'), 'Deve conter as diretrizes estritas');
-  console.log('✅ Teste 1 passou: buildSubagentSystemPrompt monta prompt isolado e focado');
+  console.log('✅ Teste 1 passou: buildSubagentSystemPrompt monta prompt isolado, focado e com skills');
 
   // Teste 2: parseSubagentResult limpa tags e normaliza o retorno
   const rawText = '<think>Pensando na arquitetura...</think>\n\n### Relatório\nA API utiliza useQuery.';

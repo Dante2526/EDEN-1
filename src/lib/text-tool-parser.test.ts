@@ -84,4 +84,29 @@ describe('text-tool-parser (Text-Based Tool & File Edit Extractor)', () => {
     assert.ok(promptWithoutRepo.includes('<synap_tool'));
     assert.ok(promptWithoutRepo.includes('Nenhum repositório GitHub está selecionado'));
   });
+
+  it('inclui catálogo de ferramentas MCP conectadas no prompt textual quando fornecido', () => {
+    const mcpTools = [
+      {
+        type: 'function',
+        function: {
+          name: 'mcp__context7__resolve_library_id',
+          description: 'Resolve library ID no Context7',
+          parameters: {
+            type: 'object',
+            properties: {
+              libraryName: { type: 'string' },
+            },
+            required: ['libraryName'],
+          },
+        },
+      },
+    ];
+
+    const prompt = buildTextToolProtocolPrompt(true, 'Dante2526/Synap', 'main', mcpTools);
+    assert.ok(prompt.includes('mcp__context7__resolve_library_id'));
+    assert.ok(prompt.includes('Resolve library ID no Context7'));
+    assert.ok(prompt.includes('libraryName'));
+  });
 });
+

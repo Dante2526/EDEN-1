@@ -825,24 +825,18 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 51/51 testes passando em 12 suítes.
   - `npm run build`: bundle compilado em 1.75s com artefatos Cloudflare Pages gerados.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 58. Integração 100% de Skills e MCP nos 6 Modelos, Subagentes e Agent Studio
+- **Solicitação do Usuário:** Garantir que as Skills ativas e servidores MCP conectados operem em 100% dos 6 modelos (incluindo `@cf/deepseek-ai/deepseek-r1-distill-qwen-32b`), nos Subagentes (`dispatch_subagent`) e no Agent Studio (`Planner`, `Reviewer` e `Implementer`).
+- **Solução Implementada:**
+  1. **Catálogo MCP no 6º Modelo (`src/lib/text-tool-parser.ts` e `src/App.tsx`):**
+     - `buildTextToolProtocolPrompt` agora recebe `mcpTools` e documenta todas as ferramentas `mcp__<serverId>__<toolName>` ativas (com descrição e parâmetros) no prompt textual do `DeepSeek R1 Distill 32B (CF)`, permitindo sua execução via `<synap_tool name="mcp__...">`.
+  2. **Skills + MCP nos Subagentes (`src/lib/subagent-runner.ts` e `src/App.tsx`):**
+     - `SubagentConfig` e `buildSubagentSystemPrompt` passaram a aceitar `skillsPrompt`, injetando as Skills ativas nos subagentes.
+     - `runSubagent` agora adapta o protocolo textual quando o modelo selecionado não possui Function Calling nativo e recebe `mcpOpenAiTools` em `dispatch_subagent`.
+  3. **Skills + MCP no Agent Studio (`src/studio/studio-engine.ts`, `src/studio/studio-panel.tsx` e `src/App.tsx`):**
+     - `StudioPanel` recebe `skills` e `mcpServers` e repassa `StudioRuntimeContext` para `runPlanner`, `runReviewer` e `runImplementer`.
+     - Os 3 agentes do Studio agora recebem as Skills ativas no System Prompt e podem invocar ferramentas `mcp__*` (executadas via `executeMcpToolCall`).
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 52/52 testes passando em 12 suítes.
+  - `npm run build`: bundle compilado em 2.39s com artefatos Cloudflare Pages gerados.

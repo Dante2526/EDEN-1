@@ -1928,6 +1928,19 @@ function AppContent() {
         const readOnlyRepoTools = currentRepo
           ? GITHUB_TOOLS.filter((t) => ['read_file', 'list_files', 'search_code'].includes(t.function.name))
           : [];
+        const activeMcpServers = mcpServers.filter(
+          (s) => s.enabled && s.status === 'connected' && s.tools.length > 0
+        );
+        const mcpOpenAiTools = activeMcpServers.flatMap((s) =>
+          convertMcpToolsToOpenAi(s.tools, s.id)
+        );
+        const activeSkills = skills.filter((s) => s.enabled);
+        const subagentSkillsPrompt =
+          activeSkills.length > 0
+            ? '--- HABILIDADES MODULARES ATIVAS (SKILLS) ---\n' +
+              activeSkills.map((s) => `### Habilidade: ${s.name}\n${s.systemPrompt}`).join('\n\n')
+            : undefined;
+
         const subagentTools = [
           WEB_SEARCH_TOOL,
           FETCH_URL_TOOL,
@@ -1936,14 +1949,15 @@ function AppContent() {
           READ_GITHUB_FILE_TOOL,
           QUERY_CODE_GRAPH_TOOL,
           ...readOnlyRepoTools,
+          ...mcpOpenAiTools,
         ];
-        const subagentModel: ModelId = isToolCapableModel(selectedModel) ? selectedModel : 'z-ai/glm-5.3-flash';
 
         const subagentRes = await runSubagent({
           role: args.role,
           task: args.task,
           context: args.context,
-          model: subagentModel,
+          skillsPrompt: subagentSkillsPrompt,
+          model: selectedModel,
           apiKeySecret: import.meta.env.VITE_API_SECRET || '',
           tools: subagentTools,
           onExecuteTool: async (subToolName, subToolArgs) => {
@@ -2504,9 +2518,20 @@ function AppContent() {
       : 'ATENÇÃO: Nenhum repositório GitHub está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
         'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior.';
 
+    // Obter ferramentas ativas de servidores MCP conectados
+    const activeMcpServers = mcpServers.filter((s) => s.enabled && s.status === 'connected' && s.tools.length > 0);
+    const mcpOpenAiTools = activeMcpServers.flatMap((s) => convertMcpToolsToOpenAi(s.tools, s.id));
+    const baseTools = chatActiveRepo ? ALL_CHAT_TOOLS : DEFAULT_CHAT_TOOLS;
+    const requestTools = isNoToolsModel ? [] : [...baseTools, ...mcpOpenAiTools];
+
     const basePrompt = isNoToolsModel
       ? 'Você é o assistente Synap operando com o modelo DeepSeek R1.\n' +
-        buildTextToolProtocolPrompt(Boolean(chatActiveRepo), chatActiveRepo?.fullName, chatActiveRepo?.branch)
+        buildTextToolProtocolPrompt(
+          Boolean(chatActiveRepo),
+          chatActiveRepo?.fullName,
+          chatActiveRepo?.branch,
+          mcpOpenAiTools
+        )
       : 'Você é o assistente Synap com ferramentas avançadas integradas.\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO):\n' +
         'Sempre que for realizar uma ação (editar arquivo, rodar comando no terminal, pesquisar na web, compilar documento ou rodar python), emita a tool_call IMEDIATAMENTE na primeira resposta.\n' +
@@ -2540,12 +2565,6 @@ function AppContent() {
 
     // Injetar Base de Conhecimento persistente (Memória de longo prazo)
     const memoriesPrompt = formatKnowledgePrompt(knowledgeFacts);
-
-    // Obter ferramentas ativas de servidores MCP conectados
-    const activeMcpServers = mcpServers.filter((s) => s.enabled && s.status === 'connected' && s.tools.length > 0);
-    const mcpOpenAiTools = activeMcpServers.flatMap((s) => convertMcpToolsToOpenAi(s.tools, s.id));
-    const baseTools = chatActiveRepo ? ALL_CHAT_TOOLS : DEFAULT_CHAT_TOOLS;
-    const requestTools = isNoToolsModel ? [] : [...baseTools, ...mcpOpenAiTools];
 
     const convForPayload: Conversation = currentConv
       ? { ...currentConv, messages: [...currentConv.messages, userMessage] }
@@ -3779,6 +3798,8 @@ function AppContent() {
         {mainViewTab === 'agentes' || isStudioMode ? (
           <StudioPanel
             activeRepo={activeRepo}
+            skills={skills}
+            mcpServers={mcpServers}
             onOpenRepoSelector={() => {
               setSidebarTab('repos');
               setIsSidebarOpen(true);

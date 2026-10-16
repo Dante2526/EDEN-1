@@ -136,7 +136,8 @@ export function extractTextToolCalls(text: string): TextToolExtractionResult {
 export function buildTextToolProtocolPrompt(
   hasActiveRepo: boolean,
   repoFullName?: string,
-  branch?: string
+  branch?: string,
+  mcpTools?: any[]
 ): string {
   const repoSection =
     hasActiveRepo && repoFullName
@@ -161,6 +162,29 @@ export function buildTextToolProtocolPrompt(
           'Portanto, NÃO use <synap_edit>; forneça blocos de código em Markdown normal e informe que o usuário pode vincular um repositório no topo.',
         ].join('\n');
 
+  const mcpList = Array.isArray(mcpTools)
+    ? mcpTools
+        .map((t) => {
+          const fn = t?.function || t;
+          if (!fn?.name) return null;
+          const props = fn?.parameters?.properties
+            ? Object.keys(fn.parameters.properties).join(', ')
+            : '';
+          return `- <synap_tool name="${fn.name}">{...}</synap_tool> — ${fn.description || 'Ferramenta MCP'}${props ? ` (parâmetros: ${props})` : ''}`;
+        })
+        .filter(Boolean)
+    : [];
+
+  const mcpSection =
+    mcpList.length > 0
+      ? [
+          '',
+          'FERRAMENTAS EXTERNAS MCP CONECTADAS (Model Context Protocol):',
+          'Você também pode executar qualquer ferramenta MCP ativa abaixo emitindo <synap_tool name="mcp__..."> com argumentos JSON:',
+          ...mcpList,
+        ].join('\n')
+      : '';
+
   const generalToolsSection = [
     'PROTOCOLO DE EXECUÇÃO DE FERRAMENTAS DO SYNAP:',
     'Sempre que precisar executar uma ferramenta geral (pesquisa web, leitura de URL, Python, imagens ou memória), emita a tag correspondente:',
@@ -169,9 +193,13 @@ export function buildTextToolProtocolPrompt(
     '- Rodar Python: <synap_tool name="run_python">{"code": "print(2 + 2)"}</synap_tool>',
     '- Gerar Imagem: <synap_tool name="generate_image">{"prompt": "descrição detalhada"}</synap_tool>',
     '- Salvar Memória: <synap_tool name="save_memory">{"fact": "fato importante", "category": "preference"}</synap_tool>',
+    mcpSection,
     '',
     'REGRA DE OURO: Quando o usuário pedir para alterar ou criar arquivos no repositório ativo, emita OBRIGATORIAMENTE o bloco <synap_edit path="..." type="..."> com o código completo.',
-  ].join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   return `${repoSection}\n\n${generalToolsSection}`;
 }
+

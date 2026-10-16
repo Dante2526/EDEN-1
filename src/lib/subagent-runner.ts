@@ -1,10 +1,12 @@
 import { ModelId } from './types';
 import { extractTextToolCalls } from './text-tool-parser';
+import { isToolCapableModel } from './models';
 
 export interface SubagentConfig {
   role: string;
   task: string;
   context?: string;
+  skillsPrompt?: string;
   model: ModelId;
   apiKeySecret?: string;
   signal?: AbortSignal;
@@ -26,20 +28,26 @@ export interface SubagentResult {
 /**
  * Constrói o system prompt focado e restrito para o subagente.
  */
-export function buildSubagentSystemPrompt(role: string, task: string, context?: string): string {
+export function buildSubagentSystemPrompt(
+  role: string,
+  task: string,
+  context?: string,
+  skillsPrompt?: string
+): string {
   return [
     `Você é um subagente autônomo com o papel de: "${role}".`,
     'Sua missão é resolver EXCLUSIVAMENTE a subtarefa delimitada abaixo, sem se desviar para outros tópicos.',
     '',
     `🎯 TAREFA PRINCIPAL:\n${task}`,
     context ? `\n📋 CONTEXTO & DADOS FORNECIDOS:\n${context}` : '',
+    skillsPrompt ? `\n${skillsPrompt}` : '',
     '',
     'DIRETRIZES DO SUBAGENTE:',
     '1. Responda com um relatório objetivo, técnico e pronto para ser consumido pelo agente coordenador principal.',
     '2. Seja direto e evite enrolações, preâmbulos vazios ou introduções dispensáveis.',
     '3. Se a tarefa exigir código ou configuração, forneça os trechos completos e formatados.',
     '4. Estruture as conclusões em tópicos Markdown concisos.',
-    '5. Se tiver ferramentas disponíveis (como read_file, list_files, search_code, web_search, fetch_url), use-as imediatamente para coletar evidências reais antes de redigir o relatório.',
+    '5. Se tiver ferramentas disponíveis (como read_file, list_files, search_code, web_search, fetch_url ou mcp__*), use-as imediatamente para coletar evidências reais antes de redigir o relatório.',
   ]
     .filter(Boolean)
     .join('\n');
@@ -86,7 +94,22 @@ export async function runSubagent(config: SubagentConfig): Promise<SubagentResul
     };
   }
 
-  const systemPrompt = buildSubagentSystemPrompt(role, task, config.context);
+  const supportsNativeTools = isToolCapableModel(config.model);
+  const baseSystemPrompt = buildSubagentSystemPrompt(
+    role,
+    task,
+    config.context,
+    config.skillsPrompt
+  );
+  const hasTools = Boolean(config.tools && Array.isArray(config.tools) && config.tools.length > 0);
+  const systemPrompt =
+    !supportsNativeTools && hasTools
+      ? `${baseSystemPrompt}\n\nPROTOCOLO DE FERRAMENTAS EM TEXTO:\nPara invocar qualquer ferramenta (${config
+          .tools!.map((t) => t?.function?.name)
+          .filter(Boolean)
+          .join(', ')}), emita: <synap_tool name="NOME_DA_FERRAMENTA">{...json...}</synap_tool>`
+      : baseSystemPrompt;
+
   const messages: any[] = [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: `Execute a tarefa: ${task}` },
@@ -112,9 +135,10 @@ export async function runSubagent(config: SubagentConfig): Promise<SubagentResul
         model: config.model,
         reasoning_effort: 'low',
       };
-      if (config.tools && Array.isArray(config.tools) && config.tools.length > 0) {
+      if (supportsNativeTools && hasTools) {
         requestBody.tools = config.tools;
       }
+
 
       const res = await fetch('/api/chat', {
         method: 'POST',
