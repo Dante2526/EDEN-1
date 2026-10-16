@@ -1281,3 +1281,26 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 61/61 testes unitários passando em 15 suítes.
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção e workers Cloudflare Pages compilados com 0 erros.
+
+## 81. Streaming TTS por Sentenças & Correção do Modo Live (Conversação 50/50)
+- **Solicitação do Usuário:** Corrigir os travamentos e a falta de fluidez ao término da resposta da IA no modo Live e implementar a reprodução de voz progressiva enquanto o modelo está gerando o texto (dando uma vantagem no buffer de 50/50 para que a conversa soe fluida sem pausas ou engasgos).
+- **Diagnóstico da Causa Raiz:**
+  1. *Bloqueio por isStreaming:* O efeito de voz anterior esperava a conclusão total da mensagem para começar a falar, criando um atraso de 4 a 8 segundos de silêncio antes do áudio.
+  2. *Erro 403 e Timeout no Backend:* A rota `/api/tts` chamava `@andresaya/edge-tts` que sofria bloqueio 403 nos WebSockets da Microsoft, gerando mais 3 segundos de tentativa antes do fallback.
+  3. *Loop de Eco:* O microfone ficava aberto e captava a própria saída dos alto-falantes da IA, disparando transcrições fantasmas e interrompendo a fala involuntariamente.
+- **Solução Implementada:**
+  1. **Motor de Fila de Fala Progressiva (`src/lib/streaming-speech-queue.ts`):**
+     - Função `extractCleanSpeechText`: sanitiza blocos de raciocínio `<think>`, código markdown e tags XML sem alterar o texto original.
+     - Função `splitSpeechSentences`: segmenta o texto em frases completas por pontuação (`.`, `!`, `?`, `:`) com agrupamento de frases excessivamente curtas (<18 caracteres) para cadência natural.
+     - Classe `StreamingSpeechQueue`: gerencia a fila sequencial via Web Speech API nativa, disparando a primeira frase com prioridade e emendando as frases seguintes sem intervalo de silêncio.
+  2. **Integração no App Core (`src/App.tsx`):**
+     - O streaming do assistente alimenta progressivamente a fila através de `liveSpeechQueueRef.current.feed()`.
+     - Ao concluir a geração do modelo, chama `liveSpeechQueueRef.current.finalize()`.
+     - Blindagem anti-eco: o microfone pausa a auto-transcrição durante a fala, reabrindo imediatamente ao término da última sentença (`synap:resume-listening`).
+     - Suporte nativo a interrupção intencional (*barge-in*): se o usuário falar frases não coincidentes, a fila de fala é cancelada instantaneamente.
+  3. **Suíte de Testes Automatizados (`src/lib/streaming-speech-queue.test.ts`):**
+     - Testes de sanitização, separação de sentenças, retenção de trechos parciais e ciclo de vida da fila (100% verde).
+- **Evidências de Verificação:**
+  - `npm test`: 66/66 testes unitários passando em 16 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e workers Cloudflare Pages compilados com 0 erros em 7.50s.

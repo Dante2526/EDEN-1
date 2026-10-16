@@ -76,6 +76,7 @@ import { isVisionModel, isToolCapableModel } from './lib/models';
 import { extractTextToolCalls, buildTextToolProtocolPrompt } from './lib/text-tool-parser';
 import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } from './lib/theme';
 import { useContinuousVoice } from './lib/use-continuous-voice';
+import { StreamingSpeechQueue } from './lib/streaming-speech-queue';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
 import { looksLikeEcho } from './lib/echo-filter';
 import {
@@ -950,12 +951,17 @@ function AppContent() {
   const liveSpeechTokenRef = useRef(0); // muda a cada fala/interrupção: invalida falas em andamento
   const liveIsSpeakingRef = useRef(false);
   const liveSpokenTextRef = useRef(''); // o que a IA está falando (pro filtro de eco)
-  const lastSpokenMsgIdRef = useRef(''); // evita falar a MESMA resposta duas vezes
+  const liveSpeechQueueRef = useRef<StreamingSpeechQueue | null>(null);
+  const liveSpeechMsgIdRef = useRef<string>('');
 
-  // Para TODA fala da IA imediatamente (áudio, fetch do TTS em andamento e Web Speech)
+  // Para TODA fala da IA imediatamente (fila de streaming, áudio neural e Web Speech)
   const stopLiveSpeech = useCallback(() => {
     liveSpeechTokenRef.current += 1;
     liveIsSpeakingRef.current = false;
+    if (liveSpeechQueueRef.current) {
+      liveSpeechQueueRef.current.cancel();
+      liveSpeechQueueRef.current = null;
+    }
     const audio = currentTTSAudioRef.current;
     if (audio) {
       audio.onended = null;
@@ -971,7 +977,9 @@ function AppContent() {
       currentTTSUrlRef.current = null;
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
     }
   }, []);
 
@@ -992,133 +1000,64 @@ function AppContent() {
   useEffect(() => {
     if (!continuousVoiceActive) {
       stopLiveSpeech();
+      liveSpeechMsgIdRef.current = '';
       return;
     }
     const conv = conversations.find(c => c.id === activeId);
     const last = conv?.messages[conv.messages.length - 1];
-    if (last && last.role === 'assistant') lastSpokenMsgIdRef.current = last.id;
+    if (last && last.role === 'assistant') liveSpeechMsgIdRef.current = last.id;
   }, [continuousVoiceActive]);
 
-  // Quando o streaming termina e o modo contínuo tá ativo, fala a resposta (uma vez só)
+  // Streaming Speech (Modo Live 50/50): fala por sentenças enquanto a IA escreve
   useEffect(() => {
-    if (!continuousVoiceActive || isStreaming) return;
+    if (!continuousVoiceActive) {
+      stopLiveSpeech();
+      liveSpeechMsgIdRef.current = '';
+      return;
+    }
 
     const conv = conversations.find(c => c.id === activeId);
     if (!conv || conv.messages.length === 0) return;
 
     const lastMsg = conv.messages[conv.messages.length - 1];
     if (lastMsg.role !== 'assistant' || !lastMsg.content) return;
-    if (lastMsg.id === lastSpokenMsgIdRef.current) return; // já falou essa resposta
 
-    const cleanText = lastMsg.content
-      .replace(/<think>[\s\S]*?<\/think>/g, '')
-      .replace(/```[\s\S]*?```/g, ' Trecho de código omitido. ')
-      .replace(/`([^`]+)`/g, '$1')
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      .replace(/^#{1,6}\s+/gm, '')
-      .replace(/\|[^\n]+\|/g, '')
-      .replace(/^[\s]*[-*+]\s+/gm, '')
-      .replace(/^[\s]*\d+\.\s+/gm, '')
-      .replace(/[*_~]{1,3}/g, '')
-      .replace(/\n+/g, '. ')
-      .trim()
-      .slice(0, 2000);
-
-    if (!cleanText) return;
-
-    lastSpokenMsgIdRef.current = lastMsg.id;
-    stopLiveSpeech(); // garante que nenhuma fala anterior continue tocando
-    const myToken = liveSpeechTokenRef.current;
-    liveSpokenTextRef.current = cleanText;
-    liveIsSpeakingRef.current = true;
-
-    const isCurrent = () => liveSpeechTokenRef.current === myToken;
-    const onFinished = () => {
-      if (!isCurrent()) return; // foi interrompida: o microfone já está aberto
-      liveIsSpeakingRef.current = false;
-      continuousVoiceListeningRef.current = true;
-      window.dispatchEvent(new CustomEvent('synap:resume-listening'));
-    };
-
-    const speak = async () => {
+    // Nova mensagem do assistente detectada: inicializa a fila de fala
+    if (lastMsg.id !== liveSpeechMsgIdRef.current) {
+      stopLiveSpeech();
+      liveSpeechMsgIdRef.current = lastMsg.id;
       playSpeakingStartSound();
-      try {
-        const settings = JSON.parse(localStorage.getItem('synap_settings_v1') || '{}');
-        const preferredVoice = settings.speechVoice || 'pt-BR-FranciscaNeural';
-        const res = await fetch('/api/tts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': import.meta.env.VITE_API_SECRET || '',
-          },
-          body: JSON.stringify({ text: cleanText, voice: preferredVoice }),
-        });
-        if (!isCurrent()) return; // usuário interrompeu enquanto o áudio era gerado
 
-        if (res.ok) {
-          let url = '';
-          let isBlobUrl = false;
-          if ((res.headers.get('content-type') || '').includes('application/json')) {
-            // Vozes Gemini voltam como JSON { audio (base64), mimeType }
-            const data = await res.json();
-            if (data?.audio) url = `data:${data.mimeType || 'audio/mpeg'};base64,${data.audio}`;
-          } else {
-            url = URL.createObjectURL(await res.blob());
-            isBlobUrl = true;
-          }
-          if (!isCurrent()) {
-            if (isBlobUrl) URL.revokeObjectURL(url);
-            return;
-          }
-          if (url) {
-            const audio = new Audio(url);
-            currentTTSAudioRef.current = audio;
-            currentTTSUrlRef.current = isBlobUrl ? url : null;
-            // Garante o microfone aberto durante a fala (pra poder interromper)
-            window.dispatchEvent(new CustomEvent('synap:force-start-listening'));
-            const cleanupAudio = () => {
-              if (currentTTSAudioRef.current === audio) currentTTSAudioRef.current = null;
-              if (isBlobUrl && currentTTSUrlRef.current === url) {
-                URL.revokeObjectURL(url);
-                currentTTSUrlRef.current = null;
-              }
-            };
-            audio.onended = () => {
-              cleanupAudio();
-              onFinished();
-            };
-            audio.onerror = () => {
-              cleanupAudio();
-              onFinished();
-            };
-            await audio.play();
-            return;
-          }
-        }
-      } catch (err) {
-        if (!isCurrent()) return; // play() rejeitado porque foi interrompida: normal
-        console.warn('[Synap] TTS neural falhou no modo live, usando voz do navegador:', err);
-      }
+      const settings = JSON.parse(localStorage.getItem('synap_settings_v1') || '{}');
+      const preferredVoice = settings.speechVoice || 'pt-BR-FranciscaNeural';
 
-      if (!isCurrent()) return;
+      liveSpeechQueueRef.current = new StreamingSpeechQueue({
+        voice: preferredVoice,
+        rate: 1.05,
+        onStartSentence: (sentence) => {
+          liveIsSpeakingRef.current = true;
+          liveSpokenTextRef.current = liveSpeechQueueRef.current?.getSpokenText() || sentence;
+          // Pausa o microfone enquanto fala para evitar que capte o próprio áudio
+          continuousVoiceListeningRef.current = false;
+        },
+        onFinishedAll: () => {
+          liveIsSpeakingRef.current = false;
+          continuousVoiceListeningRef.current = true;
+          // Reabre o microfone imediatamente após a conclusão de todas as sentenças
+          window.dispatchEvent(new CustomEvent('synap:resume-listening'));
+        },
+      });
+    }
 
-      // Fallback: Web Speech API
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 1.05;
-        utterance.onend = onFinished;
-        utterance.onerror = onFinished;
-        window.dispatchEvent(new CustomEvent('synap:force-start-listening'));
-        window.speechSynthesis.speak(utterance);
+    // Alimenta o texto atual na fila de streaming
+    if (liveSpeechQueueRef.current) {
+      if (isStreaming) {
+        liveSpeechQueueRef.current.feed(lastMsg.content);
       } else {
-        onFinished();
+        liveSpeechQueueRef.current.finalize(lastMsg.content);
       }
-    };
-
-    speak();
-  }, [isStreaming, continuousVoiceActive, activeId, conversations, stopLiveSpeech]);
+    }
+  }, [continuousVoiceActive, isStreaming, conversations, activeId, stopLiveSpeech]);
 
   // Handler pra quando o usuário fala no modo contínuo (definido depois de handleSendMessage)
   // Veja handleContinuousVoiceTranscript mais abaixo
