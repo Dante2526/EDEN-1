@@ -4,8 +4,6 @@ export const ALLOWED_MODELS = [
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
-  '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-  '@cf/qwen/qwen2.5-coder-32b-instruct',
 ] as const;
 
 export const VISION_MODELS = [
@@ -19,24 +17,17 @@ export function isVisionModel(model: string): boolean {
 }
 
 /**
- * Modelos hospedados na Cloudflare Workers AI.
- * São roteados no backend para o endpoint OpenAI-compatible da CF
- * (api.cloudflare.com/client/v4/accounts/{id}/ai/v1/chat/completions)
- * e exigem CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN.
+ * Modelos hospedados na Cloudflare Workers AI (atualmente desativados).
  */
-export const CLOUDFLARE_MODELS = [
-  '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-  '@cf/qwen/qwen2.5-coder-32b-instruct',
-] as const;
+export const CLOUDFLARE_MODELS = [] as const;
 
 export function isCloudflareModel(model: string): boolean {
-  return CLOUDFLARE_MODELS.includes(model as any);
+  return (CLOUDFLARE_MODELS as readonly string[]).includes(model);
 }
 
 /**
  * Modelos que suportam execução nativa de ferramentas (OpenAI Function Calling).
- * Inclui GLM-5.3, GLM-5.3-Flash, Gemma 4 31B, DeepSeek V4.1 Flash,
- * Nemotron-3.5 Super VL (NVIDIA) e Qwen 2.5 Coder 32B (Cloudflare).
+ * Todos os 5 modelos NVIDIA atuais suportam ferramentas nativas.
  */
 export const TOOL_MODELS = [
   'z-ai/glm-5.3',
@@ -44,7 +35,6 @@ export const TOOL_MODELS = [
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
-  '@cf/qwen/qwen2.5-coder-32b-instruct',
 ] as const;
 
 export function isToolCapableModel(model: string): boolean {

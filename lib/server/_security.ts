@@ -17,19 +17,12 @@ export const ALLOWED_MODELS = [
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
-  '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-  '@cf/qwen/qwen2.5-coder-32b-instruct',
 ];
 
 /**
- * Modelos hospedados na Cloudflare Workers AI.
- * Usam endpoint OpenAI-compatible em api.cloudflare.com e exigem
- * CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN configurados.
+ * Modelos hospedados na Cloudflare Workers AI (atualmente desativados).
  */
-export const CLOUDFLARE_MODELS = [
-  '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-  '@cf/qwen/qwen2.5-coder-32b-instruct',
-];
+export const CLOUDFLARE_MODELS: string[] = [];
 
 export function isCloudflareModel(model: string): boolean {
   return CLOUDFLARE_MODELS.includes(model);
@@ -51,7 +44,6 @@ export const TOOL_MODELS = [
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
-  '@cf/qwen/qwen2.5-coder-32b-instruct',
 ];
 
 export function isToolCapableModel(model: string): boolean {

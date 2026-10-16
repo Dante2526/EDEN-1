@@ -891,11 +891,22 @@ function AppContent() {
 
   const [diffViewingChange, setDiffViewingChange] = useState<PendingChange | null>(null);
 
-  // Model & Reasoning Effort
   const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
-      if (saved === 'z-ai/glm-5.3' || saved === 'z-ai/glm-5.3-flash' || saved === 'google/gemma-4-31b-it' || saved === 'deepseek-ai/deepseek-v4.1-flash' || saved === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || saved === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || saved === '@cf/qwen/qwen2.5-coder-32b-instruct') return saved;
+      if (
+        saved === 'z-ai/glm-5.3' ||
+        saved === 'z-ai/glm-5.3-flash' ||
+        saved === 'google/gemma-4-31b-it' ||
+        saved === 'deepseek-ai/deepseek-v4.1-flash' ||
+        saved === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+      ) {
+        return saved;
+      }
+      if (saved && saved.startsWith('@cf/')) {
+        localStorage.setItem(MODEL_STORAGE_KEY, 'z-ai/glm-5.3-flash');
+        return 'z-ai/glm-5.3-flash';
+      }
     }
     return 'z-ai/glm-5.3'; // Modelo padrão: GLM-5.3 full (mais robusto)
   });
@@ -4094,7 +4105,7 @@ function AppContent() {
           onSendMessage={handleSendMessage}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b' || selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'}
+          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}

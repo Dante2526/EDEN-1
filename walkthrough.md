@@ -1210,5 +1210,27 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção e workers Cloudflare Pages compilados com 0 erros em 1.78s.
 
+## 78. Remoção Completa dos Modelos da Cloudflare (Qwen 2.5 Coder e DeepSeek R1 Distill)
+- **Solicitação do Usuário:** Remover os modelos da Cloudflare Workers AI (`@cf/qwen/qwen2.5-coder-32b-instruct` e `@cf/deepseek-ai/deepseek-r1-distill-qwen-32b`), pois o Qwen 2.5 Coder ficava apenas simulando alterações em texto em vez de alterar o código de fato via ferramentas (`edit_file`), e o DeepSeek R1 Distill opera estritamente como modelo de texto puro sem ferramentas de edição.
+- **Diagnóstico:** A API da Cloudflare Workers AI possui instabilidades conhecidas de streaming de Function Calling, fazendo com que chamadas de ferramentas vazem como texto puro para o chat ou sejam descartadas em fallback 400. Como o Synap exige execução real de ferramentas de arquivo, esses modelos não atendem ao fluxo de trabalho da plataforma.
+- **Solução Implementada:**
+  1. **Remoção das Matrizes de Modelos (`src/lib/models.ts` & `lib/server/_security.ts`):**
+     - Removidos ambos os modelos de `ALLOWED_MODELS`, `CLOUDFLARE_MODELS` e `TOOL_MODELS`.
+     - `ALLOWED_MODELS` agora possui exatamente 5 modelos NVIDIA oficiais, todos com 100% de suporte nativo a ferramentas.
+  2. **Tipagem Estrita (`src/lib/types.ts`):**
+     - Removidos os dois IDs da união TypeScript `ModelId`.
+  3. **Limpeza de UI no Dropdown (`src/components/model-controls.tsx`):**
+     - Removidos os cards dos dois modelos da lista e seus respectivos rótulos ternários.
+  4. **Migração Automática no App Core (`src/App.tsx`):**
+     - Implementado fallback inteligente na inicialização: se o `localStorage` do usuário possuir um modelo antigo `@cf/...`, o sistema migra automaticamente para o `z-ai/glm-5.3-flash`.
+     - Removidos os modelos removidos da condicional de `isFlashModel`.
+  5. **Atualização da Suíte de Testes Unitários (`src/lib/models.test.ts`):**
+     - Atualizados testes de paridade entre cliente e servidor, confirmando 5 modelos permitidos e rejeição correta para modelos desativados.
+- **Evidências de Verificação:**
+  - `npm test`: 57/57 testes unitários passando em 14 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção compilado com sucesso em 6.35s (Vite + Cloudflare Pages Worker).
+
+
 
 

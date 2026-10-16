@@ -66,18 +66,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       subtitle: 'NVIDIA 120B Super VL — Visão multimodal e raciocínio avançado',
       badge: 'NVIDIA · VL',
     },
-    {
-      id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-      title: 'DeepSeek R1 Distill 32B',
-      subtitle: 'Raciocínio profundo via Cloudflare Workers AI',
-      badge: 'CF · R1',
-    },
-    {
-      id: '@cf/qwen/qwen2.5-coder-32b-instruct',
-      title: 'Qwen2.5 Coder 32B',
-      subtitle: 'Especializado em código — excelente para programação',
-      badge: 'CF · Coder',
-    },
   ];
 
   const reasoningLevels: Array<{
@@ -133,10 +121,6 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? 'DeepSeek V4.1'
                 : selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
                 ? 'Nemotron VL'
-                : selectedModel === '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
-                ? 'R1 Distill'
-                : selectedModel === '@cf/qwen/qwen2.5-coder-32b-instruct'
-                ? 'Qwen Coder'
                 : 'GLM-5.3'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-zinc-500 dark:text-[color:var(--c-fg-8c867a)]" />

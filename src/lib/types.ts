@@ -185,9 +185,7 @@ export type ModelId =
   | 'z-ai/glm-5.3-flash'
   | 'google/gemma-4-31b-it'
   | 'deepseek-ai/deepseek-v4.1-flash'
-  | 'nvidia/nemotron-3.5-super-vl-120b-a12b'
-  | '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b'
-  | '@cf/qwen/qwen2.5-coder-32b-instruct';
+  | 'nvidia/nemotron-3.5-super-vl-120b-a12b';
 export type ReasoningEffort = 'low' | 'high' | 'max';
 
 export interface AppSettings {
