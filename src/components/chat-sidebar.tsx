@@ -29,8 +29,10 @@ import { SourceControlPanel } from './source-control/source-control-panel';
 import { ExtensionsPanel } from './extensions/extensions-panel';
 import { DownloaderPanel } from './downloader/downloader-panel';
 import { DarkModeToggle } from './dark-mode-toggle';
-// Lazy load ProjectsPanel (Sandpack é pesado, só carrega quando usuário abre a aba)
-const ProjectsPanel = React.lazy(() =>
+import { lazyWithRetry } from '../lib/lazy-retry';
+
+// Lazy load ProjectsPanel resiliente a deploys (Sandpack é pesado, só carrega quando usuário abre a aba)
+const ProjectsPanel = lazyWithRetry(() =>
   import('./project-workspace/projects-panel').then((m) => ({ default: m.ProjectsPanel }))
 );
 

@@ -1,7 +1,9 @@
 import React, { useState, Suspense } from 'react';
 import { X, Check, Undo2, Edit3, Save, FileCode, Plus, Minus } from 'lucide-react';
 
-const ReactDiffViewer = React.lazy(() => import('react-diff-viewer-continued'));
+import { lazyWithRetry } from '../../lib/lazy-retry';
+
+const ReactDiffViewer = lazyWithRetry(() => import('react-diff-viewer-continued'));
 import { PendingChange } from '../../lib/types';
 
 interface DiffViewerProps {

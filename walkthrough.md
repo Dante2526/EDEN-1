@@ -704,6 +704,33 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 31/31 testes passando (7 suítes completas).
   - `npm run build`: bundle compilado com sucesso e artefatos copiados para `dist/`.
 
+## 52. Blindagem Contra Crash de Dynamic Import Pós-Deploy (`lazyWithRetry`)
+- **Problema Relatado:** Crash em produção:
+  `[SYNAP CRASH] Failed to fetch dynamically imported module: https://synap-8yq.pages.dev/assets/project-workspace-B6OIUaNP.js`
+- **Investigação & Causa Raiz:**
+  - O usuário estava com uma aba aberta do Synap rodando o HTML do deploy anterior.
+  - Quando um novo commit gerou um novo deploy no Cloudflare Pages, os chunks com hashes antigos foram substituídos por novos hashes.
+  - Ao clicar na aba de preview/projetos, o React tentou importar `project-workspace` preguiçosamente com o hash antigo que retornou HTTP 404, disparando o crash capturado pelo `GlobalErrorBoundary`.
+- **Solução Implementada:**
+  1. **Helper de Resiliência (`src/lib/lazy-retry.ts` com TDD):**
+     - Criado `isDynamicChunkError` para identificar falhas de importação de módulos dinâmicos.
+     - Implementado `lazyWithRetry`: intercepta a falha de download do chunk desatualizado e dispara uma recarga de página limpa (`window.location.reload()`) com proteção anti-loop via `sessionStorage` (janela de 10s).
+     - 3 testes unitários automatizados em `src/lib/lazy-retry.test.ts`.
+  2. **Substituição de `React.lazy` por `lazyWithRetry`:**
+     - Aplicado em `src/App.tsx` (`ProjectWorkspace` e `ProjectsPanel`).
+     - Aplicado em `src/components/chat-sidebar.tsx` (`ProjectsPanel`).
+     - Aplicado em `src/components/source-control/diff-viewer.tsx` (`ReactDiffViewer`).
+  3. **Eventos Globais do Navegador & Vite (`src/main.tsx`):**
+     - Adicionado listener para o evento oficial `vite:preloadError`.
+     - Captura centralizada em `window.addEventListener('error')` e `unhandledrejection`.
+  4. **Experiência Visual Amigável (`src/components/global-error-boundary.tsx`):**
+     - Se um erro de chunk antigo atingir o Error Boundary, em vez da tela vermelha assustadora com stack trace técnico, é exibido um card moderno *"Nova versão do Synap disponível"* com auto-atualização em 1.5s e botão imediato.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 34/34 testes passando (8 suítes completas).
+  - `npm run build`: bundle compilado com sucesso em 2.73s.
+
+
 
 
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { isDynamicChunkError } from '../lib/lazy-retry';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  isUpdatingDeploy?: boolean;
 }
 
 /**
@@ -16,22 +18,31 @@ interface ErrorBoundaryState {
  * faz a tela ficar preta sem nenhuma mensagem.
  *
  * Quando captura um erro:
- * 1. Renderiza um fallback com botão "Ver detalhes do erro"
- * 2. Chama onError (pra abrir o ErrorModal)
- * 3. Oferece botão "Recarregar página"
+ * 1. Se for chunk desatualizado pós-deploy: recarrega suavemente
+ * 2. Renderiza um fallback com botão "Ver detalhes do erro"
+ * 3. Chama onError (pra abrir o ErrorModal)
+ * 4. Oferece botão "Recarregar página"
  */
 export class GlobalErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, isUpdatingDeploy: false };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
+    const isChunk = isDynamicChunkError(error);
+    return { hasError: true, error, isUpdatingDeploy: isChunk };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[GlobalErrorBoundary] React render crash:', error, info);
+    if (isDynamicChunkError(error)) {
+      console.warn('[GlobalErrorBoundary] Detectado chunk desatualizado. Agendando recarga automática...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      return;
+    }
     if (this.props.onError) {
       this.props.onError(error, info);
     }
@@ -59,6 +70,32 @@ ${this.state.error.stack || '(sem stack)'}`;
 
   render() {
     if (this.state.hasError && this.state.error) {
+      if (this.state.isUpdatingDeploy || isDynamicChunkError(this.state.error)) {
+        return (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0f0e0c]/90 backdrop-blur-md text-[#f3efe6]">
+            <div className="max-w-md w-full bg-[#181714] border border-[#d97757]/40 rounded-2xl shadow-2xl p-6 text-center space-y-4 animate-in fade-in">
+              <div className="w-12 h-12 rounded-2xl bg-[#d97757]/20 border border-[#d97757]/40 flex items-center justify-center mx-auto text-[#d97757]">
+                <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[#f3efe6]">Nova versão do Synap disponível</h2>
+                <p className="text-xs text-[#a39d93] mt-1 leading-relaxed">
+                  Um novo deploy foi publicado enquanto a aba estava aberta. Atualizando automaticamente a aplicação...
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#d97757] hover:bg-[#c4663f] text-white text-xs font-semibold transition cursor-pointer shadow-md"
+              >
+                Atualizar Agora
+              </button>
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0f0e0c] text-[#f3efe6]">
           <div className="max-w-lg w-full bg-[#181714] border border-red-500/40 rounded-2xl shadow-2xl overflow-hidden">

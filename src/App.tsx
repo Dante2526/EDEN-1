@@ -38,11 +38,13 @@ import { useDeploymentMonitor } from './lib/deployment-service';
 import { DeploymentErrorCard } from './components/deployments/deployment-error-card';
 import { DeploymentLogModal } from './components/deployments/deployment-log-modal';
 import { ChatSidebar } from './components/chat-sidebar';
-// Lazy load Sandpack components (só baixa quando usuário abre projetos)
-const ProjectWorkspace = React.lazy(() =>
+import { lazyWithRetry } from './lib/lazy-retry';
+
+// Lazy load Sandpack components resiliente a deploys (só baixa quando usuário abre projetos)
+const ProjectWorkspace = lazyWithRetry(() =>
   import('./components/project-workspace/project-workspace').then((m) => ({ default: m.ProjectWorkspace }))
 );
-const ProjectsPanel = React.lazy(() =>
+const ProjectsPanel = lazyWithRetry(() =>
   import('./components/project-workspace/projects-panel').then((m) => ({ default: m.ProjectsPanel }))
 );
 import { ChatMessage } from './components/chat-message';
