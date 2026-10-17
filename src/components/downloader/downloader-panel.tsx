@@ -39,6 +39,7 @@ interface DownloadResult {
   platform?: string;
   instance?: string;
   error?: string;
+  detail?: string;
 }
 
 interface HistoryItem {
@@ -405,17 +406,20 @@ export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose })
             <div className="space-y-2">
               <div className="flex items-start gap-1.5 text-rose-400 text-[11px]">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                <div>
+                <div className="flex-1 min-w-0">
                   <div className="font-medium mb-0.5">Falha no download</div>
-                  <div className="text-[10px] text-[#8c867a] font-mono leading-relaxed">
+                  <div className="text-[10px] text-[#f3efe6] font-mono leading-relaxed break-words">
                     {result.error || 'Erro desconhecido. Tente novamente.'}
                   </div>
+                  {result.detail && result.detail !== result.error && (
+                    <div className="text-[9px] text-[#8c867a] font-mono mt-1 bg-[#22201d] px-2 py-1 rounded border border-[#3b3831] break-words">
+                      Detalhe: {result.detail}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="text-[10px] text-[#5e5a52] px-1 leading-relaxed">
-                Possíveis causas: plataforma não suportada, vídeo privado/removido,
-                ou todas as instâncias estão sobrecarregadas. Aguarde 30s e tente
-                novamente.
+              <div className="text-[10px] text-[#736e65] px-1 leading-relaxed">
+                Dica: Certifique-se de que o vídeo é público e o link é direto do post/vídeo.
               </div>
             </div>
           )}

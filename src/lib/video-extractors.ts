@@ -149,6 +149,25 @@ export function parseYouTubeInnertubeResponse(
       filename: sanitizeFilename(`${rawTitle} - ${q}`, 'mp4'),
       metadata: { title: `${rawTitle} (${q})`, duration, author },
     };
+  } else {
+    // Fallback para streams adaptativos de vídeo quando formats muxed não estiver disponível
+    const adaptiveVideos = adaptiveFormats
+      .filter((f: any) => f.url && (f.mimeType || '').startsWith('video/'))
+      .sort((a: any, b: any) => (b.height || b.bitrate || 0) - (a.height || a.bitrate || 0));
+    if (adaptiveVideos.length > 0) {
+      const bestV = adaptiveVideos[0];
+      const q = bestV.qualityLabel || (bestV.height ? `${bestV.height}p` : 'HD');
+      const ext = (bestV.mimeType || '').includes('webm') ? 'webm' : 'mp4';
+      videoItem = {
+        type: 'video',
+        url: bestV.url,
+        thumb: thumbnail,
+        quality: q,
+        format: ext,
+        filename: sanitizeFilename(`${rawTitle} - ${q}`, ext),
+        metadata: { title: `${rawTitle} (${q})`, duration, author },
+      };
+    }
   }
 
   // 2. Audio Adaptive Formats - Seleciona estritamente o stream de maior bitrate

@@ -1472,3 +1472,23 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
   - `npm run lint` (`tsc --noEmit`): 0 erros de tipagem estrita.
   - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker compilados com 0 erros em 1.66s.
+
+## 92. Downloader: Resolução de Encurtadores, Fallback Adaptativo e Diagnóstico Preciso
+- **Solicitação do Usuário:** *"Ta dizendonisso: Falha no download, pra ver se o video ta publico e etc, ta normal ele, ta e com bug pra baixar"*
+- **Diagnóstico da Causa Raiz:**
+  1. **Falha Ocultada pelo Fallback:** Quando a extração nativa falhava por qualquer motivo ou recebia links encurtados (`youtu.be`, `vm.tiktok.com`, `vt.tiktok.com`, `t.co`, `bit.ly`, `instagram.com/share/`), o erro real era descartado silenciosamente e a requisição caía no fallback do Cobalt (que retornava 400 por falta de JWT). Isso forçava o erro genérico *"Não foi possível extrair a mídia deste link no momento. Verifique se o vídeo é público e tente novamente."*.
+  2. **Vídeos com Apenas Streams Adaptativos:** Vídeos do YouTube que não continham streams muxed em `formats` (muitos vídeos em 1080p/4K) resultavam em `videoItem = null`, falhando a montagem da opção de vídeo.
+  3. **Links Encurtados e Redirecionamentos:** Links de compartilhamento móvel (como `vm.tiktok.com` ou `instagram.com/share/`) não eram seguidos até a URL de destino antes de acionar a extração.
+- **Solução Implementada:**
+  1. **Resolução Automática de Encurtadores (`api/download.ts`):**
+     - Função `resolveRedirectUrl`: segue automaticamente redirecionamentos HTTP 301/302 para links de compartilhamento mobile (`youtu.be`, `vm.tiktok.com`, `vt.tiktok.com`, `t.co`, `bit.ly`, `instagram.com/share/`, `pin.it`) antes de processar a extração.
+  2. **Fallback para Streams Adaptativos (`src/lib/video-extractors.ts`):**
+     - Se `formats` muxed estiver ausente, o extrator agora seleciona o melhor stream de vídeo em `adaptiveFormats` (priorizando qualidade HD e formato MP4/WebM), impedindo falhas em vídeos modernos.
+  3. **Diagnóstico Transparente no Painel (`src/components/downloader/downloader-panel.tsx`):**
+     - Propriedade `detail` exibida na interface com a mensagem técnica real em badge mono, facilitando identificar links privados ou removidos.
+     - Preservação da mensagem de erro real de `extracted.error` em vez de mascará-la.
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e worker Cloudflare Pages compilados com 0 erros em 1.71s.
+

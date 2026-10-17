@@ -213,16 +213,49 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
 
   const platform = detectMediaPlatform(targetUrl);
 
+async function resolveRedirectUrl(urlStr: string): Promise<string> {
+  const lower = urlStr.toLowerCase();
+  const isShortened =
+    lower.includes('youtu.be/') ||
+    lower.includes('vm.tiktok.com/') ||
+    lower.includes('vt.tiktok.com/') ||
+    lower.includes('t.co/') ||
+    lower.includes('bit.ly/') ||
+    lower.includes('instagram.com/share/') ||
+    lower.includes('pin.it/');
+
+  if (!isShortened) return urlStr;
+
+  try {
+    const res = await fetch(urlStr, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+      },
+      signal: AbortSignal.timeout(3500),
+    });
+    return res.url || urlStr;
+  } catch {
+    return urlStr;
+  }
+}
+
   // Helper para encapsular links no túnel de download direto
   const wrapTunnelUrl = (rawMediaUrl: string, filename: string): string => {
     return `/api/download?stream=1&url=${encodeURIComponent(rawMediaUrl)}&filename=${encodeURIComponent(filename)}`;
   };
 
+  let lastError = '';
+
   // -------------------------------------------------------------------------
   // Camada 1: Extratores Nativos (YouTube, TikTok, Twitter/X, Reddit, Web)
   // -------------------------------------------------------------------------
   try {
-    const extracted = await extractMediaFromUrl(targetUrl, { audioOnly });
+    const resolvedUrl = await resolveRedirectUrl(targetUrl);
+    const effectiveUrl = resolvedUrl || targetUrl;
+    const extracted = await extractMediaFromUrl(effectiveUrl, { audioOnly });
 
     if (extracted.ok && extracted.picker && extracted.picker.length > 0) {
       // Injeta os URLs do túnel em cada item retornado
@@ -254,15 +287,16 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
+    } else if (!extracted.ok && extracted.error) {
+      lastError = extracted.error;
     }
-  } catch {
-    /* fallback para Cobalt */
+  } catch (err: any) {
+    lastError = err?.message || 'Erro inesperado na extração nativa.';
   }
 
   // -------------------------------------------------------------------------
   // Camada 2: Fallback Secundário Cobalt (para outros sites)
   // -------------------------------------------------------------------------
-  let lastError = '';
   for (const instance of COBALT_INSTANCES) {
     try {
       const result = await tryCobaltInstance(instance, targetUrl);
@@ -310,6 +344,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     JSON.stringify({
       ok: false,
       error:
+        lastError ||
         'Não foi possível extrair a mídia deste link no momento. Verifique se o vídeo é público e tente novamente.',
       detail: lastError || undefined,
       platform,
