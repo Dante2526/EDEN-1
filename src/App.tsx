@@ -78,6 +78,7 @@ import { ThemeMode, getInitialTheme, applyTheme, toggleThemeWithTransition } fro
 import { useContinuousVoice } from './lib/use-continuous-voice';
 import { StreamingSpeechQueue } from './lib/streaming-speech-queue';
 import { playThinkingSound, playSpeakingStartSound, playVoiceModeOnSound, playVoiceModeOffSound } from './lib/sound-effects';
+import { formatElementInspectorPrompt } from './lib/preview-element-locator';
 import { looksLikeEcho } from './lib/echo-filter';
 import {
   looksLikeIncompleteWork,
@@ -2106,10 +2107,160 @@ function AppContent() {
       }
     }
 
+    // ==================== Project Workspace tools (Sandpack / Live Preview) ====================
+    if (name === 'create_project') {
+      try {
+        const projName = (args.name || '').trim();
+        if (!projName) {
+          return { result: JSON.stringify({ error: 'Parâmetro "name" é obrigatório.' }) };
+        }
+        const template = (args.template || 'react-ts') as any;
+        const validTemplates = ['react-ts', 'react', 'vite-react-ts', 'vanilla-ts', 'vanilla', 'vue', 'static', 'node'];
+        if (!validTemplates.includes(template)) {
+          return { result: JSON.stringify({ error: `Template inválido: ${template}. Válidos: ${validTemplates.join(', ')}` }) };
+        }
+        const created = await createProject({
+          name: projName,
+          description: args.description?.trim() || undefined,
+          template,
+          files: args.files || undefined,
+          conversationId: activeId || undefined,
+        });
+        await openProject(created.id);
+        return {
+          result: JSON.stringify({
+            ok: true,
+            projectId: created.id,
+            name: created.name,
+            template: created.template,
+            fileCount: Object.keys(created.files || {}).length,
+            message: `Projeto "${created.name}" criado e aberto no workspace. O usuário já pode ver o preview ao vivo.`,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Erro ao criar projeto.' }) };
+      }
+    }
+
+    if (name === 'update_project_files') {
+      try {
+        const updates = Array.isArray(args.updates) ? args.updates : [];
+        if (updates.length === 0) {
+          return { result: JSON.stringify({ error: 'Nenhuma atualização fornecida.' }) };
+        }
+        if (args.projectId && args.projectId !== activeProject?.id) {
+          await openProject(args.projectId);
+        }
+        if (!activeProject) {
+          return { result: JSON.stringify({ error: 'Nenhum projeto ativo. Crie um projeto primeiro com create_project.' }) };
+        }
+        for (const u of updates) {
+          if (!u.path || !u.action) {
+            return { result: JSON.stringify({ error: 'Cada update precisa de "path" e "action".' }) };
+          }
+          if (u.action !== 'delete' && typeof u.content !== 'string') {
+            return { result: JSON.stringify({ error: `Update em "${u.path}" precisa de "content" (string).` }) };
+          }
+        }
+        await updateProjectFiles(updates);
+        return {
+          result: JSON.stringify({
+            ok: true,
+            projectId: activeProject.id,
+            updatedCount: updates.length,
+            message: `${updates.length} arquivo(s) atualizado(s) no projeto "${activeProject.name}". Preview recarregado ao vivo.`,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Erro ao atualizar arquivos.' }) };
+      }
+    }
+
+    if (name === 'open_project') {
+      try {
+        const targetId = args.projectId || projectsIndex[0]?.id;
+        if (!targetId) {
+          return { result: JSON.stringify({ error: 'Nenhum projeto salvo. Use create_project primeiro.' }) };
+        }
+        const target = projectsIndex.find((p: any) => p.id === targetId);
+        if (!target) {
+          return { result: JSON.stringify({ error: `Projeto não encontrado: ${targetId}` }) };
+        }
+        await openProject(targetId);
+        return {
+          result: JSON.stringify({
+            ok: true,
+            projectId: target.id,
+            name: target.name,
+            template: target.template,
+            message: `Projeto "${target.name}" aberto no workspace.`,
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Erro ao abrir projeto.' }) };
+      }
+    }
+
+    // Se não houver repositório GitHub ativo mas houver activeProject aberto no Workspace/Preview:
+    if (!currentRepo && activeProject) {
+      if (name === 'edit_file') {
+        const { path, content = '', type = 'modified' } = args;
+        if (!path) {
+          return { result: JSON.stringify({ error: 'Parâmetro path é obrigatório para edit_file.' }) };
+        }
+        await updateProjectFiles([{
+          path,
+          action: type === 'deleted' ? 'delete' : 'update',
+          content: content || '',
+        }]);
+        const editedFile: MessageEditedFile = { path, type: (type as ChangeType) || 'modified' };
+        return {
+          result: JSON.stringify({
+            success: true,
+            message: `Arquivo '${path}' atualizado com sucesso no projeto '${activeProject.name}'. O preview foi recarregado ao vivo.`,
+          }),
+          editedFile,
+        };
+      }
+
+      if (name === 'read_file') {
+        const cleanPath = (args.path || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+        const filesMap = activeProject.files || {};
+        const matched = filesMap[cleanPath] || filesMap['/' + cleanPath] || filesMap['./' + cleanPath];
+        if (matched) {
+          const content = typeof matched === 'string' ? matched : matched.content;
+          return { result: content };
+        }
+        return { result: JSON.stringify({ error: `Arquivo '${args.path}' não encontrado no projeto ativo.` }) };
+      }
+
+      if (name === 'list_files') {
+        const filesMap = activeProject.files || {};
+        const fileList = Object.keys(filesMap).map((p) => ({
+          name: p.split('/').pop() || p,
+          path: p,
+          type: 'file',
+        }));
+        return { result: JSON.stringify(fileList) };
+      }
+
+      if (name === 'search_code') {
+        const query = (args.query || '').toLowerCase();
+        const filesMap = activeProject.files || {};
+        const results = Object.entries(filesMap)
+          .filter(([p, entry]) => {
+            const content = typeof entry === 'string' ? entry : entry.content;
+            return p.toLowerCase().includes(query) || (typeof content === 'string' && content.toLowerCase().includes(query));
+          })
+          .map(([p]) => ({ path: p }));
+        return { result: JSON.stringify(results) };
+      }
+    }
+
     if (!currentRepo) {
       return {
         result: JSON.stringify({
-          error: 'Nenhum repositório GitHub está vinculado a esta conversa. Selecione um repositório no menu superior.',
+          error: 'Nenhum repositório GitHub ou projeto ativo nesta conversa. Abra um projeto ou selecione um repositório no menu superior.',
         }),
       };
     }
@@ -2294,103 +2445,6 @@ function AppContent() {
       }
     }
 
-    // ==================== Project Workspace tools (Sandpack) ====================
-    if (name === 'create_project') {
-      try {
-        const projName = (args.name || '').trim();
-        if (!projName) {
-          return { result: JSON.stringify({ error: 'Parâmetro "name" é obrigatório.' }) };
-        }
-        const template = (args.template || 'react-ts') as any;
-        const validTemplates = ['react-ts', 'react', 'vite-react-ts', 'vanilla-ts', 'vanilla', 'vue', 'static', 'node'];
-        if (!validTemplates.includes(template)) {
-          return { result: JSON.stringify({ error: `Template inválido: ${template}. Válidos: ${validTemplates.join(', ')}` }) };
-        }
-        const created = await createProject({
-          name: projName,
-          description: args.description?.trim() || undefined,
-          template,
-          files: args.files || undefined,
-          conversationId: activeId || undefined,
-        });
-        // Abre o workspace automaticamente
-        await openProject(created.id);
-        return {
-          result: JSON.stringify({
-            ok: true,
-            projectId: created.id,
-            name: created.name,
-            template: created.template,
-            fileCount: Object.keys(created.files || {}).length,
-            message: `Projeto "${created.name}" criado e aberto no workspace. O usuário já pode ver o preview ao vivo.`,
-          }),
-        };
-      } catch (err: any) {
-        return { result: JSON.stringify({ error: err?.message || 'Erro ao criar projeto.' }) };
-      }
-    }
-
-    if (name === 'update_project_files') {
-      try {
-        const updates = Array.isArray(args.updates) ? args.updates : [];
-        if (updates.length === 0) {
-          return { result: JSON.stringify({ error: 'Nenhuma atualização fornecida.' }) };
-        }
-        // Se projectId foi fornecido e difere do ativo, abre primeiro
-        if (args.projectId && args.projectId !== activeProject?.id) {
-          await openProject(args.projectId);
-        }
-        if (!activeProject) {
-          return { result: JSON.stringify({ error: 'Nenhum projeto ativo. Crie um projeto primeiro com create_project.' }) };
-        }
-        // Valida cada update
-        for (const u of updates) {
-          if (!u.path || !u.action) {
-            return { result: JSON.stringify({ error: 'Cada update precisa de "path" e "action".' }) };
-          }
-          if (u.action !== 'delete' && typeof u.content !== 'string') {
-            return { result: JSON.stringify({ error: `Update em "${u.path}" precisa de "content" (string).` }) };
-          }
-        }
-        await updateProjectFiles(updates);
-        return {
-          result: JSON.stringify({
-            ok: true,
-            projectId: activeProject.id,
-            updatedCount: updates.length,
-            message: `${updates.length} arquivo(s) atualizado(s) no projeto "${activeProject.name}". Preview recarregado.`,
-          }),
-        };
-      } catch (err: any) {
-        return { result: JSON.stringify({ error: err?.message || 'Erro ao atualizar arquivos.' }) };
-      }
-    }
-
-    if (name === 'open_project') {
-      try {
-        const targetId = args.projectId || projectsIndex[0]?.id;
-        if (!targetId) {
-          return { result: JSON.stringify({ error: 'Nenhum projeto salvo. Use create_project primeiro.' }) };
-        }
-        const target = projectsIndex.find((p: any) => p.id === targetId);
-        if (!target) {
-          return { result: JSON.stringify({ error: `Projeto não encontrado: ${targetId}` }) };
-        }
-        await openProject(targetId);
-        return {
-          result: JSON.stringify({
-            ok: true,
-            projectId: target.id,
-            name: target.name,
-            template: target.template,
-            message: `Projeto "${target.name}" aberto no workspace.`,
-          }),
-        };
-      } catch (err: any) {
-        return { result: JSON.stringify({ error: err?.message || 'Erro ao abrir projeto.' }) };
-      }
-    }
-
     return { result: JSON.stringify({ error: `Ferramenta desconhecida: ${name}` }) };
   };
 
@@ -2481,23 +2535,10 @@ function AppContent() {
 
     let finalText = text;
     if (selectedPreviewElements.length > 0) {
-      const elementsSummary = selectedPreviewElements
-        .map((el, idx) => {
-          const parts = [
-            `Componente #${idx + 1}: <${el.tagName}>`,
-            el.className ? `Classes CSS: ${el.className}` : null,
-            el.selector ? `Seletor CSS: ${el.selector}` : null,
-            el.textContent ? `Texto interno: "${el.textContent}"` : null,
-            el.outerHtmlSnippet ? `Snippet HTML: \`${el.outerHtmlSnippet.trim()}\`` : null,
-          ]
-            .filter(Boolean)
-            .join('\n  ');
-          return `[Elemento ${idx + 1}]\n  ${parts}`;
-        })
-        .join('\n\n');
-
+      const activeFiles = previewProject?.files || activeProject?.files || null;
+      const elementsPrompt = formatElementInspectorPrompt(selectedPreviewElements, activeFiles);
       const userInstruction = text.trim() || 'Modifique os componentes selecionados no preview conforme boas práticas.';
-      finalText = `${userInstruction}\n\n### [Componentes Selecionados no Preview para Edição]\nO usuário inspecionou e selecionou visualmente os seguintes elementos no preview da aplicação:\n${elementsSummary}\n\nPor favor, aplique as modificações solicitadas focando exatamente nesses componentes e seus respectivos arquivos de código.`;
+      finalText = `${userInstruction}\n\n${elementsPrompt}`;
 
       setSelectedPreviewElements([]);
     }
@@ -2608,20 +2649,28 @@ function AppContent() {
         `Envie SEMPRE o código-fonte legível e completo em texto claro (TypeScript, JSX, CSS, etc.). É ESTRITAMENTE PROIBIDO codificar arquivos em Base64, usar scripts Python para decodificação ou usar comandos Bash para criar arquivos. ` +
         `A alteração ficará salva localmente no Source Control para o usuário revisar o diff e commitar.\n\n` +
         graphRagSummary
-      : 'ATENÇÃO: Nenhum repositório GitHub está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
-        'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior.';
+      : activeProject
+      ? `Você está conectado ao PROJETO LOCAL ATIVO NO PREVIEW: "${activeProject.name}" (Template: ${activeProject.template}).\n` +
+        `Você tem acesso total às ferramentas de código locais: edit_file, read_file, list_files, search_code, update_project_files e create_project.\n` +
+        `Arquivos atuais do projeto no workspace:\n` +
+        `${Object.keys(activeProject.files || {}).map((f) => `- ${f}`).join('\n')}\n\n` +
+        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n` +
+        `NUNCA prometa ou responda que vai alterar código em texto puro. Emita OBRIGATORIAMENTE a chamada da ferramenta \`edit_file\` ou \`update_project_files\` na primeira resposta para atualizar o projeto do preview em tempo real!\n` +
+        `Ao usar \`edit_file\`, envie o caminho exato do arquivo (ex: 'src/App.tsx' ou 'src/App.jsx') e o conteúdo completo atualizado. A alteração recarregará o Live Preview instantaneamente.`
+      : 'ATENÇÃO: Nenhum repositório GitHub ou projeto local está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
+        'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior ou abrir um projeto no Preview.';
 
     // Obter ferramentas ativas de servidores MCP conectados
     const activeMcpServers = mcpServers.filter((s) => s.enabled && s.status === 'connected' && s.tools.length > 0);
     const mcpOpenAiTools = activeMcpServers.flatMap((s) => convertMcpToolsToOpenAi(s.tools, s.id));
-    const baseTools = chatActiveRepo ? ALL_CHAT_TOOLS : DEFAULT_CHAT_TOOLS;
+    const baseTools = (chatActiveRepo || activeProject) ? ALL_CHAT_TOOLS : DEFAULT_CHAT_TOOLS;
     const requestTools = isNoToolsModel ? [] : [...baseTools, ...mcpOpenAiTools];
 
     const basePrompt = isNoToolsModel
       ? 'Você é o assistente Éden operando com o modelo DeepSeek R1.\n' +
         buildTextToolProtocolPrompt(
-          Boolean(chatActiveRepo),
-          chatActiveRepo?.fullName,
+          Boolean(chatActiveRepo || activeProject),
+          chatActiveRepo?.fullName || activeProject?.name,
           chatActiveRepo?.branch,
           mcpOpenAiTools
         ) +

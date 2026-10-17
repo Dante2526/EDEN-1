@@ -1381,3 +1381,28 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 70/70 testes unitários passando em 17 suítes.
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.64s.
+
+## 87. Precisão Cirúrgica do Inspetor de Elementos do Preview e Edição Local Sem GitHub
+- **Solicitação do Usuário:** Checar o funcionamento da seleção de elementos no preview e garantir que a IA realmente compreenda o componente selecionado e consiga modificá-lo com precisão.
+- **Diagnóstico da Causa Raiz:**
+  1. *Falta de Mapeamento com o Código-Fonte:* O inspetor no iframe enviava apenas dados do DOM client-side (`selector`, `className`, `tagName`, `textContent` e snippet de HTML renderizado). A IA tinha que adivinhar em qual arquivo (`App.tsx`, `Header.tsx`, etc.) e em qual linha o componente estava declarado.
+  2. *Bloqueio Fatal de Ferramentas de Workspace:* Em `src/App.tsx`, `if (!currentRepo)` retornava erro antes de alcançar `create_project` e `update_project_files`. Sem repositório GitHub conectado, a IA não conseguia atualizar os arquivos do projeto no Live Preview.
+  3. *Ausência do Esquema de Edição sem Repositório:* Quando não havia repositório vinculado, `baseTools` recebia apenas `DEFAULT_CHAT_TOOLS` (que não continha `edit_file`), impedindo que a IA emitisse comandos de edição de arquivos para o preview.
+- **Solução Implementada:**
+  1. **Motor Localizador de Código-Fonte (`src/lib/preview-element-locator.ts`):**
+     - Função `locateElementInProjectFiles`: cruza o elemento inspecionado com os arquivos do projeto (`.tsx`, `.jsx`, `.html`, `.vue`), pontuando candidatos por ID específico, texto visível (`textContent`), classes Tailwind distintas e tags JSX.
+     - Extrai o arquivo correspondente, o número exato da linha (`lineNumber`) e um snippet de código contextual com 3 linhas de margem.
+     - Função `formatElementInspectorPrompt`: formata um bloco estruturado contendo a localização cirúrgica (`Arquivo Fonte Provável`, `Linha`, `Código-Fonte Original`) além do seletor e do snippet HTML.
+  2. **Desbloqueio de Ferramentas e Fallback Local (`src/App.tsx`):**
+     - Ferramentas de projeto (`create_project`, `update_project_files`, `open_project`) movidas para execução prioritária antes do bloqueio `!currentRepo`.
+     - Implementado fallback automático para `edit_file`, `read_file`, `list_files` e `search_code`: quando não há repositório GitHub, essas ferramentas operam diretamente no `activeProject.files`, persistindo a alteração e recarregando o Live Preview instantaneamente.
+  3. **Conscientização de Contexto e Ferramentas no Chat (`src/App.tsx`):**
+     - `baseTools` habilitado com `ALL_CHAT_TOOLS` sempre que `chatActiveRepo` ou `activeProject` estiver ativo.
+     - `repoPrompt` contextualiza a IA sobre o projeto ativo no workspace, listando os arquivos disponíveis e instruindo a chamada compulsória e imediata de `edit_file` / `update_project_files`.
+  4. **Suíte de Testes Automatizados TDD (`src/lib/preview-element-locator.test.ts`):**
+     - Cobertura de correspondência por `textContent`, localização em componentes filhos, identificação por ID único, formatação do prompt e tratamento de ausência de correspondência.
+- **Evidências de Verificação:**
+  - `npm test`: 75/75 testes unitários passando em 18 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.68s (Vite + Cloudflare Pages Worker).
+
