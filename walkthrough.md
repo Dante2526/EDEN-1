@@ -1453,6 +1453,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso e worker Cloudflare Pages gerado em 1.98s.
 
-
-
-
+## 91. Downloader: Curadoria Inteligente (Máximo 2 Opções Limpas e Modo 1-Click)
+- **Solicitação do Usuário:** *"Que tanto de opção e essa? Boa parte audio"* (exibia mais de 23 cards repetitivos de áudio com múltiplos codecs e bitrates baixos do YouTube).
+- **Diagnóstico da Causa Raiz:**
+  - O YouTube Innertube e o cascade Piped retornam dezenas de faixas de áudio adaptativas (`adaptiveFormats`) para dublagens em múltiplos idiomas, spatial audio e codecs alternativos (itags 139, 140, 249, 250, 251, 599, 600).
+  - O extrator iterava sobre todos os streams sem deduplicação de bitrate, gerando inchaço e sobrecarga cognitiva no painel.
+  - No componente `downloader-panel.tsx`, quando `picker.length === 1`, o card verde único e o card do picker eram renderizados simultaneamente, causando duplicação visual desnecessária.
+- **Solução Implementada:**
+  1. **Curadoria Inteligente em `src/lib/video-extractors.ts`:**
+     - **Modo Padrão (Vídeo):** Seleciona estritamente o **melhor vídeo MP4** (maior resolução muxed com áudio) e o **melhor áudio** (maior bitrate, priorizando M4A 130/160kbps). Reduz os 23 cards poluídos para **apenas 2 opções limpas e claras**.
+     - **Modo "Extrair apenas áudio" (1-Click):** Retorna estritamente **1 única opção** direta de áudio na máxima fidelidade (tanto no Innertube quanto no Piped e no TikTok).
+  2. **Refinamento do Painel de Download (`src/components/downloader/downloader-panel.tsx`):**
+     - Eliminação da duplicação visual quando há apenas 1 opção disponível.
+     - Rótulo contextual: `"Arquivo pronto para download:"` quando há 1 item, e `"2 opções disponíveis:"` quando vídeo e áudio estão presentes.
+  3. **Suíte de Testes Automatizados TDD (`src/lib/video-extractors.test.ts`):**
+     - Verificação estrita de que o resultado normal possui exatamente 2 itens e que o modo `audioOnly` possui exatamente 1 item de áudio com a URL de maior fidelidade.
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros de tipagem estrita.
+  - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker compilados com 0 erros em 1.66s.

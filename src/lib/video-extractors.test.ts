@@ -91,7 +91,7 @@ describe('Video Extractors Unit Tests', () => {
   });
 
   describe('parseYouTubeInnertubeResponse', () => {
-    it('deve extrair streams de vídeo muxed e streams de áudio', () => {
+    it('deve extrair exatamente 1 melhor vídeo e 1 melhor áudio', () => {
       const mockInnertube = {
         playabilityStatus: { status: 'OK' },
         videoDetails: {
@@ -113,6 +113,12 @@ describe('Video Extractors Unit Tests', () => {
           ],
           adaptiveFormats: [
             {
+              itag: 139,
+              bitrate: 48000,
+              mimeType: 'audio/mp4; codecs="mp4a.40.2"',
+              url: 'https://rr1.googlevideo.com/videoplayback?itag=139',
+            },
+            {
               itag: 140,
               bitrate: 130000,
               mimeType: 'audio/mp4; codecs="mp4a.40.2"',
@@ -131,27 +137,29 @@ describe('Video Extractors Unit Tests', () => {
       const result = parseYouTubeInnertubeResponse(mockInnertube, false);
       assert.strictEqual(result.ok, true);
       assert.strictEqual(result.title, 'Meu Vídeo Incrível');
-      assert.ok(result.picker && result.picker.length >= 2);
+      assert.strictEqual(result.picker?.length, 2);
       assert.strictEqual(result.picker[0].type, 'video');
       assert.strictEqual(result.picker[0].quality, '360p');
       assert.strictEqual(result.picker[1].type, 'audio');
-      assert.strictEqual(result.picker[1].format, 'm4a');
     });
 
-    it('deve priorizar áudios quando audioOnly for true', () => {
+    it('deve retornar exatamente 1 opção de áudio quando audioOnly for true', () => {
       const mockInnertube = {
         playabilityStatus: { status: 'OK' },
         videoDetails: { title: 'Música Teste' },
         streamingData: {
           formats: [{ itag: 18, url: 'https://googlevideo.com/video' }],
           adaptiveFormats: [
-            { itag: 140, mimeType: 'audio/mp4', url: 'https://googlevideo.com/audio' },
+            { itag: 139, bitrate: 48000, mimeType: 'audio/mp4', url: 'https://googlevideo.com/audio-low' },
+            { itag: 140, bitrate: 130000, mimeType: 'audio/mp4', url: 'https://googlevideo.com/audio-high' },
           ],
         },
       };
       const result = parseYouTubeInnertubeResponse(mockInnertube, true);
       assert.strictEqual(result.ok, true);
+      assert.strictEqual(result.picker?.length, 1);
       assert.strictEqual(result.picker?.[0]?.type, 'audio');
+      assert.strictEqual(result.picker?.[0]?.url, 'https://googlevideo.com/audio-high');
     });
   });
 

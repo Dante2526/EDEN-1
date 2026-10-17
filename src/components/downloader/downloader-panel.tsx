@@ -303,8 +303,8 @@ export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose })
                 )}
               </div>
 
-              {/* Resultado único (quando NÃO houver lista de opções) */}
-              {result.url && (!result.picker || result.picker.length <= 1) && (
+              {/* Resultado único (quando NÃO houver lista de opções em picker) */}
+              {result.url && (!result.picker || result.picker.length === 0) && (
                 <a
                   href={result.url}
                   download={result.filename || undefined}
@@ -335,7 +335,9 @@ export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose })
               {result.picker && result.picker.length > 0 && (
                 <div className="space-y-1.5">
                   <div className="text-[10px] text-[#8c867a] font-mono uppercase tracking-wide">
-                    {result.picker.length} opção(ões) de download:
+                    {result.picker.length > 1
+                      ? `${result.picker.length} opções disponíveis:`
+                      : 'Arquivo pronto para download:'}
                   </div>
                   {result.picker.map((item, idx) => (
                     <a

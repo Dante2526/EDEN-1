@@ -131,44 +131,63 @@ export function parseYouTubeInnertubeResponse(
   const formats = data?.streamingData?.formats || [];
   const adaptiveFormats = data?.streamingData?.adaptiveFormats || [];
 
-  const picker: ExtractedMediaItem[] = [];
+  // 1. Muxed Formats (Vídeo + Áudio embutidos) - Seleciona o melhor vídeo disponível
+  const validVideoFormats = formats
+    .filter((f: any) => f.url && (!f.mimeType || f.mimeType.includes('video')))
+    .sort((a: any, b: any) => (b.height || b.bitrate || 0) - (a.height || a.bitrate || 0));
 
-  // 1. Muxed Formats (Vídeo + Áudio embutidos)
-  for (const f of formats) {
-    if (f.url) {
-      const q = f.qualityLabel || '360p';
-      picker.push({
-        type: 'video',
-        url: f.url,
-        thumb: thumbnail,
-        quality: q,
-        format: 'mp4',
-        filename: sanitizeFilename(`${rawTitle} - ${q}`, 'mp4'),
-        metadata: { title: `${rawTitle} (${q})`, duration, author },
-      });
-    }
+  let videoItem: ExtractedMediaItem | null = null;
+  if (validVideoFormats.length > 0) {
+    const bestV = validVideoFormats[0];
+    const q = bestV.qualityLabel || '360p';
+    videoItem = {
+      type: 'video',
+      url: bestV.url,
+      thumb: thumbnail,
+      quality: q,
+      format: 'mp4',
+      filename: sanitizeFilename(`${rawTitle} - ${q}`, 'mp4'),
+      metadata: { title: `${rawTitle} (${q})`, duration, author },
+    };
   }
 
-  // 2. Audio Adaptive Formats (M4A / WebM de alta qualidade)
-  const audioFormats = adaptiveFormats.filter((f: any) =>
-    (f.mimeType || '').startsWith('audio/')
-  );
+  // 2. Audio Adaptive Formats - Seleciona estritamente o stream de maior bitrate
+  const audioFormats = adaptiveFormats
+    .filter((f: any) => f.url && (f.mimeType || '').startsWith('audio/'))
+    .sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
 
-  for (const a of audioFormats) {
-    if (a.url) {
-      const isM4a = (a.mimeType || '').includes('mp4');
-      const ext = isM4a ? 'm4a' : 'webm';
-      const bitrateKbps = a.bitrate ? `${Math.round(a.bitrate / 1000)}kbps` : 'audio';
+  let audioItem: ExtractedMediaItem | null = null;
+  if (audioFormats.length > 0) {
+    const bestA = audioFormats[0];
+    const isM4a = (bestA.mimeType || '').includes('mp4');
+    const ext = isM4a ? 'm4a' : 'webm';
+    const bitrateKbps = bestA.bitrate ? `${Math.round(bestA.bitrate / 1000)}kbps` : 'audio';
+    audioItem = {
+      type: 'audio',
+      url: bestA.url,
+      thumb: thumbnail,
+      quality: bitrateKbps,
+      format: ext,
+      filename: sanitizeFilename(`${rawTitle} - ${bitrateKbps}`, ext),
+      metadata: { title: `${rawTitle} [Áudio ${bitrateKbps}]`, duration, author },
+    };
+  }
+
+  const picker: ExtractedMediaItem[] = [];
+
+  if (audioOnly) {
+    if (audioItem) {
+      picker.push(audioItem);
+    } else if (videoItem) {
       picker.push({
+        ...videoItem,
         type: 'audio',
-        url: a.url,
-        thumb: thumbnail,
-        quality: bitrateKbps,
-        format: ext,
-        filename: sanitizeFilename(`${rawTitle} - ${bitrateKbps}`, ext),
-        metadata: { title: `${rawTitle} [Áudio ${bitrateKbps}]`, duration, author },
+        filename: sanitizeFilename(`${rawTitle} - Áudio`, 'mp4'),
       });
     }
+  } else {
+    if (videoItem) picker.push(videoItem);
+    if (audioItem) picker.push(audioItem);
   }
 
   if (picker.length === 0) {
@@ -177,11 +196,6 @@ export function parseYouTubeInnertubeResponse(
       platform: 'YouTube',
       error: 'Nenhum stream direto disponível para este vídeo.',
     };
-  }
-
-  // Reordenação: se audioOnly, coloca áudios no topo
-  if (audioOnly) {
-    picker.sort((a, b) => (a.type === 'audio' ? -1 : 1));
   }
 
   const primaryItem = picker[0];
@@ -250,7 +264,18 @@ export function parseTikWmResponse(data: any, audioOnly = false): ExtractedMedia
   }
 
   if (audioOnly) {
-    picker.sort((a, b) => (a.type === 'audio' ? -1 : 1));
+    const audioItem = picker.find((p) => p.type === 'audio');
+    if (audioItem) {
+      return {
+        ok: true,
+        platform: 'TikTok',
+        title: rawTitle,
+        thumbnail: thumb,
+        url: audioItem.url,
+        filename: audioItem.filename,
+        picker: [audioItem],
+      };
+    }
   }
 
   return {
@@ -546,40 +571,57 @@ export async function extractMediaFromUrl(
         });
         if (pRes.ok) {
           const pData = await pRes.json();
-          const videoStreams = (pData.videoStreams || []).filter(
-            (s: any) => s.url && !s.videoOnly
-          );
-          const audioStreams = pData.audioStreams || [];
+          const videoStreams = (pData.videoStreams || [])
+            .filter((s: any) => s.url && !s.videoOnly)
+            .sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
+          const audioStreams = (pData.audioStreams || [])
+            .filter((s: any) => s.url)
+            .sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
 
           const picker: ExtractedMediaItem[] = [];
-          for (const vs of videoStreams) {
-            picker.push({
-              type: 'video',
-              url: vs.url,
-              thumb: pData.thumbnailUrl,
-              quality: vs.quality || '360p',
-              format: 'mp4',
-              filename: sanitizeFilename(`${pData.title} - ${vs.quality || 'video'}`, 'mp4'),
-              metadata: { title: pData.title, author: pData.uploader },
-            });
-          }
+          const bestVs = videoStreams[0];
+          const bestAs = audioStreams[0];
 
-          for (const as of audioStreams) {
-            picker.push({
-              type: 'audio',
-              url: as.url,
-              thumb: pData.thumbnailUrl,
-              quality: as.quality || 'audio',
-              format: as.format === 'M4A' ? 'm4a' : 'mp3',
-              filename: sanitizeFilename(`${pData.title} - Áudio`, 'mp3'),
-              metadata: { title: pData.title, author: pData.uploader },
-            });
+          if (options.audioOnly) {
+            if (bestAs) {
+              const quality = bestAs.quality || (bestAs.bitrate ? `${Math.round(bestAs.bitrate / 1000)}kbps` : 'audio');
+              picker.push({
+                type: 'audio',
+                url: bestAs.url,
+                thumb: pData.thumbnailUrl,
+                quality,
+                format: bestAs.format === 'M4A' || (bestAs.mimeType || '').includes('mp4') ? 'm4a' : 'mp3',
+                filename: sanitizeFilename(`${pData.title} - Áudio`, 'mp3'),
+                metadata: { title: `${pData.title} [Áudio]`, author: pData.uploader },
+              });
+            }
+          } else {
+            if (bestVs) {
+              picker.push({
+                type: 'video',
+                url: bestVs.url,
+                thumb: pData.thumbnailUrl,
+                quality: bestVs.quality || '360p',
+                format: 'mp4',
+                filename: sanitizeFilename(`${pData.title} - ${bestVs.quality || 'video'}`, 'mp4'),
+                metadata: { title: pData.title, author: pData.uploader },
+              });
+            }
+            if (bestAs) {
+              const quality = bestAs.quality || (bestAs.bitrate ? `${Math.round(bestAs.bitrate / 1000)}kbps` : 'audio');
+              picker.push({
+                type: 'audio',
+                url: bestAs.url,
+                thumb: pData.thumbnailUrl,
+                quality,
+                format: bestAs.format === 'M4A' || (bestAs.mimeType || '').includes('mp4') ? 'm4a' : 'mp3',
+                filename: sanitizeFilename(`${pData.title} - Áudio`, 'mp3'),
+                metadata: { title: `${pData.title} [Áudio]`, author: pData.uploader },
+              });
+            }
           }
 
           if (picker.length > 0) {
-            if (options.audioOnly) {
-              picker.sort((a, b) => (a.type === 'audio' ? -1 : 1));
-            }
             return {
               ok: true,
               platform: 'YouTube',
