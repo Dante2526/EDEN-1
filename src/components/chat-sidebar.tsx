@@ -434,8 +434,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
         {/* Top Header / App branding */}
         <div className="px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#d97757]/15 flex items-center justify-center">
-              <ClaudeLogo className="w-4 h-4 text-[#d97757]" />
+            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+              <ClaudeLogo className="w-6 h-6" />
             </div>
             <div>
               <h1 className="font-sans text-sm font-semibold text-[color:var(--c-fg-f3efe6)] tracking-tight">Éden</h1>
