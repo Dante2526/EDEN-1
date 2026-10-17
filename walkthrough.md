@@ -1370,3 +1370,14 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: 70/70 testes unitários passando em 17 suítes (100% verde).
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção compilado com sucesso em 1.62s.
+
+## 86. Simplificação da UI: Remoção do Botão da Câmera (Foco no Ctrl+V Nativo)
+- **Solicitação do Usuário:** Remover o botão de câmera da barra inferior, mantendo a interface enxuta e priorizando a colagem direta via teclado (`Ctrl+V`).
+- **Ajustes Efetuados (`src/components/chat-input.tsx`):**
+  - Removido o botão `<Camera>` e sua função `handleTakeScreenshot`.
+  - Preservado integralmente o fluxo de colagem direta de prints (`Ctrl+V`) tanto no textarea quanto no listener global da janela do Éden.
+  - O botão de clipe (`Paperclip`) continua exclusivo para anexar arquivos manuais quando desejado.
+- **Evidências de Verificação:**
+  - `npm test`: 70/70 testes unitários passando em 17 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.64s.

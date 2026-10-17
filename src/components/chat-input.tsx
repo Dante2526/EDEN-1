@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X, Camera } from 'lucide-react';
+import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X } from 'lucide-react';
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
@@ -232,59 +232,6 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
     return () => window.removeEventListener('paste', handleGlobalPaste);
   }, [selectedModel, isLoading]);
 
-  // Captura direta de tela via Screen Capture API (Web Standard)
-  const handleTakeScreenshot = async () => {
-    if (isLoading) return;
-    try {
-      if (!navigator.mediaDevices?.getDisplayMedia) {
-        setNotification('Captura de tela direta não suportada. Use Win+Shift+S e cole com Ctrl+V.');
-        return;
-      }
-
-      setNotification('Selecione a tela ou janela para o print...');
-
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: 'always' } as any,
-        audio: false,
-      });
-
-      const track = stream.getVideoTracks()[0];
-      const video = document.createElement('video');
-      video.playsInline = true;
-      video.muted = true;
-      video.srcObject = stream;
-
-      await video.play();
-      // Aguarda estabilização do frame do monitor
-      await new Promise((res) => setTimeout(res, 200));
-
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1920;
-      canvas.height = video.videoHeight || 1080;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      }
-
-      track.stop();
-      stream.getTracks().forEach((t) => t.stop());
-      video.srcObject = null;
-
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          const file = new File([blob], `print-${Date.now()}.png`, { type: 'image/png' });
-          await processFiles([file]);
-          setNotification('📸 Print capturado da tela com sucesso!');
-        }
-      }, 'image/png');
-    } catch (err: any) {
-      if (err.name !== 'NotAllowedError') {
-        console.error('Erro na captura de tela:', err);
-      }
-      setNotification(null);
-    }
-  };
-
   // Real-time live voice transcription handler
   const handleVoiceTranscript = (text: string, isInterim?: boolean) => {
     if (!isListeningRef.current) {
@@ -411,7 +358,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
 
           {/* Claude Bottom Toolbar */}
           <div className="flex items-center justify-between gap-2 mt-2 pt-1">
-            {/* Left Tools: Attachment & Direct Screenshot */}
+            {/* Left Tools: Attachment (Suporta anexar arquivos e colar prints via Ctrl+V) */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -422,7 +369,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 }}
                 disabled={isLoading}
                 aria-label="Anexar arquivos ou imagens"
-                title="Anexar imagens, documentos, PDFs ou código"
+                title="Anexar imagens, documentos, PDFs ou código (ou use Ctrl+V para colar um print)"
                 className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
                   isLoading
                     ? 'text-[color:var(--c-fg-5a554d)] cursor-not-allowed opacity-40'
@@ -430,21 +377,6 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 }`}
               >
                 <Paperclip className="w-4 h-4" />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleTakeScreenshot}
-                disabled={isLoading}
-                aria-label="Tirar print da tela do PC"
-                title="Tirar print da tela do PC (ou use Ctrl+V para colar)"
-                className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
-                  isLoading
-                    ? 'text-[color:var(--c-fg-5a554d)] cursor-not-allowed opacity-40'
-                    : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
-                }`}
-              >
-                <Camera className="w-4 h-4" />
               </button>
 
               {(images.length > 0 || documents.length > 0) && (
