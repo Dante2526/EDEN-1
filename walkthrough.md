@@ -1406,3 +1406,14 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.68s (Vite + Cloudflare Pages Worker).
 
+## 88. Interface de Usuário: Remoção do Subtítulo da Tela de Boas-Vindas
+- **Solicitação do Usuário:** Remover o texto descritivo *"Éden com modelos GLM-5.3 e Flash. Source Control Git e Modo Plano integrados."* da tela inicial do chat.
+- **Ajustes Efetuados (`src/App.tsx`):**
+  - Removido o elemento `<p>` com a descrição de modelos e ferramentas sob a saudação inicial do assistente na tela de chat vazio.
+  - A interface inicial do Éden agora exibe com elegância e minimalismo apenas o logo zen do bonsai japonês e a saudação amigável (*"Bom dia/Boa tarde/Boa noite, como posso ajudar?"*).
+- **Evidências de Verificação:**
+  - `npm test`: 75/75 testes unitários passando em 18 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.62s.
+
+

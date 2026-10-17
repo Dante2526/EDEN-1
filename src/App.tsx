@@ -4038,10 +4038,6 @@ function AppContent() {
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[color:var(--c-fg-f3efe6)] tracking-tight mb-2">
                 {getGreeting()}, como posso ajudar?
               </h2>
-              <p className="text-xs sm:text-sm text-[color:var(--c-fg-a39d93)] max-w-md px-2 leading-relaxed">
-                Éden com modelos <span className="text-[color:var(--c-fg-f3efe6)] font-medium">GLM-5.3</span> e{' '}
-                <span className="text-[color:var(--c-fg-f3efe6)] font-medium">Flash</span>. Source Control Git e Modo Plano integrados.
-              </p>
             </div>
           ) : (
             <div className="py-4 space-y-4">
