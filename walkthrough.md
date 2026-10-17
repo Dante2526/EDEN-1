@@ -1571,3 +1571,18 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.69s.
   - `git push`: commit `b1c2035` publicado com sucesso no repositório remoto.
+
+## 96. Design de Interface: Gradiente Laranja Pôr do Sol Vibrante no Switcher do Header
+- **Solicitação do Usuário:** *"Essa cor laranja em volta do chat no superior, quero um laranja mais bonito"* com print destacando o botão ativo do Chat.
+- **Diagnóstico:** A cor anterior era o terracota opaco `#d97757` (RGB 217, 119, 87), que em telas OLED móveis sobre fundo escuro (`#0f0e0d`) aparentava um tom desbotado, fosco e marrom/barro sem brilho ou destaque moderno.
+- **Solução Implementada (`src/components/chat-header.tsx`):**
+  - Substituição do bloco sólido `#d97757` por um gradiente vivo de **Laranja Pôr do Sol Vibrante**:
+    `bg-gradient-to-r from-[#ff6b35] to-[#ea580c]`
+  - Injeção de brilho quente suave e borda delicada de acabamento:
+    `shadow-[0_2px_12px_rgba(255,107,53,0.35)] border border-[#ff8c42]/30`
+  - Aplicação simétrica nos botões ativos de **Chat**, **Preview** e **Studio**.
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.65s.
+  - `git push`: commit `7647c53` publicado com sucesso no repositório remoto.
