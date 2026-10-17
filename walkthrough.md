@@ -1521,4 +1521,30 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção e workers gerados com sucesso em 1.56s.
 
+## 94. Identidade Visual: Favicon do Bonsai com Fundo 100% Transparente
+- **Solicitação do Usuário:** *"O bonsai ta dentro um fundo preto, tem como deixar só o bonsai? Isso la na aba do navegador"*
+- **Diagnóstico da Causa Raiz:**
+  - O arquivo vetorial original continha um `<rect fill="url(#edenBg)" />` escuro e borda de cantos arredondados, que criava uma caixa preta quadrada dentro da aba do navegador.
+  - As margens externas no `viewBox="0 0 512 512"` deixavam o bonsai reduzido no centro do quadro.
+- **Solução Implementada:**
+  1. **Remoção do Fundo Escuro:**
+     - Removidos os retângulos de fundo escuro e bordas em `public/favicon.svg` e `public/icons/icon.svg`.
+     - Preservado o anel solar zen terracota com transparência nativa (`fill="none"` no contêiner SVG).
+  2. **Enquadramento Perfeito do Bonsai:**
+     - Ajustado o `viewBox` para `85 70 340 355` (idêntico ao componente oficial `<EdenBonsaiLogo>`), preenchendo 100% do ícone da aba com o bonsai e seu vaso tradicional.
+  3. **Regeneração de Todos os Ícones Rasterizados:**
+     - Executado `node scripts/generate-favicons.mjs` com o `sharp`, atualizando com fundo transparente:
+       - `public/favicon.ico`
+       - `public/favicon-32x32.png`
+       - `public/favicon-48x48.png`
+       - `public/apple-touch-icon.png`
+       - `public/icons/icon-192.png`
+       - `public/icons/icon-512.png`
+       - `public/icons/icon-maskable-512.png`
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes passando (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.62s.
+
+
 

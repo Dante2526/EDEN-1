@@ -1,11 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="85 70 340 355" width="512" height="512" fill="none">
   <defs>
-    <!-- Gradiente de Fundo Zen do Éden -->
-    <linearGradient id="edenBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1a1815" />
-      <stop offset="100%" stop-color="#0d0c0a" />
-    </linearGradient>
-
     <!-- Sol Zen / Ensō Terracota Éden -->
     <radialGradient id="zenSun" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#d97757" stop-opacity="0.38" />
@@ -40,13 +34,9 @@
     </linearGradient>
   </defs>
 
-  <!-- Fundo Arredondado Escuro Premium -->
-  <rect width="512" height="512" rx="128" fill="url(#edenBg)" />
-  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="#d97757" stroke-width="4" stroke-opacity="0.35" />
-
-  <!-- Círculo Zen / Solstício Éden de Fundo -->
+  <!-- Círculo Zen / Solstício Éden de Fundo (Transparente) -->
   <circle cx="260" cy="220" r="140" fill="url(#zenSun)" />
-  <circle cx="260" cy="220" r="120" fill="none" stroke="#d97757" stroke-width="2.5" stroke-opacity="0.25" stroke-dasharray="12 6" />
+  <circle cx="260" cy="220" r="120" fill="none" stroke="#d97757" stroke-width="2.5" stroke-opacity="0.35" stroke-dasharray="12 6" />
 
   <!-- Vaso Raso de Bonsai Japonês com Pés -->
   <!-- Base do Vaso -->
