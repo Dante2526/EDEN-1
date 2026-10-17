@@ -1546,5 +1546,28 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.62s.
 
-
-
+## 95. Layout Mobile: Reposicionamento do Badge de Deploy Anti-Sobreposição no Header
+- **Solicitação do Usuário:** *"A parte la de deploy precia ser repocionada no movel"* com print demonstrando colisão do botão Deploy sobre a aba Studio (botão de robô).
+- **Diagnóstico da Causa Raiz:**
+  1. No componente `<DeploymentStatusBadge>`, a label de texto `"Deploy"` estava fixada sem a classe de responsividade `hidden sm:inline`. Isso ampliava a largura do botão para ~75px em telas pequenas.
+  2. No `<ChatHeader>`, o switcher central (`[Chat] [Preview] [Studio]`) fica posicionado absolutamente no centro da tela (`absolute left-1/2 -translate-x-1/2`).
+  3. No cluster direito (`z-10`), a presença simultânea do `DeploymentStatusBadge` (~75px), `Grafo` (~32px) e `Terminal` (~32px) totalizava mais de 155px de largura, fazendo o contêiner direito invadir a área central e truncar o botão Deploy em *"eploy"* por cima do ícone do Studio.
+  4. Por outro lado, a extremidade esquerda do cabeçalho móvel continha apenas o botão de abrir o menu lateral (`PanelLeft`), deixando um espaço livre de ~80px desocupado.
+- **Solução Implementada:**
+  1. **Badge Compacto & Acessível (`src/components/deployments/deployment-status-badge.tsx`):**
+     - Rótulo `"Deploy"` ajustado para `<span className="hidden sm:inline font-semibold text-[11px]">Deploy</span>`.
+     - Padding dinâmico: `p-1.5` quadrado e compacto no mobile, e `sm:px-2.5 sm:py-1.5` no desktop.
+     - `aria-label` descritivo preservado para acessibilidade e leitores de tela em modo ícone puro.
+  2. **Reposicionamento Inteligente no Header (`src/components/chat-header.tsx`):**
+     - Em telas móveis (`sm:hidden`), o `DeploymentStatusBadge` é renderizado no contêiner da esquerda, diretamente ao lado do menu lateral (`PanelLeft`).
+     - Em telas maiores (`hidden sm:block`), preserva o posicionamento original na extremidade direita com o rótulo completo.
+  3. **Equilíbrio Visual no Mobile (360px):**
+     - Esquerda: `[Menu] [Deploy Icon]` = ~70px.
+     - Centro: `[Chat] [Preview] [Studio]` = ~110px (de 125px a 235px).
+     - Direita: `[Grafo] [Terminal]` = ~68px (a partir de 280px).
+     - Resultado: mais de 45px de margem livre em ambos os lados e **zero colisão visual**.
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.69s.
+  - `git push`: commit `b1c2035` publicado com sucesso no repositório remoto.
