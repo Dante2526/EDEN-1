@@ -1586,3 +1586,30 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.65s.
   - `git push`: commit `7647c53` publicado com sucesso no repositório remoto.
+
+## 97. Otimização Mobile: Adaptação Completa do Modal Graphify e Demais Modais da Aplicação
+- **Solicitação do Usuário:** *"Ajusfa todo esse modal para dispositivo movel, se tiver mais no apo que nn ta adpatado para celular aproveita logo"* com print do modal do Mapa de Arquitetura 3D apresentando sobreposição do cabeçalho, canvas comprimido e painel inferior cortado.
+- **Diagnóstico da Causa Raiz:**
+  1. No `GraphModal` (`src/components/graph-modal.tsx`), o padding externo `p-2` e o cabeçalho com `flex-wrap` faziam títulos e botões quebrarem em múltiplas linhas desorganizadas em telas de 360-400px.
+  2. O canvas 3D possuía `min-h-[340px]`, estrangulando o painel de detalhes inferior (`max-h-[42vh]`) e empurrando o conteúdo para baixo da barra de navegação do navegador móvel.
+  3. A legenda 3D ficava ancorada no rodapé do canvas, colidindo com os nós da esfera 3D e sobrepondo os botões de zoom.
+  4. Outros modais da aplicação (`SettingsModal`, `DeploymentLogModal`, `ErrorModal` e `DiffViewer`) utilizavam paddings fixos `p-4` que desperdiçavam espaço lateral nos celulares e não aproveitavam a altura da tela como gavetas nativas.
+- **Solução Implementada:**
+  1. **Modal de Arquitetura 3D Graphify (`src/components/graph-modal.tsx`):**
+     - **Tela Cheia Nativa:** Enquadramento `p-0 sm:p-6` com cantos `rounded-none sm:rounded-2xl` e `h-full sm:h-[92vh]`.
+     - **Cabeçalho Compacto:** Título truncado de forma fluida, badge `3D Engine · 60 FPS` oculto em mobile (`hidden sm:inline-block`), e botões de ação touch sem quebra de linha.
+     - **Divisão de Altura Inteligente:** Canvas com `h-[42vh] sm:h-[50vh] lg:h-auto lg:flex-1` e drawer de detalhes com `flex-1 min-h-0 overflow-y-auto pb-8 sm:pb-4`.
+     - **Pill Indicador de Gaveta:** Adicionada barra tátil arredondada (`w-8 h-1 rounded-full bg-zinc-600/60 mx-auto mb-2 lg:hidden`).
+     - **Legenda e Controles Flutuantes:** Legenda reposicionada para `top-2 left-2` no mobile em badge ultra-compacto com backdrop-blur, desobstruindo os nós 3D e os botões de zoom (`bottom-2 right-2`).
+  2. **Modal de Configurações (`src/components/settings-modal.tsx`):**
+     - Otimizado para `p-0 sm:p-4`, `h-full sm:h-auto sm:max-h-[90vh]` e quebra flexível de badges de status em telas estreitas.
+  3. **Modal de Logs de Implantação (`src/components/deployments/deployment-log-modal.tsx`):**
+     - Enquadramento nativo `p-0 sm:p-4`, título truncado, botão de cópia compacto para mobile e rodapé com margem segura.
+  4. **Inspetor de Erros e Diff Viewer (`error-modal.tsx` e `diff-viewer.tsx`):**
+     - Ajustados para enquadramento full-screen em dispositivos móveis com barras de rolagem internas independentes.
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e Cloudflare Pages compilados em 1.58s.
+  - `git push`: commit `2a10c50` publicado com sucesso no repositório remoto.
+
