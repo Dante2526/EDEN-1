@@ -439,7 +439,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             </div>
             <div>
               <h1 className="font-sans text-sm font-semibold text-[color:var(--c-fg-f3efe6)] tracking-tight">Éden</h1>
-              <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono tracking-tight">IA Workspace</p>
+              <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono tracking-tight">Espaço</p>
             </div>
           </div>
 

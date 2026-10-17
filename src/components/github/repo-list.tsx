@@ -277,7 +277,7 @@ export const RepoList: React.FC<RepoListProps> = ({
                               : 'bg-[color:var(--c-bg-2a2620)] hover:bg-[#d97757] text-[color:var(--c-fg-e8e3d8)]'
                           }`}
                         >
-                          <span>{isActive ? 'Explorar Arquivos' : 'Vincular a este Chat'}</span>
+                          <span>{isActive ? 'Explorar Arquivos' : 'Vincular'}</span>
                           <ArrowRight className="w-3 h-3" />
                         </button>
                       </div>
