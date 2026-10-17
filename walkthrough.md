@@ -1613,3 +1613,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle de produção e Cloudflare Pages compilados em 1.58s.
   - `git push`: commit `2a10c50` publicado com sucesso no repositório remoto.
 
+## 98. Identidade Visual: Remoção do Fundo Marrom do Bonsai na Barra Lateral
+- **Solicitação do Usuário:** *"A nossa bonsai ali canto dirieto superior, tita esse fundo marrom dela"* com print da barra lateral exibindo o bonsai envolto por um quadrado escuro terracota.
+- **Diagnóstico da Causa Raiz:**
+  - No cabeçalho da barra lateral (`src/components/chat-sidebar.tsx`), o ícone `<ClaudeLogo>` estava contido em uma `<div>` com classe de cor `bg-[#d97757]/15` e cantos `rounded-lg`, criando uma caixa marrom/terracota sólida em volta do bonsai.
+- **Solução Implementada (`src/components/chat-sidebar.tsx`):**
+  - Removida a classe `bg-[#d97757]/15` e a borda arredondada da caixa contenedora.
+  - O bonsai agora é renderizado com **fundo 100% transparente**, diretamente sobre o tema escuro do app, com escala ajustada para `w-6 h-6` e suas cores naturais ricas (verde jade/esmeralda no topo e madeira nobre no tronco).
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e worker Cloudflare Pages compilados em 1.51s.
+  - `git push`: commit `67d2a75` publicado com sucesso no repositório remoto.
+
+
