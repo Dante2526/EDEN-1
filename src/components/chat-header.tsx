@@ -90,6 +90,17 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           <PanelLeft className="w-5 h-5" />
         </button>
 
+        {/* Cloudflare Pages Deployment Status Badge (mobile < sm) */}
+        {deployment && (
+          <div className="sm:hidden">
+            <DeploymentStatusBadge
+              deployment={deployment}
+              isLoading={isLoadingDeployment}
+              onClick={onOpenDeploymentLogs}
+            />
+          </div>
+        )}
+
         {activeRepo && (
           <div className="hidden xl:flex items-center gap-1.5 p-1 px-2.5 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b33)] text-xs font-mono min-w-0 shadow-xs ml-1">
             <button
@@ -211,13 +222,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           </button>
         )}
 
-        {/* Cloudflare Pages Deployment Status Badge */}
+        {/* Cloudflare Pages Deployment Status Badge (desktop >= sm) */}
         {deployment && (
-          <DeploymentStatusBadge
-            deployment={deployment}
-            isLoading={isLoadingDeployment}
-            onClick={onOpenDeploymentLogs}
-          />
+          <div className="hidden sm:block">
+            <DeploymentStatusBadge
+              deployment={deployment}
+              isLoading={isLoadingDeployment}
+              onClick={onOpenDeploymentLogs}
+            />
+          </div>
         )}
 
         {onOpenGraph && (
