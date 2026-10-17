@@ -1492,3 +1492,33 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle de produção e worker Cloudflare Pages compilados com 0 erros em 1.71s.
 
+## 93. Identidade Visual: Favicons Multiplataforma do Bonsai (ICO, PNGs e PWA)
+- **Solicitação do Usuário:** *"Ei nosso bonsai nn ta na aba do navegador"*
+- **Diagnóstico da Causa Raiz:**
+  1. O navegador procurava por `/favicon.ico` na raiz, arquivo que não existia (gerando fallback SPA de 404).
+  2. Navegadores mobile e abas do Chrome priorizam ícones rasterizados declarados em `manifest.json` (`/icons/icon-192.png`, `/icons/icon-512.png`) e `apple-touch-icon.png`. Esses arquivos continham os ícones antigos pré-bonsai criados em 14/10.
+  3. `index.html` não possuía declarações de fallbacks PNG específicos (`favicon-32x32.png`, `favicon-48x48.png` e `shortcut icon`).
+- **Solução Implementada:**
+  1. **Geração Automatizada com Sharp (`scripts/generate-favicons.mjs`):**
+     - Renderizados a partir do SVG mestre do bonsai (`public/favicon.svg`):
+       - `public/favicon.ico` (32x32)
+       - `public/favicon-32x32.png` (32x32 para abas de desktop)
+       - `public/favicon-48x48.png` (48x48 para abas de alta densidade)
+       - `public/apple-touch-icon.png` (180x180 para iOS Safari)
+       - `public/icons/icon-192.png` (192x192 para Android Chrome / PWA)
+       - `public/icons/icon-512.png` (512x512 para splash e PWA)
+       - `public/icons/icon-maskable-512.png` (512x512 adaptativo para launcher)
+  2. **Atualização Completa em `index.html`:**
+     - Links explícitos com prioridade SVG + fallback PNG + ICO:
+       - `<link rel="icon" type="image/svg+xml" href="/favicon.svg" />`
+       - `<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />`
+       - `<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />`
+       - `<link rel="shortcut icon" href="/favicon.ico" />`
+       - `<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />`
+- **Evidências de Verificação:**
+  - Todos os 7 arquivos gerados e validados no diretório `public/`.
+  - `npm test`: 92/92 testes passando (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e workers gerados com sucesso em 1.56s.
+
+
