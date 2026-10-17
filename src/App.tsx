@@ -4036,7 +4036,7 @@ function AppContent() {
               </div>
 
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[color:var(--c-fg-f3efe6)] tracking-tight mb-2">
-                {getGreeting()}, como posso ajudar?
+                {getGreeting()} Near, como posso ajudar?
               </h2>
             </div>
           ) : (

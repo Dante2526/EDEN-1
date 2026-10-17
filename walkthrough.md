@@ -1416,4 +1416,15 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.62s.
 
+## 89. Personalização: Saudação Dedicada a Near no Chat
+- **Solicitação do Usuário:** Personalizar a saudação da tela de boas-vindas para incluir o nome "Near" (*"Boa noite Near, como posso ajudar?"*).
+- **Ajustes Efetuados (`src/App.tsx`):**
+  - O cabeçalho de boas-vindas foi atualizado para `{getGreeting()} Near, como posso ajudar?`.
+  - Mantida a reatividade dinâmica de horário: adapta-se naturalmente a *"Bom dia Near, como posso ajudar?"*, *"Boa tarde Near, como posso ajudar?"* e *"Boa noite Near, como posso ajudar?"*.
+- **Evidências de Verificação:**
+  - `npm test`: 75/75 testes unitários passando em 18 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso em 1.63s.
+
+
 
