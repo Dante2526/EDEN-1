@@ -654,35 +654,34 @@ export const GraphModal: React.FC<GraphModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-6xl h-[92vh] bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b34)] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[color:var(--c-fg-f3efe6)] font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-6xl h-full sm:h-[92vh] bg-[color:var(--c-bg-23211d)] border-0 sm:border border-[color:var(--c-bg-3e3b34)] rounded-none sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[color:var(--c-fg-f3efe6)] font-sans">
         {/* Top Header Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3 border-b border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-1c1a17)]/95">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 shadow-inner">
-              <Network className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-2 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-1c1a17)]/95 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="p-1.5 sm:p-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 shadow-inner shrink-0">
+              <Network className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-serif font-semibold text-sm sm:text-base text-[color:var(--c-fg-f3efe6)]">
-                  Mapa de Arquitetura 3D (Graphify)
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h2 className="font-serif font-semibold text-xs sm:text-base text-[color:var(--c-fg-f3efe6)] truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none">
+                  Mapa de Arquitetura 3D
                 </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 font-mono">
+                <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 font-mono">
                   3D Engine · 60 FPS
                 </span>
                 <span className="hidden md:inline-block text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono">
                   GraphRAG Ativo
                 </span>
               </div>
-              <p className="text-xs text-[color:var(--c-fg-8c867a)]">
-                {graph.nodes.length} módulos · {graph.edges.length} dependências ·{' '}
-                {Object.keys(graph.communities).length} agrupamentos
+              <p className="text-[10px] sm:text-xs text-[color:var(--c-fg-8c867a)] truncate">
+                {graph.nodes.length} módulos · {graph.edges.length} conexões
               </p>
             </div>
           </div>
 
           {/* Search and Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <div className="relative hidden sm:block">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-[color:var(--c-fg-8c867a)]" />
               <input
@@ -690,7 +689,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
                 placeholder="Buscar arquivo ou módulo…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-8c867a)] focus:outline-none focus:border-sky-400 w-52"
+                className="pl-9 pr-3 py-1.5 text-xs rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-8c867a)] focus:outline-none focus:border-sky-400 w-44 lg:w-52"
               />
             </div>
 
@@ -699,7 +698,7 @@ export const GraphModal: React.FC<GraphModalProps> = ({
               type="button"
               onClick={() => setIs3D((prev) => !prev)}
               title={is3D ? 'Alternar para visão 2D Plana' : 'Alternar para Esfera 3D'}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-mono transition cursor-pointer ${
+              className={`flex items-center gap-1 px-2 py-1.5 sm:px-2.5 rounded-lg sm:rounded-xl border text-xs font-mono transition cursor-pointer ${
                 is3D
                   ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
                   : 'bg-[color:var(--c-bg-302e2a)] border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-c4bfb6)]'
@@ -715,13 +714,13 @@ export const GraphModal: React.FC<GraphModalProps> = ({
                 type="button"
                 onClick={() => setAutoRotate((prev) => !prev)}
                 title={autoRotate ? 'Pausar rotação orbital' : 'Ativar rotação orbital automática'}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
+                className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl border transition cursor-pointer ${
                   autoRotate
                     ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
                     : 'bg-[color:var(--c-bg-302e2a)] border-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-c4bfb6)] hover:text-white'
                 }`}
               >
-                {autoRotate ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                {autoRotate ? <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </button>
             )}
 
@@ -729,28 +728,28 @@ export const GraphModal: React.FC<GraphModalProps> = ({
               type="button"
               onClick={resetView}
               title="Resetar câmera 3D"
-              className="p-2 rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] hover:bg-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] hover:bg-[color:var(--c-bg-3e3b34)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
             <button
               type="button"
               onClick={onClose}
               title="Fechar mapa"
-              className="p-2 rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] hover:bg-rose-500/20 hover:border-rose-500/40 text-[color:var(--c-fg-c4bfb6)] hover:text-rose-300 transition cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-[color:var(--c-bg-302e2a)] border border-[color:var(--c-bg-3e3b34)] hover:bg-rose-500/20 hover:border-rose-500/40 text-[color:var(--c-fg-c4bfb6)] hover:text-rose-300 transition cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
 
         {/* Main Content Area */}
-        <div className="relative flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <div className="relative flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
           {/* Interactive 3D Canvas Viewport */}
           <div
             ref={containerRef}
-            className="flex-1 relative bg-[#0c0b09] overflow-hidden select-none min-h-[340px]"
+            className="relative bg-[#0c0b09] overflow-hidden select-none h-[42vh] sm:h-[50vh] lg:h-auto lg:flex-1 shrink-0 lg:shrink"
           >
             <canvas
               ref={canvasRef}
@@ -766,23 +765,23 @@ export const GraphModal: React.FC<GraphModalProps> = ({
               className="w-full h-full block cursor-grab"
             />
 
-            {/* Dica de Interação Orbital & Legenda 3D */}
-            <div className="absolute bottom-3 left-3 pointer-events-none flex flex-col gap-1.5">
-              <div className="px-3 py-1.5 rounded-xl bg-black/65 border border-white/10 backdrop-blur-md flex flex-wrap items-center gap-3 text-[11px] text-zinc-300">
+            {/* Dica de Interação Orbital & Legenda 3D reposicionada no topo para mobile */}
+            <div className="absolute top-2 left-2 sm:top-auto sm:bottom-3 sm:left-3 pointer-events-none flex flex-col gap-1 z-10 max-w-[calc(100%-60px)] sm:max-w-none">
+              <div className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-black/75 border border-white/10 backdrop-blur-md flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] text-zinc-300">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]" />
+                  <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]" />
                   Selecionado
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                   Hub Central
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
+                  <span className="w-2 h-2 rounded-full bg-sky-400" />
                   Componente
                 </span>
                 <span className="hidden sm:flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
                   Tipo / Hook
                 </span>
               </div>
@@ -793,28 +792,30 @@ export const GraphModal: React.FC<GraphModalProps> = ({
             </div>
 
             {/* Float Controls (Zoom In / Out) */}
-            <div className="absolute bottom-3 right-3 flex flex-col gap-1.5 p-1.5 rounded-xl bg-[color:var(--c-bg-23211d)]/90 border border-[color:var(--c-bg-3e3b34)] shadow-lg backdrop-blur-sm">
+            <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 flex flex-col gap-1 p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-[color:var(--c-bg-23211d)]/90 border border-[color:var(--c-bg-3e3b34)] shadow-lg backdrop-blur-sm z-10">
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.min(2.8, z + 0.2))}
                 title="Aumentar zoom 3D"
-                className="p-1.5 rounded-lg hover:bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
+                className="p-1.5 rounded-md hover:bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
               >
-                <ZoomIn className="w-4 h-4" />
+                <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.max(0.45, z - 0.2))}
                 title="Diminuir zoom 3D"
-                className="p-1.5 rounded-lg hover:bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
+                className="p-1.5 rounded-md hover:bg-[color:var(--c-bg-302e2a)] text-[color:var(--c-fg-c4bfb6)] hover:text-white transition cursor-pointer"
               >
-                <ZoomOut className="w-4 h-4" />
+                <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
 
-          {/* Right Sidebar: Selected Node Details */}
-          <div className="w-full lg:w-88 xl:w-96 max-h-[42vh] lg:max-h-none border-t lg:border-t-0 lg:border-l border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-23211d)] p-4 flex flex-col overflow-y-auto">
+          {/* Drawer / Sidebar: Selected Node Details */}
+          <div className="flex-1 min-h-0 lg:flex-none lg:w-88 xl:w-96 border-t lg:border-t-0 lg:border-l border-[color:var(--c-bg-3e3b34)] bg-[color:var(--c-bg-23211d)] p-3 sm:p-4 flex flex-col overflow-y-auto pb-8 sm:pb-4">
+            {/* Pill/Handle indicador de gaveta no mobile */}
+            <div className="w-8 h-1 rounded-full bg-zinc-600/60 mx-auto mb-2 lg:hidden shrink-0" />
             {selectedNode ? (
               <div className="space-y-4">
                 <div className="pb-3 border-b border-[color:var(--c-bg-3e3b34)]">

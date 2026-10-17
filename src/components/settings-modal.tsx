@@ -148,11 +148,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
       {/* Claude Warm Card Sheet */}
-      <div className="w-full max-w-md rounded-2xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3b3831)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-md h-full sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-2xl bg-[color:var(--c-bg-23211d)] border-0 sm:border border-[color:var(--c-bg-3b3831)] shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[color:var(--c-bg-312f2a)]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[color:var(--c-bg-312f2a)] shrink-0">
           <div className="flex items-center gap-2.5">
             <ClaudeLogo className="w-5 h-5 text-[color:var(--c-fg-d97757)]" />
             <div>
@@ -173,12 +173,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-5 space-y-4 overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto pb-8 sm:pb-5 flex-1">
           {/* API Keys Status Notices */}
           <div className="space-y-2">
             {/* NVIDIA NIM Key Status */}
             <div className="p-3 rounded-xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-1d1b18)] text-xs">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1">
                 <div className="flex items-center gap-2 font-medium text-[color:var(--c-fg-f3efe6)]">
                   <KeyRound className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
                   <span>NVIDIA NIM (Chat & Modelos GLM)</span>
@@ -202,13 +202,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Edge TTS Status */}
             <div className="p-3 rounded-xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-1d1b18)] text-xs">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1">
                 <div className="flex items-center gap-2 font-medium text-[color:var(--c-fg-f3efe6)]">
                   <Sparkles className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)]" />
-                  <span>Microsoft Edge TTS (Vozes Neurais pt-BR)</span>
+                  <span>Microsoft Edge TTS (Vozes pt-BR)</span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                  Ativo (Sem Chave / Grátis)
+                  Ativo (Sem Chave)
                 </span>
               </div>
               <p className="text-[color:var(--c-fg-a39d93)] leading-relaxed text-[11px]">

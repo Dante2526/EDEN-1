@@ -54,30 +54,30 @@ ${item.stack ? `Stack Trace:\n${item.stack}` : ''}`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-slate-900 border border-red-500/40 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-slate-900 border-0 sm:border border-red-500/40 rounded-none sm:rounded-2xl w-full max-w-3xl h-full sm:h-auto sm:max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-red-950/40 border-b border-red-500/25">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400">
-              <ShieldAlert className="w-5 h-5 animate-pulse" />
+        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 bg-red-950/40 border-b border-red-500/25 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+              <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
             </div>
-            <div>
-              <h2 className="text-lg font-semibold text-[color:var(--c-on-strong)] flex items-center gap-2">
-                <span>Inspetor de Erros do Sistema</span>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-semibold text-[color:var(--c-on-strong)] flex items-center gap-1.5 sm:gap-2 truncate max-w-[160px] xs:max-w-[220px] sm:max-w-none">
+                <span>Inspetor de Erros</span>
                 {current?.status && (
-                  <span className="text-xs px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 font-mono border border-red-500/30">
+                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 font-mono border border-red-500/30 shrink-0">
                     HTTP {current.status}
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-red-300/80">
-                Diagnóstico detalhado do problema ocorrido na aplicação
+              <p className="text-[10px] sm:text-xs text-red-300/80 truncate">
+                Diagnóstico detalhado da aplicação
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {errorHistory.length > 1 && (
               <div className="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700">
                 <button

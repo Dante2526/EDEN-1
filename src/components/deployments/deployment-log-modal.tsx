@@ -68,40 +68,40 @@ export const DeploymentLogModal: React.FC<DeploymentLogModalProps> = ({
   const logLines = logs.split('\n');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
       <div
-        className="w-full max-w-4xl max-h-[85vh] synap-card flex flex-col overflow-hidden bg-[color:var(--c-bg-1c1a17)] border border-[color:var(--c-bg-3b362b)] shadow-2xl"
+        className="w-full max-w-4xl h-full sm:h-auto sm:max-h-[85vh] rounded-none sm:rounded-2xl synap-card flex flex-col overflow-hidden bg-[color:var(--c-bg-1c1a17)] border-0 sm:border border-[color:var(--c-bg-3b362b)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[color:var(--c-bg-322f28)] bg-[color:var(--c-bg-24211d)]">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between px-3 sm:px-5 py-3 border-b border-[color:var(--c-bg-322f28)] bg-[color:var(--c-bg-24211d)] shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-[color:var(--c-bg-2e2a22)] border border-[color:var(--c-bg-3e392f)] flex items-center justify-center text-[color:var(--c-fg-d97757)] shrink-0">
               <Terminal className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-sm text-[color:var(--c-fg-f3efe6)] truncate">
-                  Logs de Implantação — Cloudflare Pages
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h3 className="font-semibold text-xs sm:text-sm text-[color:var(--c-fg-f3efe6)] truncate max-w-[150px] xs:max-w-[220px] sm:max-w-none">
+                  Logs de Implantação
                 </h3>
                 {deployment.status === 'failure' && (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-950/80 text-rose-300 border border-rose-800/60">
-                    <AlertTriangle className="w-3 h-3" /> Falha no build
+                  <span className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-rose-950/80 text-rose-300 border border-rose-800/60 shrink-0">
+                    <AlertTriangle className="w-3 h-3" /> Falha
                   </span>
                 )}
                 {deployment.status === 'building' && (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-950/80 text-amber-300 border border-amber-800/60 animate-pulse">
+                  <span className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-amber-950/80 text-amber-300 border border-amber-800/60 animate-pulse shrink-0">
                     <Loader2 className="w-3 h-3 animate-spin" /> Compilando
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[color:var(--c-fg-a69f91)] font-mono truncate">
-                Commit: {deployment.commitHash?.slice(0, 7) || deployment.shortId} • {deployment.commitMessage || 'deploy automático'}
+              <p className="text-[10px] sm:text-xs text-[color:var(--c-fg-a69f91)] font-mono truncate">
+                {deployment.commitHash?.slice(0, 7) || deployment.shortId} • {deployment.commitMessage || 'deploy automático'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {deployment.url && (
               <a
                 href={deployment.url}
@@ -115,15 +115,15 @@ export const DeploymentLogModal: React.FC<DeploymentLogModalProps> = ({
             <button
               onClick={handleCopy}
               disabled={isLoading || !logs}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[color:var(--c-fg-c4bfb6)] hover:text-white bg-[color:var(--c-bg-2e2a22)] hover:bg-[color:var(--c-bg-383329)] transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-medium text-[color:var(--c-fg-c4bfb6)] hover:text-white bg-[color:var(--c-bg-2e2a22)] hover:bg-[color:var(--c-bg-383329)] transition-colors disabled:opacity-40"
               title="Copiar logs completos"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Copiado!' : 'Copiar'}</span>
+              <span className="hidden sm:inline">{copied ? 'Copiado!' : 'Copiar'}</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-[color:var(--c-fg-a69f91)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2e2a22)] transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg text-[color:var(--c-fg-a69f91)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2e2a22)] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -131,7 +131,7 @@ export const DeploymentLogModal: React.FC<DeploymentLogModalProps> = ({
         </div>
 
         {/* Terminal Body */}
-        <div className="flex-1 p-4 overflow-y-auto bg-[#12110f] font-mono text-xs leading-relaxed max-h-[60vh] select-text">
+        <div className="flex-1 p-3 sm:p-4 overflow-y-auto bg-[#12110f] font-mono text-xs leading-relaxed select-text min-h-0">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 text-[color:var(--c-fg-a69f91)] gap-3">
               <Loader2 className="w-6 h-6 animate-spin text-[color:var(--c-fg-d97757)]" />
@@ -166,7 +166,7 @@ export const DeploymentLogModal: React.FC<DeploymentLogModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-[color:var(--c-bg-322f28)] bg-[color:var(--c-bg-24211d)]">
+        <div className="flex items-center justify-between px-3 sm:px-5 py-3 border-t border-[color:var(--c-bg-322f28)] bg-[color:var(--c-bg-24211d)] shrink-0 pb-6 sm:pb-3">
           <div className="text-xs text-[color:var(--c-fg-a69f91)]">
             Total de linhas: <span className="font-mono text-[color:var(--c-fg-f3efe6)]">{logLines.length}</span>
           </div>

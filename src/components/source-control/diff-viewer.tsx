@@ -71,16 +71,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-5xl h-[92vh] rounded-2xl bg-[color:var(--c-bg-1d1b18)] border border-[color:var(--c-bg-3b3831)] shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-5xl h-full sm:h-[92vh] rounded-none sm:rounded-2xl bg-[color:var(--c-bg-1d1b18)] border-0 sm:border border-[color:var(--c-bg-3b3831)] shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-[color:var(--c-bg-312f2a)] bg-[color:var(--c-bg-23211d)] flex items-center justify-between flex-wrap gap-2">
+        <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[color:var(--c-bg-312f2a)] bg-[color:var(--c-bg-23211d)] flex items-center justify-between gap-2 shrink-0">
           {/* File path & badge */}
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             <FileCode className="w-4 h-4 text-[color:var(--c-fg-d97757)] shrink-0" />
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs sm:text-sm text-[color:var(--c-fg-f3efe6)] font-medium truncate">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-mono text-xs sm:text-sm text-[color:var(--c-fg-f3efe6)] font-medium truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">
                   {change.path}
                 </span>
                 <span
