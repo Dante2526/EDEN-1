@@ -145,7 +145,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               }}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.97] cursor-pointer ${
                 mainViewTab === 'chat'
-                  ? 'bg-[#d97757] text-white shadow-xs font-semibold'
+                  ? 'bg-gradient-to-r from-[#ff6b35] to-[#ea580c] text-white shadow-[0_2px_12px_rgba(255,107,53,0.35)] border border-[#ff8c42]/30 font-semibold'
                   : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
@@ -165,7 +165,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               title={activeProjectName ? `Preview de ${activeProjectName}` : 'Nenhum projeto aberto'}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.97] ${
                 mainViewTab === 'preview'
-                  ? 'bg-[#d97757] text-white shadow-xs font-semibold cursor-pointer'
+                  ? 'bg-gradient-to-r from-[#ff6b35] to-[#ea580c] text-white shadow-[0_2px_12px_rgba(255,107,53,0.35)] border border-[#ff8c42]/30 font-semibold cursor-pointer'
                   : activeProjectName
                   ? 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)] cursor-pointer'
                   : 'text-[color:var(--c-fg-5e5a52)] opacity-50 cursor-not-allowed'
@@ -184,7 +184,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               }}
               className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-150 active:scale-[0.97] cursor-pointer ${
                 mainViewTab === 'agentes'
-                  ? 'bg-[#d97757] text-white shadow-xs font-semibold'
+                  ? 'bg-gradient-to-r from-[#ff6b35] to-[#ea580c] text-white shadow-[0_2px_12px_rgba(255,107,53,0.35)] border border-[#ff8c42]/30 font-semibold'
                   : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-25231e)]'
               }`}
             >
