@@ -1626,4 +1626,18 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle de produção e worker Cloudflare Pages compilados em 1.51s.
   - `git push`: commit `67d2a75` publicado com sucesso no repositório remoto.
 
+## 99. Microcopy & Simplificação: 'Espaço' na Barra Lateral e 'Vincular' na Lista de Repos
+- **Solicitação do Usuário:** *"Muda o texto: IA Workspace, para "Espaço" e la na aba Vincular a esta chat, deixa somente "Vincular ""*
+- **Ajustes Implementados:**
+  1. **Subtítulo da Marca (`src/components/chat-sidebar.tsx`):**
+     - Alterado de `"IA Workspace"` para `"Espaço"` logo abaixo do logo e nome oficial Éden no topo da barra de navegação.
+  2. **Botão de Ação nos Cards de Repositório (`src/components/github/repo-list.tsx`):**
+     - Simplificado de `"Vincular a este Chat"` para `"Vincular"` (ou `"Explorar Arquivos"` quando já ativo), tornando os cartões de repositórios do GitHub muito mais limpos e concisos em telas móveis e desktop.
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (100% verde).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle de produção e workers compilados em 1.60s.
+  - `git push`: commit `7ab1492` publicado com sucesso no repositório remoto.
+
+
 
