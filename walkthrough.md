@@ -1426,5 +1426,33 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: bundle compilado com sucesso em 1.63s.
 
+## 90. Downloader: Motor Universal de Extração e Eliminação de Instâncias Mortas do Cobalt
+- **Solicitação do Usuário:** Resolver falha no download de vídeos em qualquer plataforma, inclusive no YouTube, que exibia o erro: *"Falha no download Resposta inválida da instância https://cobalt.synzr.ru: error code: 1016"*.
+- **Diagnóstico da Causa Raiz:**
+  1. As 5 instâncias Cobalt públicas configuradas em `api/download.ts` tornaram-se inoperantes ou bloquearam requisições automáticas:
+     - `https://cobalt.synzr.ru` e `https://cobalt-api.kwiatekmiki.com`: DNS morto (Cloudflare Error 1016: Origin DNS error).
+     - `https://api.cobalt.tools` e `https://cobalt-backend.canine.tools`: exigem token de captcha humano (`error.api.auth.jwt.missing`).
+     - `https://co.eepy.today`: 502 Bad Gateway.
+  2. O downloader dependia 100% de instâncias terceiras do Cobalt, sem nenhum motor nativo direto de extração de mídias.
+  3. CDNs como o `googlevideo.com` do YouTube amarram o IP da requisição à URL gerada, causando erro 403 se o navegador tentar abrir o link diretamente sem um túnel proxy.
+- **Solução Implementada:**
+  1. **Motor Universal de Extração (`src/lib/video-extractors.ts`):**
+     - **YouTube & YouTube Shorts:** Extração nativa através da API YouTube Innertube (clientes Android 20.03.32 e iOS) obtendo streams MP4 completos (vídeo+áudio) e faixas de áudio M4A/WebM em alta fidelidade, com fallback secundário automático para o cascade Piped (`api.piped.private.coffee`, `pipedapi.ducks.party`).
+     - **TikTok:** Extração nativa via API TikWM (`tikwm.com/api/`), retornando vídeo HD sem marca d'água e faixa de áudio MP3 original.
+     - **Twitter / X:** Extração nativa via API VxTwitter / FxTwitter (`api.vxtwitter.com`), suportando múltiplos vídeos, GIFs e fotos.
+     - **Reddit:** Extração nativa via Reddit JSON API (`<url>.json`), capturando `fallback_url` e streams de vídeo.
+     - **Instagram, Facebook, Pinterest, Vimeo, Twitch e Web Geral:** Extrator universal de metadados OpenGraph / Twitter Card (`og:video`, `og:video:secure_url`, `twitter:player:stream`, tags `<video src="...">`) e links diretos `.mp4`/`.mp3`.
+  2. **Túnel de Download Direto (`GET /api/download?stream=1`):**
+     - Rota proxy de streaming de alta performance que recebe a URL do stream gerado e injeta o cabeçalho `Content-Disposition: attachment; filename="..."`.
+     - Permite que o navegador inicie o download imediato do arquivo no disco do usuário (sem abrir aba de reprodução) e contorna bloqueios de IP/CORS da CDN.
+  3. **Interface Aprimorada no Downloader Panel (`src/components/downloader/downloader-panel.tsx`):**
+     - Exibição de opções de download com badges de qualidade (`360p`, `HD`, `130kbps`) e formato (`MP4`, `M4A`, `MP3`).
+     - Eliminação de cards duplicados quando múltiplos formatos estão disponíveis.
+- **Evidências de Verificação:**
+  - `npm test`: 92/92 testes unitários passando em 27 suítes (incluindo suíte completa de `video-extractors.test.ts`).
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: bundle compilado com sucesso e worker Cloudflare Pages gerado em 1.98s.
+
+
 
 

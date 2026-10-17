@@ -1,29 +1,34 @@
 import { checkAuthAndRateLimit } from '../lib/server/_security';
 import { Env } from '../lib/server/env';
+import {
+  extractMediaFromUrl,
+  detectMediaPlatform,
+  sanitizeFilename,
+} from '../src/lib/video-extractors';
 
 /**
- * Synap Downloader API
- * --------------------
- * Proxy server-side para a API do cobalt.tools (open-source, sem API key).
- * Suporta: YouTube, TikTok, Instagram, Twitter/X, Reddit, SoundCloud,
- * Pinterest, Facebook, Twitch, Vimeo, Bilibili, etc.
- *
- * Cascade de instâncias públicas (caso uma esteja fora do ar).
+ * Universal Downloader API
+ * ------------------------
+ * 1. Extração nativa de alta velocidade:
+ *    - YouTube (Innertube Android/iOS + Cascade Piped)
+ *    - TikTok (TikWM HD sem marca d'água + áudio MP3)
+ *    - Twitter/X (VxTwitter / FxTwitter)
+ *    - Reddit (Reddit JSON API)
+ *    - Instagram, Facebook, Pinterest, Vimeo e Web (OpenGraph / HTML5)
+ * 2. Túnel de Download Direto (stream=1):
+ *    - Stream seguro com Content-Disposition: attachment; filename="..."
+ *    - Previne bloqueio 403 de IP/CORS e força download direto do arquivo.
+ * 3. Cascade secundário de instâncias Cobalt públicas para sites legados.
  */
 
 export const config = {
-  // No CF Worker não há distinction Node/Edge — tudo é V8 isolate.
-  // Mantemos o campo por compat retroativa com a Vercel se voltarmos.
   runtime: 'edge',
 };
 
-// Lista de instâncias públicas do cobalt. Caso uma falhe, tentamos a próxima.
+// Instâncias públicas saudáveis do Cobalt (fallback secundário)
 const COBALT_INSTANCES = [
-  'https://api.cobalt.tools',
-  'https://cobalt-api.kwiatekmiki.com',
-  'https://co.eepy.today',
   'https://cobalt-backend.canine.tools',
-  'https://cobalt.synzr.ru',
+  'https://api.cobalt.tools',
 ];
 
 interface CobaltResponse {
@@ -39,8 +44,6 @@ interface CobaltResponse {
   error?: { code: string; message?: string };
   filename?: string;
   output?: string;
-  // Token usado em algumas instâncias novas
-  token?: string;
 }
 
 function isLocalOrPrivateUrl(urlStr: string): boolean {
@@ -79,26 +82,20 @@ async function tryCobaltInstance(
   instanceBaseUrl: string,
   targetUrl: string
 ): Promise<CobaltResponse> {
-  // A API nova (v10+) usa POST / com Accept: application/json
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    'User-Agent': 'Synap/1.0',
   };
-
-  // Algumas instâncias exigem um header de chave pública (vazio está OK na maioria)
-  if (instanceBaseUrl.includes('cobalt.tools')) {
-    headers['User-Agent'] = 'Synap/1.0';
-  }
 
   const response = await fetch(instanceBaseUrl.replace(/\/$/, ''), {
     method: 'POST',
     headers,
     body: JSON.stringify({
       url: targetUrl,
-      // Prioriza arquivo único (não zip)
       filenamePattern: 'basic',
     }),
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(10000),
   });
 
   const text = await response.text();
@@ -106,44 +103,81 @@ async function tryCobaltInstance(
   try {
     data = JSON.parse(text);
   } catch {
-    // Algumas instâncias antigas usam /api/json
-    const fallbackResponse = await fetch(
-      `${instanceBaseUrl.replace(/\/$/, '')}/api/json`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          url: targetUrl,
-          filenamePattern: 'basic',
-        }),
-        signal: AbortSignal.timeout(15000),
-      }
-    );
-    const fallbackText = await fallbackResponse.text();
-    try {
-      data = JSON.parse(fallbackText);
-    } catch {
-      throw new Error(
-        `Resposta inválida da instância ${instanceBaseUrl}: ${text.slice(0, 200)}`
-      );
-    }
-  }
-
-  if (!response.ok && data.status !== 'error') {
-    throw new Error(`HTTP ${response.status} em ${instanceBaseUrl}`);
+    throw new Error(`Resposta não-JSON da instância ${instanceBaseUrl}`);
   }
 
   return data;
 }
 
 export default async function handler(req: Request, envArg?: Env): Promise<Response> {
+  const reqUrl = new URL(req.url);
+
+  // =========================================================================
+  // 1. TÚNEL DE STREAM DIRETO: GET /api/download?stream=1&url=<encoded>&filename=<encoded>
+  // =========================================================================
+  if (req.method === 'GET' && (reqUrl.searchParams.get('stream') === '1' || reqUrl.searchParams.get('stream') === 'true')) {
+    const streamTargetUrl = reqUrl.searchParams.get('url') || '';
+    const rawFilename = reqUrl.searchParams.get('filename') || 'video.mp4';
+    const safeFilename = sanitizeFilename(rawFilename, 'mp4');
+
+    if (!streamTargetUrl || isLocalOrPrivateUrl(streamTargetUrl)) {
+      return new Response(JSON.stringify({ error: 'URL de stream inválida ou proibida.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    try {
+      const forwardHeaders: Record<string, string> = {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+        Accept: '*/*',
+      };
+
+      const rangeHeader = req.headers.get('range');
+      if (rangeHeader) {
+        forwardHeaders['Range'] = rangeHeader;
+      }
+
+      const upstreamRes = await fetch(streamTargetUrl, {
+        headers: forwardHeaders,
+        signal: req.signal,
+      });
+
+      if (!upstreamRes.ok && upstreamRes.status !== 206) {
+        // Se a CDN rejeitar proxy de stream (ex: expire excedido), redireciona o cliente diretamente
+        return Response.redirect(streamTargetUrl, 302);
+      }
+
+      const responseHeaders = new Headers();
+      const contentType = upstreamRes.headers.get('content-type') || 'application/octet-stream';
+      const contentLength = upstreamRes.headers.get('content-length');
+      const contentRange = upstreamRes.headers.get('content-range');
+      const acceptRanges = upstreamRes.headers.get('accept-ranges') || 'bytes';
+
+      responseHeaders.set('Content-Type', contentType);
+      responseHeaders.set('Content-Disposition', `attachment; filename="${safeFilename}"`);
+      responseHeaders.set('Accept-Ranges', acceptRanges);
+      if (contentLength) responseHeaders.set('Content-Length', contentLength);
+      if (contentRange) responseHeaders.set('Content-Range', contentRange);
+      responseHeaders.set('Cache-Control', 'private, max-age=3600');
+
+      return new Response(upstreamRes.body, {
+        status: upstreamRes.status,
+        headers: responseHeaders,
+      });
+    } catch (err: any) {
+      // Fallback em caso de erro no pipe: redireciona para a URL direta
+      return Response.redirect(streamTargetUrl, 302);
+    }
+  }
+
+  // =========================================================================
+  // 2. EXTRAÇÃO DE MÍDIA (METADADOS + STREAMS)
+  // =========================================================================
   const securityResponse = await checkAuthAndRateLimit(req, envArg);
   if (securityResponse) return securityResponse;
 
-  // Aceita GET (query string) ou POST (body JSON)
   let targetUrl = '';
   let audioOnly = false;
 
@@ -153,49 +187,91 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       targetUrl = body.url || '';
       audioOnly = !!body.audioOnly;
     } catch {
-      return new Response(
-        JSON.stringify({ error: 'Body JSON inválido.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Body JSON inválido.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
   } else {
-    const reqUrl = new URL(req.url);
     targetUrl = reqUrl.searchParams.get('url') || '';
     audioOnly = reqUrl.searchParams.get('audioOnly') === 'true';
   }
 
   if (!targetUrl.trim()) {
-    return new Response(
-      JSON.stringify({ error: 'Parâmetro `url` é obrigatório.' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: 'Parâmetro `url` é obrigatório.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   if (isLocalOrPrivateUrl(targetUrl)) {
     return new Response(
-      JSON.stringify({
-        error: 'URLs locais ou IPs privados não são permitidos.',
-      }),
+      JSON.stringify({ error: 'URLs locais ou IPs privados não são permitidos.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  // Detecta plataforma para feedback amigável
-  const platform = detectPlatform(targetUrl);
+  const platform = detectMediaPlatform(targetUrl);
 
-  // Cascade de instâncias
+  // Helper para encapsular links no túnel de download direto
+  const wrapTunnelUrl = (rawMediaUrl: string, filename: string): string => {
+    return `/api/download?stream=1&url=${encodeURIComponent(rawMediaUrl)}&filename=${encodeURIComponent(filename)}`;
+  };
+
+  // -------------------------------------------------------------------------
+  // Camada 1: Extratores Nativos (YouTube, TikTok, Twitter/X, Reddit, Web)
+  // -------------------------------------------------------------------------
+  try {
+    const extracted = await extractMediaFromUrl(targetUrl, { audioOnly });
+
+    if (extracted.ok && extracted.picker && extracted.picker.length > 0) {
+      // Injeta os URLs do túnel em cada item retornado
+      const tunneledPicker = extracted.picker.map((item) => ({
+        type: item.type,
+        url: wrapTunnelUrl(item.url, item.filename),
+        directUrl: item.url,
+        thumb: item.thumb,
+        filename: item.filename,
+        quality: item.quality,
+        format: item.format,
+        metadata: item.metadata,
+      }));
+
+      const primary = tunneledPicker[0];
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          status: 'picker',
+          url: primary.url,
+          directUrl: primary.directUrl,
+          title: extracted.title,
+          thumbnail: extracted.thumbnail,
+          picker: tunneledPicker,
+          filename: primary.filename,
+          platform: extracted.platform || platform,
+          instance: 'native-engine',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+  } catch {
+    /* fallback para Cobalt */
+  }
+
+  // -------------------------------------------------------------------------
+  // Camada 2: Fallback Secundário Cobalt (para outros sites)
+  // -------------------------------------------------------------------------
   let lastError = '';
   for (const instance of COBALT_INSTANCES) {
     try {
       const result = await tryCobaltInstance(instance, targetUrl);
 
-      // Se a instância retornou erro explícito, tenta próxima
       if (result.status === 'error') {
         lastError = result.error?.message || `code: ${result.error?.code || 'unknown'}`;
         continue;
       }
 
-      // Se audioOnly e vieram vídeos no picker, filtra apenas áudios
       if (audioOnly && result.picker && result.picker.length > 0) {
         const audios = result.picker.filter((p) => p.type === 'audio');
         if (audios.length > 0) {
@@ -203,20 +279,29 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
         }
       }
 
+      const rawUrl = result.url || result.picker?.[0]?.url;
+      const safeFilename = result.filename || sanitizeFilename(`${platform}-video`, 'mp4');
+      const tunnelUrl = rawUrl ? wrapTunnelUrl(rawUrl, safeFilename) : undefined;
+
       return new Response(
         JSON.stringify({
           ok: true,
           status: result.status,
-          url: result.url,
-          picker: result.picker,
-          filename: result.filename,
+          url: tunnelUrl || rawUrl,
+          directUrl: rawUrl,
+          picker: result.picker?.map((p) => ({
+            ...p,
+            url: wrapTunnelUrl(p.url, p.filename || safeFilename),
+            directUrl: p.url,
+          })),
+          filename: safeFilename,
           platform,
           instance: instance.replace(/^https?:\/\//, ''),
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     } catch (err: any) {
-      lastError = err?.message || 'Falha desconhecida';
+      lastError = err?.message || 'Falha de conexão';
       continue;
     }
   }
@@ -225,31 +310,10 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     JSON.stringify({
       ok: false,
       error:
-        lastError ||
-        'Todas as instâncias de download estão indisponíveis. Tente novamente em alguns segundos.',
+        'Não foi possível extrair a mídia deste link no momento. Verifique se o vídeo é público e tente novamente.',
+      detail: lastError || undefined,
       platform,
     }),
     { status: 502, headers: { 'Content-Type': 'application/json' } }
   );
-}
-
-function detectPlatform(url: string): string {
-  const lower = url.toLowerCase();
-  if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'YouTube';
-  if (lower.includes('tiktok.com')) return 'TikTok';
-  if (lower.includes('instagram.com')) return 'Instagram';
-  if (lower.includes('twitter.com') || lower.includes('x.com')) return 'Twitter/X';
-  if (lower.includes('reddit.com') || lower.includes('redd.it')) return 'Reddit';
-  if (lower.includes('soundcloud.com')) return 'SoundCloud';
-  if (lower.includes('pinterest.') || lower.includes('pin.it')) return 'Pinterest';
-  if (lower.includes('facebook.com') || lower.includes('fb.watch')) return 'Facebook';
-  if (lower.includes('twitch.tv')) return 'Twitch';
-  if (lower.includes('vimeo.com')) return 'Vimeo';
-  if (lower.includes('bilibili.com') || lower.includes('b23.tv')) return 'Bilibili';
-  if (lower.includes('dailymotion.com')) return 'Dailymotion';
-  if (lower.includes('snapchat.com')) return 'Snapchat';
-  if (lower.includes('streamable.com')) return 'Streamable';
-  if (lower.includes('t.me')) return 'Telegram';
-  if (lower.includes('pinterest.com')) return 'Pinterest';
-  return 'Web';
 }

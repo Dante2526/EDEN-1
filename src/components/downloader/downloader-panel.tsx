@@ -22,9 +22,12 @@ import {
 interface PickerItem {
   type: 'video' | 'audio' | 'photo';
   url: string;
+  directUrl?: string;
   thumb?: string;
   filename?: string;
-  metadata?: { title?: string; duration?: string };
+  quality?: string;
+  format?: string;
+  metadata?: { title?: string; duration?: string; author?: string };
 }
 
 interface DownloadResult {
@@ -300,8 +303,8 @@ export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose })
                 )}
               </div>
 
-              {/* Resultado único (stream/redirect) */}
-              {result.url && (
+              {/* Resultado único (quando NÃO houver lista de opções) */}
+              {result.url && (!result.picker || result.picker.length <= 1) && (
                 <a
                   href={result.url}
                   download={result.filename || undefined}
@@ -328,11 +331,11 @@ export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose })
                 </a>
               )}
 
-              {/* Picker (múltiplos formatos) */}
+              {/* Picker (múltiplos formatos / qualidades) */}
               {result.picker && result.picker.length > 0 && (
                 <div className="space-y-1.5">
                   <div className="text-[10px] text-[#8c867a] font-mono uppercase tracking-wide">
-                    {result.picker.length} opção(ões) disponível(is):
+                    {result.picker.length} opção(ões) de download:
                   </div>
                   {result.picker.map((item, idx) => (
                     <a
@@ -365,8 +368,20 @@ export const DownloaderPanel: React.FC<{ onClose?: () => void }> = ({ onClose })
                         <div className="text-[11px] text-[#f3efe6] font-medium truncate">
                           {item.metadata?.title || item.filename || `Arquivo ${idx + 1}`}
                         </div>
-                        <div className="text-[10px] text-[#8c867a] font-mono flex items-center gap-1.5">
+                        <div className="text-[10px] text-[#8c867a] font-mono flex items-center gap-1.5 flex-wrap">
                           <span className="capitalize">{item.type}</span>
+                          {item.quality && (
+                            <>
+                              <span>·</span>
+                              <span className="text-[#d97757] font-semibold">{item.quality}</span>
+                            </>
+                          )}
+                          {item.format && (
+                            <>
+                              <span>·</span>
+                              <span className="uppercase text-[#a39d93]">{item.format}</span>
+                            </>
+                          )}
                           {item.metadata?.duration && (
                             <>
                               <span>·</span>
