@@ -71,7 +71,7 @@ export const StudioPanel: React.FC<Props> = ({
   const [refactorPromptOpen, setRefactorPromptOpen] = useState(false);
   const [refactorFeedback, setRefactorFeedback] = useState('');
 
-  const { addChange } = usePendingChanges();
+  const { changes, addChange } = usePendingChanges();
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +268,7 @@ export const StudioPanel: React.FC<Props> = ({
       const plan = await runPlanner(enrichedTask, activeRepo, config.planner, customFeedback, {
         skills,
         mcpServers,
+        pendingChanges: changes,
       });
 
       // Atualiza card do Planner com o plano gerado
@@ -294,6 +295,7 @@ export const StudioPanel: React.FC<Props> = ({
       const review = await runReviewer(plan, enrichedTask, activeRepo, config.reviewer, {
         skills,
         mcpServers,
+        pendingChanges: changes,
       });
 
       updateEntry(reviewerEntryId, {
@@ -369,7 +371,7 @@ export const StudioPanel: React.FC<Props> = ({
             })
           );
         },
-        async (path, content, type) => {
+        async (path, content, type, originalContent) => {
           if (!activeRepo) return;
           await addChange({
             path,
@@ -377,12 +379,13 @@ export const StudioPanel: React.FC<Props> = ({
             repo: `${activeRepo.owner}/${activeRepo.repo}`,
             branch: activeRepo.branch,
             type: type === 'create' ? 'added' : type === 'delete' ? 'deleted' : 'modified',
-            originalContent: '',
+            originalContent: originalContent ?? '',
           });
         },
         {
           skills,
           mcpServers,
+          pendingChanges: changes,
         }
       );
 

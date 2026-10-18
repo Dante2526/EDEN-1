@@ -1658,6 +1658,23 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - Grafo 100% gerado e funcional em `graphify-out/graph.json`.
   - Teste de consulta CLI executado com sucesso.
 
-
-
-
+## 101. Upgrades de Elite dos Agentes Éden: `patch_file`, Memória Contínua e Superpoderes Multi-Agente
+- **Solicitação do Usuário:** *"Eu quero que você use o nosso grafo para ver no nosso aplicativo se eu consigo manter longas conversas com nossos agentes lá no aplicativo, se eles conseguem alterar os arquivos direitinho, modificar sem parar, e se eles têm todas as ferramentas necessárias ou se a gente precisa integrar, dar poder mais alguma para elas, ou se as que eles têm são as melhores. Eu quero só a melhor."*
+- **Diagnóstico via Graphify (`graphify query` / `graphify explain`):**
+  1. **Edição Cirúrgica (`patch_file`):** Antes, os agentes dependiam de `edit_file` (reescrita integral do arquivo), o que consumia muitos tokens e arriscava truncamento em arquivos longos (>300 linhas).
+  2. **Memória Contínua de Edições Pendentes:** `read_file`, `edit_file` e `search_code` buscavam o arquivo bruto da API do GitHub sem verificar antes se o arquivo já havia sido modificado na conversa atual (`changes` do Source Control), causando perda de alterações anteriores ao editar o mesmo arquivo múltiplas vezes.
+  3. **Paridade do Studio e Subagentes:** O motor Multi-Agentes (`studio-engine.ts`) e o `subagent-runner.ts` tinham limite curto de iterações (3 a 5 turnos) e o Studio não contava com `patch_file`, `search_code` nem `query_code_graph`.
+- **Upgrades Implementados:**
+  1. **Motor Cirúrgico (`src/lib/file-patcher.ts` + `src/lib/file-patcher.test.ts`):**
+     - Implementados `applyFilePatches`, `normalizePatchArgs`, `resolveEffectiveFileContent` e `normalizeRepoPath` com suporte a blocos únicos/múltiplos, normalização automática de `CRLF`/`LF` e detecção de ambiguidade.
+  2. **Integração de `patch_file` e Overlay em Tempo Real (`src/App.tsx`, `src/lib/text-tool-parser.ts`, `src/components/chat-message.tsx`):**
+     - Adicionada a ferramenta nativa `patch_file` e a tag textual `<synap_patch path="...">` com blocos `<old>` e `<new>`.
+     - Criado `liveChangesRef` sincronizado em tempo real dentro do loop de até 45 turnos (`handleSendMessage`), garantindo que `read_file`, `patch_file`, `edit_file`, `batch_edit_files` e `search_code` enxerguem imediatamente todas as edições não commitadas da sessão.
+  3. **Superpoderes no Studio e Subagentes (`src/studio/studio-engine.ts`, `src/studio/studio-panel.tsx`, `src/lib/subagent-runner.ts`):**
+     - Adicionados `patch_file`, `search_code` e `query_code_graph` aos agentes Planner, Reviewer e Implementer do Studio, com `fileStateCache` compartilhado entre etapas e `maxIterations` elevado para **12 turnos**.
+     - Expandido `subagent-runner.ts` para **12 iterações**, timeout de **90s** e truncamento automático de saídas de ferramentas acima de 24.000 caracteres para proteger a janela de contexto.
+- **Evidências de Verificação:**
+  - `npm test`: 100/100 testes unitários passando em 28 suítes (incluindo os novos testes de `file-patcher.test.ts` e `text-tool-parser.test.ts`).
+  - `npm run lint` (`tsc --noEmit`): 0 erros de compilação/tipagem.
+  - `npm run build`: bundle de produção Vite + Cloudflare Worker compilado com sucesso.
+  - `graphify update .`: grafo de conhecimento atualizado e sincronizado.

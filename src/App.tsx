@@ -85,6 +85,12 @@ import {
   looksLikeFileModificationPromise,
   isRecoverableStreamErrorMessage,
 } from './lib/agentic-patterns';
+import {
+  applyFilePatches,
+  normalizePatchArgs,
+  resolveEffectiveFileContent,
+  normalizeRepoPath,
+} from './lib/file-patcher';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -123,12 +129,56 @@ const READ_GITHUB_FILE_TOOL = {
   },
 };
 
+const PATCH_FILE_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'patch_file',
+    description:
+      'Edita cirurgicamente trechos específicos de um arquivo existente (substituindo old_str por new_str) sem precisar reescrever o arquivo inteiro. É 5x mais rápida e segura que edit_file para arquivos grandes. Suporta um único bloco (old_str/new_str) ou múltiplos blocos (patches).',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'Caminho relativo do arquivo (ex: "src/App.tsx")',
+        },
+        old_str: {
+          type: 'string',
+          description: 'Trecho exato atual no arquivo a ser substituído (inclua 2-3 linhas de contexto para ser único).',
+        },
+        new_str: {
+          type: 'string',
+          description: 'Novo código que substituirá old_str.',
+        },
+        allow_multiple: {
+          type: 'boolean',
+          description: 'Se true, substitui todas as ocorrências idênticas de old_str no arquivo.',
+        },
+        patches: {
+          type: 'array',
+          description: 'Opcional: lista de múltiplos blocos { old_str, new_str, allow_multiple } para aplicar em sequência no mesmo arquivo.',
+          items: {
+            type: 'object',
+            properties: {
+              old_str: { type: 'string', description: 'Trecho exato atual a substituir' },
+              new_str: { type: 'string', description: 'Novo trecho substituto' },
+              allow_multiple: { type: 'boolean' },
+            },
+            required: ['old_str', 'new_str'],
+          },
+        },
+      },
+      required: ['path'],
+    },
+  },
+};
+
 const GITHUB_TOOLS = [
   {
     type: 'function',
     function: {
       name: 'read_file',
-      description: 'Lê conteúdo de um arquivo do repositório ativo',
+      description: 'Lê conteúdo atualizado de um arquivo do repositório ou projeto ativo (incluindo alterações já feitas nesta conversa)',
       parameters: {
         type: 'object',
         properties: {
@@ -170,12 +220,13 @@ const GITHUB_TOOLS = [
       },
     },
   },
+  PATCH_FILE_TOOL,
   {
     type: 'function',
     function: {
       name: 'edit_file',
       description:
-        'Edita ou cria um arquivo no repositório ativo. A alteração fica pendente no Source Control para revisão do usuário e NÃO commita automaticamente.',
+        'Cria um novo arquivo, deleta ou reescreve o conteúdo completo de um arquivo no repositório ativo. Para editar trechos pontuais de arquivos existentes, prefira patch_file.',
       parameters: {
         type: 'object',
         properties: {
@@ -562,6 +613,11 @@ function AppContent() {
     updateChangeContent,
     clearCommitted,
   } = usePendingChanges();
+
+  const liveChangesRef = useRef(changes);
+  useEffect(() => {
+    liveChangesRef.current = changes;
+  }, [changes]);
 
   const ACTIVE_CONV_STORAGE_KEY = 'synap_active_conv_id';
 
@@ -2203,6 +2259,45 @@ function AppContent() {
 
     // Se não houver repositório GitHub ativo mas houver activeProject aberto no Workspace/Preview:
     if (!currentRepo && activeProject) {
+      if (name === 'patch_file') {
+        const { path } = args;
+        if (!path) {
+          return { result: JSON.stringify({ error: 'Parâmetro path é obrigatório para patch_file.' }) };
+        }
+        const patches = normalizePatchArgs(args);
+        const cleanPath = normalizeRepoPath(path);
+        const filesMap = activeProject.files || {};
+        const matched = filesMap[cleanPath] || filesMap['/' + cleanPath] || filesMap['./' + cleanPath];
+        if (!matched) {
+          return {
+            result: JSON.stringify({
+              error: `Arquivo '${path}' não encontrado no projeto ativo. Use read_file/list_files para verificar o caminho ou edit_file para criar um novo arquivo.`,
+            }),
+          };
+        }
+        const currentContent = typeof matched === 'string' ? matched : matched.content;
+        const patchRes = applyFilePatches(currentContent, patches);
+        if (!patchRes.success) {
+          return { result: JSON.stringify({ error: patchRes.error }) };
+        }
+        await updateProjectFiles([
+          {
+            path,
+            action: 'update',
+            content: patchRes.content,
+          },
+        ]);
+        const editedFile: MessageEditedFile = { path, type: 'modified' };
+        return {
+          result: JSON.stringify({
+            success: true,
+            appliedPatches: patchRes.appliedCount,
+            message: `Patch cirúrgico aplicado com sucesso em '${path}' (${patchRes.appliedCount} bloco(s)) no projeto '${activeProject.name}'. Preview recarregado ao vivo.`,
+          }),
+          editedFile,
+        };
+      }
+
       if (name === 'edit_file') {
         const { path, content = '', type = 'modified' } = args;
         if (!path) {
@@ -2224,7 +2319,7 @@ function AppContent() {
       }
 
       if (name === 'read_file') {
-        const cleanPath = (args.path || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
+        const cleanPath = normalizeRepoPath(args.path || '');
         const filesMap = activeProject.files || {};
         const matched = filesMap[cleanPath] || filesMap['/' + cleanPath] || filesMap['./' + cleanPath];
         if (matched) {
@@ -2265,6 +2360,104 @@ function AppContent() {
       };
     }
 
+    const syncLiveChangeRef = (saved: PendingChange) => {
+      const normTarget = normalizeRepoPath(saved.path);
+      const prevList = liveChangesRef.current || [];
+      const idx = prevList.findIndex(
+        (c) => c.repo === saved.repo && c.branch === saved.branch && normalizeRepoPath(c.path) === normTarget
+      );
+      if (idx !== -1) {
+        const copy = [...prevList];
+        copy[idx] = saved;
+        liveChangesRef.current = copy;
+      } else {
+        liveChangesRef.current = [...prevList, saved];
+      }
+    };
+
+    if (name === 'patch_file') {
+      const { path } = args;
+      if (!path) {
+        return {
+          result: JSON.stringify({ error: 'Parâmetro path é obrigatório para patch_file.' }),
+        };
+      }
+
+      const patches = normalizePatchArgs(args);
+      const effective = resolveEffectiveFileContent(path, liveChangesRef.current, currentRepo.fullName);
+
+      if (effective.status === 'deleted') {
+        return {
+          result: JSON.stringify({
+            error: `O arquivo '${path}' está marcado como deletado no Source Control. Use edit_file se desejar recriá-lo.`,
+          }),
+        };
+      }
+
+      let currentContent = effective.content;
+      let originalContent = effective.originalContent;
+
+      if (effective.status === 'unchanged' || currentContent === undefined) {
+        try {
+          currentContent = await fetchFileContent(
+            null,
+            currentRepo.owner,
+            currentRepo.repo,
+            path,
+            currentRepo.branch
+          );
+          originalContent = currentContent;
+        } catch (err: any) {
+          return {
+            result: JSON.stringify({
+              error: `Não foi possível ler o arquivo '${path}' no repositório (${err?.message || 'não encontrado'}). Verifique o caminho ou use edit_file para criar um arquivo novo.`,
+            }),
+          };
+        }
+      }
+
+      const patchRes = applyFilePatches(currentContent, patches);
+      if (!patchRes.success) {
+        return {
+          result: JSON.stringify({ error: patchRes.error }),
+        };
+      }
+
+      const savedChange = await addChange({
+        path,
+        repo: currentRepo.fullName,
+        branch: currentRepo.branch,
+        type: 'modified',
+        originalContent,
+        newContent: patchRes.content,
+      });
+      syncLiveChangeRef(savedChange);
+
+      const editedFile: MessageEditedFile = {
+        path,
+        type: 'modified',
+      };
+
+      let graphImpact = '';
+      if (projectGraph && projectGraph.nodes && projectGraph.nodes.length > 0) {
+        try {
+          const gContext = queryGraphContext(projectGraph, { focusFile: path, maxNodes: 6 });
+          if (gContext.matchedNodes.length > 0) {
+            graphImpact = `\n\n[Conexões de Arquitetura no Grafo]:\n${gContext.markdownContext}`;
+          }
+        } catch {}
+      }
+
+      return {
+        result: JSON.stringify({
+          success: true,
+          appliedPatches: patchRes.appliedCount,
+          message: `Patch cirúrgico aplicado com sucesso em '${path}' (${patchRes.appliedCount} bloco(s) substituído(s)) e atualizado no Source Control local.${graphImpact}`,
+        }),
+        editedFile,
+      };
+    }
+
     if (name === 'edit_file') {
       const { path, content = '', type = 'modified' } = args;
 
@@ -2274,10 +2467,11 @@ function AppContent() {
         };
       }
 
-      let originalContent: string | undefined = undefined;
+      const effective = resolveEffectiveFileContent(path, liveChangesRef.current, currentRepo.fullName);
+      let originalContent: string | undefined = effective.originalContent;
 
-      // Try fetching original file content if modifying or deleting
-      if (type === 'modified' || type === 'deleted') {
+      // Try fetching original file content if modifying or deleting and not already cached in pending changes
+      if ((type === 'modified' || type === 'deleted') && originalContent === undefined && effective.status === 'unchanged') {
         try {
           originalContent = await fetchFileContent(
             null,
@@ -2291,7 +2485,7 @@ function AppContent() {
         }
       }
 
-      await addChange({
+      const savedChange = await addChange({
         path,
         repo: currentRepo.fullName,
         branch: currentRepo.branch,
@@ -2299,7 +2493,7 @@ function AppContent() {
         originalContent,
         newContent: content || '',
       });
-
+      syncLiveChangeRef(savedChange);
 
       const editedFile: MessageEditedFile = {
         path,
@@ -2340,9 +2534,10 @@ function AppContent() {
       for (const item of files) {
         if (!item.path) continue;
         const itemType = (item.type as ChangeType) || 'modified';
-        let originalContent: string | undefined = undefined;
+        const effective = resolveEffectiveFileContent(item.path, liveChangesRef.current, currentRepo.fullName);
+        let originalContent: string | undefined = effective.originalContent;
 
-        if (itemType === 'modified' || itemType === 'deleted') {
+        if ((itemType === 'modified' || itemType === 'deleted') && originalContent === undefined && effective.status === 'unchanged') {
           try {
             originalContent = await fetchFileContent(
               null,
@@ -2356,7 +2551,7 @@ function AppContent() {
           }
         }
 
-        await addChange({
+        const savedChange = await addChange({
           path: item.path,
           repo: currentRepo.fullName,
           branch: currentRepo.branch,
@@ -2364,6 +2559,7 @@ function AppContent() {
           originalContent,
           newContent: item.content || '',
         });
+        syncLiveChangeRef(savedChange);
 
         processedFiles.push({
           path: item.path,
@@ -2399,6 +2595,18 @@ function AppContent() {
 
     if (name === 'read_file') {
       try {
+        const effective = resolveEffectiveFileContent(args.path, liveChangesRef.current, currentRepo.fullName);
+        if (effective.status === 'deleted') {
+          return {
+            result: JSON.stringify({
+              error: `O arquivo '${args.path}' foi marcado como deletado nas alterações pendentes do Source Control.`,
+            }),
+          };
+        }
+        if (effective.status === 'modified' && effective.content !== undefined) {
+          return { result: effective.content };
+        }
+
         const fileContent = await fetchFileContent(
           null,
           currentRepo.owner,
@@ -2429,16 +2637,38 @@ function AppContent() {
 
     if (name === 'search_code') {
       try {
-        const items = await searchCode(
+        const queryLower = (args.query || '').toLowerCase();
+        const localMatches = (liveChangesRef.current || [])
+          .filter((c) => (!c.repo || c.repo === currentRepo.fullName) && c.type !== 'deleted')
+          .filter(
+            (c) =>
+              c.path.toLowerCase().includes(queryLower) ||
+              (typeof c.newContent === 'string' && c.newContent.toLowerCase().includes(queryLower))
+          )
+          .map((c) => ({
+            path: c.path,
+            source: 'pending_change',
+          }));
+
+        const remoteItems = await searchCode(
           null,
           args.query,
           currentRepo.owner,
           currentRepo.repo,
           args.path,
           args.extension
-        );
+        ).catch(() => []);
+
+        const seenPaths = new Set(localMatches.map((m) => normalizeRepoPath(m.path)));
+        const merged = [
+          ...localMatches,
+          ...(Array.isArray(remoteItems)
+            ? remoteItems.filter((item: any) => !seenPaths.has(normalizeRepoPath(item.path || '')))
+            : []),
+        ];
+
         return {
-          result: JSON.stringify(items),
+          result: JSON.stringify(merged),
         };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || `Erro na busca de código: ${args.query}` }) };
@@ -2639,25 +2869,25 @@ function AppContent() {
       ? undefined
       : chatActiveRepo
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
-        `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_code_graph, query_architecture_graph e edit_file APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
+        `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_code_graph, query_architecture_graph, patch_file, edit_file e batch_edit_files APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
         `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
         `REGRA OBRIGATÓRIA DE GRAFO (GRAPH-FIRST ARCHITECTURE - USO COMPULSÓRIO):\n` +
-        `Antes de propor qualquer alteração de código (edit_file ou batch_edit_files) ou leitura profunda de múltiplos arquivos, você DEVE OBRIGATORIAMENTE consultar o grafo de arquitetura do projeto via ferramenta query_code_graph (ou query_architecture_graph) passando o caminho do arquivo no parâmetro focus_file ou termo no query. Analise quem importa o arquivo, quem depende dele e quais são os impactos antes de alterar.\n` +
-        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame edit_file DIRETAMENTE via tool_call.\n` +
-        `ECONOMIA DE TOKENS (GRAPHRAG): Use o mapa de dependências abaixo (e a ferramenta \`query_code_graph\`) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
-        `Ao propor alterações, correções, remoções ou códigos para o repositório, utilize OBRIGATORIAMENTE a ferramenta edit_file (ou batch_edit_files). ` +
-        `Envie SEMPRE o código-fonte legível e completo em texto claro (TypeScript, JSX, CSS, etc.). É ESTRITAMENTE PROIBIDO codificar arquivos em Base64, usar scripts Python para decodificação ou usar comandos Bash para criar arquivos. ` +
-        `A alteração ficará salva localmente no Source Control para o usuário revisar o diff e commitar.\n\n` +
+        `Antes de propor qualquer alteração de código (patch_file, edit_file ou batch_edit_files) ou leitura profunda de múltiplos arquivos, você DEVE OBRIGATORIAMENTE consultar o grafo de arquitetura do projeto via ferramenta query_code_graph (ou query_architecture_graph) passando o caminho do arquivo no parâmetro focus_file ou termo no query. Analise quem importa o arquivo, quem depende dele e quais são os impactos antes de alterar.\n` +
+        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame patch_file ou edit_file DIRETAMENTE via tool_call.\n` +
+        `ECONOMIA DE TOKENS (GRAPHRAG & PATCH CIRÚRGICO): Use o mapa de dependências abaixo (e a ferramenta \`query_code_graph\`) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
+        `EDIÇÃO CIRÚRGICA RÁPIDA (PREFIRA patch_file): Ao editar arquivos existentes, prefira SEMPRE \`patch_file\` (passando \`path\`, \`old_str\` e \`new_str\`, ou \`patches\`) para substituir apenas os trechos alterados com velocidade máxima e sem gastar tokens reescrevendo o arquivo inteiro. Use \`edit_file\` apenas para criar arquivos novos, deletar arquivos ou quando precisar reescrever o arquivo inteiro. ` +
+        `Envie SEMPRE o código-fonte legível em texto claro (TypeScript, JSX, CSS, etc.). É ESTRITAMENTE PROIBIDO codificar arquivos em Base64, usar scripts Python para decodificação ou usar comandos Bash para criar arquivos. ` +
+        `A alteração ficará salva localmente no Source Control (e já visível imediatamente para suas próximas chamadas de read_file/patch_file) para o usuário revisar o diff e commitar.\n\n` +
         graphRagSummary
       : activeProject
       ? `Você está conectado ao PROJETO LOCAL ATIVO NO PREVIEW: "${activeProject.name}" (Template: ${activeProject.template}).\n` +
-        `Você tem acesso total às ferramentas de código locais: edit_file, read_file, list_files, search_code, update_project_files e create_project.\n` +
+        `Você tem acesso total às ferramentas de código locais: patch_file, edit_file, read_file, list_files, search_code, update_project_files e create_project.\n` +
         `Arquivos atuais do projeto no workspace:\n` +
         `${Object.keys(activeProject.files || {}).map((f) => `- ${f}`).join('\n')}\n\n` +
         `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n` +
-        `NUNCA prometa ou responda que vai alterar código em texto puro. Emita OBRIGATORIAMENTE a chamada da ferramenta \`edit_file\` ou \`update_project_files\` na primeira resposta para atualizar o projeto do preview em tempo real!\n` +
-        `Ao usar \`edit_file\`, envie o caminho exato do arquivo (ex: 'src/App.tsx' ou 'src/App.jsx') e o conteúdo completo atualizado. A alteração recarregará o Live Preview instantaneamente.`
-      : 'ATENÇÃO: Nenhum repositório GitHub ou projeto local está selecionado nesta conversa. As ferramentas de código (read_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
+        `NUNCA prometa ou responda que vai alterar código em texto puro. Emita OBRIGATORIAMENTE a chamada da ferramenta \`patch_file\`, \`edit_file\` ou \`update_project_files\` na primeira resposta para atualizar o projeto do preview em tempo real!\n` +
+        `Para edições pontuais em arquivos existentes, prefira \`patch_file\` (enviando \`path\`, \`old_str\` e \`new_str\`). Para criar arquivos novos ou reescrever por completo, use \`edit_file\`. A alteração recarregará o Live Preview instantaneamente.`
+      : 'ATENÇÃO: Nenhum repositório GitHub ou projeto local está selecionado nesta conversa. As ferramentas de código (read_file, patch_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
         'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior ou abrir um projeto no Preview.';
 
     // Obter ferramentas ativas de servidores MCP conectados

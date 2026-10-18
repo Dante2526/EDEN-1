@@ -107,6 +107,31 @@ describe('text-tool-parser (Text-Based Tool & File Edit Extractor)', () => {
     assert.ok(prompt.includes('mcp__context7__resolve_library_id'));
     assert.ok(prompt.includes('Resolve library ID no Context7'));
     assert.ok(prompt.includes('libraryName'));
+    assert.ok(prompt.includes('patch_file'));
+  });
+
+  it('extrai <synap_patch path="..."> com blocos <old> e <new> para edições cirúrgicas', () => {
+    const raw = [
+      'Aplicando patch cirúrgico:',
+      '<synap_patch path="src/App.tsx">',
+      '<old>',
+      'const MAX = 10;',
+      '</old>',
+      '<new>',
+      'const MAX = 45;',
+      '</new>',
+      '</synap_patch>',
+    ].join('\n');
+
+    const { toolCalls, cleanedText } = extractTextToolCalls(raw);
+    assert.equal(toolCalls.length, 1);
+    assert.equal(toolCalls[0].name, 'patch_file');
+    const parsedArgs = JSON.parse(toolCalls[0].arguments);
+    assert.equal(parsedArgs.path, 'src/App.tsx');
+    assert.equal(parsedArgs.patches.length, 1);
+    assert.equal(parsedArgs.patches[0].old_str, 'const MAX = 10;');
+    assert.equal(parsedArgs.patches[0].new_str, 'const MAX = 45;');
+    assert.ok(!cleanedText.includes('<synap_patch'));
   });
 });
 

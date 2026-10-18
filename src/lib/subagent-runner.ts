@@ -115,8 +115,8 @@ export async function runSubagent(config: SubagentConfig): Promise<SubagentResul
     { role: 'user', content: `Execute a tarefa: ${task}` },
   ];
 
-  const maxIterations = config.maxIterations ?? 5;
-  const timeoutMs = 45000;
+  const maxIterations = config.maxIterations ?? 12;
+  const timeoutMs = 90000;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -279,6 +279,10 @@ export async function runSubagent(config: SubagentConfig): Promise<SubagentResul
             toolResult = await config.onExecuteTool(tc.name, parsedArgs);
           } catch (toolErr: any) {
             toolResult = JSON.stringify({ error: toolErr?.message || 'Erro ao executar ferramenta no subagente.' });
+          }
+          const MAX_TOOL_OUTPUT_CHARS = 24000;
+          if (toolResult && toolResult.length > MAX_TOOL_OUTPUT_CHARS) {
+            toolResult = `${toolResult.slice(0, MAX_TOOL_OUTPUT_CHARS)}\n...[Saída truncada em ${MAX_TOOL_OUTPUT_CHARS} caracteres para preservar o contexto do subagente]...`;
           }
           messages.push({
             role: 'tool',

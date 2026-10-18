@@ -1,15 +1,29 @@
 // src/studio/studio-engine.ts
-import { ActiveRepoState, Skill, McpServer } from '../lib/types';
+import { ActiveRepoState, Skill, McpServer, PendingChange } from '../lib/types';
 import { StudioAgent, StudioStep, StudioReview } from './studio-types';
 import { generateId } from '../lib/utils';
-import { getClientAuthHeaders } from '../lib/github';
+import { getClientAuthHeaders, searchCode } from '../lib/github';
 import { isToolCapableModel } from '../lib/models';
 import { extractTextToolCalls } from '../lib/text-tool-parser';
 import { convertMcpToolsToOpenAi, executeMcpToolCall } from '../lib/mcp-client';
+import {
+  applyFilePatches,
+  normalizePatchArgs,
+  normalizeRepoPath,
+  resolveEffectiveFileContent,
+} from '../lib/file-patcher';
+import { buildGraphFromFiles, queryGraphContext } from '../lib/graphify-engine';
 
 export interface StudioRuntimeContext {
   skills?: Skill[];
   mcpServers?: McpServer[];
+  pendingChanges?: PendingChange[];
+}
+
+interface CachedFileEntry {
+  content: string;
+  originalContent?: string;
+  deleted?: boolean;
 }
 
 function buildStudioSkillsSection(skills?: Skill[]): string {
@@ -34,7 +48,7 @@ const READ_TOOLS = [
     type: 'function' as const,
     function: {
       name: 'read_file',
-      description: 'Lê o conteúdo de um arquivo do repositório ativo',
+      description: 'Lê o conteúdo atualizado de um arquivo do repositório ativo (incluindo alterações já feitas nesta sessão)',
       parameters: {
         type: 'object',
         properties: {
@@ -53,6 +67,35 @@ const READ_TOOLS = [
         type: 'object',
         properties: {
           path: { type: 'string', description: 'Caminho do diretório (vazio = raiz)' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'search_code',
+      description: 'Busca ocorrências de texto, funções ou classes no repositório ativo',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Termo de busca, função ou símbolo' },
+          path: { type: 'string', description: 'Pasta opcional para filtrar (ex: src/)' },
+        },
+        required: ['query'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'query_code_graph',
+      description: 'Consulta o Grafo de Arquitetura do projeto (Graphify) para mapear dependências e impacto entre módulos',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Termo ou símbolo para buscar no grafo' },
+          focus_file: { type: 'string', description: 'Arquivo alvo para inspecionar quem importa ou depende dele' },
         },
       },
     },
@@ -131,7 +174,9 @@ async function callChat(
               `${m.content}\n\n` +
               `PROTOCOLO DE FERRAMENTAS EM TEXTO (obrigatório para este modelo):\n` +
               `- Para invocar qualquer ferramenta (${toolNames}), emita: <synap_tool name="NOME_DA_FERRAMENTA">{...json...}</synap_tool>\n` +
-              `- Para editar ou criar um arquivo com edit_file, você também pode emitir:\n` +
+              `- Para edição cirúrgica rápida com patch_file, você pode emitir:\n` +
+              `<synap_patch path="caminho/do/arquivo"><old>...trecho atual...</old><new>...novo trecho...</new></synap_patch>\n` +
+              `- Para editar ou criar um arquivo inteiro com edit_file, emita:\n` +
               `<synap_edit path="caminho/do/arquivo" type="modified">\n...conteúdo completo...\n</synap_edit>`,
           };
         }
@@ -147,7 +192,7 @@ async function callChat(
     body: JSON.stringify({
       messages: payloadMessages,
       model: agent.model,
-      reasoning_effort: agent.reasoningEffort, // ← snake_case (correto)
+      reasoning_effort: agent.reasoningEffort,
       tools: supportsNativeTools ? tools : undefined,
     }),
   });
@@ -222,16 +267,22 @@ async function callChat(
   };
 }
 
-// Helper: executa uma tool (read_file, list_files, edit_file, mcp__*) localmente
+// Helper: executa uma tool (read_file, list_files, search_code, query_code_graph, patch_file, edit_file, mcp__*) localmente
 async function executeTool(
   name: string,
   args: any,
   activeRepo: ActiveRepoState,
-  onEditFile?: (path: string, content: string, type: 'create' | 'modify' | 'delete') => Promise<void>,
-  mcpServers?: McpServer[]
+  onEditFile?: (
+    path: string,
+    content: string,
+    type: 'create' | 'modify' | 'delete',
+    originalContent?: string
+  ) => Promise<void>,
+  runtime?: StudioRuntimeContext,
+  fileStateCache?: Map<string, CachedFileEntry>
 ): Promise<string> {
   if (name.startsWith('mcp__')) {
-    const targetServer = (mcpServers || []).find((s) => name.startsWith(`mcp__${s.id}__`));
+    const targetServer = (runtime?.mcpServers || []).find((s) => name.startsWith(`mcp__${s.id}__`));
     if (!targetServer) {
       return `Erro: Servidor MCP correspondente a ${name} não encontrado ou inativo.`;
     }
@@ -243,16 +294,52 @@ async function executeTool(
     'x-api-key': import.meta.env.VITE_API_SECRET || '',
   };
 
-  if (name === 'read_file') {
+  const readCurrentFileWithCache = async (rawPath: string): Promise<{ ok: boolean; content: string; originalContent?: string; error?: string }> => {
+    const normPath = normalizeRepoPath(rawPath);
+    if (fileStateCache?.has(normPath)) {
+      const cached = fileStateCache.get(normPath)!;
+      if (cached.deleted) {
+        return { ok: false, content: '', originalContent: cached.originalContent, error: `Arquivo ${rawPath} foi marcado como deletado.` };
+      }
+      return { ok: true, content: cached.content, originalContent: cached.originalContent };
+    }
+
+    if (runtime?.pendingChanges && runtime.pendingChanges.length > 0) {
+      const effective = resolveEffectiveFileContent(normPath, runtime.pendingChanges, activeRepo.fullName);
+      if (effective.status === 'deleted') {
+        return { ok: false, content: '', originalContent: effective.originalContent, error: `Arquivo ${rawPath} está deletado no Source Control.` };
+      }
+      if (effective.status === 'modified' && effective.content !== undefined) {
+        fileStateCache?.set(normPath, {
+          content: effective.content,
+          originalContent: effective.originalContent,
+        });
+        return { ok: true, content: effective.content, originalContent: effective.originalContent };
+      }
+    }
+
     const res = await fetch(
       `/api/github?action=file&owner=${activeRepo.owner}&repo=${activeRepo.repo}&path=${encodeURIComponent(
-        args.path
+        normPath
       )}&branch=${activeRepo.branch}`,
       { headers: githubHeaders }
     );
-    if (!res.ok) return `Erro: arquivo ${args.path} não encontrado`;
+    if (!res.ok) {
+      return { ok: false, content: '', error: `Erro: arquivo ${rawPath} não encontrado` };
+    }
     const data = await res.json();
-    return data.content || '';
+    const fetchedContent = data.content || '';
+    fileStateCache?.set(normPath, {
+      content: fetchedContent,
+      originalContent: fetchedContent,
+    });
+    return { ok: true, content: fetchedContent, originalContent: fetchedContent };
+  };
+
+  if (name === 'read_file') {
+    const fileRes = await readCurrentFileWithCache(args.path || '');
+    if (!fileRes.ok) return fileRes.error || `Erro: arquivo ${args.path} não encontrado`;
+    return fileRes.content;
   }
 
   if (name === 'list_files') {
@@ -270,10 +357,84 @@ async function executeTool(
     );
   }
 
+  if (name === 'search_code') {
+    try {
+      const items = await searchCode(
+        null,
+        args.query || '',
+        activeRepo.owner,
+        activeRepo.repo,
+        args.path
+      );
+      return JSON.stringify(items);
+    } catch (err: any) {
+      return `Erro na busca de código: ${err?.message || args.query}`;
+    }
+  }
+
+  if (name === 'query_code_graph' || name === 'query_architecture_graph') {
+    const filesForGraph: Array<{ path: string; content: string }> = [];
+    if (fileStateCache) {
+      for (const [p, entry] of fileStateCache.entries()) {
+        if (!entry.deleted) {
+          filesForGraph.push({ path: p, content: entry.content });
+        }
+      }
+    }
+    if (runtime?.pendingChanges) {
+      for (const ch of runtime.pendingChanges) {
+        const normP = normalizeRepoPath(ch.path);
+        if (!fileStateCache?.has(normP) && ch.type !== 'deleted') {
+          filesForGraph.push({ path: normP, content: ch.newContent });
+        }
+      }
+    }
+    const graph = buildGraphFromFiles(filesForGraph);
+    const qRes = queryGraphContext(graph, {
+      query: args.query,
+      focusFile: args.focus_file,
+      maxNodes: 10,
+    });
+    return qRes.markdownContext || 'Grafo consultado (leia arquivos adicionais se precisar expandir os nós em memória).';
+  }
+
+  if (name === 'patch_file' && onEditFile) {
+    const normPath = normalizeRepoPath(args.path || '');
+    if (!normPath) return 'Erro: parâmetro path é obrigatório para patch_file.';
+    const patches = normalizePatchArgs(args);
+    const currentFile = await readCurrentFileWithCache(normPath);
+    if (!currentFile.ok) {
+      return currentFile.error || `Erro: não foi possível ler ${normPath} para aplicar patch.`;
+    }
+    const patchRes = applyFilePatches(currentFile.content, patches);
+    if (!patchRes.success) {
+      return `Erro ao aplicar patch_file em ${normPath}: ${patchRes.error}`;
+    }
+    fileStateCache?.set(normPath, {
+      content: patchRes.content,
+      originalContent: currentFile.originalContent,
+    });
+    await onEditFile(normPath, patchRes.content, 'modify', currentFile.originalContent);
+    return `Patch cirúrgico aplicado com sucesso em ${normPath} (${patchRes.appliedCount} bloco(s)) e salvo no Source Control.`;
+  }
+
   if (name === 'edit_file' && onEditFile) {
+    const normPath = normalizeRepoPath(args.path || '');
     const type = args.type === 'create' ? 'create' : args.type === 'delete' ? 'delete' : 'modify';
-    await onEditFile(args.path, args.content || '', type);
-    return `Arquivo ${args.path} atualizado no Source Control`;
+    let originalContent: string | undefined = undefined;
+    if (type !== 'create') {
+      const existing = await readCurrentFileWithCache(normPath);
+      if (existing.ok) {
+        originalContent = existing.originalContent ?? existing.content;
+      }
+    }
+    fileStateCache?.set(normPath, {
+      content: args.content || '',
+      originalContent,
+      deleted: type === 'delete',
+    });
+    await onEditFile(normPath, args.content || '', type, originalContent);
+    return `Arquivo ${normPath} atualizado no Source Control`;
   }
 
   return `Tool ${name} não suportada`;
@@ -289,11 +450,12 @@ export async function runPlanner(
 ): Promise<StudioStep[]> {
   const skillsSection = buildStudioSkillsSection(runtime?.skills);
   const mcpTools = buildStudioMcpTools(runtime?.mcpServers);
+  const fileStateCache = new Map<string, CachedFileEntry>();
 
   const systemPrompt = `Você é um Arquiteto de Software Sênior. Analise o repositório ativo (${activeRepo.owner}/${activeRepo.repo}, branch ${activeRepo.branch}) e a tarefa do usuário.
 
 REGRAS:
-1. Use as ferramentas read_file, list_files e ferramentas MCP conectadas livremente para entender o repo antes de planejar
+1. Use as ferramentas read_file, list_files, search_code, query_code_graph e ferramentas MCP conectadas livremente para entender o repo antes de planejar
 2. Quando terminar a análise, chame a ferramenta submit_plan com o plano completo
 3. Máximo 8 passos. Cada passo deve ser concreto e executável
 4. Para cada passo, especifique o arquivo alvo (targetFile) e a ação (create/modify/delete/read/analyze)
@@ -312,9 +474,9 @@ TAREFA DO USUÁRIO: ${task}${skillsSection}`;
     { role: 'user', content: `Tarefa: ${task}` },
   ];
 
-  // Loop de tool calls até chamar submit_plan (máx 10 iterações)
+  // Loop de tool calls até chamar submit_plan (máx 12 iterações)
   let currentMessages = [...messages];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 12; i++) {
     const result = await callChat(currentMessages, agent, [...READ_TOOLS, ...mcpTools, SUBMIT_PLAN_TOOL]);
 
     if (result.toolCalls.length === 0) {
@@ -352,8 +514,8 @@ TAREFA DO USUÁRIO: ${task}${skillsSection}`;
         planSubmitted = true;
         submittedSteps = parsedArgs.steps || [];
       } else {
-        // Executa read_file, list_files ou mcp__*
-        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo, undefined, runtime?.mcpServers);
+        // Executa read_file, list_files, search_code, query_code_graph ou mcp__*
+        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo, undefined, runtime, fileStateCache);
         currentMessages.push({
           role: 'tool',
           content: toolResult,
@@ -375,7 +537,7 @@ TAREFA DO USUÁRIO: ${task}${skillsSection}`;
     }
   }
 
-  throw new Error('Planner não chamou submit_plan após 10 iterações');
+  throw new Error('Planner não chamou submit_plan após 12 iterações');
 }
 
 // ============ 2. REVIEWER ============
@@ -388,6 +550,7 @@ export async function runReviewer(
 ): Promise<StudioReview> {
   const skillsSection = buildStudioSkillsSection(runtime?.skills);
   const mcpTools = buildStudioMcpTools(runtime?.mcpServers);
+  const fileStateCache = new Map<string, CachedFileEntry>();
 
   const planJson = JSON.stringify(
     plan.map((s) => ({
@@ -403,7 +566,7 @@ export async function runReviewer(
   const systemPrompt = `Você é um Code Reviewer Sênior. Analise o plano abaixo e identifique riscos, sugestões e aprovações.
 
 REGRAS:
-1. Use read_file e ferramentas MCP conectadas para validar arquivos citados no plano (se necessário)
+1. Use read_file, search_code, query_code_graph e ferramentas MCP conectadas para validar arquivos citados no plano (se necessário)
 2. Seja crítico mas construtivo
 3. Marque approved=false se algum passo tem risco grave
 4. Quando terminar, chame submit_review com o parecer
@@ -419,7 +582,7 @@ ${planJson}${skillsSection}`;
   ];
 
   let currentMessages = [...messages];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 12; i++) {
     const result = await callChat(currentMessages, agent, [...READ_TOOLS, ...mcpTools, SUBMIT_REVIEW_TOOL]);
 
     if (result.toolCalls.length === 0) {
@@ -455,7 +618,7 @@ ${planJson}${skillsSection}`;
         reviewSubmitted = true;
         submittedReview = parsedArgs;
       } else {
-        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo, undefined, runtime?.mcpServers);
+        const toolResult = await executeTool(tc.name, parsedArgs, activeRepo, undefined, runtime, fileStateCache);
         currentMessages.push({
           role: 'tool',
           content: toolResult,
@@ -477,7 +640,7 @@ ${planJson}${skillsSection}`;
     }
   }
 
-  throw new Error('Reviewer não chamou submit_review após 10 iterações');
+  throw new Error('Reviewer não chamou submit_review após 12 iterações');
 }
 
 // ============ 3. IMPLEMENTER ============
@@ -486,17 +649,54 @@ export async function runImplementer(
   activeRepo: ActiveRepoState,
   agent: StudioAgent,
   onProgress: (step: StudioStep) => void,
-  onEditFile: (path: string, content: string, type: 'create' | 'modify' | 'delete') => Promise<void>,
+  onEditFile: (
+    path: string,
+    content: string,
+    type: 'create' | 'modify' | 'delete',
+    originalContent?: string
+  ) => Promise<void>,
   runtime?: StudioRuntimeContext
 ): Promise<void> {
   const skillsSection = buildStudioSkillsSection(runtime?.skills);
   const mcpTools = buildStudioMcpTools(runtime?.mcpServers);
+  const fileStateCache = new Map<string, CachedFileEntry>();
+
+  const PATCH_TOOL = {
+    type: 'function' as const,
+    function: {
+      name: 'patch_file',
+      description:
+        'Edita cirurgicamente trechos específicos de um arquivo existente (substituindo old_str por new_str) sem precisar reescrever o arquivo inteiro. Prefira sempre patch_file para modificar arquivos existentes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Caminho relativo do arquivo' },
+          old_str: { type: 'string', description: 'Trecho exato atual no arquivo a ser substituído' },
+          new_str: { type: 'string', description: 'Novo trecho que substituirá old_str' },
+          allow_multiple: { type: 'boolean' },
+          patches: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                old_str: { type: 'string' },
+                new_str: { type: 'string' },
+                allow_multiple: { type: 'boolean' },
+              },
+              required: ['old_str', 'new_str'],
+            },
+          },
+        },
+        required: ['path'],
+      },
+    },
+  };
 
   const EDIT_TOOL = {
     type: 'function' as const,
     function: {
       name: 'edit_file',
-      description: 'Edita ou cria um arquivo no repositório. A alteração vai pro Source Control para revisão.',
+      description: 'Cria um novo arquivo, deleta ou reescreve o arquivo inteiro no repositório. A alteração vai pro Source Control para revisão.',
       parameters: {
         type: 'object',
         properties: {
@@ -513,17 +713,17 @@ export async function runImplementer(
     onProgress({ ...step, status: 'in_progress' });
 
     try {
-      const systemPrompt = `Você é um Engenheiro de Software. Execute o passo abaixo usando edit_file.
+      const systemPrompt = `Você é um Engenheiro de Software Sênior. Execute o passo abaixo usando patch_file (recomendado para editar arquivos existentes) ou edit_file (para criar novos arquivos ou reescrever por completo).
 
 PASSO ${step.index}: ${step.description}
 ${step.targetFile ? `ARQUIVO ALVO: ${step.targetFile}` : ''}
 AÇÃO: ${step.action}
 
 REGRAS:
-- Se precisar ver o conteúdo atual, use read_file primeiro
-- Use edit_file para criar/modificar o arquivo
-- Faça a alteração mínima necessária
-- Não tente commitar — o Synap cuida disso
+- Se precisar ver o conteúdo atual, use read_file primeiro (ele já reflete quaisquer alterações feitas nos passos anteriores)
+- Para modificar arquivos existentes, prefira patch_file (passando path, old_str e new_str) por ser mais rápido e seguro
+- Use edit_file para criar arquivos novos ou reescrever arquivos pequenos
+- Não tente commitar — o Éden salva tudo no Source Control
 
 Após executar, responda com texto curto confirmando o que fez.${skillsSection}`;
 
@@ -535,16 +735,21 @@ Após executar, responda com texto curto confirmando o que fez.${skillsSection}`
       let currentMessages = [...messages];
       let stepDone = false;
 
-      for (let i = 0; i < 5 && !stepDone; i++) {
-        const result = await callChat(currentMessages, agent, [...READ_TOOLS, ...mcpTools, EDIT_TOOL]);
+      for (let i = 0; i < 12 && !stepDone; i++) {
+        const result = await callChat(currentMessages, agent, [
+          ...READ_TOOLS,
+          ...mcpTools,
+          PATCH_TOOL,
+          EDIT_TOOL,
+        ]);
 
         if (result.toolCalls.length === 0) {
           const requiresEdit = step.action === 'create' || step.action === 'modify' || step.action === 'delete';
-          if (requiresEdit && i < 2) {
+          if (requiresEdit && i < 3) {
             currentMessages.push({ role: 'assistant', content: result.content || '' });
             currentMessages.push({
               role: 'user',
-              content: 'ATENÇÃO: Você respondeu com texto explicativo mas NÃO chamou a ferramenta `edit_file`. Execute a ferramenta `edit_file` agora para aplicar a alteração.',
+              content: 'ATENÇÃO: Você respondeu com texto explicativo mas NÃO chamou `patch_file` nem `edit_file`. Execute `patch_file` ou `edit_file` agora para aplicar a alteração.',
             });
             continue;
           }
@@ -575,7 +780,8 @@ Após executar, responda com texto curto confirmando o que fez.${skillsSection}`
             parsedArgs,
             activeRepo,
             onEditFile,
-            runtime?.mcpServers
+            runtime,
+            fileStateCache
           );
           currentMessages.push({
             role: 'tool',
@@ -583,14 +789,17 @@ Após executar, responda com texto curto confirmando o que fez.${skillsSection}`
             tool_call_id: tc.id,
           });
 
-          if (tc.name === 'edit_file') {
+          if (
+            (tc.name === 'edit_file' || tc.name === 'patch_file') &&
+            !toolResult.startsWith('Erro')
+          ) {
             stepDone = true;
           }
         }
       }
 
       if (!stepDone) {
-        throw new Error('O modelo respondeu com texto mas não chamou a ferramenta edit_file.');
+        throw new Error('O modelo respondeu com texto mas não concluiu a alteração de arquivo (patch_file / edit_file).');
       }
 
       onProgress({
@@ -608,4 +817,5 @@ Após executar, responda com texto curto confirmando o que fez.${skillsSection}`
     }
   }
 }
+
 

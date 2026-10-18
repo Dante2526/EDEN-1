@@ -219,7 +219,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     (tc) => tc.status === 'waiting' || tc.status === 'pending'
   );
   const hasRunningTool = Boolean(runningTool);
-  const isEditingFile = runningTool?.name === 'edit_file';
+  const isEditingFile = runningTool?.name === 'edit_file' || runningTool?.name === 'patch_file';
   const isWebSearch = runningTool?.name === 'web_search' || runningTool?.name === 'search_web';
 
   // Normaliza markdown de imagens para evitar quebras de linha entre ![...] e (...)
@@ -271,6 +271,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
         return 'Juntando as fontes…';
       case 'fetch_url':
         return 'Lendo página…';
+      case 'patch_file':
+        return 'Aplicando patch cirúrgico…';
       case 'edit_file':
         return 'Editando arquivo…';
       case 'read_file':
@@ -573,6 +575,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     ? 'Extraindo conteúdo…'
                     : isThisWebSearch
                     ? 'Juntando as fontes…'
+                    : tc.name === 'patch_file'
+                    ? 'Aplicando patch cirúrgico…'
                     : tc.name === 'edit_file'
                     ? 'Editando arquivo…'
                     : getToolActionLabel(tc.name);
@@ -586,7 +590,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     ? 'Baixando e higienizando texto do artigo ou documentação…'
                     : isThisWebSearch
                     ? 'Consultando a web e cruzando informações de fontes confiáveis'
-                    : tc.name === 'edit_file'
+                    : tc.name === 'patch_file' || tc.name === 'edit_file'
                     ? 'Alteração em andamento — pronta para revisão no Source Control'
                     : 'Consultando repositório GitHub…';
 

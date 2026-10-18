@@ -68,6 +68,41 @@ export function extractTextToolCalls(text: string): TextToolExtractionResult {
     return '';
   });
 
+  // 1.5 Extrair blocos <synap_patch path="..."> com pares <old>...</old> e <new>...</new>
+  const patchRegex = /<synap_patch\s+([^>]+)>([\s\S]*?)<\/synap_patch>/gi;
+  cleanedText = cleanedText.replace(patchRegex, (_fullMatch, attrsStr: string, innerBody: string) => {
+    const pathMatch = attrsStr.match(/path\s*=\s*["']([^"']+)["']/i);
+    if (!pathMatch || !pathMatch[1]) {
+      return _fullMatch;
+    }
+    const path = pathMatch[1].trim();
+    const pairRegex = /<old>([\s\S]*?)<\/old>\s*<new>([\s\S]*?)<\/new>/gi;
+    const patches: Array<{ old_str: string; new_str: string }> = [];
+    let pairMatch: RegExpExecArray | null;
+    while ((pairMatch = pairRegex.exec(innerBody)) !== null) {
+      const old_str = stripOuterCodeFence(pairMatch[1]);
+      const new_str = stripOuterCodeFence(pairMatch[2]);
+      if (old_str) {
+        patches.push({ old_str, new_str });
+      }
+    }
+    if (patches.length === 0) {
+      return _fullMatch;
+    }
+
+    counter++;
+    toolCalls.push({
+      id: `text_patch_${Date.now()}_${counter}`,
+      name: 'patch_file',
+      arguments: JSON.stringify({
+        path,
+        patches,
+      }),
+    });
+
+    return '';
+  });
+
   // 2. Extrair blocos <synap_tool name="...">...JSON...</synap_tool>
   const toolRegex = /<synap_tool\s+([^>]+)>([\s\S]*?)<\/synap_tool>/gi;
   cleanedText = cleanedText.replace(toolRegex, (_fullMatch, attrsStr: string, innerJson: string) => {
@@ -145,15 +180,26 @@ export function buildTextToolProtocolPrompt(
           `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${repoFullName}" (branch "${branch || 'main'}").`,
           'Você PODE ler, inspecionar e editar arquivos diretamente neste repositório emitindo tags estruturadas na sua resposta:',
           '',
-          '1. Para CRIAR ou EDITAR um arquivo no repositório (vai direto para o Source Control):',
+          '1. Para EDIÇÃO CIRÚRGICA RÁPIDA em arquivo existente (RECOMENDADO — substitui apenas o trecho alterado via patch_file):',
+          '<synap_patch path="caminho/do/arquivo.tsx">',
+          '<old>',
+          '...trecho exato atual...',
+          '</old>',
+          '<new>',
+          '...novo trecho substituto...',
+          '</new>',
+          '</synap_patch>',
+          'Ou via JSON: <synap_tool name="patch_file">{"path": "src/App.tsx", "old_str": "antigo", "new_str": "novo"}</synap_tool>',
+          '',
+          '2. Para CRIAR um novo arquivo ou reescrever um arquivo inteiro:',
           '<synap_edit path="caminho/do/arquivo.tsx" type="modified">',
           '...conteúdo completo do arquivo aqui...',
           '</synap_edit>',
           '(Use type="added" para novos arquivos, type="modified" para editar existentes ou type="deleted" para remover).',
-          '2. Para CONSULTAR O GRAFO DE ARQUITETURA (OBRIGATÓRIO antes de editar):',
+          '3. Para CONSULTAR O GRAFO DE ARQUITETURA (OBRIGATÓRIO antes de editar):',
           '<synap_tool name="query_code_graph">{"focus_file": "src/App.tsx"}</synap_tool>',
           '',
-          '3. Para LER arquivos, LISTAR diretórios ou BUSCAR código no repositório:',
+          '4. Para LER arquivos, LISTAR diretórios ou BUSCAR código no repositório:',
           '<synap_tool name="read_file">{"path": "src/App.tsx"}</synap_tool>',
           '<synap_tool name="list_files">{"path": "src"}</synap_tool>',
           '<synap_tool name="search_code">{"query": "termo"}</synap_tool>',
