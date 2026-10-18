@@ -6,6 +6,7 @@ import {
   getBasePackageName,
   normalizePath,
   resolveImportPath,
+  isBrowserIncompatible,
 } from './preview-html';
 import { SynapProject } from './types';
 
@@ -162,5 +163,36 @@ describe('Preview HTML Generator', () => {
     assert.match(reactHtml, /__SYNAP_SET_INSPECT_MODE__/);
     assert.match(reactHtml, /__SYNAP_ELEMENT_SELECTED__/);
     assert.match(reactHtml, /synap-inspect-overlay-box/);
+  });
+
+  it('não deve emitir chave react-dom/ inválida e deve considerar @testing-library e typescript-eslint como incompatíveis com browser', () => {
+    assert.strictEqual(isBrowserIncompatible('@testing-library/jest-dom'), true);
+    assert.strictEqual(isBrowserIncompatible('@testing-library/react'), true);
+    assert.strictEqual(isBrowserIncompatible('typescript-eslint'), true);
+    assert.strictEqual(isBrowserIncompatible('@typescript-eslint/parser'), true);
+    assert.strictEqual(isBrowserIncompatible('vitest'), true);
+    assert.strictEqual(isBrowserIncompatible('jest'), true);
+
+    const reactProj: SynapProject = {
+      id: 'clean-importmap-proj',
+      name: 'Clean App',
+      template: 'react-ts',
+      files: {
+        'src/App.tsx': {
+          path: 'src/App.tsx',
+          content: 'export default function App() { return <div>Ok</div>; }',
+        },
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const html = buildPreviewHtmlPreTranspiled(reactProj, {
+      'src/App.tsx': 'exports.default = function App() { return null; };',
+    });
+    // Não pode conter "react-dom/": "..." no importmap
+    assert.doesNotMatch(html, /"react-dom\/":/);
+    assert.match(html, /"react-dom":/);
+    assert.match(html, /"react-dom\/client":/);
   });
 });

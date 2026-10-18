@@ -1757,4 +1757,21 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: compilado com sucesso.
   - `graphify update .`: grafo de conhecimento atualizado.
 
+## 106. Higienização do Live Preview (Import Map e Exclusão de Testes/Linters)
+- **Solicitação do Usuário:** Análise e correção de erros no console do navegador (`Ignored an import map value of "react-dom/"`, `@testing-library/jest-dom`, `typescript-eslint`).
+- **Diagnóstico das Falhas (`systematic-debugging`):**
+  1. **Violação da Especificação W3C de Import Maps (`src/lib/preview-html.ts`):** O mapeamento `'react-dom/': https://esm.sh/react-dom@.../?external=react` terminava com query string em vez de barra `/`, violando a regra de prefixos do W3C e fazendo o navegador ignorar a entrada com aviso.
+  2. **Inclusão de Pacotes de Teste e Linter no Browser Bundle (`src/lib/preview-html.ts`):** Arquivos como `setupTests.ts` e configurações de eslint/jest eram analisados pelo extrator de imports bare do preview, tentando carregar `@testing-library/jest-dom` e `typescript-eslint` via esm.sh no navegador (onde `expect` não existe e dependências de Node falham com HTTP 500).
+- **Correções Aplicadas:**
+  - Remoção da chave `'react-dom/'` do `importMap` em `src/lib/preview-html.ts` (já coberta por `'react-dom'` e `'react-dom/client'`).
+  - Adição de `@testing-library/*`, `typescript-eslint`, `@typescript-eslint/*`, `eslint*`, `jest`, `vitest` em `BROWSER_INCOMPATIBLE_DEPS`.
+  - Exclusão de arquivos `setupTests`, `setup-tests`, `*.spec.*`, `eslint.config`, `jest.config` da transpilação do Live Preview.
+  - Testes unitários atualizados em `src/lib/preview-html.test.ts`.
+- **Evidências de Verificação:**
+  - `npm test`: 112/112 testes unitários passando em 30 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: compilado com sucesso.
+  - `graphify update .`: grafo de conhecimento atualizado.
+
+
 

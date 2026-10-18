@@ -60,7 +60,11 @@ const BROWSER_INCOMPATIBLE_DEPS = new Set([
   'tsx', 'ts-node', 'tsx-cli',
   'express', 'fastify', 'koa', 'next', 'nuxt',
   '@vitejs/plugin-react', '@vitejs/plugin-react-swc', 'vite', 'webpack', 'rollup', 'esbuild',
-  'typescript', 'eslint', 'prettier',
+  'typescript', 'eslint', 'prettier', 'typescript-eslint',
+  '@typescript-eslint/parser', '@typescript-eslint/eslint-plugin', '@typescript-eslint/utils',
+  'eslint-plugin-react', 'eslint-plugin-react-hooks', 'eslint-plugin-react-refresh', '@eslint/js',
+  '@testing-library/jest-dom', '@testing-library/react', '@testing-library/user-event', '@testing-library/dom',
+  'jest', 'vitest', '@jest/globals', 'jsdom', 'happy-dom',
   'firebase-admin', 'firebase-functions',
   'mongoose', 'mysql2', 'pg', 'redis', 'ioredis', 'sqlite3', 'better-sqlite3',
   'fs', 'path', 'os', 'child_process', 'crypto', 'http', 'https', 'net', 'url', 'dotenv',
@@ -356,7 +360,18 @@ export function buildPreviewHtmlPreTranspiled(
       jsonFiles[path] = file.content;
       continue;
     }
-    if (/\.(tsx|ts|jsx|js)$/.test(path) && !path.endsWith('.d.ts') && !path.includes('vite.config') && !path.includes('vitest.config') && !path.includes('.test.')) {
+    const isExcluded =
+      path.endsWith('.d.ts') ||
+      path.includes('vite.config') ||
+      path.includes('vitest.config') ||
+      path.includes('jest.config') ||
+      path.includes('eslint.config') ||
+      path.includes('.test.') ||
+      path.includes('.spec.') ||
+      path.includes('setupTests') ||
+      path.includes('setup-tests');
+
+    if (/\.(tsx|ts|jsx|js)$/.test(path) && !isExcluded) {
       if (preTranspiled && (preTranspiled[path] || preTranspiled[`/${path}`])) {
         transpiledFiles[path] = preTranspiled[path] || preTranspiled[`/${path}`];
       } else if (babelCache) {
@@ -435,7 +450,6 @@ export function buildPreviewHtmlPreTranspiled(
       'react': `https://esm.sh/react@${reactVersion}`,
       'react/': `https://esm.sh/react@${reactVersion}/`,
       'react-dom': `https://esm.sh/react-dom@${reactVersion}?external=react`,
-      'react-dom/': `https://esm.sh/react-dom@${reactVersion}/?external=react`,
       'react-dom/client': `https://esm.sh/react-dom@${reactVersion}/client?external=react`,
       ...depUrlMap,
     },
