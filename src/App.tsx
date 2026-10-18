@@ -599,18 +599,21 @@ const QUERY_ARCHITECTURE_GRAPH_TOOL = {
 };
 
 // ============================================================================
-// IMAGE GENERATION TOOL — FLUX.2 Dev via Cloudflare Workers AI
+// IMAGE GENERATION TOOL — FLUX.1 Dev via Cloudflare Workers AI
 // ============================================================================
-// Melhor modelo open-source de geração de imagem (2026), ~95% da qualidade do
-// Imagen 4 Ultra. 100% gratuito no free tier da CF (10k neurons/dia).
-// Retorna data URL base64 direto (não precisa de CDN externo).
+// Modelo open-source de geração de imagem. 100% gratuito no free tier da CF
+// (10k neurons/dia). Retorna data URL base64 direto (não precisa de CDN).
+//
+// NOTA: FLUX.2 Dev NÃO funciona via JSON path (requer multipart/form-data,
+// dá erro "required properties at '/' are 'multipart'"). Por isso usamos só
+// FLUX.1 family.
 // ============================================================================
 const IMAGE_GEN_TOOL = {
   type: 'function' as const,
   function: {
     name: 'generate_image',
     description:
-      'Gera imagem a partir de descrição textual usando FLUX.2 Dev (modelo estado da arte open-source, ~95% da qualidade do Imagen 4). ' +
+      'Gera imagem a partir de descrição textual usando FLUX.1 Dev via Cloudflare Workers AI. ' +
       'Use para criar ilustrações, conceitos visuais, mockups, ícones, fotos estilizadas, etc. ' +
       'A imagem volta embutida na resposta (data URL) e aparece direto no chat. ' +
       'Sem watermark, sem custo, sem API key externa.',
@@ -631,10 +634,10 @@ const IMAGE_GEN_TOOL = {
         model: {
           type: 'string',
           description:
-            'Modelo FLUX a usar (opcional, default: flux-2-dev). ' +
-            '"flux-2-dev": melhor qualidade (recomendado). ' +
+            'Modelo FLUX a usar (opcional, default: flux-1-dev). ' +
+            '"flux-1-dev": melhor qualidade (recomendado, ~8s). ' +
             '"flux-1-schnell": mais rápido (~3s), qualidade um pouco menor.',
-          enum: ['flux-2-dev', 'flux-1-dev', 'flux-1-schnell'],
+          enum: ['flux-1-dev', 'flux-1-schnell'],
         },
       },
       required: ['prompt'],
@@ -1890,7 +1893,7 @@ function AppContent() {
       try {
         const prompt = args.prompt || '';
         const aspectRatio = args.aspect_ratio || args.aspectRatio || '1:1';
-        const model = args.model || 'flux-2-dev';
+        const model = args.model || 'flux-1-dev';
         const res = await fetch('/api/image', {
           method: 'POST',
           headers: {

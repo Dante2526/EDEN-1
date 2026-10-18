@@ -28,8 +28,17 @@ export const config = {
  */
 
 // Modelos disponíveis (em ordem de qualidade, melhor primeiro)
+// IMPORTANTE: FLUX.2 Dev (flux-2-dev, flux-2-klein-*) requer multipart/form-data
+// no body, NÃO suporta JSON. Por isso usamos só FLUX.1 family que aceita JSON:
+//   - flux-1-schnell: 4 steps default (rápido, ~3s), qualidade boa
+//   - flux-1-dev: 8 steps default (mais lento, melhor qualidade)
+//
+// Ref: agents@0.28.1 image model handling
+// "its generated input takes a required `multipart` object body ...
+//  live, the run path answers 400 Bad input: required properties at '/'
+//  are 'multipart'. Suggesting an id that always 400s is worse than not
+//  suggesting it."
 const FLUX_MODELS = {
-  'flux-2-dev': '@cf/black-forest-labs/flux-2-dev',
   'flux-1-dev': '@cf/black-forest-labs/flux-1-dev',
   'flux-1-schnell': '@cf/black-forest-labs/flux-1-schnell',
 } as const;
@@ -44,14 +53,14 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   // Aceita POST (body JSON) ou GET (query string)
   let prompt = '';
   let aspectRatio = '1:1';
-  let modelKey: FluxModelKey = 'flux-2-dev';
+  let modelKey: FluxModelKey = 'flux-1-dev';
 
   if (req.method === 'POST') {
     try {
       const body = await req.json();
       prompt = body.prompt || '';
       aspectRatio = body.aspect_ratio || body.aspectRatio || '1:1';
-      const requestedModel = body.model || 'flux-2-dev';
+      const requestedModel = body.model || 'flux-1-dev';
       if (requestedModel in FLUX_MODELS) {
         modelKey = requestedModel as FluxModelKey;
       }
@@ -60,7 +69,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     const url = new URL(req.url);
     prompt = url.searchParams.get('prompt') || '';
     aspectRatio = url.searchParams.get('aspect_ratio') || '1:1';
-    const requestedModel = url.searchParams.get('model') || 'flux-2-dev';
+    const requestedModel = url.searchParams.get('model') || 'flux-1-dev';
     if (requestedModel in FLUX_MODELS) {
       modelKey = requestedModel as FluxModelKey;
     }
@@ -111,9 +120,12 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       body: JSON.stringify({
         prompt: cleanPrompt,
         size,
-        // FLUX.2 Dev aceita steps (4-50, default 8). Mais steps = mais qualidade.
-        // 12 é bom trade-off entre qualidade e velocidade.
-        steps: modelKey === 'flux-2-dev' ? 12 : undefined,
+        // FLUX.1 Schnell aceita até 8 steps (default 4, mais rápido)
+        // FLUX.1 Dev aceita até 50 steps (default 8, melhor qualidade)
+        // Steps = quantidade de iterações de difusão. Mais steps = mais qualidade.
+        steps: modelKey === 'flux-1-schnell' ? 8 : 20,
+        // Seed aleatório pra cada geração ser única
+        seed: Math.floor(Math.random() * 1_000_000),
       }),
       signal: fetchCtrl.signal,
     });
