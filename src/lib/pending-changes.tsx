@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { get, set } from 'idb-keyval';
 import { PendingChange, ChangeType } from './types';
+import { normalizeRepoPath } from './file-patcher';
 
 const PENDING_CHANGES_KEY = 'synap_pending_changes';
 
@@ -93,10 +94,11 @@ export const PendingChangesProvider: React.FC<{ children: React.ReactNode }> = (
       originalContent?: string;
       newContent: string;
     }): Promise<PendingChange> => {
+      const cleanPath = normalizeRepoPath(params.path);
       const newId = `change_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const newChange: PendingChange = {
         id: newId,
-        path: params.path,
+        path: cleanPath,
         repo: params.repo,
         branch: params.branch,
         type: params.type,
@@ -107,14 +109,18 @@ export const PendingChangesProvider: React.FC<{ children: React.ReactNode }> = (
       };
 
       persistAndSet((prev) => {
-        // If change for same path, repo, branch already exists, update it while preserving stage state
+        // If change for same normalized path, repo, branch already exists, update it while preserving stage state
         const existingIdx = prev.findIndex(
-          (c) => c.repo === params.repo && c.branch === params.branch && c.path === params.path
+          (c) =>
+            c.repo === params.repo &&
+            c.branch === params.branch &&
+            normalizeRepoPath(c.path) === cleanPath
         );
         if (existingIdx !== -1) {
           const updated = [...prev];
           updated[existingIdx] = {
             ...updated[existingIdx],
+            path: cleanPath,
             type: params.type,
             newContent: params.newContent,
             originalContent:

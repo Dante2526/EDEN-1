@@ -1678,3 +1678,46 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros de compilação/tipagem.
   - `npm run build`: bundle de produção Vite + Cloudflare Worker compilado com sucesso.
   - `graphify update .`: grafo de conhecimento atualizado e sincronizado.
+
+## 102. Modo Plano Obrigatório (Hard-Gate de Escrita + Botão Aprovar e Executar Plano)
+- **Solicitação do Usuário:** *"conseguimos obrigar os agentes / modelos a criar um plano sempre que for querer aletrar arquivos: que nem vc faz, ai la eu tenho um botão que liga e desliga plano, quando ligado e obrigado"*
+- **Diagnóstico da Causa Raiz:**
+  1. O botão **`Plano ON / OFF`** (`isPlanMode`) em `model-controls.tsx` funcionava apenas como instrução de texto (`planPrompt`), deixando `patch_file`, `edit_file` e `batch_edit_files` expostos e liberados na chamada da API.
+  2. O detector `looksLikeFileModificationPromise` em `src/App.tsx` forçava a IA a editar arquivos se ela descrevesse mudanças de código dentro do plano.
+  3. O estado do botão `Plano ON / OFF` não era persistido no `localStorage` e não havia um botão interativo para aprovar e disparar a execução do plano.
+- **Solução Implementada:**
+  1. **Motor de Hard-Gate (`src/lib/plan-mode-gate.ts` + `src/lib/plan-mode-gate.test.ts`):**
+     - `filterToolsForPlanMode`: quando `Plano ON`, mantém 100% das ferramentas de leitura e diagnóstico (`query_code_graph`, `read_file`, `list_files`, `search_code`, `web_search`, `dispatch_subagent`), mas remove todas as ferramentas de escrita (`patch_file`, `edit_file`, `batch_edit_files`, `update_project_files`, `create_project`).
+     - `checkPlanModeWriteGate`: bloqueia qualquer tentativa de escrita (nativa ou via tags `<synap_edit>`/`<synap_patch>`) antes da aprovação.
+     - `isPlanApprovalReply`: detecta automaticamente respostas diretas de aprovação no chat (`"sim"`, `"aprovado"`, `"pode fazer"`, etc.) após um plano ser apresentado, liberando as ferramentas de escrita no turno seguinte.
+  2. **Integração e Persistência (`src/App.tsx`):**
+     - Persistência de `isPlanMode` em `localStorage` (`synap_plan_mode_v1`).
+     - Desativação de `looksLikeFileModificationPromise` quando `activePlan === true`.
+     - Criação do handler `handleApprovePlan` que dispara a execução imediata do plano aprovado (`overridePlanMode = false`).
+  3. **Card Interativo de Aprovação (`src/components/chat-message.tsx`):**
+     - Exibição de card de aprovação no rodapé de toda resposta gerada em Modo Plano com os botões **"Aprovar e Executar Plano"** e **"Desligar Plano"**.
+- **Evidências de Verificação:**
+  - `npm test`: 105/105 testes unitários passando em 29 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: compilado com sucesso em 3.71s.
+  - `graphify update .`: grafo de conhecimento atualizado.
+
+## 103. Auditoria Arquitetural e Correção de 5 Bugs Críticos e Médios
+- **Solicitação do Usuário:** *"procure por bugs no app"* → aprovado para correção imediata.
+- **Diagnóstico via Graphify (`graphify query` + inspeção dos God Nodes):**
+  1. **Bug 1 (Crítico — Source Control):** `addChange` em `src/lib/pending-changes.tsx` comparava `c.path === params.path` sem normalizar barras ou `./`, criando entradas duplicadas e risco de erro HTTP 422 no commit do GitHub.
+  2. **Bug 2 (Alto — Sincronia GitHub ↔ Live Preview):** `patch_file`, `edit_file` e `batch_edit_files` em `src/App.tsx` (e o Implementer em `src/studio/studio-panel.tsx`) gravavam no Source Control, mas não atualizavam `activeProject.files` quando o repositório estava aberto no Live Preview (`sourceRepoFullName === currentRepo.fullName`).
+  3. **Bug 3 (Alto — Stale Closure em Edições Consecutivas):** `updateProjectFiles` e `updateFileContent` em `src/lib/project-context.tsx` liam `activeProject` da closure do React, sobrescrevendo edições anteriores quando a IA modificava múltiplos arquivos no mesmo turno.
+  4. **Bug 4 (Médio — Studio Multi-Agente):** `StudioPanel` não recebia `projectGraph` de `App.tsx`, e uma falha no `runReviewer` caía no `catch` externo de `startStudio`, sobrescrevendo o card do Planner como `"Erro no planejamento"`.
+  5. **Bug 5 (Baixo — Modal de Tokens):** `src/components/model-controls.tsx` exibia `"Janela de 128k"` / `"128.000 tokens"` fixos mesmo para os modelos de `256k` (`Gemma 4 31B IT` e `Nemotron 3.5 Super`).
+- **Correções Aplicadas:**
+  - Normalização de caminhos com `normalizeRepoPath` em `src/lib/pending-changes.tsx` e `src/lib/project-context.tsx`.
+  - Introdução de `activeProjectRef` sincronizado em tempo real em `src/lib/project-context.tsx`.
+  - Sincronização imediata com `updateProjectFiles` ao editar arquivos de repositório GitHub vinculado ao Live Preview (`src/App.tsx` e `src/studio/studio-panel.tsx`).
+  - Repasse de `projectGraph` para `StudioPanel` / `StudioRuntimeContext` (`src/studio/studio-engine.ts`) e isolamento do `try/catch` do Revisor em `src/studio/studio-panel.tsx`.
+  - Exibição dinâmica de `256k` (`256.000 tokens`) vs `128k` (`128.000 tokens`) em `src/components/model-controls.tsx`.
+- **Evidências de Verificação:**
+  - `npm test`: 105/105 testes passando em 29 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: compilado com sucesso em 2.46s.
+  - `graphify update .`: grafo de conhecimento atualizado (14.697 nós).

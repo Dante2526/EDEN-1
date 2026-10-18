@@ -24,11 +24,13 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { ActiveRepoState, AttachedDocument, Skill, McpServer } from '../lib/types';
+import { ProjectGraph } from '../lib/graphify-engine';
 import { StudioSession, StudioStep, StudioTimelineEntry, TimelineActor } from './studio-types';
 import { loadStudioConfig } from '../lib/studio-config';
 import { generateId, fileToBase64, readFileAsText } from '../lib/utils';
 import { runPlanner, runReviewer, runImplementer } from './studio-engine';
 import { usePendingChanges } from '../lib/pending-changes';
+import { useProjects } from '../lib/project-context';
 import { VoiceButton } from '../components/voice-button';
 import { FileAttachmentPreviews } from '../components/image-attachment';
 import { ThinkingOrb } from 'thinking-orbs';
@@ -37,6 +39,7 @@ interface Props {
   activeRepo: ActiveRepoState | null;
   skills?: Skill[];
   mcpServers?: McpServer[];
+  projectGraph?: ProjectGraph | null;
   onOpenRepoSelector?: () => void;
   onOpenSourceControl?: () => void;
   onOpenSettings?: () => void;
@@ -58,6 +61,7 @@ export const StudioPanel: React.FC<Props> = ({
   activeRepo,
   skills,
   mcpServers,
+  projectGraph,
   onOpenRepoSelector,
   onOpenSourceControl,
   onBackToChat,
@@ -72,6 +76,7 @@ export const StudioPanel: React.FC<Props> = ({
   const [refactorFeedback, setRefactorFeedback] = useState('');
 
   const { changes, addChange } = usePendingChanges();
+  const { activeProject, updateProjectFiles } = useProjects();
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +273,7 @@ export const StudioPanel: React.FC<Props> = ({
       const plan = await runPlanner(enrichedTask, activeRepo, config.planner, customFeedback, {
         skills,
         mcpServers,
+        projectGraph: projectGraph || undefined,
         pendingChanges: changes,
       });
 
@@ -283,7 +289,7 @@ export const StudioPanel: React.FC<Props> = ({
       newSession.plan = plan;
       setSession({ ...newSession });
 
-      // 3. Card do Revisor
+      // 3. Card do Revisor (com try/catch isolado para não sobrescrever o card do Planner se o Revisor falhar)
       const reviewerEntryId = addEntry({
         actor: 'reviewer',
         type: 'review',
@@ -292,41 +298,55 @@ export const StudioPanel: React.FC<Props> = ({
         content: 'Validando riscos, impacto arquitetural e integridade...',
       });
 
-      const review = await runReviewer(plan, enrichedTask, activeRepo, config.reviewer, {
-        skills,
-        mcpServers,
-        pendingChanges: changes,
-      });
+      const approvalActions = [
+        {
+          label: 'Aprovar e Implementar',
+          variant: 'primary' as const,
+          onClick: () => approveAndImplement(plan, newSession),
+        },
+        {
+          label: 'Refazer Plano',
+          variant: 'secondary' as const,
+          onClick: () => {
+            setRefactorPromptOpen(true);
+          },
+        },
+        {
+          label: 'Cancelar',
+          variant: 'danger' as const,
+          onClick: () => cancelSession(newSession),
+        },
+      ];
 
-      updateEntry(reviewerEntryId, {
-        title: `Revisão de ${config.reviewer.model}`,
-        observations: review.observations,
-        content: review.summary,
-        status: review.approved ? 'success' : 'warning',
-        actions: [
-          {
-            label: 'Aprovar e Implementar',
-            variant: 'primary',
-            onClick: () => approveAndImplement(plan, newSession),
-          },
-          {
-            label: 'Refazer Plano',
-            variant: 'secondary',
-            onClick: () => {
-              setRefactorPromptOpen(true);
-            },
-          },
-          {
-            label: 'Cancelar',
-            variant: 'danger',
-            onClick: () => cancelSession(newSession),
-          },
-        ],
-      });
+      try {
+        const review = await runReviewer(plan, enrichedTask, activeRepo, config.reviewer, {
+          skills,
+          mcpServers,
+          projectGraph: projectGraph || undefined,
+          pendingChanges: changes,
+        });
 
-      newSession.status = 'awaiting_approval';
-      newSession.review = review;
-      setSession({ ...newSession });
+        updateEntry(reviewerEntryId, {
+          title: `Revisão de ${config.reviewer.model}`,
+          observations: review.observations,
+          content: review.summary,
+          status: review.approved ? 'success' : 'warning',
+          actions: approvalActions,
+        });
+
+        newSession.status = 'awaiting_approval';
+        newSession.review = review;
+        setSession({ ...newSession });
+      } catch (reviewErr: any) {
+        updateEntry(reviewerEntryId, {
+          title: 'Erro na revisão automática',
+          content: `${reviewErr?.message || 'Falha ao executar o Reviewer.'} Você ainda pode aprovar e implementar o plano gerado pelo Planner.`,
+          status: 'warning',
+          actions: approvalActions,
+        });
+        newSession.status = 'awaiting_approval';
+        setSession({ ...newSession });
+      }
     } catch (err: any) {
       updateEntry(plannerEntryId, {
         title: 'Erro no planejamento',
@@ -373,18 +393,29 @@ export const StudioPanel: React.FC<Props> = ({
         },
         async (path, content, type, originalContent) => {
           if (!activeRepo) return;
+          const repoFullName = `${activeRepo.owner}/${activeRepo.repo}`;
           await addChange({
             path,
             newContent: content,
-            repo: `${activeRepo.owner}/${activeRepo.repo}`,
+            repo: repoFullName,
             branch: activeRepo.branch,
             type: type === 'create' ? 'added' : type === 'delete' ? 'deleted' : 'modified',
             originalContent: originalContent ?? '',
           });
+          if (activeProject && activeProject.sourceRepoFullName === repoFullName) {
+            await updateProjectFiles([
+              {
+                path,
+                content,
+                action: type === 'create' ? 'create' : type === 'delete' ? 'delete' : 'update',
+              },
+            ]);
+          }
         },
         {
           skills,
           mcpServers,
+          projectGraph: projectGraph || undefined,
           pendingChanges: changes,
         }
       );

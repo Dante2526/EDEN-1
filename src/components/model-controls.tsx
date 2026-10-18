@@ -266,7 +266,13 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
               <div className="space-y-3">
                 <div className="p-3.5 rounded-xl bg-[color:var(--c-bg-1e1c19)] border border-[color:var(--c-bg-312f2a)] space-y-2.5">
                   <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[color:var(--c-bg-2c2924)]">
-                    <span className="text-[color:var(--c-fg-a8a296)]">Contexto Ativo Atual (Janela de 128k):</span>
+                    <span className="text-[color:var(--c-fg-a8a296)]">
+                      Contexto Ativo Atual (Janela de{' '}
+                      {selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+                        ? '256k'
+                        : '128k'}
+                      ):
+                    </span>
                     <span className="font-mono text-emerald-400 font-semibold">
                       {(conversationTokens?.activeContextTokens || 0).toLocaleString()} tokens
                     </span>
@@ -297,7 +303,11 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 <div className="p-3 rounded-xl bg-[color:var(--c-bg-191714)] border border-[color:var(--c-bg-2d2b25)] text-xs space-y-2 text-[color:var(--c-fg-8c867a)]">
                   <div className="flex justify-between items-center">
                     <span>Janela de Contexto Total:</span>
-                    <span className="text-[color:var(--c-fg-c4bcaa)] font-mono font-medium">128.000 tokens</span>
+                    <span className="text-[color:var(--c-fg-c4bcaa)] font-mono font-medium">
+                      {selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+                        ? '256.000 tokens'
+                        : '128.000 tokens'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Limite por Resposta (max_tokens):</span>

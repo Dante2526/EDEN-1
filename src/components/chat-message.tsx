@@ -42,6 +42,8 @@ interface ChatMessageProps {
   onOpenTerminal?: () => void;
   onOpenSourceControl?: () => void;
   onOpenGraph?: (focusFile?: string) => void;
+  onApprovePlan?: () => void;
+  onTogglePlanMode?: () => void;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -195,6 +197,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onOpenTerminal,
   onOpenSourceControl,
   onOpenGraph,
+  onApprovePlan,
+  onTogglePlanMode,
 }) => {
   const isUser = message.role === 'user';
   const [showReasoning, setShowReasoning] = useState(false);
@@ -1522,6 +1526,46 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               </div>
             ) : null}
           </div>
+
+          {/* Card de Aprovação do Modo Plano Obrigatório (Hard-Gate) */}
+          {message.isPlanMode && hasRealContent && !isStreaming && onApprovePlan && (
+            <div className="w-full mt-4 p-3.5 sm:p-4 rounded-2xl bg-[color:var(--c-bg-221f1b)] border border-[#d97757]/40 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start sm:items-center gap-3 min-w-0">
+                <div className="p-2 rounded-xl bg-[#d97757]/15 border border-[#d97757]/30 shrink-0">
+                  <ListTodo className="w-4 h-4 text-[#d97757]" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">
+                    Plano pronto para revisão (Hard-Gate Ativo)
+                  </span>
+                  <span className="text-[11px] text-[color:var(--c-fg-9c9589)] mt-0.5 leading-snug">
+                    Nenhuma alteração de arquivo foi feita ainda. Aprove para liberar a execução ou envie ajustes no chat.
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                {onTogglePlanMode && (
+                  <button
+                    type="button"
+                    onClick={onTogglePlanMode}
+                    title="Desligar a obrigatoriedade de plano para as próximas mensagens"
+                    className="px-3 py-2 rounded-xl bg-[color:var(--c-bg-2c2924)] hover:bg-[color:var(--c-bg-36322c)] border border-[color:var(--c-bg-3e3a33)] text-[color:var(--c-fg-b8b3a8)] hover:text-[color:var(--c-fg-f3efe6)] text-xs font-medium transition cursor-pointer"
+                  >
+                    Desligar Plano
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onApprovePlan}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#d97757] hover:bg-[#c4663f] text-white text-xs font-semibold transition shadow-sm cursor-pointer select-none"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Aprovar e Executar Plano</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Action Bar (Claude style subtle bottom icons) */}
           {displayContent && !isStreaming && (

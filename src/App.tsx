@@ -91,9 +91,16 @@ import {
   resolveEffectiveFileContent,
   normalizeRepoPath,
 } from './lib/file-patcher';
+import {
+  filterToolsForPlanMode,
+  checkPlanModeWriteGate,
+  buildMandatoryPlanPrompt,
+  isPlanApprovalReply,
+} from './lib/plan-mode-gate';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
+const PLAN_MODE_STORAGE_KEY = 'synap_plan_mode_v1';
 
 // Tools que funcionam SEM repo ativo (busca global no GitHub)
 const SEARCH_GITHUB_REPOS_TOOL = {
@@ -992,7 +999,12 @@ function AppContent() {
     }
   }, []);
 
-  const [isPlanMode, setIsPlanMode] = useState<boolean>(false);
+  const [isPlanMode, setIsPlanMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(PLAN_MODE_STORAGE_KEY) === 'true';
+    }
+    return false;
+  });
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([]);
   const [isTerminalRunning, setIsTerminalRunning] = useState<boolean>(false);
@@ -1616,6 +1628,9 @@ function AppContent() {
   const handleTogglePlanMode = useCallback(() => {
     setIsPlanMode((prev) => {
       const next = !prev;
+      try {
+        localStorage.setItem(PLAN_MODE_STORAGE_KEY, String(next));
+      } catch {}
       if (next && reasoningEffort === 'low') {
         setReasoningEffort('high');
         localStorage.setItem(REASONING_STORAGE_KEY, 'high');
@@ -1654,7 +1669,6 @@ function AppContent() {
   const handleNewChat = useCallback(() => {
     setActiveId(null);
     try { localStorage.removeItem('synap_active_conv_id'); } catch {}
-    setIsPlanMode(false);
     setActiveRepo(null);
     setMainViewTab('chat');
     if (window.innerWidth < 768) {
@@ -1670,11 +1684,6 @@ function AppContent() {
     if (target) {
       if (target.model) setSelectedModel(target.model as ModelId);
       if (target.reasoningEffort) setReasoningEffort(target.reasoningEffort);
-      if (target.isPlanMode !== undefined) {
-        setIsPlanMode(target.isPlanMode);
-      } else {
-        setIsPlanMode(false);
-      }
       setActiveRepo(target.activeRepo || null);
 
       // Se o chat tem repo vinculado, procura um projeto Sandpack
@@ -2433,6 +2442,10 @@ function AppContent() {
       });
       syncLiveChangeRef(savedChange);
 
+      if (activeProject && activeProject.sourceRepoFullName === currentRepo.fullName) {
+        await updateProjectFiles([{ path, content: patchRes.content, action: 'update' }]);
+      }
+
       const editedFile: MessageEditedFile = {
         path,
         type: 'modified',
@@ -2495,6 +2508,16 @@ function AppContent() {
       });
       syncLiveChangeRef(savedChange);
 
+      if (activeProject && activeProject.sourceRepoFullName === currentRepo.fullName) {
+        await updateProjectFiles([
+          {
+            path,
+            content: content || '',
+            action: type === 'deleted' ? 'delete' : type === 'added' ? 'create' : 'update',
+          },
+        ]);
+      }
+
       const editedFile: MessageEditedFile = {
         path,
         type: (type as ChangeType) || 'modified',
@@ -2530,6 +2553,7 @@ function AppContent() {
       }
 
       const processedFiles: MessageEditedFile[] = [];
+      const previewUpdates: Array<{ path: string; content: string; action: 'create' | 'update' | 'delete' }> = [];
 
       for (const item of files) {
         if (!item.path) continue;
@@ -2561,10 +2585,20 @@ function AppContent() {
         });
         syncLiveChangeRef(savedChange);
 
+        previewUpdates.push({
+          path: item.path,
+          content: item.content || '',
+          action: itemType === 'deleted' ? 'delete' : itemType === 'added' ? 'create' : 'update',
+        });
+
         processedFiles.push({
           path: item.path,
           type: itemType,
         });
+      }
+
+      if (activeProject && activeProject.sourceRepoFullName === currentRepo.fullName && previewUpdates.length > 0) {
+        await updateProjectFiles(previewUpdates);
       }
 
       let graphBatchImpact = '';
@@ -2753,7 +2787,21 @@ function AppContent() {
     if (!text && images.length === 0 && documents.length === 0 && selectedPreviewElements.length === 0) return;
     setErrorMessage(null);
 
-    const activePlan = overridePlanMode !== undefined ? overridePlanMode : isPlanMode;
+    const lastAssistantMsg = activeConversation?.messages
+      ? [...activeConversation.messages].reverse().find((m) => m.role === 'assistant')
+      : undefined;
+    const isDirectApprovalOfPreviousPlan =
+      overridePlanMode === undefined &&
+      isPlanMode &&
+      Boolean(lastAssistantMsg?.isPlanMode) &&
+      isPlanApprovalReply(text, true);
+
+    const activePlan =
+      overridePlanMode !== undefined
+        ? overridePlanMode
+        : isDirectApprovalOfPreviousPlan
+        ? false
+        : isPlanMode;
 
     let effectiveModel = selectedModel;
     if (images.length > 0 && !isVisionModel(selectedModel)) {
@@ -2869,24 +2917,30 @@ function AppContent() {
       ? undefined
       : chatActiveRepo
       ? `Você está conectado ao repositório GitHub ativo EXCLUSIVO DESTA CONVERSA: "${chatActiveRepo.fullName}" na branch "${chatActiveRepo.branch}".\n` +
-        `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_code_graph, query_architecture_graph, patch_file, edit_file e batch_edit_files APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
-        `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
-        `REGRA OBRIGATÓRIA DE GRAFO (GRAPH-FIRST ARCHITECTURE - USO COMPULSÓRIO):\n` +
-        `Antes de propor qualquer alteração de código (patch_file, edit_file ou batch_edit_files) ou leitura profunda de múltiplos arquivos, você DEVE OBRIGATORIAMENTE consultar o grafo de arquitetura do projeto via ferramenta query_code_graph (ou query_architecture_graph) passando o caminho do arquivo no parâmetro focus_file ou termo no query. Analise quem importa o arquivo, quem depende dele e quais são os impactos antes de alterar.\n` +
-        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame patch_file ou edit_file DIRETAMENTE via tool_call.\n` +
-        `ECONOMIA DE TOKENS (GRAPHRAG & PATCH CIRÚRGICO): Use o mapa de dependências abaixo (e a ferramenta \`query_code_graph\`) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
-        `EDIÇÃO CIRÚRGICA RÁPIDA (PREFIRA patch_file): Ao editar arquivos existentes, prefira SEMPRE \`patch_file\` (passando \`path\`, \`old_str\` e \`new_str\`, ou \`patches\`) para substituir apenas os trechos alterados com velocidade máxima e sem gastar tokens reescrevendo o arquivo inteiro. Use \`edit_file\` apenas para criar arquivos novos, deletar arquivos ou quando precisar reescrever o arquivo inteiro. ` +
-        `Envie SEMPRE o código-fonte legível em texto claro (TypeScript, JSX, CSS, etc.). É ESTRITAMENTE PROIBIDO codificar arquivos em Base64, usar scripts Python para decodificação ou usar comandos Bash para criar arquivos. ` +
-        `A alteração ficará salva localmente no Source Control (e já visível imediatamente para suas próximas chamadas de read_file/patch_file) para o usuário revisar o diff e commitar.\n\n` +
-        graphRagSummary
+        (activePlan
+          ? `🛑 MODO PLANO OBRIGATÓRIO ATIVO (HARD-GATE DE ESCRITA): Você tem acesso às ferramentas de LEITURA E DIAGNÓSTICO (query_code_graph, query_architecture_graph, read_file, list_files, search_code) para o repositório "${chatActiveRepo.fullName}", mas as ferramentas de escrita (patch_file, edit_file, batch_edit_files) estão BLOQUEADAS até que o usuário aprove o seu plano.\n` +
+            `Investigue o grafo e os arquivos reais primeiro e apresente o Plano de Implementação detalhado em Markdown aguardando o clique em "Aprovar e Executar Plano".\n\n` +
+            graphRagSummary
+          : `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_code_graph, query_architecture_graph, patch_file, edit_file e batch_edit_files APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
+            `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
+            `REGRA OBRIGATÓRIA DE GRAFO (GRAPH-FIRST ARCHITECTURE - USO COMPULSÓRIO):\n` +
+            `Antes de propor qualquer alteração de código (patch_file, edit_file ou batch_edit_files) ou leitura profunda de múltiplos arquivos, você DEVE OBRIGATORIAMENTE consultar o grafo de arquitetura do projeto via ferramenta query_code_graph (ou query_architecture_graph) passando o caminho do arquivo no parâmetro focus_file ou termo no query. Analise quem importa o arquivo, quem depende dele e quais são os impactos antes de alterar.\n` +
+            `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame patch_file ou edit_file DIRETAMENTE via tool_call.\n` +
+            `ECONOMIA DE TOKENS (GRAPHRAG & PATCH CIRÚRGICO): Use o mapa de dependências abaixo (e a ferramenta \`query_code_graph\`) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
+            `EDIÇÃO CIRÚRGICA RÁPIDA (PREFIRA patch_file): Ao editar arquivos existentes, prefira SEMPRE \`patch_file\` (passando \`path\`, \`old_str\` e \`new_str\`, ou \`patches\`) para substituir apenas os trechos alterados com velocidade máxima e sem gastar tokens reescrevendo o arquivo inteiro. Use \`edit_file\` apenas para criar arquivos novos, deletar arquivos ou quando precisar reescrever o arquivo inteiro. ` +
+            `Envie SEMPRE o código-fonte legível em texto claro (TypeScript, JSX, CSS, etc.). É ESTRITAMENTE PROIBIDO codificar arquivos em Base64, usar scripts Python para decodificação ou usar comandos Bash para criar arquivos. ` +
+            `A alteração ficará salva localmente no Source Control (e já visível imediatamente para suas próximas chamadas de read_file/patch_file) para o usuário revisar o diff e commitar.\n\n` +
+            graphRagSummary)
       : activeProject
       ? `Você está conectado ao PROJETO LOCAL ATIVO NO PREVIEW: "${activeProject.name}" (Template: ${activeProject.template}).\n` +
-        `Você tem acesso total às ferramentas de código locais: patch_file, edit_file, read_file, list_files, search_code, update_project_files e create_project.\n` +
         `Arquivos atuais do projeto no workspace:\n` +
         `${Object.keys(activeProject.files || {}).map((f) => `- ${f}`).join('\n')}\n\n` +
-        `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n` +
-        `NUNCA prometa ou responda que vai alterar código em texto puro. Emita OBRIGATORIAMENTE a chamada da ferramenta \`patch_file\`, \`edit_file\` ou \`update_project_files\` na primeira resposta para atualizar o projeto do preview em tempo real!\n` +
-        `Para edições pontuais em arquivos existentes, prefira \`patch_file\` (enviando \`path\`, \`old_str\` e \`new_str\`). Para criar arquivos novos ou reescrever por completo, use \`edit_file\`. A alteração recarregará o Live Preview instantaneamente.`
+        (activePlan
+          ? `🛑 MODO PLANO OBRIGATÓRIO ATIVO (HARD-GATE DE ESCRITA): Use read_file, list_files e search_code para inspecionar os arquivos atuais do projeto e apresente o Plano de Implementação estruturado em Markdown. As ferramentas de alteração estão bloqueadas até o usuário clicar em "Aprovar e Executar Plano".`
+          : `Você tem acesso total às ferramentas de código locais: patch_file, edit_file, read_file, list_files, search_code, update_project_files e create_project.\n` +
+            `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n` +
+            `NUNCA prometa ou responda que vai alterar código em texto puro. Emita OBRIGATORIAMENTE a chamada da ferramenta \`patch_file\`, \`edit_file\` ou \`update_project_files\` na primeira resposta para atualizar o projeto do preview em tempo real!\n` +
+            `Para edições pontuais em arquivos existentes, prefira \`patch_file\` (enviando \`path\`, \`old_str\` e \`new_str\`). Para criar arquivos novos ou reescrever por completo, use \`edit_file\`. A alteração recarregará o Live Preview instantaneamente.`)
       : 'ATENÇÃO: Nenhum repositório GitHub ou projeto local está selecionado nesta conversa. As ferramentas de código (read_file, patch_file, edit_file, list_files, search_code) NÃO estão disponíveis.\n' +
         'Portanto, NUNCA prometa ou diga que vai criar, editar ou salvar arquivos no repositório. Em vez disso, forneça o código completo formatado em Markdown diretamente na sua resposta para o usuário copiar manualmente, e informe que ele pode vincular um repositório no menu superior ou abrir um projeto no Preview.';
 
@@ -2894,7 +2948,8 @@ function AppContent() {
     const activeMcpServers = mcpServers.filter((s) => s.enabled && s.status === 'connected' && s.tools.length > 0);
     const mcpOpenAiTools = activeMcpServers.flatMap((s) => convertMcpToolsToOpenAi(s.tools, s.id));
     const baseTools = (chatActiveRepo || activeProject) ? ALL_CHAT_TOOLS : DEFAULT_CHAT_TOOLS;
-    const requestTools = isNoToolsModel ? [] : [...baseTools, ...mcpOpenAiTools];
+    const filteredBaseTools = filterToolsForPlanMode(baseTools, activePlan);
+    const requestTools = isNoToolsModel ? [] : [...filteredBaseTools, ...mcpOpenAiTools];
 
     const basePrompt = isNoToolsModel
       ? 'Você é o assistente Éden operando com o modelo DeepSeek R1.\n' +
@@ -2918,12 +2973,7 @@ function AppContent() {
         '6. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.';
 
     const planPrompt = activePlan
-      ? 'Você é um estrategista e arquiteto de planejamento sênior. O MODO PLANO (FUNÇÃO PLAN) está ATIVADO. Para a solicitação do usuário, crie OBRIGATORIAMENTE um PLANO DE AÇÃO COMPLETO, PRÁTICO E EXECUTÁVEL, formatado estritamente com os seguintes tópicos em Markdown:\n\n' +
-        '🎯 1. OBJETIVO & RESULTADO ESPERADO (Definição clara da meta)\n' +
-        '📋 2. PRÉ-REQUISITOS & RECURSOS (Ferramentas, materiais ou conhecimentos prévios)\n' +
-        '🗓️ 3. FASES CRONOLÓGICAS PASSO A PASSO (Etapas divididas em Fases/Semanas com ações práticas numeradas)\n' +
-        '⚠️ 4. RISCOS, DESAFIOS & CONTINGÊNCIAS (Possíveis obstáculos e soluções preventivas)\n' +
-        '✅ 5. CRITÉRIOS DE SUCESSO & PRIMEIRO PASSO IMEDIATO (A primeira ação para começar hoje mesmo).'
+      ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject))
       : undefined;
 
     // Injetar habilidades modulares ativas (Skills)
@@ -3485,24 +3535,37 @@ function AppContent() {
             let execution: any = null;
 
             try {
-              if (tc.name.startsWith('mcp__')) {
+              const planGate = checkPlanModeWriteGate(tc.name, activePlan);
+              if (!planGate.allowed) {
+                result = planGate.blockedResultJson!;
+                const callEntry = allToolCalls.find((x) => x.id === tc.id);
+                if (callEntry) {
+                  callEntry.status = 'error';
+                  callEntry.result = result;
+                }
+              } else if (tc.name.startsWith('mcp__')) {
                 const targetServer = mcpServers.find((s) => tc.name.startsWith(`mcp__${s.id}__`));
                 if (targetServer) {
                   result = await executeMcpToolCall(targetServer, tc.name, parsedArgs);
                 } else {
                   result = JSON.stringify({ error: `Servidor MCP correspondente não encontrado para ${tc.name}` });
                 }
+                const callEntry = allToolCalls.find((x) => x.id === tc.id);
+                if (callEntry) {
+                  callEntry.status = 'completed';
+                  callEntry.result = result;
+                  debugInfoRef.current.toolCallsExecuted++;
+                }
               } else {
                 execution = await executeGitHubTool(tc.name, parsedArgs, chatActiveRepo);
                 result = execution.result;
                 editedFile = execution.editedFile;
-              }
-
-              const callEntry = allToolCalls.find((x) => x.id === tc.id);
-              if (callEntry) {
-                callEntry.status = 'completed';
-                callEntry.result = result;
-                debugInfoRef.current.toolCallsExecuted++;
+                const callEntry = allToolCalls.find((x) => x.id === tc.id);
+                if (callEntry) {
+                  callEntry.status = 'completed';
+                  callEntry.result = result;
+                  debugInfoRef.current.toolCallsExecuted++;
+                }
               }
             } catch (toolErr: any) {
               result = JSON.stringify({ error: toolErr?.message || 'Falha ao executar ferramenta.' });
@@ -3639,13 +3702,14 @@ function AppContent() {
             { role: 'assistant', content: cleanText || '[Ação interrompida pelo servidor]' },
             {
               role: 'user',
-              content: chatActiveRepo && !isNoToolsModel
-                ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE a ferramenta (edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
+              content: chatActiveRepo && !isNoToolsModel && !activePlan
+                ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE a ferramenta (patch_file ou edit_file) agora no repositório ativo para concluir o que foi solicitado.'
                 : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou sem introdução.',
             },
           ];
           hasToolCallsToProcess = true;
         } else if (
+          !activePlan &&
           iterationText.trim() &&
           loopCount < MAX_TOOL_ITERATIONS &&
           chatActiveRepo &&
@@ -4015,6 +4079,17 @@ function AppContent() {
     handleSendMessage(prompt);
   }, [deployment, handleSendMessage]);
 
+  // Handler para aprovar e executar o plano em 1 clique (libera o Hard-Gate de escrita no turno de execução)
+  const handleApprovePlan = useCallback(() => {
+    if (isStreaming) return;
+    handleSendMessage(
+      '✅ Plano aprovado! Execute agora todas as alterações planejadas nos arquivos passo a passo usando `patch_file` ou `edit_file`.',
+      [],
+      [],
+      false
+    );
+  }, [isStreaming, handleSendMessage]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bom dia';
@@ -4172,6 +4247,7 @@ function AppContent() {
             activeRepo={activeRepo}
             skills={skills}
             mcpServers={mcpServers}
+            projectGraph={projectGraph}
             onOpenRepoSelector={() => {
               setSidebarTab('repos');
               setIsSidebarOpen(true);
@@ -4293,6 +4369,8 @@ function AppContent() {
                         setIsSidebarOpen(true);
                       }}
                       onOpenGraph={handleOpenGraph}
+                      onApprovePlan={handleApprovePlan}
+                      onTogglePlanMode={handleTogglePlanMode}
                     />
                   </React.Fragment>
                 );

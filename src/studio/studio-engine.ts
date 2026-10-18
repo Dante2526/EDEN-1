@@ -12,11 +12,12 @@ import {
   normalizeRepoPath,
   resolveEffectiveFileContent,
 } from '../lib/file-patcher';
-import { buildGraphFromFiles, queryGraphContext } from '../lib/graphify-engine';
+import { buildGraphFromFiles, queryGraphContext, ProjectGraph } from '../lib/graphify-engine';
 
 export interface StudioRuntimeContext {
   skills?: Skill[];
   mcpServers?: McpServer[];
+  projectGraph?: ProjectGraph | null;
   pendingChanges?: PendingChange[];
 }
 
@@ -389,7 +390,10 @@ async function executeTool(
         }
       }
     }
-    const graph = buildGraphFromFiles(filesForGraph);
+    const graph =
+      runtime?.projectGraph && runtime.projectGraph.nodes.length > 0 && filesForGraph.length === 0
+        ? runtime.projectGraph
+        : buildGraphFromFiles(filesForGraph);
     const qRes = queryGraphContext(graph, {
       query: args.query,
       focusFile: args.focus_file,

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { SynapProject, ProjectFile, ProjectTemplate } from './types';
 import {
   loadProject,
@@ -9,6 +9,7 @@ import {
   setCachedActiveProject,
   getCachedProjectIndex,
 } from './project-storage';
+import { normalizeRepoPath } from './file-patcher';
 
 interface ProjectContextType {
   /** Projeto atualmente aberto no workspace (null = nenhum) */
@@ -120,10 +121,12 @@ const TEMPLATE_STARTERS: Record<ProjectTemplate, Record<string, string>> = {
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeProject, setActiveProjectState] = useState<SynapProject | null>(() => getCachedActiveProject());
+  const activeProjectRef = useRef<SynapProject | null>(activeProject);
   const [projectsIndex, setProjectsIndex] = useState<ProjectContextType['projectsIndex']>(() => getCachedProjectIndex());
   const [loading, setLoading] = useState(false);
 
   const setActiveProject = useCallback((proj: SynapProject | null) => {
+    activeProjectRef.current = proj;
     setActiveProjectState(proj);
     setCachedActiveProject(proj);
   }, []);
@@ -139,12 +142,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const openProject = useCallback(async (id: string) => {
     // Se já é o projeto ativo e carregado, evita re-render desnecessário
-    if (activeProject && activeProject.id === id) return;
+    const current = activeProjectRef.current;
+    if (current && current.id === id) return;
     const project = await loadProject(id);
     if (project) {
       setActiveProject(project);
     }
-  }, [activeProject, setActiveProject]);
+  }, [setActiveProject]);
 
   const closeProject = useCallback(() => {
     setActiveProject(null);
@@ -161,13 +165,15 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // Primeiro os arquivos do template
       for (const [path, content] of Object.entries(starterFiles)) {
-        allFiles[path] = { path, content, active: path.includes('App') || path === 'index.html' };
+        const cleanPath = normalizeRepoPath(path);
+        allFiles[cleanPath] = { path: cleanPath, content, active: cleanPath.includes('App') || cleanPath === 'index.html' };
       }
 
       // Depois os arquivos customizados (sobrescreve se existir)
       if (params.files) {
         for (const [path, content] of Object.entries(params.files)) {
-          allFiles[path] = { path, content };
+          const cleanPath = normalizeRepoPath(path);
+          allFiles[cleanPath] = { path: cleanPath, content };
         }
       }
 
@@ -187,56 +193,65 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setActiveProject(project);
       return project;
     },
-    [refreshIndex]
+    [refreshIndex, setActiveProject]
   );
 
   const updateProjectFiles = useCallback<ProjectContextType['updateProjectFiles']>(
     async (updates) => {
-      if (!activeProject) return;
-      const newFiles = { ...activeProject.files };
+      const current = activeProjectRef.current;
+      if (!current) return;
+      const newFiles = { ...current.files };
       for (const u of updates) {
-        if (u.action === 'delete') {
+        const cleanPath = normalizeRepoPath(u.path);
+        // Remove eventual chave legada com barra inicial se diferir
+        if (u.path !== cleanPath && u.path in newFiles) {
           delete newFiles[u.path];
+        }
+        if (u.action === 'delete') {
+          delete newFiles[cleanPath];
         } else {
-          newFiles[u.path] = {
-            ...newFiles[u.path],
-            path: u.path,
+          newFiles[cleanPath] = {
+            ...newFiles[cleanPath],
+            path: cleanPath,
             content: u.content,
           };
         }
       }
-      const updated = { ...activeProject, files: newFiles };
+      const updated = { ...current, files: newFiles, updatedAt: Date.now() };
       setActiveProject(updated);
       await saveProject(updated);
       await refreshIndex();
     },
-    [activeProject, refreshIndex]
+    [refreshIndex, setActiveProject]
   );
 
   const updateFileContent = useCallback<ProjectContextType['updateFileContent']>(
     async (path, content) => {
-      if (!activeProject) return;
-      const newFiles = {
-        ...activeProject.files,
-        [path]: { ...activeProject.files[path], path, content },
-      };
-      const updated = { ...activeProject, files: newFiles };
+      const current = activeProjectRef.current;
+      if (!current) return;
+      const cleanPath = normalizeRepoPath(path);
+      const newFiles = { ...current.files };
+      if (path !== cleanPath && path in newFiles) {
+        delete newFiles[path];
+      }
+      newFiles[cleanPath] = { ...newFiles[cleanPath], path: cleanPath, content };
+      const updated = { ...current, files: newFiles, updatedAt: Date.now() };
       setActiveProject(updated);
       await saveProject(updated);
       // Não chamamos refreshIndex a cada digitação — só no save manual
     },
-    [activeProject]
+    [setActiveProject]
   );
 
   const removeProject = useCallback<ProjectContextType['removeProject']>(
     async (id) => {
       await deleteProject(id);
       await refreshIndex();
-      if (activeProject?.id === id) {
+      if (activeProjectRef.current?.id === id) {
         setActiveProject(null);
       }
     },
-    [activeProject, refreshIndex]
+    [refreshIndex, setActiveProject]
   );
 
   const renameProject = useCallback<ProjectContextType['renameProject']>(
@@ -247,11 +262,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const updated = { ...project, name: newName.trim(), updatedAt: Date.now() };
       await saveProject(updated);
       await refreshIndex();
-      if (activeProject?.id === id) {
+      if (activeProjectRef.current?.id === id) {
         setActiveProject(updated);
       }
     },
-    [activeProject, refreshIndex]
+    [refreshIndex, setActiveProject]
   );
 
   /**
