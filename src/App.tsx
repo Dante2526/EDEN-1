@@ -598,8 +598,52 @@ const QUERY_ARCHITECTURE_GRAPH_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, ...GITHUB_TOOLS];
+// ============================================================================
+// IMAGE GENERATION TOOL — FLUX.2 Dev via Cloudflare Workers AI
+// ============================================================================
+// Melhor modelo open-source de geração de imagem (2026), ~95% da qualidade do
+// Imagen 4 Ultra. 100% gratuito no free tier da CF (10k neurons/dia).
+// Retorna data URL base64 direto (não precisa de CDN externo).
+// ============================================================================
+const IMAGE_GEN_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'generate_image',
+    description:
+      'Gera imagem a partir de descrição textual usando FLUX.2 Dev (modelo estado da arte open-source, ~95% da qualidade do Imagen 4). ' +
+      'Use para criar ilustrações, conceitos visuais, mockups, ícones, fotos estilizadas, etc. ' +
+      'A imagem volta embutida na resposta (data URL) e aparece direto no chat. ' +
+      'Sem watermark, sem custo, sem API key externa.',
+    parameters: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description:
+            'Descrição detalhada da imagem em inglês (melhor qualidade). Inclua estilo, sujeitos, cenário, iluminação, composição. ' +
+            'Ex: "a majestic lion sitting on a cliff at sunset, golden hour lighting, hyperrealistic, 8k, cinematic composition".',
+        },
+        aspect_ratio: {
+          type: 'string',
+          description: 'Proporção da imagem. Valores: "1:1" (quadrado, padrão), "16:9" (paisagem), "9:16" (retrato), "4:3", "3:4".',
+          enum: ['1:1', '16:9', '9:16', '4:3', '3:4'],
+        },
+        model: {
+          type: 'string',
+          description:
+            'Modelo FLUX a usar (opcional, default: flux-2-dev). ' +
+            '"flux-2-dev": melhor qualidade (recomendado). ' +
+            '"flux-1-schnell": mais rápido (~3s), qualidade um pouco menor.',
+          enum: ['flux-2-dev', 'flux-1-dev', 'flux-1-schnell'],
+        },
+      },
+      required: ['prompt'],
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -1839,6 +1883,42 @@ function AppContent() {
         };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || `Erro ao ler URL ${args.url}` }) };
+      }
+    }
+
+    if (name === 'generate_image') {
+      try {
+        const prompt = args.prompt || '';
+        const aspectRatio = args.aspect_ratio || args.aspectRatio || '1:1';
+        const model = args.model || 'flux-2-dev';
+        const res = await fetch('/api/image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
+          body: JSON.stringify({ prompt, aspect_ratio: aspectRatio, model }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          return { result: JSON.stringify({ error: data.error || `Erro HTTP ${res.status} ao gerar imagem` }) };
+        }
+        // Retorna info da imagem + markdown pra IA embutir na resposta
+        return {
+          result: JSON.stringify({
+            success: true,
+            url: data.url,
+            is_data_url: true,
+            markdown: data.markdown,
+            model: data.model,
+            size: data.size,
+            aspect_ratio: data.aspect_ratio,
+            // Importante: instrução pra IA saber que pode embutir a imagem
+            hint: 'Imagem gerada com sucesso. Para exibi-la na resposta, escreva o markdown exatamente como está no campo "markdown" acima. NÃO modifique o data URL.',
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao gerar imagem via FLUX.2 Dev' }) };
       }
     }
 
