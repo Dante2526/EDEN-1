@@ -1525,6 +1525,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 </div>
               </div>
             ) : null}
+
+            {hasRealContent && isStreaming && !hasRunningTool && (
+              <div className="flex items-center gap-2.5 mt-3 px-3 py-2 rounded-xl bg-[color:var(--c-bg-24211d)]/80 border border-[color:var(--c-bg-3a352a)] w-fit">
+                <span className="w-2 h-2 rounded-full bg-[#d97757] animate-pulse shrink-0" />
+                <span className="text-[11px] text-[color:var(--c-fg-9c9589)] font-mono">
+                  {isAwaitingCompletion
+                    ? 'Aguardando confirmação das ferramentas em segundo plano…'
+                    : thinkingContent
+                    ? `Processando próxima etapa (${thinkingContent.length.toLocaleString()} caracteres de raciocínio)…`
+                    : 'Executando próxima etapa…'}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Card de Aprovação do Modo Plano Obrigatório (Hard-Gate) */}

@@ -48,4 +48,25 @@ describe('agentic-patterns (Detecção de Trabalho Incompleto e Resiliência)', 
     assert.equal(isRecoverableStreamErrorMessage('Chave API inválida'), false);
     assert.equal(isRecoverableStreamErrorMessage('Modelo não autorizado'), false);
   });
+
+  it('detecta promessas terminadas em dois-pontos ("Preciso conferir o config:", "Agora deixa eu resolver...:")', () => {
+    const msg1 =
+      'As animações customizadas (spin_4s, bounce_2s) usam classes arbitrárias — se os keyframes não existirem no config do Tailwind, a engrenagem e o martelo ficam parados. Preciso conferir o config:';
+    const msg2 =
+      'Agora deixa eu resolver o que realmente falta — título em branco sólido + conferir as animações no config:';
+    const msg3 =
+      'O Sparkles ainda está lá — e também o parágrafo que você pediu pra remover antes. Vou aplicar tudo de uma vez:';
+
+    assert.equal(looksLikeIncompleteWork(msg1), true);
+    assert.equal(looksLikeIncompleteWork(msg2), true);
+    assert.equal(looksLikeFileModificationPromise(msg2), true);
+    assert.equal(looksLikeIncompleteWork(msg3), true);
+    assert.equal(looksLikeFileModificationPromise(msg3), true);
+  });
+
+  it('não dispara falso positivo quando o 1º parágrafo tinha "Vou aplicar" mas o último parágrafo já concluiu ("Feito! ✅")', () => {
+    const completedMultiTurn =
+      'O Sparkles ainda está lá — vou aplicar tudo de uma vez:\n\nFeito! ✅ Todas as alterações foram salvas no Maintenance.tsx.';
+    assert.equal(looksLikeIncompleteWork(completedMultiTurn), false);
+  });
 });

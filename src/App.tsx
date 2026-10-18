@@ -2925,7 +2925,8 @@ function AppContent() {
             `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
             `REGRA OBRIGATÓRIA DE GRAFO (GRAPH-FIRST ARCHITECTURE - USO COMPULSÓRIO):\n` +
             `Antes de propor qualquer alteração de código (patch_file, edit_file ou batch_edit_files) ou leitura profunda de múltiplos arquivos, você DEVE OBRIGATORIAMENTE consultar o grafo de arquitetura do projeto via ferramenta query_code_graph (ou query_architecture_graph) passando o caminho do arquivo no parâmetro focus_file ou termo no query. Analise quem importa o arquivo, quem depende dele e quais são os impactos antes de alterar.\n` +
-            `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler ou alterar arquivos (ex: "Vou listar os arquivos...", "Vou localizar o arquivo...", "Primeiro, vou listar...", "Deixe-me checar..."). Se precisa consultar, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call. Se precisa criar, alterar ou remover código, chame patch_file ou edit_file DIRETAMENTE via tool_call.\n` +
+            `IMPORTANTE SOBRE O GRAPHIFY: No ambiente web do Éden, o grafo de conhecimento JÁ ESTÁ EXTRAÍDO E CARREGADO EM MEMÓRIA automaticamente. NUNCA tente rodar comandos de terminal como "graphify extract" ou "graphify update", e NUNCA escreva para o usuário que vai extrair o grafo em segundo plano — basta chamar diretamente a ferramenta query_code_graph.\n` +
+            `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler, conferir ou alterar arquivos (ex: "Vou listar os arquivos...", "Preciso conferir o config:", "Agora deixa eu resolver...", "Vou aplicar tudo de uma vez:"). Se precisa consultar ou conferir um arquivo, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call na mesma resposta! Se precisa criar, alterar ou remover código, chame patch_file ou edit_file DIRETAMENTE via tool_call na mesma resposta!\n` +
             `ECONOMIA DE TOKENS (GRAPHRAG & PATCH CIRÚRGICO): Use o mapa de dependências abaixo (e a ferramenta \`query_code_graph\`) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +
             `EDIÇÃO CIRÚRGICA RÁPIDA (PREFIRA patch_file): Ao editar arquivos existentes, prefira SEMPRE \`patch_file\` (passando \`path\`, \`old_str\` e \`new_str\`, ou \`patches\`) para substituir apenas os trechos alterados com velocidade máxima e sem gastar tokens reescrevendo o arquivo inteiro. Use \`edit_file\` apenas para criar arquivos novos, deletar arquivos ou quando precisar reescrever o arquivo inteiro. ` +
             `Envie SEMPRE o código-fonte legível em texto claro (TypeScript, JSX, CSS, etc.). É ESTRITAMENTE PROIBIDO codificar arquivos em Base64, usar scripts Python para decodificação ou usar comandos Bash para criar arquivos. ` +
@@ -2963,7 +2964,7 @@ function AppContent() {
       : 'Você é o assistente Éden com ferramentas avançadas integradas.\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n' +
         'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
-        'É ESTRITAMENTE PROIBIDO responder apenas prometendo ou anunciando que vai agir (ex: "Vou criar o arquivo...", "Vou listar os arquivos...", "Vou localizar...", "Primeiro vou...", "Deixe-me verificar..."). Emita a chamada de ferramenta na mesma resposta!\n' +
+        'É ESTRITAMENTE PROIBIDO responder apenas prometendo ou anunciando que vai agir (ex: "Vou criar o arquivo...", "Vou listar os arquivos...", "Vou localizar...", "Primeiro vou...", "Deixe-me verificar...", "Preciso conferir o config:"). Emita a chamada de ferramenta na mesma resposta!\n' +
         'Regras estritas para ferramentas:\n' +
         '1. Emulador de Terminal Git: Você tem acesso à ferramenta `run_terminal_command` para executar comandos no Emulador de Terminal Git (ex: `git status`, `git log`, `git branch`, `git checkout`, `git commit`, `git diff`, `ls`, `cat <arquivo>`, `pwd`, `grep`, `echo`, etc.). Os comandos operam no repositório GitHub ativo. Sempre que o usuário pedir para executar comandos Git/Unix ou inspecionar o estado do repositório via terminal, EXECUTE a ferramenta `run_terminal_command` e relate a saída. ATENÇÃO: O terminal é um emulador Git e NÃO suporta redirecionamento de shell (`>`, `>>`, `cat >`, heredocs `<< EOF`, `touch`, `nano`, `vi` ou `find`). NUNCA tente criar ou gravar arquivos através do terminal — para criar ou editar arquivos use SEMPRE a ferramenta `edit_file` ou `batch_edit_files`.\n' +
         '2. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais, documentações técnicas ou URLs fornecidas diretamente pelo usuário.\n' +
@@ -3031,6 +3032,8 @@ function AppContent() {
 
       let hasToolCallsToProcess = true;
       const MAX_TOOL_ITERATIONS = 45;
+      const MAX_CONSECUTIVE_AUTO_CONTINUES = 2;
+      let consecutiveAutoContinues = 0;
       let loopCount = 0;
       const allEditedFiles: MessageEditedFile[] = [];
       const allToolCalls: MessageToolCall[] = [];
@@ -3243,168 +3246,184 @@ function AppContent() {
         let buffer = '';
         const toolCallsAccumulator: Record<number, { id: string; name: string; arguments: string }> = {};
         let iterationTokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined = undefined;
+        let streamDone = false;
+        let lastUsefulPayloadAt = Date.now();
+        const READ_CHUNK_TIMEOUT_MS = 40000; // 40s sem nenhum byte do servidor (keepalive é a cada 5s)
+        const MAX_SILENT_KEEPALIVE_MS = 85000; // 85s recebendo apenas keepalive sem tokens reais
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        try {
+          while (!streamDone) {
+            let readTimer: ReturnType<typeof setTimeout> | null = null;
+            const readPromise = reader.read();
+            const timeoutPromise = new Promise<{ done: true; value: undefined; timedOut: true }>((resolve) => {
+              readTimer = setTimeout(() => {
+                resolve({ done: true, value: undefined, timedOut: true });
+              }, READ_CHUNK_TIMEOUT_MS);
+            });
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+            const readResult = (await Promise.race([readPromise, timeoutPromise])) as {
+              done: boolean;
+              value?: Uint8Array;
+              timedOut?: boolean;
+            };
+            if (readTimer) clearTimeout(readTimer);
 
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data:')) continue;
-
-            const dataStr = trimmed.replace(/^data:\s*/, '');
-            if (dataStr === '[DONE]') {
+            if (readResult.timedOut) {
+              console.warn('[Synap] Client stream watchdog: 40s sem dados do servidor, encerrando leitura da rodada.');
+              streamErrorMsg = 'Stream interrupted: A conexão ficou inativa por mais de 40s.';
+              iterationFinishReason = 'interrupted';
               break;
             }
 
-            try {
-              const parsed = JSON.parse(dataStr);
-              if (parsed.error) {
-                // Erro enviado pelo servidor dentro do stream (ex.: NVIDIA sem resposta)
-                streamErrorMsg =
-                  typeof parsed.error === 'string'
-                    ? parsed.error
-                    : parsed.error.message || JSON.stringify(parsed.error);
-              }
-              if (parsed.isInterruption) {
-                iterationFinishReason = 'interrupted';
-              }
-              const choice = parsed.choices?.[0];
-              if (choice?.finish_reason) iterationFinishReason = choice.finish_reason;
-              const delta = choice?.delta || choice?.message;
+            const { done, value } = readResult;
+            if (done) break;
 
-              if (parsed.usage) {
-                iterationTokenUsage = {
-                  promptTokens: parsed.usage.prompt_tokens || 0,
-                  completionTokens: parsed.usage.completion_tokens || 0,
-                  totalTokens: parsed.usage.total_tokens || 0,
-                };
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith('data:')) continue;
+
+              lastUsefulPayloadAt = Date.now();
+              const dataStr = trimmed.replace(/^data:\s*/, '');
+              if (dataStr === '[DONE]') {
+                streamDone = true;
+                break;
               }
 
-              if (delta) {
-                if (delta.reasoning_content) {
-                  iterationReasoning += delta.reasoning_content;
-                } else if (delta.reasoning) {
-                  iterationReasoning += delta.reasoning;
+              try {
+                const parsed = JSON.parse(dataStr);
+                if (parsed.error) {
+                  // Erro enviado pelo servidor dentro do stream (ex.: NVIDIA sem resposta)
+                  streamErrorMsg =
+                    typeof parsed.error === 'string'
+                      ? parsed.error
+                      : parsed.error.message || JSON.stringify(parsed.error);
+                }
+                if (parsed.isInterruption) {
+                  iterationFinishReason = 'interrupted';
+                }
+                const choice = parsed.choices?.[0];
+                if (choice?.finish_reason) iterationFinishReason = choice.finish_reason;
+                const delta = choice?.delta || choice?.message;
+
+                if (parsed.usage) {
+                  iterationTokenUsage = {
+                    promptTokens: parsed.usage.prompt_tokens || 0,
+                    completionTokens: parsed.usage.completion_tokens || 0,
+                    totalTokens: parsed.usage.total_tokens || 0,
+                  };
                 }
 
-                if (delta.content) {
-                  iterationText += delta.content;
-                }
+                if (delta) {
+                  if (delta.reasoning_content) {
+                    iterationReasoning += delta.reasoning_content;
+                  } else if (delta.reasoning) {
+                    iterationReasoning += delta.reasoning;
+                  }
 
-                // Accumulate tool calls (OpenAI standard format)
-                if (delta.tool_calls && Array.isArray(delta.tool_calls)) {
-                  for (const tc of delta.tool_calls) {
-                    const idx = tc.index ?? 0;
-                    if (!toolCallsAccumulator[idx]) {
-                      toolCallsAccumulator[idx] = {
-                        id: tc.id || `call_${Date.now()}_${idx}`,
-                        name: tc.function?.name || '',
+                  if (delta.content) {
+                    iterationText += delta.content;
+                  }
+
+                  // Accumulate tool calls (OpenAI standard format)
+                  if (delta.tool_calls && Array.isArray(delta.tool_calls)) {
+                    for (const tc of delta.tool_calls) {
+                      const idx = tc.index ?? 0;
+                      if (!toolCallsAccumulator[idx]) {
+                        toolCallsAccumulator[idx] = {
+                          id: tc.id || `call_${Date.now()}_${idx}`,
+                          name: tc.function?.name || '',
+                          arguments: '',
+                        };
+                      }
+                      if (tc.id) toolCallsAccumulator[idx].id = tc.id;
+                      if (tc.function?.name) toolCallsAccumulator[idx].name = tc.function.name;
+                      if (tc.function?.arguments) toolCallsAccumulator[idx].arguments += tc.function.arguments;
+                    }
+                  } else if (delta.function_call) {
+                    // Legacy function_call fallback
+                    if (!toolCallsAccumulator[0]) {
+                      toolCallsAccumulator[0] = {
+                        id: `call_${Date.now()}_0`,
+                        name: delta.function_call.name || '',
                         arguments: '',
                       };
                     }
-                    if (tc.id) toolCallsAccumulator[idx].id = tc.id;
-                    if (tc.function?.name) toolCallsAccumulator[idx].name = tc.function.name;
-                    if (tc.function?.arguments) toolCallsAccumulator[idx].arguments += tc.function.arguments;
+                    if (delta.function_call.name) toolCallsAccumulator[0].name = delta.function_call.name;
+                    if (delta.function_call.arguments) toolCallsAccumulator[0].arguments += delta.function_call.arguments;
                   }
-                } else if (delta.function_call) {
-                  // Legacy function_call fallback
-                  if (!toolCallsAccumulator[0]) {
-                    toolCallsAccumulator[0] = {
-                      id: `call_${Date.now()}_0`,
-                      name: delta.function_call.name || '',
-                      arguments: '',
-                    };
+
+                  const currentCombinedText = accumulatedAssistantText
+                    ? `${accumulatedAssistantText}\n\n${iterationText}`
+                    : iterationText;
+
+                  const currentCombinedReasoning = accumulatedReasoningText
+                    ? `${accumulatedReasoningText}\n\n${iterationReasoning}`
+                    : iterationReasoning;
+
+                  // Throttle de renderização: atualiza UI no máximo a cada 50ms
+                  // pra evitar jank visual com tokens muito rápidos
+                  const now = Date.now();
+                  if (!lastRenderRef.current || now - lastRenderRef.current > 50) {
+                    lastRenderRef.current = now;
+                    setConversations((prev) =>
+                      prev.map((c) => {
+                        if (c.id !== currentConvId) return c;
+                        return {
+                          ...c,
+                          messages: c.messages.map((m) =>
+                            m.id === assistantMessageId
+                              ? {
+                                  ...m,
+                                  content: currentCombinedText,
+                                  reasoning: currentCombinedReasoning || undefined,
+                                  editedFiles: allEditedFiles.length > 0 ? allEditedFiles : undefined,
+                                  toolCalls: allToolCalls.length > 0 ? allToolCalls : undefined,
+                                  tokenUsage: iterationTokenUsage,
+                                  fallbackWarning,
+                                }
+                              : m
+                          ),
+                        };
+                      })
+                    );
                   }
-                  if (delta.function_call.name) toolCallsAccumulator[0].name = delta.function_call.name;
-                  if (delta.function_call.arguments) toolCallsAccumulator[0].arguments += delta.function_call.arguments;
                 }
+              } catch {}
+            }
 
-                const currentCombinedText = accumulatedAssistantText
-                  ? `${accumulatedAssistantText}\n\n${iterationText}`
-                  : iterationText;
-
-                const currentCombinedReasoning = accumulatedReasoningText
-                  ? `${accumulatedReasoningText}\n\n${iterationReasoning}`
-                  : iterationReasoning;
-
-                // Throttle de renderização: atualiza UI no máximo a cada 50ms
-                // pra evitar jank visual com tokens muito rápidos
-                const now = Date.now();
-                if (!lastRenderRef.current || now - lastRenderRef.current > 50) {
-                  lastRenderRef.current = now;
-                  setConversations((prev) =>
-                    prev.map((c) => {
-                      if (c.id !== currentConvId) return c;
-                      return {
-                        ...c,
-                        messages: c.messages.map((m) =>
-                          m.id === assistantMessageId
-                            ? {
-                                ...m,
-                                content: currentCombinedText,
-                                reasoning: currentCombinedReasoning || undefined,
-                                editedFiles: allEditedFiles.length > 0 ? allEditedFiles : undefined,
-                                toolCalls: allToolCalls.length > 0 ? allToolCalls : undefined,
-                                tokenUsage: iterationTokenUsage,
-                                fallbackWarning,
-                              }
-                            : m
-                        ),
-                      };
-                    })
-                  );
-                }
-              }
-            } catch {}
+            if (!streamDone && Date.now() - lastUsefulPayloadAt > MAX_SILENT_KEEPALIVE_MS) {
+              console.warn('[Synap] Client stream watchdog: 85s apenas com keepalives sem tokens reais.');
+              streamErrorMsg = 'Stream interrupted: O modelo demorou mais de 85s sem enviar tokens.';
+              iterationFinishReason = 'interrupted';
+              break;
+            }
           }
+        } finally {
+          try {
+            await reader.cancel();
+          } catch {}
         }
 
+        let hadRecoverableStreamError = false;
         if (streamErrorMsg) {
           // Limpa do iterationText qualquer mensagem de erro injetada por sendErrorAndClose
           iterationText = iterationText.replace(/\n\n⚠️ \*\*Erro:\*\* .*/g, '').trim();
 
-          const isRecoverableStreamError = isRecoverableStreamErrorMessage(streamErrorMsg);
+          hadRecoverableStreamError = isRecoverableStreamErrorMessage(streamErrorMsg);
 
-          if (!iterationText.trim() && Object.keys(toolCallsAccumulator).length === 0 && !isRecoverableStreamError) {
+          if (!iterationText.trim() && Object.keys(toolCallsAccumulator).length === 0 && !hadRecoverableStreamError) {
             // Sem texto e sem tool calls — erro real não recuperável, lança exceção
             throw new Error(streamErrorMsg);
           }
 
-          if (isRecoverableStreamError && loopCount < MAX_TOOL_ITERATIONS) {
-            console.log('[Synap] Erro recuperável de stream detectado:', streamErrorMsg, '— continuando trabalho automaticamente');
-            const cleanText = iterationText.trim();
-            if (cleanText) {
-              accumulatedAssistantText = accumulatedAssistantText
-                ? `${accumulatedAssistantText}\n\n${cleanText}`
-                : cleanText;
-              streamingAccumulatedTextRef.current = accumulatedAssistantText;
-            }
-
-            const hasCompletedReads = allToolCalls.some((tc) => (tc.name === 'read_file' || tc.name === 'list_files') && tc.status === 'completed');
-            const continuationPrompt = chatActiveRepo && !isNoToolsModel
-              ? hasCompletedReads
-                ? 'Sua conexão foi interrompida momentaneamente pelo servidor. Como as inspeções e leituras de arquivos já foram concluídas com sucesso, execute IMEDIATAMENTE a ferramenta edit_file para aplicar a alteração solicitada no repositório ativo.'
-                : 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE as ferramentas necessárias (ex: edit_file ou create_file) agora no repositório ativo para concluir o que foi solicitado.'
-              : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou, sem repetir nada e sem introdução.';
-
-            currentMessagesForApi = [
-              ...currentMessagesForApi,
-              { role: 'assistant', content: cleanText || 'Continuando execução...' },
-              {
-                role: 'user',
-                content: continuationPrompt,
-              },
-            ];
-            hasToolCallsToProcess = true;
-            // Limpa streamErrorMsg para não poluir a UI nesta rodada
+          if (hadRecoverableStreamError && consecutiveAutoContinues < MAX_CONSECUTIVE_AUTO_CONTINUES && loopCount < MAX_TOOL_ITERATIONS) {
+            // Será tratado de forma unificada no bloco de continuação abaixo sem duplicar mensagens
             streamErrorMsg = '';
-          } else {
-            // Outro erro ou limite de iterações atingido — adiciona aviso no texto
+          } else if (!hadRecoverableStreamError) {
             iterationText += `\n\n⚠️ ${streamErrorMsg}`;
           }
         }
@@ -3483,6 +3502,7 @@ function AppContent() {
 
         if (detectedCalls.length > 0) {
           hasToolCallsToProcess = true;
+          consecutiveAutoContinues = 0;
 
           // Register tool calls in running state
           for (const tc of detectedCalls) {
@@ -3675,8 +3695,10 @@ function AppContent() {
           }
         } else if (
           iterationFinishReason === 'length' &&
+          consecutiveAutoContinues < MAX_CONSECUTIVE_AUTO_CONTINUES &&
           loopCount < MAX_TOOL_ITERATIONS
         ) {
+          consecutiveAutoContinues++;
           // Resposta cortada por limite de tokens (seja no raciocínio ou no texto)
           console.log('[Synap] finish_reason=length — continuando resposta/raciocínio automaticamente');
           const lastAssistantContent = iterationText.trim() || '[Raciocínio inicial concluído]';
@@ -3692,18 +3714,25 @@ function AppContent() {
           ];
           hasToolCallsToProcess = true;
         } else if (
-          (iterationFinishReason === 'interrupted' || iterationFinishReason === 'error') &&
+          (hadRecoverableStreamError || iterationFinishReason === 'interrupted' || iterationFinishReason === 'error') &&
+          consecutiveAutoContinues < MAX_CONSECUTIVE_AUTO_CONTINUES &&
           loopCount < MAX_TOOL_ITERATIONS
         ) {
+          consecutiveAutoContinues++;
           console.log('[Synap] finish_reason=interrupted/error — auto-continuando execução');
           const cleanText = iterationText.trim();
+          const hasCompletedReads = allToolCalls.some(
+            (tc) => (tc.name === 'read_file' || tc.name === 'list_files') && tc.status === 'completed'
+          );
           currentMessagesForApi = [
             ...currentMessagesForApi,
             { role: 'assistant', content: cleanText || '[Ação interrompida pelo servidor]' },
             {
               role: 'user',
               content: chatActiveRepo && !isNoToolsModel && !activePlan
-                ? 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE a ferramenta (patch_file ou edit_file) agora no repositório ativo para concluir o que foi solicitado.'
+                ? hasCompletedReads
+                  ? 'Sua conexão foi interrompida momentaneamente pelo servidor. Como as leituras já foram concluídas, execute IMEDIATAMENTE a ferramenta (patch_file ou edit_file) para aplicar a alteração solicitada no repositório ativo.'
+                  : 'Sua resposta anterior foi interrompida pelo servidor antes de concluir as alterações nos arquivos. Execute IMEDIATAMENTE a ferramenta (patch_file ou edit_file) agora no repositório ativo para concluir o que foi solicitado.'
                 : 'Sua resposta anterior foi interrompida pelo servidor. Continue EXATAMENTE de onde parou sem introdução.',
             },
           ];
@@ -3711,12 +3740,14 @@ function AppContent() {
         } else if (
           !activePlan &&
           iterationText.trim() &&
+          consecutiveAutoContinues < MAX_CONSECUTIVE_AUTO_CONTINUES &&
           loopCount < MAX_TOOL_ITERATIONS &&
           chatActiveRepo &&
           allEditedFiles.length === 0 &&
           detectedCalls.length === 0 &&
           looksLikeFileModificationPromise(iterationText)
         ) {
+          consecutiveAutoContinues++;
           console.log('[Synap] IA prometeu alterar arquivos mas não disparou tool — forçando execução');
           currentMessagesForApi = [
             ...currentMessagesForApi,
@@ -3725,19 +3756,22 @@ function AppContent() {
               role: 'user',
               content: isNoToolsModel
                 ? 'Você descreveu alterações mas ainda não emitiu o bloco <synap_edit path="..." type="modified">. Emita IMEDIATAMENTE o bloco <synap_edit path="caminho/do/arquivo" type="modified"> com o código completo para aplicar as alterações solicitadas no repositório ativo.'
-                : 'Você descreveu alterações mas ainda não executou a ferramenta (edit_file ou create_file). ' +
+                : 'Você descreveu alterações mas ainda não executou a ferramenta (patch_file ou edit_file). ' +
                   'Execute IMEDIATAMENTE a ferramenta apropriada agora para aplicar as alterações solicitadas no repositório ativo.',
             },
           ];
           hasToolCallsToProcess = true;
         } else if (
+          !activePlan &&
           iterationFinishReason === 'stop' &&
           iterationText.trim() &&
+          consecutiveAutoContinues < MAX_CONSECUTIVE_AUTO_CONTINUES &&
           loopCount < MAX_TOOL_ITERATIONS &&
           // AGENTIC LOOP: detecta quando a IA indica que vai continuar trabalhando
           // mas parou a resposta antes de concluir. Auto-injeta um continuation prompt.
           looksLikeIncompleteWork(iterationText)
         ) {
+          consecutiveAutoContinues++;
           console.log('[Synap] agentic loop detectado — continuando trabalho automaticamente');
           currentMessagesForApi = [
             ...currentMessagesForApi,
@@ -3745,10 +3779,8 @@ function AppContent() {
             {
               role: 'user',
               content:
-                'Continue trabalhando agora. Não pare até terminar a tarefa. ' +
-                'Não repita o que já fez, não peça permissão, não diga que vai verificar — apenas faça. ' +
-                'Se precisar de mais informações, faça perguntas específicas. ' +
-                'Se terminou a tarefa, escreva um resumo final do que foi feito.',
+                'Você encerrou sua resposta prometendo uma ação ou verificação (ex: terminando com dois-pontos ":"), mas não emitiu a chamada de ferramenta. ' +
+                'Execute IMEDIATAMENTE a tool_call necessária (read_file, patch_file, edit_file ou search_code) agora, ou se já concluiu tudo, apresente apenas o resumo final sem prometer novas ações.',
             },
           ];
           hasToolCallsToProcess = true;

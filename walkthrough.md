@@ -1721,3 +1721,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm run build`: compilado com sucesso em 2.46s.
   - `graphify update .`: grafo de conhecimento atualizado (14.697 nós).
+
+## 104. Correção do Travamento Infinito em "Pensando…" e Auto-Continuação Inteligente
+- **Solicitação do Usuário:** Análise de transcrição real do Éden onde a IA ficava presa indefinidamente no estado `"Pensando…"` após concluir edições (`"Feito! ✅"`), ou parava de responder após prometer ações terminadas em dois-pontos (`"Preciso conferir o config:"` / `"Agora deixa eu resolver...:"`) e alucinava comandos CLI do Graphify (`graphify extract . --code-only`).
+- **Causas Raiz Identificadas (`systematic-debugging` + `graphify`):**
+  1. **`break` Incompleto no Leitor SSE (`src/App.tsx`):** `if (dataStr === '[DONE]') break;` saía apenas do loop interno `for (const line of lines)`, mantendo o `while (true) { await reader.read() }` externo bloqueado indefinidamente caso a conexão HTTP não fechasse imediatamente no navegador.
+  2. **Ausência de Watchdog no Cliente e Duplicação de Auto-Continuação em Erros de Stream (`src/App.tsx`):** Se o stream ficasse mudo ou só enviasse keepalives, `reader.read()` nunca resolvia. Além disso, quando ocorria `streamErrorMsg` recuperável, o código empilhava a mensagem de continuação no bloco do stream E caía novamente no `else if (iterationFinishReason === 'interrupted')`, duplicando turnos até 45 vezes (`MAX_TOOL_ITERATIONS = 45`).
+  3. **Falso Positivo em `looksLikeIncompleteWork` após Conclusão (`src/lib/agentic-patterns.ts`):** Quando o 1º parágrafo dizia `"Vou aplicar tudo de uma vez:"` e o último dizia `"Feito! ✅"`, a regex avaliava os últimos 450 caracteres como um todo e reativava o loop agêntico mesmo com a tarefa concluída. Por outro lado, faltavam os verbos `"aplicar"`, `"conferir"`, `"resolver"` e `"corrigir"` quando a IA parava em dois-pontos (`:`).
+  4. **Alucinação de CLI do Graphify e Falta de Feedback no Rodapé (`src/App.tsx`, `src/components/chat-message.tsx`):** O prompt de repositório não deixava explícito que o grafo já reside em memória (`query_code_graph`), e o card inferior de status só aparecia quando `!hasRealContent`, deixando apenas a pílula pequena no topo durante turnos subsequentes.
+- **Correções Aplicadas:**
+  - Adição da flag `streamDone`, `finally { await reader.cancel(); }` e Watchdog de leitura no cliente (`READ_CHUNK_TIMEOUT_MS = 40_000`, `MAX_SILENT_KEEPALIVE_MS = 85_000`) em `src/App.tsx`.
+  - Unificação do tratamento de `hadRecoverableStreamError` e limite estrito de `MAX_CONSECUTIVE_AUTO_CONTINUES = 2` para auto-continuações sem chamadas de ferramenta.
+  - Verificação de `COMPLETION_MARKERS` no último parágrafo/linha (`extractLastParagraph`) e suporte a verbos `aplicar`/`conferir`/`resolver`/`corrigir` em `src/lib/agentic-patterns.ts` (+ 2 novos testes em `src/lib/agentic-patterns.test.ts`).
+  - Blindagem anti-alucinação de CLI do Graphify no `repoPrompt` (`src/App.tsx`) e barra de status viva no rodapé da mensagem em `src/components/chat-message.tsx`.
+- **Evidências de Verificação:**
+  - `npm test`: 107/107 testes unitários passando em 29 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: compilado com sucesso.
+  - `graphify update .`: grafo de conhecimento atualizado (14.699 nós).
+
