@@ -1740,3 +1740,21 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: compilado com sucesso.
   - `graphify update .`: grafo de conhecimento atualizado (14.699 nós).
 
+## 105. Aceleração de Conexão e Redução de Time-To-First-Token (TTFT) com a NVIDIA NIM
+- **Solicitação do Usuário:** Otimizar a velocidade de conexão com a IA para eliminar a demora excessiva no estado `"Conectando… Estabelecendo conexão com o modelo de IA…"`.
+- **Diagnóstico de Gargalos (`systematic-debugging` + `graphify`):**
+  1. **Sobrecarga de Prefill e Guided Decoding (`src/App.tsx`):** Toda requisição enviava até 23 ferramentas (`ALL_CHAT_TOOLS` + MCP) e todas as 9 Skills ativas, obrigando o motor vLLM/TensorRT-LLM da NVIDIA a compilar schemas JSON duplicados ou fora de contexto (ex.: `generate_document`, `run_python`, tools locais do Sandpack mesmo quando um repositório GitHub estava ativo).
+  2. **Repetição de Fallbacks HTTP 400/422 sem Memória (`api/chat.ts`):** Quando um modelo rejeitava `reasoning_effort`, `tools` ou `max_tokens`, o backend fazia um 2º POST do zero em todas as mensagens por não cachear a configuração aceita. Além disso, o modo `low` forçava `enable_thinking: true` no Gemma 4 31B e Nemotron 3.5 Super.
+  3. **Timeout Único de 75s na Conexão Inicial (`api/chat.ts`):** Se a 1ª conexão caísse em uma fila congestionada da NVIDIA NIM, aguardava 75s antes de tentar outra rota.
+  4. **Atraso Visual na Transição de `"Conectando…"` para `"Pensando…"` (`src/components/chat-message.tsx`):** `isConnecting` permanecia `true` até chegar o 1º token de texto/raciocínio, mesmo após o handshake HTTP 200 da NVIDIA já ter sido concluído.
+- **Correções e Otimizações Aplicadas:**
+  - **Poda Inteligente de Tools e Skills (`src/lib/smart-prefill.ts` + `src/lib/smart-prefill.test.ts`):** Criação de `selectContextualTools` e `selectContextualSkills` para remover ferramentas duplicadas (`query_architecture_graph`, `read_github_file`, `search_github_repos`), omitir tools do Sandpack quando em repositório GitHub, e enviar `generate_document`/`run_python` e skills específicas (`doc-creator`, `conventional-commits`, `cloudflare-pages`) apenas quando relevantes ao prompt.
+  - **Cache de Fallbacks + Fast-Connect Retry (`api/chat.ts`):** Adição de `modelFallbackCache` em memória, desativação de `enable_thinking` forçado quando `selectedEffort === 'low'`, timeout inicial rápido de **20s** com retry automático em nova rota, e emissão imediata de `data: {"meta":{"stage":"connected"}}\n\n` ao receber HTTP 200 da NVIDIA.
+  - **Transição Instantânea na UI (`src/lib/types.ts`, `src/App.tsx`, `src/components/chat-message.tsx`):** Adição de `isConnected` na mensagem para mudar imediatamente de `"Conectando…"` para `"Pensando…"` assim que o handshake HTTP 200 com a GPU é confirmado.
+- **Evidências de Verificação:**
+  - `npm test`: 111/111 testes unitários passando em 30 suítes.
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm run build`: compilado com sucesso.
+  - `graphify update .`: grafo de conhecimento atualizado.
+
+

@@ -290,8 +290,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
     }
   };
 
-  // Verifica se está na fase inicial de conexão antes de receber tokens de raciocínio ou resposta
-  const isConnecting = isStreaming && !thinkingContent && !hasRealContent && !hasRunningTool;
+  // Verifica se está na fase inicial de conexão antes do handshake HTTP 200 ou de receber tokens
+  const isConnecting =
+    isStreaming && !message.isConnected && !thinkingContent && !hasRealContent && !hasRunningTool;
 
   const handleCopy = async () => {
     try {

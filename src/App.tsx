@@ -97,6 +97,7 @@ import {
   buildMandatoryPlanPrompt,
   isPlanApprovalReply,
 } from './lib/plan-mode-gate';
+import { selectContextualTools, selectContextualSkills } from './lib/smart-prefill';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -2949,7 +2950,12 @@ function AppContent() {
     const activeMcpServers = mcpServers.filter((s) => s.enabled && s.status === 'connected' && s.tools.length > 0);
     const mcpOpenAiTools = activeMcpServers.flatMap((s) => convertMcpToolsToOpenAi(s.tools, s.id));
     const baseTools = (chatActiveRepo || activeProject) ? ALL_CHAT_TOOLS : DEFAULT_CHAT_TOOLS;
-    const filteredBaseTools = filterToolsForPlanMode(baseTools, activePlan);
+    const planFilteredTools = filterToolsForPlanMode(baseTools, activePlan);
+    const filteredBaseTools = selectContextualTools(planFilteredTools, {
+      userText: finalText,
+      hasActiveRepo: Boolean(chatActiveRepo),
+      hasActiveProject: Boolean(activeProject),
+    });
     const requestTools = isNoToolsModel ? [] : [...filteredBaseTools, ...mcpOpenAiTools];
 
     const basePrompt = isNoToolsModel
@@ -2977,8 +2983,11 @@ function AppContent() {
       ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject))
       : undefined;
 
-    // Injetar habilidades modulares ativas (Skills)
-    const activeSkills = skills.filter((s) => s.enabled);
+    // Injetar habilidades modulares ativas (Skills) filtradas por contexto para acelerar o Prefill
+    const activeSkills = selectContextualSkills(skills, {
+      userText: finalText,
+      hasActiveRepo: Boolean(chatActiveRepo),
+    });
     const skillsPrompt = activeSkills.length > 0
       ? '--- HABILIDADES MODULARES COMPULSÓRIAS (SKILLS ATIVAS) ---\n' +
         'REGRA OBRIGATÓRIA DE HABILIDADES: Você DEVE aplicar com rigor as habilidades ativas abaixo ao diagnosticar, planejar, revisar ou modificar código.\n' +
@@ -3295,6 +3304,20 @@ function AppContent() {
 
               try {
                 const parsed = JSON.parse(dataStr);
+                if (parsed?.meta?.stage === 'connected') {
+                  setConversations((prev) =>
+                    prev.map((c) => {
+                      if (c.id !== currentConvId) return c;
+                      return {
+                        ...c,
+                        messages: c.messages.map((m) =>
+                          m.id === assistantMessageId ? { ...m, isConnected: true } : m
+                        ),
+                      };
+                    })
+                  );
+                  continue;
+                }
                 if (parsed.error) {
                   // Erro enviado pelo servidor dentro do stream (ex.: NVIDIA sem resposta)
                   streamErrorMsg =

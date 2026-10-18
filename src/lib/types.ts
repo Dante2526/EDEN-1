@@ -157,6 +157,7 @@ export interface Message {
   isTruncated?: boolean;
   streamError?: string;
   usedSkills?: string[]; // Habilidades aplicadas pela IA nesta resposta/alteração
+  isConnected?: boolean; // true assim que o backend recebe HTTP 200 da NVIDIA/provedor
 }
 
 export interface ContextCompaction {

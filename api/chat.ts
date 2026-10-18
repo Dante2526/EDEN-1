@@ -5,6 +5,11 @@ export const config = {
   runtime: 'edge',
 };
 
+const modelFallbackCache = new Map<
+  string,
+  { noReasoning?: boolean; noTools?: boolean; safeTokens?: boolean }
+>();
+
 function maxTokensFor(effort: string): number {
   // Aumentado pra permitir respostas mais longas quando IA tá em modo agentic
   // (resolvendo problema complexo sem parar no meio).
@@ -272,9 +277,14 @@ export default async function handler(req: Request, envArg?: Env) {
 
     // Modelos que suportam tools (centralizados em TOOL_MODELS):
     const modelSupportsTools = isToolCapableModel(selectedModel);
+    const cachedModelFlags = modelFallbackCache.get(selectedModel) || {};
 
     // ====== BUILDER DE PAYLOAD — NUVEM (NVIDIA) ======
-    const createNvidiaPayload = (includeReasoning = true, includeTools = true, safeTokenLimit = false) => {
+    const createNvidiaPayload = (
+      includeReasoning = !cachedModelFlags.noReasoning,
+      includeTools = !cachedModelFlags.noTools,
+      safeTokenLimit = Boolean(cachedModelFlags.safeTokens)
+    ) => {
       const hasToolsActive = includeTools && modelSupportsTools && tools && Array.isArray(tools) && tools.length > 0;
       const baseMaxTokens = safeTokenLimit ? 4096 : maxTokensFor(selectedEffort);
       const tokenLimit = typeof customMaxTokens === 'number' && customMaxTokens > 0
@@ -295,7 +305,11 @@ export default async function handler(req: Request, envArg?: Env) {
       if (includeReasoning && apiEffort && apiEffort !== 'default') {
         if (selectedModel === 'z-ai/glm-5.3') {
           p.reasoning_effort = apiEffort;
-        } else if (selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b') {
+        } else if (
+          selectedEffort !== 'low' &&
+          (selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b')
+        ) {
+          // Em modo 'low' (Pensamento rápido), não força enable_thinking para responder com latência mínima
           p.chat_template_kwargs = { enable_thinking: true };
         }
       }
@@ -312,7 +326,10 @@ export default async function handler(req: Request, envArg?: Env) {
     //   - Qwen 2.5 Coder suporta tools via endpoint OpenAI-compat da Cloudflare.
     //   - Retorna o raciocínio embutido em delta.content entre <think>...</think>.
     //     O transformador CloudflareThinkSplitter cuida de separar isso em delta.reasoning_content.
-    const createCloudflarePayload = (includeTools = true, safeTokenLimit = false) => {
+    const createCloudflarePayload = (
+      includeTools = !cachedModelFlags.noTools,
+      safeTokenLimit = Boolean(cachedModelFlags.safeTokens)
+    ) => {
       let cfMaxTokens = 8192;
       if (safeTokenLimit) {
         cfMaxTokens = 4096;
@@ -342,8 +359,8 @@ export default async function handler(req: Request, envArg?: Env) {
     };
 
     let payload = usingCloudflare
-      ? createCloudflarePayload(true)
-      : createNvidiaPayload(true, true, false);
+      ? createCloudflarePayload()
+      : createNvidiaPayload();
 
     console.log(
       `[chat] provider=${usingCloudflare ? 'cloudflare' : 'nvidia'} model=${selectedModel} effort=${selectedEffort}->${apiEffort} tools=${payload.tools?.length || 0} max_tokens=${payload.max_tokens}`
@@ -377,8 +394,8 @@ export default async function handler(req: Request, envArg?: Env) {
           try { controller.close(); } catch {}
         });
 
-        // ====== FETCH COM TIMEOUT (45s) ======
-        const fetchWithTimeout = async (bodyPayload: any) => {
+        // ====== FETCH COM TIMEOUT RÁPIDO DE CONEXÃO + RETRY ======
+        const fetchWithTimeout = async (bodyPayload: any, timeoutMs = 20000) => {
           const url = usingCloudflare
             ? `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/v1/chat/completions`
             : 'https://integrate.api.nvidia.com/v1/chat/completions';
@@ -391,7 +408,7 @@ export default async function handler(req: Request, envArg?: Env) {
           }
 
           const fetchCtrl = new AbortController();
-          const fetchTimer = setTimeout(() => fetchCtrl.abort(), 75000); // 75s (teto seguro para início de raciocínio nas GPUs da Cloudflare)
+          const fetchTimer = setTimeout(() => fetchCtrl.abort(), timeoutMs);
           try {
             const r = await fetch(url, {
               method: 'POST',
@@ -425,47 +442,60 @@ export default async function handler(req: Request, envArg?: Env) {
         };
 
         try {
-          let res = await fetchWithTimeout(payload);
+          let res: Response;
+          try {
+            // Tentativa inicial rápida (20s): se cair em nó NVIDIA congestionado, reabre rota imediatamente
+            res = await fetchWithTimeout(payload, 20000);
+          } catch (firstErr: any) {
+            if (req.signal?.aborted) throw firstErr;
+            console.log(`[chat] 1ª conexão demorou >20s (${selectedModel}), abrindo 2ª rota limpa...`);
+            res = await fetchWithTimeout(payload, 45000);
+          }
 
           // Auto-retry para Rate Limit (429) ou erro temporário de gateway (502/503/504)
           if ((res.status === 429 || res.status >= 502) && !req.signal?.aborted) {
             await res.body?.cancel().catch(() => {});
-            await new Promise((r) => setTimeout(r, 2000));
-            res = await fetchWithTimeout(payload);
+            await new Promise((r) => setTimeout(r, 1500));
+            res = await fetchWithTimeout(payload, 45000);
           }
 
-          // ====== FALLBACKS ======
+          // ====== FALLBACKS COM CACHE EM MEMÓRIA ======
           if (usingCloudflare) {
             // Fallback 1: Se Cloudflare der 400/422 com tools -> tenta sem tools
             if (!res.ok && (res.status === 400 || res.status === 422) && payload.tools) {
               await res.body?.cancel().catch(() => {});
+              modelFallbackCache.set(selectedModel, { ...cachedModelFlags, noTools: true });
               payload = createCloudflarePayload(false, false);
-              res = await fetchWithTimeout(payload);
+              res = await fetchWithTimeout(payload, 35000);
             }
             // Fallback 2: Se Cloudflare der 400/422 por excesso de max_tokens -> reduz para 4096
             if (!res.ok && (res.status === 400 || res.status === 422) && payload.max_tokens > 4096) {
               await res.body?.cancel().catch(() => {});
+              modelFallbackCache.set(selectedModel, { ...modelFallbackCache.get(selectedModel), noTools: true, safeTokens: true });
               payload = createCloudflarePayload(false, true);
-              res = await fetchWithTimeout(payload);
+              res = await fetchWithTimeout(payload, 35000);
             }
           } else {
-            // Fallback 1: 400/422 com reasoning_effort -> tenta sem reasoning_effort
-            if (!res.ok && (res.status === 400 || res.status === 422) && payload.reasoning_effort) {
+            // Fallback 1: 400/422 com reasoning_effort/chat_template_kwargs -> tenta sem reasoning_effort e memoriza
+            if (!res.ok && (res.status === 400 || res.status === 422) && (payload.reasoning_effort || payload.chat_template_kwargs)) {
               await res.body?.cancel().catch(() => {});
-              payload = createNvidiaPayload(false, true, false);
-              res = await fetchWithTimeout(payload);
+              modelFallbackCache.set(selectedModel, { ...cachedModelFlags, noReasoning: true });
+              payload = createNvidiaPayload(false, !cachedModelFlags.noTools, Boolean(cachedModelFlags.safeTokens));
+              res = await fetchWithTimeout(payload, 35000);
             }
-            // Fallback 2: 400/422 com tools -> tenta sem tools
+            // Fallback 2: 400/422 com tools -> tenta sem tools e memoriza
             if (!res.ok && (res.status === 400 || res.status === 422) && payload.tools) {
               await res.body?.cancel().catch(() => {});
-              payload = createNvidiaPayload(false, false, false);
-              res = await fetchWithTimeout(payload);
+              modelFallbackCache.set(selectedModel, { ...modelFallbackCache.get(selectedModel), noReasoning: true, noTools: true });
+              payload = createNvidiaPayload(false, false, Boolean(cachedModelFlags.safeTokens));
+              res = await fetchWithTimeout(payload, 35000);
             }
-            // Fallback 3: 400/422 por excesso de max_tokens -> reduz para 4096
+            // Fallback 3: 400/422 por excesso de max_tokens -> reduz para 4096 e memoriza
             if (!res.ok && (res.status === 400 || res.status === 422) && payload.max_tokens > 4096) {
               await res.body?.cancel().catch(() => {});
+              modelFallbackCache.set(selectedModel, { noReasoning: true, noTools: true, safeTokens: true });
               payload = createNvidiaPayload(false, false, true);
-              res = await fetchWithTimeout(payload);
+              res = await fetchWithTimeout(payload, 35000);
             }
           }
 
@@ -500,6 +530,9 @@ export default async function handler(req: Request, envArg?: Env) {
             sendErrorAndClose(errMsg);
             return;
           }
+
+          // Notifica imediatamente o frontend que o handshake HTTP 200 com a GPU da NVIDIA foi concluído!
+          controller.enqueue(enc.encode('data: {"meta":{"stage":"connected"}}\n\n'));
 
           // ====== PIPE DOS DADOS REAIS ======
           // Se for Cloudflare, interceptamos o stream para separar <think> do content.
