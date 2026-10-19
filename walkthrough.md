@@ -2106,3 +2106,16 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: compilado com sucesso.
   - Code Review formal: Aprovado.
   - Commit: `be7a60c` enviado para `origin/main`.
+
+## 122. Simplificação do Placeholder da Caixa de Mensagens
+- **Solicitação do Usuário:** *"tira  aparte do texto ou cole um print (ctrl+v)..."* (anexado print destacando o placeholder).
+- **Implementações Realizadas (`src/components/chat-input.tsx`):**
+  1. Simplificado o placeholder padrão do textarea de `'Escreva uma mensagem ou cole um print (Ctrl+V)...'` para `'Escreva uma mensagem...'`.
+  2. Eliminada menção a atalho de desktop (`Ctrl+V`), melhorando a concisão visual e ergonomia mobile (360px-430px).
+  3. Preservada a condicionalidade de placeholders para inspeção de componentes, busca web ativa e modo plano.
+- **Evidências de Verificação:**
+  - `npm test`: **160/160 testes unitários passando em 36 suítes**.
+  - `tsc --noEmit`: **0 erros**.
+  - `npm run build`: compilado com sucesso.
+  - Code Review formal: Aprovado sem ressalvas.
+  - Commit: `923ba0e` enviado para `origin/main`.
