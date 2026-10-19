@@ -116,4 +116,43 @@ describe('browser-agent-engine (Playwright/Puppeteer Browser Control)', () => {
     assert.ok(formatted.includes('[3] <button> (input[name="commit"])'));
     assert.ok(formatted.includes('📸 Screenshot capturado'));
   });
+
+  it('deve incluir listeners de console, pageerror e network no script Puppeteer', () => {
+    const params: BrowserActionParams = {
+      action: 'navigate',
+      url: 'https://example.com',
+    };
+    const script = buildPuppeteerFunctionScript(params);
+
+    assert.ok(script.includes("page.on('console'"));
+    assert.ok(script.includes("page.on('pageerror'"));
+    assert.ok(script.includes("page.on('response'"));
+    assert.ok(script.includes('consoleLogs'));
+    assert.ok(script.includes('networkErrors'));
+  });
+
+  it('deve formatar DevTools da página externa (console e falhas de rede) no Markdown para a IA', () => {
+    const mockResult: BrowserActionResult = {
+      success: true,
+      currentUrl: 'https://blogger.com/video.g?token=xyz',
+      title: 'Blogger Video Player',
+      action: 'navigate',
+      actionDescription: 'Navegou para o player',
+      interactiveElements: [],
+      consoleLogs: [
+        { type: 'error', text: 'Uncaught Error: Access Denied / Invalid Token' },
+        { type: 'warning', text: 'Deprecated API called' },
+      ],
+      networkErrors: [
+        { url: 'https://blogger.com/get_video_info', status: 403, statusText: 'Forbidden' },
+      ],
+    };
+
+    const formatted = formatBrowserToolResultForModel(mockResult);
+
+    assert.ok(formatted.includes('🛠️ DevTools da Página (Console & Rede)'));
+    assert.ok(formatted.includes('[Console Error] Uncaught Error: Access Denied / Invalid Token'));
+    assert.ok(formatted.includes('[Network Error] 403 Forbidden: https://blogger.com/get_video_info'));
+  });
 });
+

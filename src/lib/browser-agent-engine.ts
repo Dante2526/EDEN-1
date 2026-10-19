@@ -46,6 +46,8 @@ export interface BrowserActionResult {
   screenshotBase64?: string;
   interactiveElements: InteractiveElement[];
   extractedText?: string;
+  consoleLogs?: { type: string; text: string }[];
+  networkErrors?: { url: string; status: number; statusText?: string }[];
   error?: string;
 }
 
@@ -67,6 +69,33 @@ module.exports = async ({ page, context }) => {
   // Configurações de viewport e headers amigáveis
   await page.setViewport({ width: 1280, height: 800 });
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+
+  const consoleLogs = [];
+  const networkErrors = [];
+
+  page.on('console', (msg) => {
+    try {
+      consoleLogs.push({ type: msg.type(), text: msg.text() });
+    } catch (_) {}
+  });
+
+  page.on('pageerror', (err) => {
+    try {
+      consoleLogs.push({ type: 'error', text: err.message || String(err) });
+    } catch (_) {}
+  });
+
+  page.on('response', (resp) => {
+    try {
+      if (!resp.ok() && resp.status() >= 400) {
+        networkErrors.push({
+          url: resp.url(),
+          status: resp.status(),
+          statusText: resp.statusText() || 'Error',
+        });
+      }
+    } catch (_) {}
+  });
 
   let actionDesc = '';
   try {
@@ -123,6 +152,8 @@ module.exports = async ({ page, context }) => {
       actionDescription: actionDesc,
       screenshotBase64,
       html,
+      consoleLogs: consoleLogs.slice(-20),
+      networkErrors: networkErrors.slice(-15),
     };
   } catch (err) {
     return {
@@ -131,6 +162,8 @@ module.exports = async ({ page, context }) => {
       title: await page.title().catch(() => ''),
       action: '${params.action}',
       actionDescription: 'Falha: ' + err.message,
+      consoleLogs: consoleLogs.slice(-10),
+      networkErrors: networkErrors.slice(-10),
       error: err.message,
     };
   }
@@ -260,6 +293,26 @@ export function formatBrowserToolResultForModel(result: BrowserActionResult): st
     if (cleanSnippet) {
       lines.push(`\nResumo de Conteúdo da Página:\n${cleanSnippet}...`);
     }
+  }
+
+  const devToolsItems: string[] = [];
+  if (result.consoleLogs && result.consoleLogs.length > 0) {
+    result.consoleLogs.slice(-6).forEach((l) => {
+      const tag = l.type === 'error' ? 'Error' : l.type === 'warning' ? 'Warning' : 'Log';
+      devToolsItems.push(`- [Console ${tag}] ${l.text}`);
+    });
+  }
+
+  if (result.networkErrors && result.networkErrors.length > 0) {
+    result.networkErrors.slice(-6).forEach((n) => {
+      devToolsItems.push(`- [Network Error] ${n.status} ${n.statusText || 'Error'}: ${n.url}`);
+    });
+  }
+
+  if (devToolsItems.length > 0) {
+    lines.push('\n🛠️ DevTools da Página (Console & Rede):');
+    lines.push('Erros e alertas detectados durante a execução do JavaScript e carregamento de mídia na página:');
+    lines.push(devToolsItems.join('\n'));
   }
 
   lines.push('\nPróximo Passo do Modelo:');

@@ -106,6 +106,12 @@ import {
   parseWebSourcesFromSearchResults,
 } from './lib/web-search-engine';
 import { formatBrowserToolResultForModel } from './lib/browser-agent-engine';
+import {
+  PreviewConsoleLog,
+  PreviewNetworkRequest,
+  formatDevToolsSummaryForAi,
+  parseDevToolsMessage,
+} from './lib/preview-devtools';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -780,8 +786,29 @@ const BROWSER_CONTROL_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
+const DEVTOOLS_INSPECT_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'get_preview_devtools_logs',
+    description:
+      'Inspeciona em tempo real o Chrome DevTools (Console e Network) do Live Preview do projeto web ativo. ' +
+      'Captura console.log, console.error, console.warn, exceções não tratadas (window.onerror) e requisições HTTP (fetch/XHR com status, duração e falhas 4xx/5xx). ' +
+      'Use esta ferramenta para diagnosticar erros de tela branca, exceções React/JavaScript ou chamadas de API quebradas no aplicativo do usuário.',
+    parameters: {
+      type: 'object',
+      properties: {
+        filter: {
+          type: 'string',
+          enum: ['all', 'errors_only'],
+          description: 'Filtro de inspeção: "errors_only" retorna apenas exceções e falhas HTTP (>= 400), "all" retorna histórico completo.',
+        },
+      },
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -1364,6 +1391,24 @@ function AppContent() {
   const currentAssistantMessageIdRef = useRef<string>('');
   const currentConversationIdRef = useRef<string>('');
   const lastBrowserUrlRef = useRef<string>('');
+  const liveDevToolsLogsRef = useRef<PreviewConsoleLog[]>([]);
+  const liveDevToolsRequestsRef = useRef<PreviewNetworkRequest[]>([]);
+
+  useEffect(() => {
+    const handleDevToolsMessage = (event: MessageEvent) => {
+      const parsed = parseDevToolsMessage(event);
+      if (parsed) {
+        if (parsed.type === '__SYNAP_DEVTOOLS_LOG__') {
+          liveDevToolsLogsRef.current = [...liveDevToolsLogsRef.current.slice(-199), parsed.payload];
+        } else if (parsed.type === '__SYNAP_DEVTOOLS_NETWORK__') {
+          liveDevToolsRequestsRef.current = [...liveDevToolsRequestsRef.current.slice(-199), parsed.payload];
+        }
+      }
+    };
+    window.addEventListener('message', handleDevToolsMessage);
+    return () => window.removeEventListener('message', handleDevToolsMessage);
+  }, []);
+
   // Snapshot de info de debug — atualizado durante o loop, lido no catch
   const debugInfoRef = useRef<{
     requestStartTime: number;
@@ -2270,6 +2315,20 @@ function AppContent() {
         return { result: formatted };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || 'Falha ao executar ação no navegador' }) };
+      }
+    }
+
+    if (name === 'get_preview_devtools_logs') {
+      try {
+        const filter = args.filter || 'all';
+        const formatted = formatDevToolsSummaryForAi(
+          liveDevToolsLogsRef.current,
+          liveDevToolsRequestsRef.current,
+          filter === 'errors_only'
+        );
+        return { result: formatted };
+      } catch (err: any) {
+        return { result: `Erro ao obter logs de DevTools: ${err?.message || 'Falha desconhecida'}` };
       }
     }
 
@@ -3472,7 +3531,7 @@ function AppContent() {
         (chatActiveRepo && graphRagSummary ? `\n\n${graphRagSummary}` : '')
       : 'Você é o assistente Éden com ferramentas avançadas integradas.\n' +
         'REGRA SUPREMA DE CAPACIDADES DO ÉDEN (PROIBIDO RECUSAR OU DIZER QUE NÃO TEM FERRAMENTAS):\n' +
-        'Você É o assistente oficial do Éden e TEM TODAS as ferramentas reais integradas no chat: `control_browser` (Playwright / Browser-Use), `run_terminal_command` (com curl, ffprobe, ffmpeg e playwright), `run_python` (Python 3 com internet e bs4), `fetch_url`, `web_search`, `generate_document` e `save_memory`.\n' +
+        'Você É o assistente oficial do Éden e TEM TODAS as ferramentas reais integradas no chat: `control_browser` (Playwright / Browser-Use), `get_preview_devtools_logs` (Chrome DevTools Console e Network do Live Preview), `run_terminal_command` (com curl, ffprobe, ffmpeg e playwright), `run_python` (Python 3 com internet e bs4), `fetch_url`, `web_search`, `generate_document` e `save_memory`.\n' +
         'É TERMINANTEMENTE PROIBIDO responder dizendo que "minhas ferramentas são fixas", "não tenho acesso ao Éden", "não posso rodar curl/ffmpeg/playwright" ou mandar o usuário rodar externamente. Se o usuário pedir para inspecionar com curl, testar mídia com ffprobe/ffmpeg, navegar na web ou rodar script, EMITA A CHAMADA DE FERRAMENTA IMEDIATAMENTE NA SUA RESPOSTA!\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n' +
         'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
@@ -3484,7 +3543,8 @@ function AppContent() {
         '4. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
         '5. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.\n' +
         '6. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.\n' +
-        '7. Controle Autônomo de Navegador (Playwright / Browser-Use): Você tem a ferramenta `control_browser` para navegar e interagir autonomamente com páginas da web em um navegador real. Você pode abrir URLs (navigate), clicar em botões e links (click), preencher campos e pesquisar (type), rolar a tela (scroll) e capturar screenshots. Ao receber os elementos interativos numerados da página (ex: [1] <button>, [2] <input>), use os seletores fornecidos para prosseguir autonomamente passo a passo até atingir o objetivo solicitado pelo usuário.';
+        '7. Controle Autônomo de Navegador (Playwright / Browser-Use): Você tem a ferramenta `control_browser` para navegar e interagir autonomamente com páginas da web em um navegador real. Você pode abrir URLs (navigate), clicar em botões e links (click), preencher campos e pesquisar (type), rolar a tela (scroll) e capturar screenshots. Ao receber os elementos interativos numerados da página (ex: [1] <button>, [2] <input>), use os seletores fornecidos para prosseguir autonomamente passo a passo até atingir o objetivo solicitado pelo usuário.\n' +
+        '8. Chrome DevTools Integrado (get_preview_devtools_logs): Você pode inspecionar o console e a rede do Live Preview em tempo real para diagnosticar exceções de runtime, erros de renderização React, falhas de CSS/Tailwind ou endpoints com erro (404, 500). Use sempre que o usuário relatar que a página está em branco, não renderizou ou deu erro.';
 
     const planPrompt = activePlan
       ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject))
@@ -4805,6 +4865,10 @@ function AppContent() {
               }}
               onRename={(newName) => renameProject(previewProject.id, newName)}
               onFileChange={(path, content) => updateFileContent(path, content)}
+              onFixWithAi={(promptText) => {
+                setMainViewTab('chat');
+                handleSendMessage(promptText);
+              }}
             />
           </div>
         )}

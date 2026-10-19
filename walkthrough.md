@@ -1918,6 +1918,35 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: **140/140 testes unitários passando em 35 suítes** (incluindo 4 novos testes em `src/lib/git-terminal-emulator.test.ts`).
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
   - `npm run build`: compilado com sucesso com Cloudflare Pages Worker (`dist/_worker.js`, 169.1 kB).
-  - `graphify update .`: grafo atualizado (14.808 nós, 16.651 arestas).
+## 113. Chrome DevTools Integrado (Console, Rede e "⚡ Corrigir com IA")
+- **Solicitação do Usuário:** *"Temos ou podemos ter? : CHROME DEVTOOLS — Ele enxerga o console, os erros e a página junto com você - e aponta o problema na hora."* -> Escolhida a Opção 3 ("Os dois juntos: Live Preview DevTools + Navegador Autônomo DevTools").
+- **Implementações Realizadas:**
+  1. **Motor de Captura e Formatação TDD (`src/lib/preview-devtools.ts` + `src/lib/preview-devtools.test.ts`):**
+     - `createConsoleLogItem`: sanitiza mensagens de console, erros (`Error`), objetos JSON circulares e captura `source`, `line`, `column` e `stack`.
+     - `createNetworkRequestItem`: mapeia chamadas HTTP com método, URL limpa, status, duração em milissegundos e statusText.
+     - `parseDevToolsMessage`: parseia eventos de postMessage (`__SYNAP_DEVTOOLS_LOG__` e `__SYNAP_DEVTOOLS_NETWORK__`) emitidos pelo iframe do Live Preview.
+     - `formatDevToolsErrorForAi`: monta o prompt estruturado com o stack trace, arquivo e linha exatos para o botão *"⚡ Corrigir com IA"*.
+     - `formatDevToolsSummaryForAi`: gera relatório de auditoria para a ferramenta da IA inspecionar erros e chamadas HTTP sob demanda.
+  2. **Instrumentação do Live Preview (`src/lib/preview-html.ts`):**
+     - `getDevToolsScriptHtml`: injeta script não bloqueante no `<head>` interceptando `console.log`, `console.info`, `console.warn`, `console.error`, `window.onerror`, `unhandledrejection`, `window.fetch` e `XMLHttpRequest`.
+     - Medição precisa de latência via `performance.now()`.
+     - Dispara `postMessage` pai automaticamente com dados higienizados e serializados.
+  3. **Gaveta e Interface do DevTools (`src/components/preview-devtools.tsx` + `src/components/project-workspace/local-preview.tsx`):**
+     - Painel retrátil na parte inferior do Live Preview com abas **Console** e **Network**, contadores de erros/avisos, filtros de severidade e busca.
+     - Auto-abertura inteligente da gaveta ao detectar qualquer exceção ou falha de rede (status >= 400).
+     - Botão flutuante na barra superior com badge de contagem de erros.
+     - Botão *"⚡ Corrigir com IA"* em cada erro de log ou falha de rede que injeta o diagnóstico diretamente no chat e aciona o modelo automaticamente.
+  4. **DevTools no Navegador Autônomo (`src/lib/browser-agent-engine.ts`, `api/browser.ts`, `src/components/chat-message.tsx`):**
+     - Listeners de Puppeteer (`page.on('console')`, `page.on('pageerror')`, `page.on('response')`) capturando logs de runtime e erros de rede (403, 404, 500, Cloudflare 429).
+     - Formatação compacta no prompt da IA (`formatBrowserToolResultForModel`) com seção `## DevTools da Página (Console & Rede)`.
+     - Card visual no chat com badges de contagem e lista de falhas de rede e logs destacados por cor.
+  5. **Ferramenta de IA do Chrome DevTools (`src/App.tsx`):**
+     - Registrada ferramenta `get_preview_devtools_logs` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Injetada regra 8 no System Prompt orientando a IA a auditar o console e rede sempre que o usuário relatar tela branca ou falha de renderização.
+- **Evidências de Verificação:**
+  - `npm test`: **147/147 testes unitários passando em 35 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) compilados com sucesso.
+
 
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { RefreshCw, ExternalLink, AlertCircle, MousePointerClick, MessageSquare } from 'lucide-react';
+import { RefreshCw, ExternalLink, AlertCircle, MousePointerClick, MessageSquare, Terminal } from 'lucide-react';
 import { SynapProject, SelectedPreviewElement } from '../../lib/types';
 import {
   isBabelLoaded,
@@ -8,12 +8,19 @@ import {
   buildPreviewHtmlPreTranspiled,
   normalizePath,
 } from '../../lib/preview-html';
+import { PreviewDevTools } from '../preview-devtools';
+import {
+  PreviewConsoleLog,
+  PreviewNetworkRequest,
+  parseDevToolsMessage,
+} from '../../lib/preview-devtools';
 
 interface LocalPreviewProps {
   project: SynapProject;
   selectedElementsCount?: number;
   onSelectElement?: (element: SelectedPreviewElement) => void;
   onNavigateToChat?: () => void;
+  onFixWithAi?: (promptText: string) => void;
 }
 
 function buildTranspiledHtmlSync(
@@ -48,9 +55,14 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({
   selectedElementsCount = 0,
   onSelectElement,
   onNavigateToChat,
+  onFixWithAi,
 }) => {
   const transpiledCacheRef = useRef<Record<string, { raw: string; compiled: string }>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const [devToolsLogs, setDevToolsLogs] = useState<PreviewConsoleLog[]>([]);
+  const [devToolsRequests, setDevToolsRequests] = useState<PreviewNetworkRequest[]>([]);
+  const [isDevToolsOpen, setIsDevToolsOpen] = useState<boolean>(false);
 
   // Se o Babel já estiver em memória (ou projeto estático HTML puro), compila sincronamente no 1º render (0ms)
   const [srcDoc, setSrcDoc] = useState<string>(() => {
@@ -96,7 +108,7 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({
     compileProject();
   }, [compileProject, refreshKey]);
 
-  // Escuta mensagens do iframe: confirmação de prontidão e seleção de elementos
+  // Escuta mensagens do iframe: confirmação de prontidão, seleção de elementos e eventos DevTools
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === '__SYNAP_PREVIEW_READY__') {
@@ -104,6 +116,21 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({
       } else if (event.data && event.data.type === '__SYNAP_ELEMENT_SELECTED__') {
         if (event.data.element && onSelectElement) {
           onSelectElement(event.data.element);
+        }
+      }
+
+      const devToolsMsg = parseDevToolsMessage(event);
+      if (devToolsMsg) {
+        if (devToolsMsg.type === '__SYNAP_DEVTOOLS_LOG__') {
+          setDevToolsLogs((prev) => [...prev.slice(-199), devToolsMsg.payload]);
+          if (devToolsMsg.payload.level === 'error') {
+            setIsDevToolsOpen(true);
+          }
+        } else if (devToolsMsg.type === '__SYNAP_DEVTOOLS_NETWORK__') {
+          setDevToolsRequests((prev) => [...prev.slice(-199), devToolsMsg.payload]);
+          if (devToolsMsg.payload.status >= 400 || devToolsMsg.payload.error) {
+            setIsDevToolsOpen(true);
+          }
         }
       }
     };
@@ -177,6 +204,26 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({
           </div>
         )}
 
+        {/* Botão de Toggle do DevTools */}
+        <button
+          type="button"
+          onClick={() => setIsDevToolsOpen((prev) => !prev)}
+          title={isDevToolsOpen ? 'Fechar Console & DevTools' : 'Abrir Console & DevTools'}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+            isDevToolsOpen
+              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+              : 'text-[color:var(--c-fg-a39d93,#a39d93)] hover:text-[color:var(--c-fg-f3efe6,#f3efe6)] hover:bg-[color:var(--c-bg-25231e,#25231e)]'
+          }`}
+        >
+          <Terminal className="w-4 h-4" />
+          <span className="hidden sm:inline">DevTools</span>
+          {devToolsLogs.filter((l) => l.level === 'error').length + devToolsRequests.filter((r) => r.status >= 400 || r.error).length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500 text-white">
+              {devToolsLogs.filter((l) => l.level === 'error').length + devToolsRequests.filter((r) => r.status >= 400 || r.error).length}
+            </span>
+          )}
+        </button>
+
         <div className="w-[1px] h-4 bg-[color:var(--c-bg-2d2b26,#2d2b26)] mx-0.5" />
 
         <button
@@ -223,6 +270,17 @@ export const LocalPreview: React.FC<LocalPreviewProps> = ({
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
         />
       ) : null}
+
+      {/* Painel DevTools Integrado (Console, Rede e Corrigir com IA) */}
+      <PreviewDevTools
+        logs={devToolsLogs}
+        requests={devToolsRequests}
+        onClearLogs={() => setDevToolsLogs([])}
+        onClearNetwork={() => setDevToolsRequests([])}
+        onFixWithAi={onFixWithAi}
+        isOpen={isDevToolsOpen}
+        onToggleOpen={() => setIsDevToolsOpen((v) => !v)}
+      />
     </div>
   );
 };

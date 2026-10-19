@@ -330,6 +330,133 @@ export function getInspectorScriptHtml(): string {
 </script>`;
 }
 
+export function getDevToolsScriptHtml(): string {
+  return `
+<script id="synap-devtools-instrumentation-script">
+(function() {
+  if (window.__SYNAP_DEVTOOLS_INSTALLED__) return;
+  window.__SYNAP_DEVTOOLS_INSTALLED__ = true;
+
+  function safeSerialize(val) {
+    if (typeof val === 'string') return val;
+    if (val instanceof Error) return val.name + ': ' + val.message + (val.stack ? '\\n' + val.stack : '');
+    try {
+      return JSON.stringify(val);
+    } catch (_) {
+      return String(val);
+    }
+  }
+
+  function emitLog(level, args, extra) {
+    try {
+      var messages = [];
+      for (var i = 0; i < args.length; i++) {
+        messages.push(safeSerialize(args[i]));
+      }
+      window.parent.postMessage({
+        type: '__SYNAP_DEVTOOLS_LOG__',
+        payload: {
+          level: level,
+          messages: messages,
+          source: extra ? extra.source : undefined,
+          line: extra ? extra.line : undefined,
+          column: extra ? extra.column : undefined,
+          stack: extra ? extra.stack : undefined,
+          timestamp: Date.now()
+        }
+      }, '*');
+    } catch (_) {}
+  }
+
+  var origLog = console.log;
+  var origInfo = console.info;
+  var origWarn = console.warn;
+  var origError = console.error;
+
+  console.log = function() {
+    emitLog('log', arguments);
+    if (origLog) origLog.apply(console, arguments);
+  };
+  console.info = function() {
+    emitLog('info', arguments);
+    if (origInfo) origInfo.apply(console, arguments);
+  };
+  console.warn = function() {
+    emitLog('warn', arguments);
+    if (origWarn) origWarn.apply(console, arguments);
+  };
+  console.error = function() {
+    emitLog('error', arguments);
+    if (origError) origError.apply(console, arguments);
+  };
+
+  window.addEventListener('error', function(e) {
+    var stack = e.error && e.error.stack ? e.error.stack : '';
+    emitLog('error', [e.message || 'Erro em tempo de execução'], {
+      source: e.filename,
+      line: e.lineno,
+      column: e.colno,
+      stack: stack
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(e) {
+    var reason = e.reason;
+    var msg = (reason && (reason.message || reason.stack)) || safeSerialize(reason);
+    emitLog('error', ['Promise Rejeitada: ' + msg], {
+      stack: reason && reason.stack ? reason.stack : undefined
+    });
+  });
+
+  if (typeof window.fetch === 'function') {
+    var origFetch = window.fetch;
+    window.fetch = function(input, init) {
+      var start = performance.now();
+      var method = (init && init.method) || 'GET';
+      var url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+
+      return origFetch.apply(this, arguments).then(function(resp) {
+        try {
+          var dur = performance.now() - start;
+          window.parent.postMessage({
+            type: '__SYNAP_DEVTOOLS_NETWORK__',
+            payload: {
+              method: method.toUpperCase(),
+              url: url,
+              status: resp.status,
+              statusText: resp.statusText || (resp.status >= 200 && resp.status < 300 ? 'OK' : 'Error'),
+              durationMs: Math.round(dur),
+              type: 'fetch',
+              timestamp: Date.now()
+            }
+          }, '*');
+        } catch (_) {}
+        return resp;
+      }).catch(function(err) {
+        try {
+          var dur = performance.now() - start;
+          window.parent.postMessage({
+            type: '__SYNAP_DEVTOOLS_NETWORK__',
+            payload: {
+              method: method.toUpperCase(),
+              url: url,
+              status: 0,
+              statusText: 'Failed',
+              durationMs: Math.round(dur),
+              type: 'fetch',
+              error: err && err.message ? err.message : String(err),
+              timestamp: Date.now()
+            }
+          }, '*');
+        } catch (_) {}
+        throw err;
+      });
+    };
+  }
+})();
+</script>`;
+}
+
 export function buildPreviewHtmlPreTranspiled(
   project: SynapProject,
   preTranspiled?: Record<string, string>
@@ -423,10 +550,11 @@ export function buildPreviewHtmlPreTranspiled(
     }
 
     const inspectorScript = getInspectorScriptHtml();
+    const devToolsScript = getDevToolsScriptHtml();
     if (rawHtml.includes('</body>')) {
-      rawHtml = rawHtml.replace('</body>', `${errorScript}\n${inspectorScript}\n</body>`);
+      rawHtml = rawHtml.replace('</body>', `${errorScript}\n${devToolsScript}\n${inspectorScript}\n</body>`);
     } else {
-      rawHtml = `${rawHtml}\n${errorScript}\n${inspectorScript}`;
+      rawHtml = `${rawHtml}\n${errorScript}\n${devToolsScript}\n${inspectorScript}`;
     }
 
     return rawHtml;
@@ -704,6 +832,7 @@ export function buildPreviewHtmlPreTranspiled(
       try { window.parent.postMessage({ type: '__SYNAP_PREVIEW_READY__' }, '*'); } catch {}
     }
   <\/script>
+  ${getDevToolsScriptHtml()}
   ${getInspectorScriptHtml()}
 </body>
 </html>`;

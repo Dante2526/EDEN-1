@@ -12,6 +12,7 @@ interface ProjectWorkspaceProps {
   onFileChange?: (path: string, content: string) => void;
   selectedElementsCount?: number;
   onSelectElement?: (element: SelectedPreviewElement) => void;
+  onFixWithAi?: (promptText: string) => void;
 }
 
 export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
@@ -19,6 +20,7 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
   onClose,
   selectedElementsCount,
   onSelectElement,
+  onFixWithAi,
 }) => {
   // Diagnóstico: verifica se o projeto tem conteúdo visível
   const diagnosticInfo = useMemo(() => {
@@ -65,6 +67,7 @@ export const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({
           selectedElementsCount={selectedElementsCount}
           onSelectElement={onSelectElement}
           onNavigateToChat={onClose}
+          onFixWithAi={onFixWithAi}
         />
 
         {/* Botão flutuante: fechar (voltar ao chat) */}

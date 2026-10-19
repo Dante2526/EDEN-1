@@ -1224,6 +1224,102 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                             </div>
                           </div>
                         )}
+
+                        {/* Seção DevTools da Página: Console e Rede */}
+                        {(Boolean(browserData?.consoleLogs?.length) || Boolean(browserData?.networkErrors?.length)) && (
+                          <div className="mt-2 pt-2 border-t border-cyan-500/20 space-y-1.5 font-mono text-[11px]">
+                            <div className="flex items-center justify-between text-[10px] text-cyan-300 font-semibold uppercase tracking-wider">
+                              <div className="flex items-center gap-1.5">
+                                <Terminal className="w-3 h-3 text-cyan-400" />
+                                <span>DevTools da Página</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {browserData?.consoleLogs?.length ? (
+                                  <span className="px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                                    {browserData.consoleLogs.length} logs
+                                  </span>
+                                ) : null}
+                                {browserData?.networkErrors?.length ? (
+                                  <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold">
+                                    {browserData.networkErrors.length} erros rede
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            {/* Lista de Erros de Rede */}
+                            {browserData?.networkErrors?.map((net: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-1.5 px-2 py-1 rounded bg-rose-950/40 border border-rose-500/30 text-rose-300 text-[10px]"
+                              >
+                                <span className="font-bold px-1 py-0.2 rounded bg-rose-500/30 text-rose-200">
+                                  {net.status || 'ERR'}
+                                </span>
+                                <span className="truncate flex-1" title={net.url}>
+                                  {net.url}
+                                </span>
+                                <span className="text-rose-400/80 shrink-0">{net.statusText}</span>
+                              </div>
+                            ))}
+
+                            {/* Lista de Logs do Console */}
+                            {browserData?.consoleLogs?.slice(0, 5).map((log: any, idx: number) => {
+                              const isErr = log.type === 'error';
+                              const isWarn = log.type === 'warning' || log.type === 'warn';
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`flex items-start gap-1.5 px-2 py-1 rounded text-[10px] ${
+                                    isErr
+                                      ? 'bg-rose-950/30 border border-rose-500/20 text-rose-300'
+                                      : isWarn
+                                      ? 'bg-amber-950/30 border border-amber-500/20 text-amber-300'
+                                      : 'bg-zinc-900/60 border border-zinc-800 text-zinc-300'
+                                  }`}
+                                >
+                                  <span className="uppercase text-[9px] font-bold shrink-0 opacity-80">
+                                    {log.type}
+                                  </span>
+                                  <span className="break-all flex-1">{log.text}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'get_preview_devtools_logs') {
+                  const filter = parsedArgs?.filter || 'all';
+                  return (
+                    <div
+                      key={tc.id}
+                      className="flex items-center justify-between gap-3 px-3.5 py-2 synap-card border-cyan-500/30 bg-[color:var(--c-bg-192022)] text-xs text-[color:var(--c-fg-c4bfb6)] my-1.5"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                          <Terminal className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-cyan-200">
+                              Chrome DevTools (Preview)
+                            </span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                              {filter}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-[color:var(--c-fg-8c867a)] font-mono truncate block">
+                            Inspeção de Console e Rede em tempo real
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Inspecionado</span>
                       </div>
                     </div>
                   );

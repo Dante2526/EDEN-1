@@ -87,6 +87,8 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
             screenshotBase64: data.screenshotBase64,
             interactiveElements,
             extractedText,
+            consoleLogs: data.consoleLogs,
+            networkErrors: data.networkErrors,
             error: data.error,
           };
 
@@ -151,6 +153,9 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       actionDescription: actionDesc,
       interactiveElements,
       extractedText,
+      networkErrors: !jinaRes.ok
+        ? [{ url: targetUrl, status: jinaRes.status, statusText: jinaRes.statusText || 'Erro HTTP' }]
+        : undefined,
     };
 
     return new Response(JSON.stringify(result), {
