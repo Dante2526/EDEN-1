@@ -62,7 +62,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     // Se tiver chave Browserless ou endpoint personalizado
     if (resolvedApiKey || customEndpoint) {
       const endpoint = customEndpoint || `https://chrome.browserless.io/function?token=${resolvedApiKey}`;
-      const code = buildPuppeteerFunctionScript(body);
+      const code = body.code || buildPuppeteerFunctionScript(body);
 
       try {
         const browserRes = await fetch(endpoint, {
@@ -87,6 +87,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
             screenshotBase64: data.screenshotBase64,
             interactiveElements,
             extractedText,
+            extractedData: data.extractedData,
             consoleLogs: data.consoleLogs,
             networkErrors: data.networkErrors,
             error: data.error,

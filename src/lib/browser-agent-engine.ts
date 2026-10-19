@@ -25,6 +25,7 @@ export interface BrowserActionParams {
   scrollAmount?: number;
   waitMs?: number;
   waitForSelector?: string;
+  code?: string;
 }
 
 export interface InteractiveElement {
@@ -46,6 +47,7 @@ export interface BrowserActionResult {
   screenshotBase64?: string;
   interactiveElements: InteractiveElement[];
   extractedText?: string;
+  extractedData?: any;
   consoleLogs?: { type: string; text: string }[];
   networkErrors?: { url: string; status: number; statusText?: string }[];
   error?: string;

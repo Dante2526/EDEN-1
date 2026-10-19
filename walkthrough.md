@@ -1948,5 +1948,35 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
   - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) compilados com sucesso.
 
+## 114. Maxun MCP Oficial e Gravador Visual de Scraping & Automação No-Code ("Browser Recipes")
+- **Solicitação do Usuário:** Análise e integração da ferramenta **Maxun** (plataforma open-source de scraping no-code com 16.7k stars no GitHub) -> Escolhida a Opção 3 ("Os dois juntos: Preset Maxun no Painel de Extensões + Motor de Scraping No-Code nativo no Éden").
+- **Implementações Realizadas:**
+  1. **Motor de Receitas de Navegação e Scraping TDD (`src/lib/browser-recipe-engine.ts` + `src/lib/browser-recipe-engine.test.ts`):**
+     - Criação de tipos (`BrowserRecipe`, `BrowserRecipeAction`, `BrowserRecipeActionType`, `BrowserRecipeRunResult`).
+     - Ações com seletores e parâmetros (`navigate`, `click`, `type`, `wait_for_selector`, `scroll`, `wait`, `screenshot`, `extract_text`, `extract_table`, `extract_attribute`).
+     - Validação rigorosa de receitas (`validateRecipe`) e compilação para scripts Puppeteer (`compileRecipeToPuppeteerScript`).
+     - Formatação compacta e semântica para injeção no prompt da IA (`formatRecipeRunResultForAi`).
+     - Dupla camada de persistência: IndexedDB assíncrono via `idb-keyval` com fallback para `localStorage` (`synap_browser_recipes_v1`).
+  2. **Preset Oficial do Maxun no Painel de Extensões (`src/components/extensions/extensions-panel.tsx`):**
+     - Card de destaque com logo, métricas do GitHub (16.7k stars, Open-Source) e descrição do ecossistema Maxun.
+     - Botão *"Copiar Comando Docker"* (`docker run -v maxun-data:/app/data -p 8080:8080 getmaxun/maxun`) com feedback de cópia em 1 clique.
+     - Botão *"Conectar Preset"* com pré-preenchimento automático da URL MCP local (`http://localhost:8080/mcp`) e nome identificador.
+     - Presets rápidos de 1 clique no modal de conexão MCP para Maxun, Puppeteer e SQLite.
+  3. **Interface Visual do Gravador de Receitas (`src/components/browser-recipe-modal.tsx`):**
+     - Modal split-view com lista lateral de robôs salvos e painel de edição/execução em tempo real.
+     - Editor de passos interativo: formulários dinâmicos por tipo de ação, timeout, seletores CSS/XPath e captura de atributos.
+     - Execução direta com teste em 1 clique via API `/api/browser`, com exibição de logs de runtime, dados extraídos em JSON formatado e screenshot capturada.
+     - Botão *"⚡ Enviar Dados para o Chat com IA"*, injetando o payload extraído no chat com acionamento automático do modelo.
+     - Acesso direto pelo botão **"Robôs"** com ícone `Globe` no cabeçalho superior (`ChatHeader`).
+  4. **Ferramentas de IA para Orquestração de Scraping (`src/App.tsx`):**
+     - Registradas as ferramentas `list_browser_recipes` e `run_browser_recipe` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Injetada regra 9 no System Prompt instruindo os modelos a consultar as receitas disponíveis antes de tentar extrações complexas manuais.
+     - Handlers dedicados no fluxo `executeGitHubTool` para executar passos sequenciais via endpoint `/api/browser` e sintetizar os dados no chat.
+- **Evidências de Verificação:**
+  - `npm test`: **152/152 testes unitários passando em 35 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) compilados com sucesso em 18.55s.
+
+
 
 

@@ -22,6 +22,8 @@ import {
   Smartphone,
   Cloud,
   Bot,
+  Globe,
+  Copy,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -64,6 +66,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isAddMcpOpen, setIsAddMcpOpen] = useState(false);
   const [expandedMcpId, setExpandedMcpId] = useState<string | null>(null);
+  const [copiedDocker, setCopiedDocker] = useState(false);
 
   // Form states for new skill
   const [newSkillName, setNewSkillName] = useState('');
@@ -167,7 +170,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
           }`}
         >
           <Server className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span>MPC</span>
+          <span>MCP</span>
           {connectedMcpCount > 0 && (
             <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
               {connectedMcpCount}
@@ -290,6 +293,55 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                 <Plus className="w-3 h-3 text-emerald-400" />
                 <span>Conectar</span>
               </button>
+            </div>
+
+            {/* Card Preset Recomendado: Maxun */}
+            <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/30 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-semibold text-cyan-200">
+                  <Globe className="w-4 h-4 text-cyan-400" />
+                  <span>Maxun (Web Scraper No-Code)</span>
+                </div>
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  16.7k ⭐
+                </span>
+              </div>
+              <p className="text-[11px] text-[color:var(--c-fg-a39d93)] leading-relaxed">
+                Extraia dados de qualquer site sem programar e converta em robôs via Playwright + IA com bypass de Cloudflare.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMcpName('Maxun Web Scraper');
+                    setNewMcpUrl('http://localhost:8080/mcp');
+                    setIsAddMcpOpen(true);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-200 text-xs font-medium transition cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Conectar Preset</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                      navigator.clipboard.writeText('docker run -v maxun-data:/app/data -p 8080:8080 getmaxun/maxun');
+                      setCopiedDocker(true);
+                      setTimeout(() => setCopiedDocker(false), 2000);
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs transition cursor-pointer flex items-center gap-1 ${
+                    copiedDocker
+                      ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                  }`}
+                  title="Copiar comando Docker para rodar o Maxun localmente"
+                >
+                  {copiedDocker ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedDocker ? 'Copiado!' : 'Docker Run'}</span>
+                </button>
+              </div>
             </div>
 
             {/* MCP Server List */}
@@ -628,6 +680,35 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             </div>
 
             <form onSubmit={handleCreateMcp} className="space-y-3">
+              {/* Presets Rápidos */}
+              <div>
+                <span className="block text-[10px] text-[color:var(--c-fg-8c867a)] mb-1">Preenchimento rápido:</span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewMcpName('Maxun Web Scraper');
+                      setNewMcpUrl('http://localhost:8080/mcp');
+                    }}
+                    className="px-2 py-1 rounded-md bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-[10px] font-medium transition cursor-pointer flex items-center gap-1"
+                  >
+                    <Globe className="w-3 h-3" />
+                    <span>Maxun Scraper</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewMcpName('Context7 Docs');
+                      setNewMcpUrl('https://mcp.context7.dev/rpc');
+                    }}
+                    className="px-2 py-1 rounded-md bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-[10px] font-medium transition cursor-pointer flex items-center gap-1"
+                  >
+                    <Server className="w-3 h-3" />
+                    <span>Context7 Docs</span>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[11px] text-[color:var(--c-fg-a39d93)] mb-1">Nome da Conexão</label>
                 <input

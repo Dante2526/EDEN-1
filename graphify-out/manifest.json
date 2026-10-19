@@ -975,14 +975,14 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792411646.2462556,
-    "ast_hash": "9ca00dfd3d8a1c04890fca00fb063954",
+    "mtime": 1792414686.2911794,
+    "ast_hash": "d74051f597e1f5e27a593a873e169dcc",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
-    "mtime": 1792204364.0358377,
-    "ast_hash": "e6b397b016b3853017d816c1681a654c",
-    "semantic_hash": "e6b397b016b3853017d816c1681a654c"
+    "mtime": 1792413957.2068315,
+    "ast_hash": "b1c2684bf041d364078c069e79145ca6",
+    "semantic_hash": ""
   },
   "src/components/chat-input.tsx": {
     "mtime": 1792377904.549098,
@@ -1050,9 +1050,9 @@
     "semantic_hash": "8921224c171256f9c22792a47f66e52e"
   },
   "src/components/extensions/extensions-panel.tsx": {
-    "mtime": 1792111321.3683724,
-    "ast_hash": "286d8c7d13f627bfdcbc0eb4c742ced2",
-    "semantic_hash": "286d8c7d13f627bfdcbc0eb4c742ced2"
+    "mtime": 1792414491.5586004,
+    "ast_hash": "94770fab2092c3a501b259df3349177a",
+    "semantic_hash": ""
   },
   "src/components/github/create-repo-modal.tsx": {
     "mtime": 1792030703.49079,
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792411752.3711786,
-    "ast_hash": "32c862b87492f14a15187113f5116841",
+    "mtime": 1792414134.6190267,
+    "ast_hash": "f2acb5131c8ee72c558c5e18655fd36e",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6010,8 +6010,8 @@
     "semantic_hash": ""
   },
   "api/browser.ts": {
-    "mtime": 1792411256.7824059,
-    "ast_hash": "2731cca899703f68dc960dcbec59e336",
+    "mtime": 1792414432.358413,
+    "ast_hash": "4287ce7954eded1c31cfad7b24ec1df9",
     "semantic_hash": ""
   },
   "src/lib/browser-agent-engine.test.ts": {
@@ -6020,8 +6020,8 @@
     "semantic_hash": ""
   },
   "src/lib/browser-agent-engine.ts": {
-    "mtime": 1792410914.7847521,
-    "ast_hash": "25df9aa1f59044b985bea1e1b9d00689",
+    "mtime": 1792414677.612644,
+    "ast_hash": "5d512d71e5e9fc0e8c16e639ad1ff765",
     "semantic_hash": ""
   },
   "src/lib/git-terminal-emulator.test.ts": {
@@ -6042,6 +6042,21 @@
   "src/lib/preview-devtools.ts": {
     "mtime": 1792411634.56035,
     "ast_hash": "93b0123582c0ea92fc9f2d3624195249",
+    "semantic_hash": ""
+  },
+  "src/components/browser-recipe-modal.tsx": {
+    "mtime": 1792414644.1262872,
+    "ast_hash": "1fe5d5f23c8d9a86839002d7495e45e0",
+    "semantic_hash": ""
+  },
+  "src/lib/browser-recipe-engine.test.ts": {
+    "mtime": 1792413491.3848505,
+    "ast_hash": "d97f793f18c62f8c9485c03f23969b28",
+    "semantic_hash": ""
+  },
+  "src/lib/browser-recipe-engine.ts": {
+    "mtime": 1792414516.135999,
+    "ast_hash": "6169d630e1c7c92ad5160d54cc8be5c3",
     "semantic_hash": ""
   }
 }

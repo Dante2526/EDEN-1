@@ -112,6 +112,13 @@ import {
   formatDevToolsSummaryForAi,
   parseDevToolsMessage,
 } from './lib/preview-devtools';
+import { BrowserRecipeModal } from './components/browser-recipe-modal';
+import {
+  loadSavedRecipes,
+  saveRecipe,
+  compileRecipeToPuppeteerScript,
+  formatRecipeRunResultForAi,
+} from './lib/browser-recipe-engine';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -807,8 +814,42 @@ const DEVTOOLS_INSPECT_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
+const LIST_BROWSER_RECIPES_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'list_browser_recipes',
+    description:
+      'Lista os robôs de navegação e automações de scraping (Browser Recipes / Maxun) salvos pelo usuário. ' +
+      'Retorna o ID, nome, URL inicial e descrição de cada fluxo automatizado gravado.',
+    parameters: {
+      type: 'object',
+      properties: {},
+    },
+  },
+};
+
+const RUN_BROWSER_RECIPE_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'run_browser_recipe',
+    description:
+      'Executa um robô de navegação e scraping gravado (Browser Recipe / estilo Maxun) de forma autônoma via Playwright/Browserless. ' +
+      'Executa a sequência de passos (cliques, digitação, espera, extração de texto/tabelas) e retorna os dados coletados.',
+    parameters: {
+      type: 'object',
+      properties: {
+        recipe_id: {
+          type: 'string',
+          description: 'ID ou nome do robô salvo para executar (obtenha via list_browser_recipes).',
+        },
+      },
+      required: ['recipe_id'],
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -847,6 +888,7 @@ function AppContent() {
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
@@ -2332,6 +2374,71 @@ function AppContent() {
       }
     }
 
+    if (name === 'list_browser_recipes') {
+      try {
+        const recipes = await loadSavedRecipes();
+        if (recipes.length === 0) {
+          return { result: 'Nenhum robô de navegação/scraping salvo ainda. O usuário pode criar novos robôs abrindo o menu "Robôs" no topo.' };
+        }
+        const summary = recipes
+          .map(
+            (r, i) =>
+              `${i + 1}. [${r.name}] (ID: ${r.id})\n   - URL Inicial: ${r.startUrl}\n   - Passos: ${r.actions.length}\n   - Objetivo: ${r.description || 'Não informado'}`
+          )
+          .join('\n\n');
+        return { result: `Robôs de Navegação Disponíveis:\n\n${summary}` };
+      } catch (err: any) {
+        return { result: `Erro ao listar robôs: ${err?.message || 'Falha desconhecida'}` };
+      }
+    }
+
+    if (name === 'run_browser_recipe') {
+      try {
+        const targetId = args.recipe_id?.trim();
+        const recipes = await loadSavedRecipes();
+        const found = recipes.find(
+          (r) => r.id === targetId || r.name.toLowerCase() === targetId?.toLowerCase()
+        );
+        if (!found) {
+          return { result: `Robô com ID ou nome "${targetId}" não encontrado. Use list_browser_recipes para consultar a lista.` };
+        }
+        const code = compileRecipeToPuppeteerScript(found);
+        const res = await fetch('/api/browser', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
+          body: JSON.stringify({
+            action: 'navigate',
+            url: found.startUrl,
+            apiKey: settings.browserlessApiKey,
+            browserEndpoint: settings.browserEndpoint,
+            code,
+          }),
+        });
+        const data = await res.json();
+        const isSuccess = data.success ?? (res.ok && !data.error);
+        const updatedRecipe = {
+          ...found,
+          lastRunAt: Date.now(),
+          lastStatus: isSuccess ? ('success' as const) : ('error' as const),
+          lastExtractedData: data.extractedData || data.interactiveElements,
+        };
+        saveRecipe(updatedRecipe).catch(() => {});
+
+        const formatted = formatRecipeRunResultForAi(
+          found,
+          data.extractedData || data.interactiveElements,
+          isSuccess,
+          data.error
+        );
+        return { result: formatted };
+      } catch (err: any) {
+        return { result: `Erro ao executar o robô: ${err?.message || 'Falha de execução'}` };
+      }
+    }
+
     if (name === 'generate_image') {
       try {
         const prompt = args.prompt || '';
@@ -3531,7 +3638,7 @@ function AppContent() {
         (chatActiveRepo && graphRagSummary ? `\n\n${graphRagSummary}` : '')
       : 'Você é o assistente Éden com ferramentas avançadas integradas.\n' +
         'REGRA SUPREMA DE CAPACIDADES DO ÉDEN (PROIBIDO RECUSAR OU DIZER QUE NÃO TEM FERRAMENTAS):\n' +
-        'Você É o assistente oficial do Éden e TEM TODAS as ferramentas reais integradas no chat: `control_browser` (Playwright / Browser-Use), `get_preview_devtools_logs` (Chrome DevTools Console e Network do Live Preview), `run_terminal_command` (com curl, ffprobe, ffmpeg e playwright), `run_python` (Python 3 com internet e bs4), `fetch_url`, `web_search`, `generate_document` e `save_memory`.\n' +
+        'Você É o assistente oficial do Éden e TEM TODAS as ferramentas reais integradas no chat: `control_browser` (Playwright / Browser-Use), `run_browser_recipe` e `list_browser_recipes` (Robôs de Scraping estilo Maxun), `get_preview_devtools_logs` (Chrome DevTools Console e Network do Live Preview), `run_terminal_command` (com curl, ffprobe, ffmpeg e playwright), `run_python` (Python 3 com internet e bs4), `fetch_url`, `web_search`, `generate_document` e `save_memory`.\n' +
         'É TERMINANTEMENTE PROIBIDO responder dizendo que "minhas ferramentas são fixas", "não tenho acesso ao Éden", "não posso rodar curl/ffmpeg/playwright" ou mandar o usuário rodar externamente. Se o usuário pedir para inspecionar com curl, testar mídia com ffprobe/ffmpeg, navegar na web ou rodar script, EMITA A CHAMADA DE FERRAMENTA IMEDIATAMENTE NA SUA RESPOSTA!\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n' +
         'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
@@ -3544,7 +3651,8 @@ function AppContent() {
         '5. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.\n' +
         '6. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.\n' +
         '7. Controle Autônomo de Navegador (Playwright / Browser-Use): Você tem a ferramenta `control_browser` para navegar e interagir autonomamente com páginas da web em um navegador real. Você pode abrir URLs (navigate), clicar em botões e links (click), preencher campos e pesquisar (type), rolar a tela (scroll) e capturar screenshots. Ao receber os elementos interativos numerados da página (ex: [1] <button>, [2] <input>), use os seletores fornecidos para prosseguir autonomamente passo a passo até atingir o objetivo solicitado pelo usuário.\n' +
-        '8. Chrome DevTools Integrado (get_preview_devtools_logs): Você pode inspecionar o console e a rede do Live Preview em tempo real para diagnosticar exceções de runtime, erros de renderização React, falhas de CSS/Tailwind ou endpoints com erro (404, 500). Use sempre que o usuário relatar que a página está em branco, não renderizou ou deu erro.';
+        '8. Chrome DevTools Integrado (get_preview_devtools_logs): Você pode inspecionar o console e a rede do Live Preview em tempo real para diagnosticar exceções de runtime, erros de renderização React, falhas de CSS/Tailwind ou endpoints com erro (404, 500). Use sempre que o usuário relatar que a página está em branco, não renderizou ou deu erro.\n' +
+        '9. Robôs de Navegação e Scraping Salvos (list_browser_recipes e run_browser_recipe): O usuário pode criar robôs visuais de automação no Éden (estilo Maxun). Use `list_browser_recipes` para descobrir quais robôs estão gravados e `run_browser_recipe` para disparar extrações de dados completas de forma confiável e obter os dados estruturados de volta no chat.';
 
     const planPrompt = activePlan
       ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject))
@@ -4824,6 +4932,7 @@ function AppContent() {
           theme={theme}
           onToggleTheme={handleToggleTheme}
           onOpenGraph={() => handleOpenGraph()}
+          onOpenScraperRecipes={() => setIsRecipeModalOpen(true)}
         />
 
         {/* Global Error Banner */}
@@ -5113,6 +5222,15 @@ function AppContent() {
         graph={projectGraph}
         initialFocusNodeId={graphFocusNodeId}
         onSelectFile={handleViewDiffForPath}
+      />
+
+      {/* Browser Recipe / Maxun Scraping Modal */}
+      <BrowserRecipeModal
+        isOpen={isRecipeModalOpen}
+        onClose={() => setIsRecipeModalOpen(false)}
+        onSendToChat={(text) => handleSendMessage(text)}
+        browserEndpoint={settings.browserEndpoint}
+        browserlessApiKey={settings.browserlessApiKey}
       />
     </div>
   );
