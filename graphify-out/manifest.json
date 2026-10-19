@@ -5,9 +5,9 @@
     "semantic_hash": "3d4d49bc058571e3328ba2ba19d30c06"
   },
   "_worker.ts": {
-    "mtime": 1792174701.399273,
-    "ast_hash": "322fc452c1ee908bcdb8cad44373dfd1",
-    "semantic_hash": "322fc452c1ee908bcdb8cad44373dfd1"
+    "mtime": 1792371797.843693,
+    "ast_hash": "b59044d8024a3fdfc6b6a351afe1a60f",
+    "semantic_hash": ""
   },
   "api/chat-test.ts": {
     "mtime": 1792030701.0615199,
@@ -20,9 +20,9 @@
     "semantic_hash": ""
   },
   "api/deployments.ts": {
-    "mtime": 1792078383.2286272,
-    "ast_hash": "f6303e18c1667a318006335939ea54da",
-    "semantic_hash": "f6303e18c1667a318006335939ea54da"
+    "mtime": 1792372608.5535698,
+    "ast_hash": "b2e17ea6d0e606d98cc3f52d4d899838",
+    "semantic_hash": ""
   },
   "api/download.ts": {
     "mtime": 1792203147.450304,
@@ -30,8 +30,8 @@
     "semantic_hash": "8ac56413223054847cba71d86f97357c"
   },
   "api/fetch-url.ts": {
-    "mtime": 1792371260.3800852,
-    "ast_hash": "c0e3c4c210949880cbfe09410efaceaf",
+    "mtime": 1792372560.5452063,
+    "ast_hash": "f8bf4f7f3ba03483bbf86b814045b1a0",
     "semantic_hash": ""
   },
   "api/github.ts": {
@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792371439.3714964,
-    "ast_hash": "9a3b3ac08276549363ae9a6363d604c2",
+    "mtime": 1792372904.85297,
+    "ast_hash": "7a93648cb2ec3dbea5c5e7716eaac989",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -990,8 +990,8 @@
     "semantic_hash": "c550ac6f78b57af703ba8b44a1dd40c3"
   },
   "src/components/chat-message.tsx": {
-    "mtime": 1792287325.029243,
-    "ast_hash": "ee151fc388db0766aaed4482543e270d",
+    "mtime": 1792372920.5625222,
+    "ast_hash": "3c32952c9b2aefa156f531456d442aa7",
     "semantic_hash": ""
   },
   "src/components/chat-sidebar.tsx": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": "05fc5454d8770ed9133080ecc821c695"
   },
   "src/lib/git-terminal-emulator.ts": {
-    "mtime": 1792371491.840217,
-    "ast_hash": "9e7a5481babe0a90a370ba0942c8ddc8",
+    "mtime": 1792373055.747718,
+    "ast_hash": "6ca0478f5054df3785eff0838dbfdd98",
     "semantic_hash": ""
   },
   "src/lib/github-commit.ts": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792287235.8234162,
-    "ast_hash": "557d0f05339ab158c591899f9ca3394b",
+    "mtime": 1792372588.546988,
+    "ast_hash": "82d9f09244c3ad6561292aee4388779e",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -1475,8 +1475,8 @@
     "semantic_hash": "b892247f87d060b81f51a116070d0ab1"
   },
   "src/workers/pyodide-worker.ts": {
-    "mtime": 1792371331.831426,
-    "ast_hash": "a524bab7700338d8c8cf17a035eef44f",
+    "mtime": 1792371798.2800517,
+    "ast_hash": "929596a4cefef9a689735f50805cc877",
     "semantic_hash": ""
   },
   "tsconfig.app.json": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792371641.0419536,
-    "ast_hash": "bf9bd00f4d2e078548cccdd581564e99",
+    "mtime": 1792373148.244418,
+    "ast_hash": "dee71fe16d5aec61a1fcd9289725998c",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -5955,8 +5955,8 @@
     "semantic_hash": ""
   },
   "src/lib/smart-prefill.ts": {
-    "mtime": 1792371449.9269187,
-    "ast_hash": "1f4f012ffa534bb2eb015128f41ddbfa",
+    "mtime": 1792373072.8414893,
+    "ast_hash": "00bc302a85b2c7700a62ed0fbcac1d8e",
     "semantic_hash": ""
   },
   "src/lib/media-probe.test.ts": {
@@ -5967,6 +5967,21 @@
   "src/lib/media-probe.ts": {
     "mtime": 1792371176.640842,
     "ast_hash": "ac4113ec8df36c97c1c83d1bc3388291",
+    "semantic_hash": ""
+  },
+  "api/image.ts": {
+    "mtime": 1792371797.8450468,
+    "ast_hash": "fbe4e7eaec8819f0de7f302c9a074e65",
+    "semantic_hash": ""
+  },
+  "src/lib/remote-gate.test.ts": {
+    "mtime": 1792372465.4053285,
+    "ast_hash": "fd6e8d15b964e51b3b11177a036f39c3",
+    "semantic_hash": ""
+  },
+  "src/lib/remote-gate.ts": {
+    "mtime": 1792372496.1844606,
+    "ast_hash": "89296cdd6f3dd826d55eb54e43288954",
     "semantic_hash": ""
   }
 }
