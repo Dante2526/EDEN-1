@@ -101,8 +101,24 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     }
 
     // Modo Fallback Edge / Headless sem chave (Jina Reader Chromium Render)
-    const targetUrl = url || 'https://google.com';
-    const jinaUrl = `https://r.jina.ai/${targetUrl.trim()}`;
+    const targetUrl = url?.trim() || '';
+    if (!targetUrl) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Nenhuma URL informada. Use action: "navigate" com o parâmetro "url" para abrir uma página.',
+          action,
+          actionDescription: 'Aguardando URL de navegação',
+          currentUrl: 'about:blank',
+          title: 'Navegador Autônomo',
+          interactiveElements: [],
+          extractedText: 'Nenhuma página aberta. Forneça uma URL para navegar.',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const jinaUrl = `https://r.jina.ai/${targetUrl}`;
     const jinaRes = await fetch(jinaUrl, {
       headers: {
         'X-Return-Format': 'html',

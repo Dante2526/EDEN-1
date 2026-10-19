@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792408291.097474,
-    "ast_hash": "7ac292de8ce2c3d105678944a57f3b2c",
+    "mtime": 1792410113.9969869,
+    "ast_hash": "94ad9ef1afa6fbee1dfdd49a69d0aeae",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": "05fc5454d8770ed9133080ecc821c695"
   },
   "src/lib/git-terminal-emulator.ts": {
-    "mtime": 1792376179.0955863,
-    "ast_hash": "7284b63f38c7c033697f67bde8bee5fe",
+    "mtime": 1792410026.3758702,
+    "ast_hash": "8435f52e2e3872300757a2f827c05ce2",
     "semantic_hash": ""
   },
   "src/lib/github-commit.ts": {
@@ -6010,8 +6010,8 @@
     "semantic_hash": ""
   },
   "api/browser.ts": {
-    "mtime": 1792407307.1223736,
-    "ast_hash": "2d44926eb0ee0fcf49dbf6ac258303ba",
+    "mtime": 1792410081.6156266,
+    "ast_hash": "a08f98e416a8c704b836d64d7f2cd043",
     "semantic_hash": ""
   },
   "src/lib/browser-agent-engine.test.ts": {
@@ -6022,6 +6022,11 @@
   "src/lib/browser-agent-engine.ts": {
     "mtime": 1792406906.8893435,
     "ast_hash": "e85d18bbee13c8bcd3dc21c0f943a25c",
+    "semantic_hash": ""
+  },
+  "src/lib/git-terminal-emulator.test.ts": {
+    "mtime": 1792410165.5268989,
+    "ast_hash": "69235d595b561151f41904410084f56a",
     "semantic_hash": ""
   }
 }

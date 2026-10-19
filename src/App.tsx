@@ -1363,6 +1363,7 @@ function AppContent() {
   const streamingAccumulatedReasoningRef = useRef<string>('');
   const currentAssistantMessageIdRef = useRef<string>('');
   const currentConversationIdRef = useRef<string>('');
+  const lastBrowserUrlRef = useRef<string>('');
   // Snapshot de info de debug — atualizado durante o loop, lido no catch
   const debugInfoRef = useRef<{
     requestStartTime: number;
@@ -2219,6 +2220,11 @@ function AppContent() {
 
     if (name === 'control_browser' || name === 'browser_action') {
       try {
+        const resolvedUrl = args.url || lastBrowserUrlRef.current || undefined;
+        if (args.url) {
+          lastBrowserUrlRef.current = args.url;
+        }
+
         const res = await fetch('/api/browser', {
           method: 'POST',
           headers: {
@@ -2227,7 +2233,7 @@ function AppContent() {
           },
           body: JSON.stringify({
             action: args.action,
-            url: args.url,
+            url: resolvedUrl,
             selector: args.selector,
             text: args.text,
             key: args.key,
@@ -2240,6 +2246,10 @@ function AppContent() {
         });
 
         const browserData = await res.json();
+        if (browserData?.currentUrl && browserData.currentUrl !== 'about:blank') {
+          lastBrowserUrlRef.current = browserData.currentUrl;
+        }
+
         if (browserData && currentAssistantMessageIdRef.current) {
           const targetMsgId = currentAssistantMessageIdRef.current;
           setConversations((prev) =>

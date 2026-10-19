@@ -62,17 +62,70 @@ function resolvePath(cwd: string, relativePath: string): string {
   return '/' + cwdParts.join('/');
 }
 
+// ==========================================
+// Virtual in-memory /tmp Filesystem
+// ==========================================
+const virtualTmpFiles = new Map<string, string>();
+
+export function clearVirtualTmpFiles(): void {
+  virtualTmpFiles.clear();
+}
+
+export function getVirtualTmpFile(path: string): string | undefined {
+  const normalized = normalizeTmpPath(path);
+  return virtualTmpFiles.get(normalized);
+}
+
+export function setVirtualTmpFile(path: string, content: string): void {
+  const normalized = normalizeTmpPath(path);
+  virtualTmpFiles.set(normalized, content);
+}
+
+export function listVirtualTmpFiles(): string[] {
+  return Array.from(virtualTmpFiles.keys());
+}
+
+function normalizeTmpPath(p: string): string {
+  let cleaned = p.trim().replace(/\\/g, '/');
+  if (!cleaned.startsWith('/')) cleaned = '/' + cleaned;
+  if (!cleaned.startsWith('/tmp/')) {
+    cleaned = '/tmp/' + cleaned.replace(/^\//, '');
+  }
+  return cleaned;
+}
+
+function cleanTokenQuotes(str: string): string {
+  let s = str.trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1);
+  }
+  return s;
+}
+
 /**
- * Extracts options and arguments from a command string.
+ * Extracts options and arguments from a command string with support for
+ * backslash escapes (\", \', \ ), single/double quotes and flags.
  */
-function parseCommandArgs(cmdString: string): { command: string; args: string[]; flags: Record<string, boolean | string> } {
+export function parseCommandArgs(cmdString: string): { command: string; args: string[]; flags: Record<string, boolean | string> } {
   const tokens: string[] = [];
   let currentToken = '';
   let inQuotes = false;
   let quoteChar = '';
+  let isEscaped = false;
 
   for (let i = 0; i < cmdString.length; i++) {
     const char = cmdString[i];
+
+    if (isEscaped) {
+      currentToken += char;
+      isEscaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      isEscaped = true;
+      continue;
+    }
 
     if ((char === '"' || char === "'") && !inQuotes) {
       inQuotes = true;
@@ -91,7 +144,7 @@ function parseCommandArgs(cmdString: string): { command: string; args: string[];
   }
   if (currentToken) tokens.push(currentToken);
 
-  const command = tokens[0] ? tokens[0].toLowerCase() : '';
+  const command = tokens[0] ? cleanTokenQuotes(tokens[0]).toLowerCase() : '';
   const args: string[] = [];
   const flags: Record<string, boolean | string> = {};
 
@@ -101,25 +154,16 @@ function parseCommandArgs(cmdString: string): { command: string; args: string[];
       const eqIndex = token.indexOf('=');
       if (eqIndex !== -1) {
         const flagName = token.substring(2, eqIndex);
-        const flagVal = token.substring(eqIndex + 1);
+        const flagVal = cleanTokenQuotes(token.substring(eqIndex + 1));
         flags[flagName] = flagVal;
       } else {
         flags[token.substring(2)] = true;
       }
     } else if (token.startsWith('-') && token.length > 1) {
-      // e.g. -la, -a, -m
+      // e.g. -la, -a, -m, -o, -H
       const flagStr = token.substring(1);
-      if (flagStr === 'm' && i + 1 < tokens.length) {
-        flags['m'] = tokens[i + 1];
-        i++; // skip next token since it was consumed as commit message
-      } else if (flagStr === 'b' && i + 1 < tokens.length) {
-        flags['b'] = tokens[i + 1];
-        i++;
-      } else if (flagStr === 'c' && i + 1 < tokens.length) {
-        flags['c'] = tokens[i + 1];
-        i++;
-      } else if (flagStr === 'n' && i + 1 < tokens.length) {
-        flags['n'] = tokens[i + 1];
+      if ((flagStr === 'm' || flagStr === 'b' || flagStr === 'c' || flagStr === 'n' || flagStr === 'o' || flagStr === 'H') && i + 1 < tokens.length) {
+        flags[flagStr] = cleanTokenQuotes(tokens[i + 1]);
         i++;
       } else {
         for (const char of flagStr) {
@@ -127,20 +171,103 @@ function parseCommandArgs(cmdString: string): { command: string; args: string[];
         }
       }
     } else {
-      args.push(token);
+      args.push(cleanTokenQuotes(token));
     }
   }
 
   return { command, args, flags };
 }
 
+function splitPipeSegments(cmd: string): string[] {
+  const segments: string[] = [];
+  let cur = '';
+  let inQ = false;
+  let qCh = '';
+  let isEsc = false;
+
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (isEsc) {
+      cur += ch;
+      isEsc = false;
+      continue;
+    }
+    if (ch === '\\') {
+      cur += ch;
+      isEsc = true;
+      continue;
+    }
+    if ((ch === '"' || ch === "'") && !inQ) {
+      inQ = true;
+      qCh = ch;
+      cur += ch;
+    } else if (ch === qCh && inQ) {
+      inQ = false;
+      qCh = '';
+      cur += ch;
+    } else if (ch === '|' && !inQ) {
+      segments.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur) segments.push(cur);
+  return segments;
+}
+
 /**
  * Main Git Terminal Emulator Engine
- * Translates Git/Unix shell commands to real GitHub REST API calls and active app state.
+ * Translates Git/Unix shell commands to real GitHub REST API calls, virtual /tmp filesystem and active app state.
  */
 export async function executeEmulatedCommand(
   rawCommand: string,
   context: TerminalEmulatorContext
+): Promise<TerminalEmulatorResult> {
+  const trimmed = rawCommand.trim();
+  if (!trimmed) {
+    return {
+      stdout: '',
+      stderr: '',
+      exitCode: 0,
+      cwd: context.cwd,
+      executionTimeMs: 0,
+      success: true,
+    };
+  }
+
+  const segments = splitPipeSegments(trimmed);
+  if (segments.length > 1) {
+    let currentInput = '';
+    let lastResult: TerminalEmulatorResult | null = null;
+    for (const seg of segments) {
+      const segTrimmed = seg.trim();
+      if (!segTrimmed) continue;
+      lastResult = await executeSingleCommand(segTrimmed, context, currentInput);
+      currentInput = lastResult.stdout;
+      if (!lastResult.success && lastResult.exitCode !== 0) {
+        return lastResult;
+      }
+    }
+    return lastResult || {
+      stdout: '',
+      stderr: '',
+      exitCode: 0,
+      cwd: context.cwd,
+      executionTimeMs: 0,
+      success: true,
+    };
+  }
+
+  return executeSingleCommand(trimmed, context);
+}
+
+export const executeTerminalCommand = executeEmulatedCommand;
+
+async function executeSingleCommand(
+  rawCommand: string,
+  context: TerminalEmulatorContext,
+  stdin?: string
 ): Promise<TerminalEmulatorResult> {
   const startTime = Date.now();
   const trimmed = rawCommand.trim();
@@ -269,6 +396,15 @@ export async function executeEmulatedCommand(
     }
 
     if (command === 'ls' || command === 'dir') {
+      const targetArg = args[0] ? resolvePath(context.cwd, args[0]) : context.cwd;
+      if (targetArg.startsWith('/tmp') || targetArg.startsWith('tmp')) {
+        const tmpList = listVirtualTmpFiles();
+        if (tmpList.length === 0) {
+          return makeResult('(diretório /tmp vazio)');
+        }
+        return makeResult(tmpList.map((f) => f.replace(/^\/tmp\/?/, '')).join('\n'));
+      }
+
       if (!owner || !repo) {
         return makeResult(
           '',
@@ -310,11 +446,31 @@ export async function executeEmulatedCommand(
     }
 
     if (command === 'cat' || command === 'head' || command === 'tail') {
-      if (!owner || !repo) {
-        return makeResult('', 'fatal: nenhum repositório GitHub ativo.', 1);
-      }
       if (args.length === 0) {
         return makeResult('', `Uso: ${command} <caminho-do-arquivo>`, 1);
+      }
+
+      const rawPath = args[0] || '';
+      const resolved = resolvePath(context.cwd, rawPath);
+      if (resolved.startsWith('/tmp/') || rawPath.startsWith('/tmp/') || rawPath.startsWith('tmp/')) {
+        const content = getVirtualTmpFile(rawPath) ?? getVirtualTmpFile(resolved);
+        if (content === undefined) {
+          return makeResult('', `${command}: ${rawPath}: Arquivo não encontrado no /tmp`, 1);
+        }
+        const lines = content.split('\n');
+        if (command === 'head') {
+          const n = typeof flags['n'] === 'string' ? parseInt(flags['n'], 10) : 10;
+          return makeResult(lines.slice(0, n).join('\n'));
+        }
+        if (command === 'tail') {
+          const n = typeof flags['n'] === 'string' ? parseInt(flags['n'], 10) : 10;
+          return makeResult(lines.slice(-n).join('\n'));
+        }
+        return makeResult(content);
+      }
+
+      if (!owner || !repo) {
+        return makeResult('', 'fatal: nenhum repositório GitHub ativo.', 1);
       }
 
       const filePath = resolvePath(context.cwd, args[0]).replace(/^\//, '');
@@ -347,17 +503,44 @@ export async function executeEmulatedCommand(
     }
 
     if (command === 'grep') {
-      if (!owner || !repo) {
-        return makeResult('', 'fatal: nenhum repositório GitHub ativo.', 1);
-      }
-      const term = args[0] || (typeof flags['e'] === 'string' ? flags['e'] : '');
+      const term = args[0] || (typeof flags['e'] === 'string' ? (flags['e'] as string) : '');
+      const targetFile = args[1] || '';
+
       if (!term) {
         return makeResult('', 'Uso: grep <termo> [arquivo]', 1);
       }
 
-      if (args[1]) {
+      // 1) Se veio de pipe (stdin)
+      if (stdin !== undefined && (!targetFile || targetFile === '-')) {
+        const matched = stdin
+          .split('\n')
+          .filter((l) => l.toLowerCase().includes(term.toLowerCase()))
+          .join('\n');
+        return makeResult(matched || 'Nenhuma correspondência encontrada.');
+      }
+
+      // 2) Se for arquivo em /tmp virtual
+      const resolved = targetFile ? resolvePath(context.cwd, targetFile) : '';
+      if (resolved.startsWith('/tmp/') || targetFile.startsWith('/tmp/') || targetFile.startsWith('tmp/')) {
+        const content = getVirtualTmpFile(targetFile) ?? getVirtualTmpFile(resolved);
+        if (content === undefined) {
+          return makeResult('', `grep: ${targetFile}: Arquivo não encontrado no /tmp`, 1);
+        }
+        const matched = content
+          .split('\n')
+          .filter((l) => l.toLowerCase().includes(term.toLowerCase()))
+          .join('\n');
+        return makeResult(matched || 'Nenhuma correspondência encontrada.');
+      }
+
+      // 3) Se for busca em repositório GitHub
+      if (!owner || !repo) {
+        return makeResult('', 'fatal: nenhum repositório GitHub ativo.', 1);
+      }
+
+      if (targetFile) {
         // Grep in specific file
-        const filePath = resolvePath(context.cwd, args[1]).replace(/^\//, '');
+        const filePath = resolvePath(context.cwd, targetFile).replace(/^\//, '');
         try {
           const content = await fetchFileContent(null, owner, repo, filePath, branch);
           const matched = content
@@ -390,14 +573,25 @@ export async function executeEmulatedCommand(
       let method: 'GET' | 'HEAD' | 'POST' = 'GET';
       let targetUrl = '';
       let includeStatusFmt = '';
+      let outputFile: string | undefined = typeof flags['o'] === 'string' ? (flags['o'] as string) : undefined;
 
       // Re-parseia os tokens brutos para preservar múltiplos -H "Header: Val"
       const rawTokens: string[] = [];
       let cur = '';
       let inQ = false;
       let qCh = '';
+      let isEsc = false;
       for (let i = 0; i < trimmed.length; i++) {
         const ch = trimmed[i];
+        if (isEsc) {
+          cur += ch;
+          isEsc = false;
+          continue;
+        }
+        if (ch === '\\') {
+          isEsc = true;
+          continue;
+        }
         if ((ch === '"' || ch === "'") && !inQ) {
           inQ = true;
           qCh = ch;
@@ -430,15 +624,23 @@ export async function executeEmulatedCommand(
           }
         } else if ((tok === '-w' || tok === '--write-out') && i + 1 < rawTokens.length) {
           includeStatusFmt = rawTokens[++i];
-        } else if ((tok === '-o' || tok === '-m' || tok === '--max-time') && i + 1 < rawTokens.length) {
-          i++; // ignora argumento de arquivo de saída ou timeout
+        } else if ((tok === '-o' || tok === '--output') && i + 1 < rawTokens.length) {
+          outputFile = rawTokens[++i];
+        } else if ((tok === '-m' || tok === '--max-time') && i + 1 < rawTokens.length) {
+          i++; // ignora argumento de timeout
         } else if (!tok.startsWith('-') && /^https?:\/\//i.test(tok)) {
           targetUrl = tok;
         }
       }
 
+      // Suporte a redirecionamento > /tmp/arquivo
+      const redirMatch = trimmed.match(/>\s*([^\s]+)/);
+      if (redirMatch && !outputFile) {
+        outputFile = redirMatch[1].trim();
+      }
+
       if (!targetUrl) {
-        return makeResult('', 'Uso: curl [-I] [-H "Referer: ..."] [-H "Range: bytes=0-1023"] <URL>', 1);
+        return makeResult('', 'Uso: curl [-I] [-H "Referer: ..."] [-H "Range: bytes=0-1023"] [-o /tmp/arquivo] <URL>', 1);
       }
 
       try {
@@ -457,6 +659,17 @@ export async function executeEmulatedCommand(
           return makeResult('', `curl: (22) ${data.error || `HTTP error ${res.status}`}`, 22);
         }
 
+        const rawContent = data.rawHtml || data.content || '';
+
+        // Se pediu para salvar em arquivo (-o /tmp/... ou > /tmp/...)
+        if (outputFile) {
+          setVirtualTmpFile(outputFile, rawContent);
+          return makeResult(
+            `Salvo em ${outputFile} (${rawContent.length} bytes)\n` +
+            `HTTP/1.1 ${data.status || res.status} ${data.statusText || 'OK'}`
+          );
+        }
+
         const outParts: string[] = [];
         if (method === 'HEAD') {
           outParts.push(`HTTP/1.1 ${data.status || res.status} ${data.statusText || ''}`);
@@ -466,7 +679,7 @@ export async function executeEmulatedCommand(
             }
           }
         } else {
-          outParts.push(data.rawHtml || data.content || '');
+          outParts.push(rawContent);
           if (Array.isArray(data.iframes) && data.iframes.length > 0) {
             outParts.push(`\n[Éden Inspector — Iframes detectados: ${data.iframes.join(', ')}]`);
           }

@@ -1895,3 +1895,29 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 168.5 kB) compilados com sucesso em 2.54s.
   - `graphify update .`: grafo atualizado.
 
+## 112. Blindagem de Aspas, Buffer Virtual `/tmp` em Memória, Pipes e Retenção de URL no Navegador
+- **Solicitação do Usuário:** Investigar e corrigir a falha de scraping no terminal (*"O escaping das aspas deu problema no terminal"*, erro de `/tmp/anime_page.html` e desvio do navegador autônomo para o Google).
+- **Diagnóstico Técnico da Causa Raiz:**
+  1. **Falha de Disco Virtual (/tmp):** O modelo executava `curl ... -o /tmp/anime_page.html` e em seguida `grep "<iframe" /tmp/anime_page.html`. Como o terminal do Éden é executado em memória no cliente e não possuía diretório `/tmp` persistido, o `grep` falhava com erro de repositório inexistente. A LLM alucinava que a causa da falha eram as aspas e interrompia o fluxo.
+  2. **Parser de Aspas com Escapes:** O parser de comandos não processava barras invertidas (`\"`, `\'`, `\\`), corrompendo termos com aspas escapadas como `\<iframe`.
+  3. **Ausência de Pipes Unix:** Comandos encadeados com `|` (ex: `echo ... | grep ...` ou `curl ... | grep ...`) eram interpretados como argumentos soltos do primeiro comando.
+  4. **Navegador Desviando para Google:** O fallback de `api/browser.ts` navegava para `google.com` sempre que a chamada subsequente omitia a URL.
+- **Implementações Realizadas:**
+  1. **Parser Robusto com Suporte a Escape (`src/lib/git-terminal-emulator.ts`):**
+     - Tratamento completo de barras invertidas (`isEscaped`), preservando caracteres e removendo aspas envolventes de forma limpa sem corromper argumentos.
+  2. **Sistema de Arquivos `/tmp` Virtual em Memória (`src/lib/git-terminal-emulator.ts`):**
+     - Estrutura `virtualTmpFiles` (`Map<string, string>`) acessível por `getVirtualTmpFile`, `setVirtualTmpFile`, `listVirtualTmpFiles` e `clearVirtualTmpFiles`.
+     - `curl -o /tmp/<arquivo>` e redirecionamento `> /tmp/<arquivo>` gravam o conteúdo HTML/texto no buffer virtual com confirmação de bytes gravados.
+     - Comandos `cat`, `head`, `tail`, `ls` e `grep` leem arquivos de `/tmp` em memória instantaneamente, dispensando conexão com o GitHub.
+  3. **Pipes Unix Básicos (`| grep`):**
+     - Divisor inteligente `splitPipeSegments` e função `executeSingleCommand` com passagem de `stdin`, permitindo encadeamento transparente de comandos.
+  4. **Retenção de URL no Navegador Autônomo (`src/App.tsx`, `api/browser.ts`):**
+     - Adicionado `lastBrowserUrlRef` em `src/App.tsx` para persistir a última URL navegada entre turnos.
+     - `api/browser.ts` não desvia mais para `google.com`, retornando status explicativo amigável caso nenhuma página esteja aberta.
+- **Evidências de Verificação:**
+  - `npm test`: **140/140 testes unitários passando em 35 suítes** (incluindo 4 novos testes em `src/lib/git-terminal-emulator.test.ts`).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: compilado com sucesso com Cloudflare Pages Worker (`dist/_worker.js`, 169.1 kB).
+  - `graphify update .`: grafo atualizado (14.808 nós, 16.651 arestas).
+
+

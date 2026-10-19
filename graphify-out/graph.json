@@ -1352,8 +1352,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "package_dependencies_dotenv",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1006,
+      "community_name": "smart-prefill.ts",
       "norm_label": "dotenv"
     },
     {
@@ -1363,8 +1363,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "dotenv",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1006,
+      "community_name": "smart-prefill.ts",
       "norm_label": "dotenv"
     },
     {
@@ -1440,8 +1440,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "package_dependencies_jspdf",
-      "community": 1009,
-      "community_name": "jspdf",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "jspdf"
     },
     {
@@ -1451,8 +1451,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "jspdf",
-      "community": 1009,
-      "community_name": "jspdf",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "jspdf"
     },
     {
@@ -1506,8 +1506,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "package_dependencies_motion",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1009,
+      "community_name": "jspdf",
       "norm_label": "motion"
     },
     {
@@ -1517,8 +1517,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "motion",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1009,
+      "community_name": "jspdf",
       "norm_label": "motion"
     },
     {
@@ -1550,8 +1550,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "package_dependencies_react",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "react"
     },
     {
@@ -1561,8 +1561,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "react",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "react"
     },
     {
@@ -1616,8 +1616,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "package_dependencies_react_markdown",
-      "community": 1010,
-      "community_name": "react-markdown",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "react-markdown"
     },
     {
@@ -1627,8 +1627,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "react_markdown",
-      "community": 1010,
-      "community_name": "react-markdown",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "react-markdown"
     },
     {
@@ -4377,8 +4377,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "runtimeerror",
-      "community": 928,
-      "community_name": "RuntimeError",
+      "community": 5,
+      "community_name": "fetch_volunteers.py",
       "norm_label": "runtimeerror"
     },
     {
@@ -5776,8 +5776,8 @@
       "source_location": "L612",
       "_origin": "ast",
       "id": "skills_design_design_templates_ppt_html_ppt_zhangzara_pin_and_paper_assets_deck_stage_deckstage_prev",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": ".prev()"
     },
     {
@@ -6007,8 +6007,8 @@
       "source_location": "L434",
       "_origin": "ast",
       "id": "skills_docx_scripts_add_toc_placeholders_insert_toc_placeholders",
-      "community": 928,
-      "community_name": "RuntimeError",
+      "community": 364,
+      "community_name": "rec5_api.py",
       "norm_label": "_insert_toc_placeholders()"
     },
     {
@@ -6117,8 +6117,8 @@
       "source_location": "L435",
       "_origin": "ast",
       "id": "skills_docx_scripts_add_toc_placeholders_rationale_435",
-      "community": 928,
-      "community_name": "RuntimeError",
+      "community": 364,
+      "community_name": "rec5_api.py",
       "norm_label": "insert placeholder toc entries and heading bookmarks into xml content.      us"
     },
     {
@@ -6172,8 +6172,8 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_docxxmleditor_init",
-      "community": 32,
-      "community_name": "DocxXMLEditor",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": ".__init__()"
     },
     {
@@ -6458,8 +6458,8 @@
       "source_location": "L964",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_setup_tracking",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._setup_tracking()"
     },
     {
@@ -6469,8 +6469,8 @@
       "source_location": "L985",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_update_people_xml",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._update_people_xml()"
     },
     {
@@ -6491,8 +6491,8 @@
       "source_location": "L1003",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_relationship_for_people",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_relationship_for_people()"
     },
     {
@@ -6590,8 +6590,8 @@
       "source_location": "L1217",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_relationship",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._has_relationship()"
     },
     {
@@ -6612,8 +6612,8 @@
       "source_location": "L1231",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_author",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._has_author()"
     },
     {
@@ -6623,8 +6623,8 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_author_to_people",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_author_to_people()"
     },
     {
@@ -6689,8 +6689,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_101",
-      "community": 32,
-      "community_name": "DocxXMLEditor",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "initialize with required rsid and optional author.          args:"
     },
     {
@@ -6975,8 +6975,8 @@
       "source_location": "L965",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_965",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "set up comment infrastructure in unpacked directory.          args:"
     },
     {
@@ -6986,8 +6986,8 @@
       "source_location": "L986",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_986",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "create people.xml if it doesn't exist."
     },
     {
@@ -7008,8 +7008,8 @@
       "source_location": "L1004",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1004",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add people.xml relationship to document.xml.rels if not already present."
     },
     {
@@ -7107,8 +7107,8 @@
       "source_location": "L1218",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1218",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "check if a relationship with given target exists."
     },
     {
@@ -7129,8 +7129,8 @@
       "source_location": "L1232",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1232",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "check if an author already exists in people.xml."
     },
     {
@@ -7140,8 +7140,8 @@
       "source_location": "L1239",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1239",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add author to people.xml (called during initialization)."
     },
     {
@@ -24293,8 +24293,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_components_chat_message_chatimage",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "chatimage()"
     },
     {
@@ -24381,8 +24381,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_claude_logo",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claude-logo.tsx"
     },
     {
@@ -24392,8 +24392,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogoprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogoprops"
     },
     {
@@ -24403,8 +24403,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogo",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogo()"
     },
     {
@@ -24414,8 +24414,8 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_components_claude_logo_claudelogoprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claudelogoprops"
     },
     {
@@ -24458,8 +24458,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_compaction_marker",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "compaction-marker.tsx"
     },
     {
@@ -24469,8 +24469,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_compaction_marker_compactionmarkerprops",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "compactionmarkerprops"
     },
     {
@@ -24480,8 +24480,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_compaction_marker_compactionmarker",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "compactionmarker()"
     },
     {
@@ -24700,8 +24700,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_eden_logo",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "eden-logo.tsx"
     },
     {
@@ -24755,8 +24755,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_extensions_extensions_panel",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "extensions-panel.tsx"
     },
     {
@@ -24766,8 +24766,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_extensions_extensions_panel_extensionspanelprops",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "extensionspanelprops"
     },
     {
@@ -24887,8 +24887,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_global_error_boundary",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "global-error-boundary.tsx"
     },
     {
@@ -24898,8 +24898,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_errorboundaryprops",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "errorboundaryprops"
     },
     {
@@ -24909,8 +24909,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_errorboundarystate",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "errorboundarystate"
     },
     {
@@ -24920,8 +24920,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "globalerrorboundary"
     },
     {
@@ -24931,8 +24931,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_constructor",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": ".constructor()"
     },
     {
@@ -24942,8 +24942,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_getderivedstatefromerror",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": ".getderivedstatefromerror()"
     },
     {
@@ -24953,8 +24953,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_componentdidcatch",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": ".componentdidcatch()"
     },
     {
@@ -24964,8 +24964,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_handlereload",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": ".handlereload()"
     },
     {
@@ -24975,8 +24975,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_handledismiss",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": ".handledismiss()"
     },
     {
@@ -24986,8 +24986,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_handlecopyerror",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": ".handlecopyerror()"
     },
     {
@@ -24997,8 +24997,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_render",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": ".render()"
     },
     {
@@ -25349,8 +25349,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_settings_modal",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "settings-modal.tsx"
     },
     {
@@ -25360,8 +25360,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodalprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "settingsmodalprops"
     },
     {
@@ -25371,8 +25371,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodal",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "settingsmodal()"
     },
     {
@@ -26438,8 +26438,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_file_patcher_test",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "file-patcher.test.ts"
     },
     {
@@ -26449,8 +26449,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_file_patcher",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "file-patcher.ts"
     },
     {
@@ -26460,8 +26460,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_file_patcher_patchblock",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "patchblock"
     },
     {
@@ -26471,8 +26471,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_file_patcher_patchresult",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "patchresult"
     },
     {
@@ -26482,8 +26482,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_file_patcher_effectivefileresolution",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "effectivefileresolution"
     },
     {
@@ -26493,8 +26493,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_file_patcher_normalizerepopath",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "normalizerepopath()"
     },
     {
@@ -26504,8 +26504,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_file_patcher_normalizepatchargs",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "normalizepatchargs()"
     },
     {
@@ -26515,8 +26515,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_lib_file_patcher_countoccurrences",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "countoccurrences()"
     },
     {
@@ -26526,8 +26526,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_lib_file_patcher_applyfilepatches",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "applyfilepatches()"
     },
     {
@@ -26537,9 +26537,31 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "src_lib_file_patcher_resolveeffectivefilecontent",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "resolveeffectivefilecontent()"
+    },
+    {
+      "label": "git-terminal-emulator.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_test",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "git-terminal-emulator.test.ts"
+    },
+    {
+      "label": "createMockContext()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_test_createmockcontext",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "createmockcontext()"
     },
     {
       "label": "git-terminal-emulator.ts",
@@ -26586,10 +26608,87 @@
       "norm_label": "resolvepath()"
     },
     {
-      "label": "parseCommandArgs()",
+      "label": "virtualTmpFiles",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
       "source_location": "L68",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_virtualtmpfiles",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "virtualtmpfiles"
+    },
+    {
+      "label": "clearVirtualTmpFiles()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L70",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_clearvirtualtmpfiles",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "clearvirtualtmpfiles()"
+    },
+    {
+      "label": "getVirtualTmpFile()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L74",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_getvirtualtmpfile",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "getvirtualtmpfile()"
+    },
+    {
+      "label": "setVirtualTmpFile()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L79",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_setvirtualtmpfile",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "setvirtualtmpfile()"
+    },
+    {
+      "label": "listVirtualTmpFiles()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L84",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_listvirtualtmpfiles",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "listvirtualtmpfiles()"
+    },
+    {
+      "label": "normalizeTmpPath()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L88",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_normalizetmppath",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "normalizetmppath()"
+    },
+    {
+      "label": "cleanTokenQuotes()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L97",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_cleantokenquotes",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "cleantokenquotes()"
+    },
+    {
+      "label": "parseCommandArgs()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L109",
       "_origin": "ast",
       "id": "src_lib_git_terminal_emulator_parsecommandargs",
       "community": 7,
@@ -26597,15 +26696,37 @@
       "norm_label": "parsecommandargs()"
     },
     {
+      "label": "splitPipeSegments()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L181",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_splitpipesegments",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "splitpipesegments()"
+    },
+    {
       "label": "executeEmulatedCommand()",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L141",
+      "source_location": "L223",
       "_origin": "ast",
       "id": "src_lib_git_terminal_emulator_executeemulatedcommand",
       "community": 7,
       "community_name": "github.ts",
       "norm_label": "executeemulatedcommand()"
+    },
+    {
+      "label": "executeSingleCommand()",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L267",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_executesinglecommand",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "executesinglecommand()"
     },
     {
       "label": "github-commit.ts",
@@ -26669,8 +26790,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_github_setgithubpat",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "setgithubpat()"
     },
     {
@@ -26680,8 +26801,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_github_removegithubpat",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "removegithubpat()"
     },
     {
@@ -26735,8 +26856,8 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_lib_github_verifygithubpat",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "verifygithubpat()"
     },
     {
@@ -27010,8 +27131,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_graphify_engine_projectgraph",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "projectgraph"
     },
     {
@@ -27186,8 +27307,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_knowledge_base_test",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "knowledge-base.test.ts"
     },
     {
@@ -27197,8 +27318,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_knowledge_base",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "knowledge-base.ts"
     },
     {
@@ -27208,8 +27329,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_knowledge_base_formatknowledgeprompt",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "formatknowledgeprompt()"
     },
     {
@@ -27219,8 +27340,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_lib_knowledge_base_createknowledgefact",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "createknowledgefact()"
     },
     {
@@ -27230,8 +27351,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_lib_knowledge_base_filterknowledgefacts",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "filterknowledgefacts()"
     },
     {
@@ -27241,8 +27362,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_lazy_retry_test",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "lazy-retry.test.ts"
     },
     {
@@ -27252,8 +27373,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_lazy_retry",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "lazy-retry.ts"
     },
     {
@@ -27263,8 +27384,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_lazy_retry_isdynamicchunkerror",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "isdynamicchunkerror()"
     },
     {
@@ -27274,8 +27395,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_lib_lazy_retry_lazywithretry",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "lazywithretry()"
     },
     {
@@ -27681,8 +27802,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_pending_changes",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "pending-changes.tsx"
     },
     {
@@ -27692,8 +27813,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_pending_changes_loadpendingchangesfromdb",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "loadpendingchangesfromdb()"
     },
     {
@@ -27703,8 +27824,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_pending_changes_savependingchangestodb",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "savependingchangestodb()"
     },
     {
@@ -27714,8 +27835,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontexttype",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "pendingchangescontexttype"
     },
     {
@@ -27725,8 +27846,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontext",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "pendingchangescontext"
     },
     {
@@ -27736,8 +27857,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangesprovider",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "pendingchangesprovider()"
     },
     {
@@ -27857,8 +27978,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_test",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "preview-element-locator.test.ts"
     },
     {
@@ -27868,8 +27989,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "preview-element-locator.ts"
     },
     {
@@ -27879,8 +28000,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_elementsourcelocation",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "elementsourcelocation"
     },
     {
@@ -27890,8 +28011,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_normalizepath",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "normalizepath()"
     },
     {
@@ -27901,8 +28022,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_locateelementinprojectfiles",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "locateelementinprojectfiles()"
     },
     {
@@ -27912,8 +28033,8 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_formatelementinspectorprompt",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "formatelementinspectorprompt()"
     },
     {
@@ -28539,8 +28660,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_skills_extractor_test",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "skills-extractor.test.ts"
     },
     {
@@ -28550,8 +28671,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_skills_extractor",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "skills-extractor.ts"
     },
     {
@@ -28561,8 +28682,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_skills_extractor_extractusedskills",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "extractusedskills()"
     },
     {
@@ -28572,8 +28693,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_test",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "smart-prefill.test.ts"
     },
     {
@@ -28583,8 +28704,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_test_mock_tools",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "mock_tools"
     },
     {
@@ -28594,8 +28715,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_test_mock_skills",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "mock_skills"
     },
     {
@@ -28605,8 +28726,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_smart_prefill",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "smart-prefill.ts"
     },
     {
@@ -28616,8 +28737,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_smarttoolselectioncontext",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "smarttoolselectioncontext"
     },
     {
@@ -28627,8 +28748,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_smartskillselectioncontext",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "smartskillselectioncontext"
     },
     {
@@ -28638,8 +28759,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_selectcontextualtools",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "selectcontextualtools()"
     },
     {
@@ -28649,8 +28770,8 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_selectcontextualskills",
-      "community": 1006,
-      "community_name": "smart-prefill.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "selectcontextualskills()"
     },
     {
@@ -28979,8 +29100,8 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "src_lib_storage_exportconversationstojson",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "exportconversationstojson()"
     },
     {
@@ -29232,8 +29353,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_studio_config",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "studio-config.ts"
     },
     {
@@ -29243,8 +29364,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_studio_config_default_studio_config",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "default_studio_config"
     },
     {
@@ -29254,8 +29375,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_studio_config_loadstudioconfig",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "loadstudioconfig()"
     },
     {
@@ -29265,8 +29386,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_studio_config_savestudioconfig",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "savestudioconfig()"
     },
     {
@@ -29496,8 +29617,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_types",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "types.ts"
     },
     {
@@ -29507,8 +29628,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_types_role",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "role"
     },
     {
@@ -29562,8 +29683,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_types_changetype",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "changetype"
     },
     {
@@ -29617,8 +29738,8 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "src_lib_types_messageeditedfile",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "messageeditedfile"
     },
     {
@@ -29639,8 +29760,8 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "src_lib_types_messagetoolcall",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "messagetoolcall"
     },
     {
@@ -29672,8 +29793,8 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_lib_types_contextcompaction",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "contextcompaction"
     },
     {
@@ -29716,8 +29837,8 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "src_lib_types_appsettings",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "appsettings"
     },
     {
@@ -29727,8 +29848,8 @@
       "source_location": "L236",
       "_origin": "ast",
       "id": "src_lib_types_skillicon",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "skillicon"
     },
     {
@@ -29738,8 +29859,8 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "src_lib_types_skill",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "skill"
     },
     {
@@ -29760,8 +29881,8 @@
       "source_location": "L254",
       "_origin": "ast",
       "id": "src_lib_types_mcpserver",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "mcpserver"
     },
     {
@@ -29771,8 +29892,8 @@
       "source_location": "L267",
       "_origin": "ast",
       "id": "src_lib_types_knowledgecategory",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "knowledgecategory"
     },
     {
@@ -29782,8 +29903,8 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "src_lib_types_knowledgefact",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "knowledgefact"
     },
     {
@@ -29914,8 +30035,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_utils_generatetitlefrommessage",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "generatetitlefrommessage()"
     },
     {
@@ -30420,8 +30541,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "main.tsx"
     },
     {
@@ -30431,8 +30552,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_main_handlechunkerror",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "handlechunkerror()"
     },
     {
@@ -30453,8 +30574,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_studio_studio_engine_studioruntimecontext",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "studioruntimecontext"
     },
     {
@@ -30596,8 +30717,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_studio_studio_panel_props",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "props"
     },
     {
@@ -30695,8 +30816,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_studio_studio_types_studioagent",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "studioagent"
     },
     {
@@ -162918,6 +163039,17 @@
       "community": 58,
       "community_name": "._validate_single_file_xsd",
       "norm_label": "111. controle autonomo de navegador para modelos de ia (playwright / browser-use)"
+    },
+    {
+      "label": "executeTerminalCommand",
+      "file_type": "code",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L265",
+      "_origin": "ast",
+      "id": "src_lib_git_terminal_emulator_executeterminalcommand",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "executeterminalcommand"
     }
   ],
   "links": [
@@ -166783,7 +166915,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1573",
+      "source_location": "L1574",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -203983,7 +204115,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/App.tsx",
-      "source_location": "L2106",
+      "source_location": "L2107",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208267,7 +208399,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3942",
+      "source_location": "L3952",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208279,7 +208411,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4274",
+      "source_location": "L4284",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208291,7 +208423,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4298",
+      "source_location": "L4308",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208303,7 +208435,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2259",
+      "source_location": "L2269",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208315,7 +208447,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4342",
+      "source_location": "L4352",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208327,7 +208459,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3520",
+      "source_location": "L3530",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208339,7 +208471,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4341",
+      "source_location": "L4351",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208363,7 +208495,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2326",
+      "source_location": "L2336",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208375,7 +208507,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4606",
+      "source_location": "L4616",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208387,7 +208519,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2771",
+      "source_location": "L2781",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208399,7 +208531,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2759",
+      "source_location": "L2769",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208411,7 +208543,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2760",
+      "source_location": "L2770",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208423,7 +208555,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2879",
+      "source_location": "L2889",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208435,7 +208567,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2435",
+      "source_location": "L2445",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208447,7 +208579,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2451",
+      "source_location": "L2461",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208459,7 +208591,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2894",
+      "source_location": "L2904",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208471,7 +208603,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3142",
+      "source_location": "L3152",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208483,7 +208615,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3170",
+      "source_location": "L3180",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208507,7 +208639,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2603",
+      "source_location": "L2613",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208519,7 +208651,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1720",
+      "source_location": "L1721",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208531,7 +208663,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3499",
+      "source_location": "L3509",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208543,7 +208675,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2542",
+      "source_location": "L2552",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208555,7 +208687,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2647",
+      "source_location": "L2657",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208567,7 +208699,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1750",
+      "source_location": "L1751",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208579,7 +208711,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3398",
+      "source_location": "L3408",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208591,7 +208723,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3290",
+      "source_location": "L3300",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208615,7 +208747,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3480",
+      "source_location": "L3490",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208627,7 +208759,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4084",
+      "source_location": "L4094",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208639,7 +208771,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3446",
+      "source_location": "L3456",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208651,7 +208783,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3280",
+      "source_location": "L3290",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208663,7 +208795,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3300",
+      "source_location": "L3310",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208699,7 +208831,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2305",
+      "source_location": "L2315",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208711,7 +208843,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2306",
+      "source_location": "L2316",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208723,7 +208855,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2139",
+      "source_location": "L2140",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208735,7 +208867,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2412",
+      "source_location": "L2422",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208747,7 +208879,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4000",
+      "source_location": "L4010",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208759,7 +208891,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3484",
+      "source_location": "L3494",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208771,7 +208903,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3447",
+      "source_location": "L3457",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208795,7 +208927,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3391",
+      "source_location": "L3401",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208831,7 +208963,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1989",
+      "source_location": "L1990",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208843,7 +208975,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1414",
+      "source_location": "L1415",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208855,7 +208987,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1457",
+      "source_location": "L1458",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208867,7 +208999,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1453",
+      "source_location": "L1454",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208879,7 +209011,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1411",
+      "source_location": "L1412",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208891,7 +209023,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1449",
+      "source_location": "L1450",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208903,7 +209035,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1465",
+      "source_location": "L1466",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208915,7 +209047,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1485",
+      "source_location": "L1486",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208927,7 +209059,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1479",
+      "source_location": "L1480",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208939,7 +209071,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1983",
+      "source_location": "L1984",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208951,7 +209083,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1472",
+      "source_location": "L1473",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208963,7 +209095,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2563",
+      "source_location": "L2573",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208975,7 +209107,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3456",
+      "source_location": "L3466",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -208987,7 +209119,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3960",
+      "source_location": "L3970",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209023,7 +209155,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L1801",
+      "source_location": "L1802",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209059,7 +209191,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3328",
+      "source_location": "L3338",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209071,7 +209203,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3517",
+      "source_location": "L3527",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209083,7 +209215,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3359",
+      "source_location": "L3369",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209095,7 +209227,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2111",
+      "source_location": "L2112",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -214918,13 +215050,13 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L559",
+      "source_location": "L772",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_ffmpeg_wasm_client_runffmpegwasm"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_ffmpeg_wasm_client_runffmpegwasm",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -215315,10 +215447,127 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator_clearvirtualtmpfiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator_executeterminalcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator_getvirtualtmpfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator_parsecommandargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator_setvirtualtmpfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator_terminalemulatorcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.test.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_test",
+      "target": "src_lib_git_terminal_emulator_test_createmockcontext",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L141",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_cleantokenquotes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L70",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_clearvirtualtmpfiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L223",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
@@ -215329,7 +215578,51 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L68",
+      "source_location": "L267",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_executesinglecommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L74",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_getvirtualtmpfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L84",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_listvirtualtmpfiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L88",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_normalizetmppath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
@@ -215345,6 +215638,28 @@
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
       "target": "src_lib_git_terminal_emulator_resolvepath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L79",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_setvirtualtmpfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L181",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_splitpipesegments",
       "confidence_score": 1.0
     },
     {
@@ -215367,6 +215682,17 @@
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
       "target": "src_lib_git_terminal_emulator_terminalemulatorresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L68",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_git_terminal_emulator_virtualtmpfiles",
       "confidence_score": 1.0
     },
     {
@@ -215579,10 +215905,10 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L226",
+      "source_location": "L353",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
       "target": "src_lib_git_terminal_emulator_terminalemulatorcontext"
     },
     {
@@ -215626,10 +215952,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L266",
+      "source_location": "L393",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
       "target": "src_lib_git_terminal_emulator_resolvepath",
       "confidence_score": 1.0
     },
@@ -215638,10 +215964,82 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L159",
+      "source_location": "L456",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_git_terminal_emulator_getvirtualtmpfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_getvirtualtmpfile",
+      "target": "src_lib_git_terminal_emulator_normalizetmppath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L666",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_git_terminal_emulator_setvirtualtmpfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L80",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_setvirtualtmpfile",
+      "target": "src_lib_git_terminal_emulator_normalizetmppath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L401",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_git_terminal_emulator_listvirtualtmpfiles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L147",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_parsecommandargs",
+      "target": "src_lib_git_terminal_emulator_cleantokenquotes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L286",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
       "target": "src_lib_git_terminal_emulator_parsecommandargs",
       "confidence_score": 1.0
     },
@@ -215649,109 +216047,133 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L750",
+      "source_location": "L239",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_github_createrepobranch"
+      "target": "src_lib_git_terminal_emulator_splitpipesegments",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L330",
+      "source_location": "L246",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_github_fetchfilecontent"
+      "target": "src_lib_git_terminal_emulator_executesinglecommand",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L721",
+      "source_location": "L963",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_github_fetchrepobranches"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_github_createrepobranch",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L786",
+      "source_location": "L486",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_github_fetchrepocommits"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_github_fetchfilecontent",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L283",
+      "source_location": "L934",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_github_fetchrepocontents"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_github_fetchrepobranches",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L374",
+      "source_location": "L999",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_github_searchcode"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_github_fetchrepocommits",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L568",
+      "source_location": "L419",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_video_decoder_engine_decodevideosampleinbrowser"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_github_fetchrepocontents",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L571",
+      "source_location": "L557",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_video_decoder_engine_formatffmpegdecodelog"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_github_searchcode",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L548",
+      "source_location": "L781",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
-      "target": "src_lib_video_decoder_engine_parseffmpegcliargs"
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_video_decoder_engine_decodevideosampleinbrowser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L784",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_video_decoder_engine_formatffmpegdecodelog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L761",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executesinglecommand",
+      "target": "src_lib_video_decoder_engine_parseffmpegcliargs",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -348722,5 +349144,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "40f3782bbfdf218d6110fd43344319179a7fb56d"
+  "built_at_commit": "219317af5933caa588569a43eb417a30f0ab7855"
 }
