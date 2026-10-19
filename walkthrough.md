@@ -1995,9 +1995,24 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - **Evidências de Verificação:**
   - `npm test`: **152/152 testes unitários passando em 35 suítes** (100% verde).
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
-  - `npm run build`: compilado com sucesso com Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB).
-
-
-
-
+## 116. Identidade Visual Azul Ciano Oceano nos Cards MCP e Remoção do Maxun
+- **Solicitação do Usuário:** Remover a vitrine do Maxun da aba MCP (já que o scraping no Éden roda via Robôs/Workflow na nuvem sem exigir terminal/Docker no computador) e aplicar o estilo visual azul ciano oceano (fundo translúcido, bordas brilhantes, badges e toggle harmonizados) em todos os cards de servidores MCP, incluindo o Context7 Docs.
+- **Implementações Realizadas:**
+  1. **Remoção Limpa do Maxun no MCP (`src/components/extensions/extensions-panel.tsx`):**
+     - Removido o card promocional do Maxun e os botões de Docker/Preset local que falhavam em conexões móveis.
+     - Removidos estados e imports órfãos (`copiedDocker`, `Globe`, `Copy`, `Check`).
+     - No modal de adicionar conexão MCP, o preset de 1 clique foi simplificado mantendo exclusivamente o **Context7 Docs** oficial.
+  2. **Identidade Visual Ciano Oceano nos Cards de Servidores MCP (`src/components/extensions/extensions-panel.tsx`):**
+     - Card de servidor MCP estilizado com `bg-cyan-950/25 border-cyan-500/35 hover:border-cyan-500/50 shadow-[0_2px_14px_rgba(6,182,212,0.08)]`.
+     - Indicador de status online com ponto ciano brilhante (`bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]`) e badge semântico `Online` ciano.
+     - Chavinha (Toggle switch) com preenchimento ciano vibrante (`bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.45)]`) quando ativo.
+     - Botões de ação, contadores de ferramentas e lista expandida de tools formatados em harmonia com a paleta ciano.
+     - Sub-aba MCP e cabeçalho do modal de conexão harmonizados com ícones e badges ciano (`text-cyan-400`).
+  3. **Higienização Automática de Servidores Legados (`src/lib/storage.ts`):**
+     - Função `loadMcpServers` com filtro defensivo (`!s.url?.includes('localhost:8080/mcp') && s.id !== 'maxun'`), garantindo que servidores locais legados adicionados em sessões anteriores sejam expurgados sem intervenção manual do usuário.
+- **Evidências de Verificação:**
+  - `npm test`: **152/152 testes unitários passando em 35 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle compilado com sucesso e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerado em 2.31s.
+  - `graphify update .`: grafo de conhecimento atualizado com 14.850 nós, 16.758 arestas e 1.011 comunidades.
 

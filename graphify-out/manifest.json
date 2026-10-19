@@ -1050,8 +1050,8 @@
     "semantic_hash": "8921224c171256f9c22792a47f66e52e"
   },
   "src/components/extensions/extensions-panel.tsx": {
-    "mtime": 1792415374.2883537,
-    "ast_hash": "8e09ca6e9c19cc5e8db2e9b351d002f1",
+    "mtime": 1792417305.4374268,
+    "ast_hash": "9557a9d68f350e6f5827572f682949f1",
     "semantic_hash": ""
   },
   "src/components/github/create-repo-modal.tsx": {
@@ -1375,9 +1375,9 @@
     "semantic_hash": "123089b80edf7590952dbee86c167693"
   },
   "src/lib/storage.ts": {
-    "mtime": 1792172839.7125645,
-    "ast_hash": "819aaf7cf1d72d023a925869c7d1003d",
-    "semantic_hash": "819aaf7cf1d72d023a925869c7d1003d"
+    "mtime": 1792417262.9000888,
+    "ast_hash": "980de4fca22720fb81fd7578f3b9779b",
+    "semantic_hash": ""
   },
   "src/lib/streaming-speech-queue.test.ts": {
     "mtime": 1792193025.1283522,
@@ -6057,6 +6057,11 @@
   "src/lib/browser-recipe-engine.ts": {
     "mtime": 1792414516.135999,
     "ast_hash": "6169d630e1c7c92ad5160d54cc8be5c3",
+    "semantic_hash": ""
+  },
+  ".agents/rules/mobile-first.md": {
+    "mtime": 1792416065.4279432,
+    "ast_hash": "848b204d3b2dbc0f2668aa670a6b63d8",
     "semantic_hash": ""
   }
 }

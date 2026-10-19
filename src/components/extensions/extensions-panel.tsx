@@ -9,7 +9,6 @@ import {
   Trash2,
   Server,
   RefreshCw,
-  Check,
   AlertCircle,
   ExternalLink,
   ChevronDown,
@@ -22,8 +21,6 @@ import {
   Smartphone,
   Cloud,
   Bot,
-  Globe,
-  Copy,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -66,7 +63,6 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isAddMcpOpen, setIsAddMcpOpen] = useState(false);
   const [expandedMcpId, setExpandedMcpId] = useState<string | null>(null);
-  const [copiedDocker, setCopiedDocker] = useState(false);
 
   // Form states for new skill
   const [newSkillName, setNewSkillName] = useState('');
@@ -169,10 +165,10 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
               : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
           }`}
         >
-          <Server className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <Server className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
           <span>MCP</span>
           {connectedMcpCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">
               {connectedMcpCount}
             </span>
           )}
@@ -288,69 +284,20 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddMcpOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[color:var(--c-bg-2b2823)] hover:bg-[color:var(--c-bg-38342e)] border border-[color:var(--c-bg-3e3b33)] text-xs font-medium text-[color:var(--c-fg-f3efe6)] transition cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-950/30 hover:bg-cyan-900/40 border border-cyan-500/30 text-xs font-medium text-cyan-200 transition cursor-pointer"
               >
-                <Plus className="w-3 h-3 text-emerald-400" />
+                <Plus className="w-3 h-3 text-cyan-400" />
                 <span>Conectar</span>
               </button>
             </div>
 
-            {/* Card Preset Recomendado: Maxun */}
-            <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/30 text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 font-semibold text-cyan-200">
-                  <Globe className="w-4 h-4 text-cyan-400" />
-                  <span>Maxun (Web Scraper No-Code)</span>
-                </div>
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  16.7k ⭐
-                </span>
-              </div>
-              <p className="text-[11px] text-[color:var(--c-fg-a39d93)] leading-relaxed">
-                Extraia dados de qualquer site sem programar e converta em robôs via Playwright + IA com bypass de Cloudflare.
-              </p>
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewMcpName('Maxun Web Scraper');
-                    setNewMcpUrl('http://localhost:8080/mcp');
-                    setIsAddMcpOpen(true);
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-200 text-xs font-medium transition cursor-pointer flex items-center gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Conectar Preset</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                      navigator.clipboard.writeText('docker run -v maxun-data:/app/data -p 8080:8080 getmaxun/maxun');
-                      setCopiedDocker(true);
-                      setTimeout(() => setCopiedDocker(false), 2000);
-                    }
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-xs transition cursor-pointer flex items-center gap-1 ${
-                    copiedDocker
-                      ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/30'
-                      : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-                  }`}
-                  title="Copiar comando Docker para rodar o Maxun localmente"
-                >
-                  {copiedDocker ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedDocker ? 'Copiado!' : 'Docker Run'}</span>
-                </button>
-              </div>
-            </div>
-
             {/* MCP Server List */}
             {mcpServers.length === 0 ? (
-              <div className="p-4 rounded-xl border border-dashed border-[color:var(--c-bg-2d2a25)] text-center space-y-2">
-                <Server className="w-6 h-6 text-[color:var(--c-fg-8c867a)] mx-auto opacity-50" />
-                <p className="text-xs text-[color:var(--c-fg-a39d93)]">Nenhum servidor MCP conectado.</p>
-                <p className="text-[11px] text-[color:var(--c-fg-8c867a)]">
-                  Conecte servidores locais ou remotos para expor bancos de dados, APIs ou serviços à IA.
+              <div className="p-4 rounded-xl border border-dashed border-cyan-500/20 bg-cyan-950/10 text-center space-y-2">
+                <Server className="w-6 h-6 text-cyan-400/50 mx-auto" />
+                <p className="text-xs text-cyan-200/80">Nenhum servidor MCP conectado.</p>
+                <p className="text-[11px] text-cyan-300/50">
+                  Conecte servidores remotos para expor bancos de dados, APIs ou serviços à IA.
                 </p>
               </div>
             ) : (
@@ -363,28 +310,28 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   return (
                     <div
                       key={server.id}
-                      className="p-3.5 synap-card space-y-2.5 transition-all"
+                      className="p-3.5 rounded-xl bg-cyan-950/25 border border-cyan-500/35 hover:border-cyan-500/50 shadow-[0_2px_14px_rgba(6,182,212,0.08)] space-y-2.5 transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <span
                             className={`w-2 h-2 rounded-full shrink-0 ${
                               isConnected
-                                ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+                                ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]'
                                 : server.status === 'connecting'
                                 ? 'bg-amber-400 animate-pulse'
                                 : 'bg-zinc-600'
                             }`}
                           />
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-medium text-[color:var(--c-fg-f3efe6)]">{server.name}</span>
+                              <span className="text-xs font-semibold text-cyan-100 truncate">{server.name}</span>
                               <span
                                 className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${
                                   isConnected
-                                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
                                     : server.status === 'connecting'
-                                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                                     : 'bg-zinc-800 text-zinc-400 border-zinc-700'
                                 }`}
                               >
@@ -395,26 +342,26 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                                   : 'Offline'}
                               </span>
                             </div>
-                            <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono truncate max-w-[170px] sm:max-w-[220px]">
+                            <p className="text-[10px] text-cyan-300/70 font-mono truncate max-w-[170px] sm:max-w-[220px]">
                               {server.url}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
                             type="button"
                             onClick={() => onTestMcpServer(server.id)}
                             disabled={isTesting}
-                            className="p-1 rounded text-zinc-400 hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-282622)] transition cursor-pointer"
+                            className="p-1 rounded text-cyan-400/80 hover:text-cyan-200 hover:bg-cyan-900/40 transition cursor-pointer"
                             title="Atualizar / Testar conexão"
                           >
-                            <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin text-emerald-400' : ''}`} />
+                            <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin text-cyan-400' : ''}`} />
                           </button>
                           <button
                             type="button"
                             onClick={() => onDeleteMcpServer(server.id)}
-                            className="p-1 rounded text-zinc-500 hover:text-rose-400 transition cursor-pointer"
+                            className="p-1 rounded text-zinc-400 hover:text-rose-400 hover:bg-rose-950/30 transition cursor-pointer"
                             title="Remover servidor"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -422,8 +369,10 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                           <button
                             type="button"
                             onClick={() => onToggleMcpServer(server.id)}
-                            className={`w-8 h-4.5 rounded-full transition-colors relative cursor-pointer ml-1 ${
-                              server.enabled ? 'bg-emerald-600' : 'bg-zinc-700'
+                            className={`w-8 h-4.5 rounded-full transition-all relative cursor-pointer ml-1 ${
+                              server.enabled
+                                ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.45)]'
+                                : 'bg-zinc-700'
                             }`}
                           >
                             <span
@@ -436,8 +385,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                       </div>
 
                       {/* Tool count & expand tools */}
-                      <div className="flex items-center justify-between pt-1 border-t border-[color:var(--c-bg-2d2a25)]/60 text-[11px]">
-                        <span className="text-[color:var(--c-fg-a39d93)]">
+                      <div className="flex items-center justify-between pt-1 border-t border-cyan-500/20 text-[11px]">
+                        <span className="text-cyan-200/80">
                           {server.tools.length > 0
                             ? `${server.tools.length} ferramenta(s) disponível(is)`
                             : 'Nenhuma ferramenta listada'}
@@ -446,7 +395,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                           <button
                             type="button"
                             onClick={() => setExpandedMcpId(isExpanded ? null : server.id)}
-                            className="text-[color:var(--c-fg-d97757)] hover:underline flex items-center gap-0.5 cursor-pointer"
+                            className="text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-0.5 cursor-pointer"
                           >
                             <span>{isExpanded ? 'Recolher' : 'Ver ferramentas'}</span>
                             {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -455,15 +404,15 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                       </div>
 
                       {server.errorMessage ? (
-                        <p className="text-[10px] text-rose-400 bg-rose-500/10 p-1.5 rounded border border-rose-500/20">
+                        <p className="text-[10px] text-rose-300 bg-rose-950/40 p-2 rounded-lg border border-rose-500/30">
                           {server.errorMessage}
                         </p>
                       ) : !isConnected && server.enabled ? (
-                        <div className="p-2 rounded-lg bg-zinc-900/80 border border-zinc-800 text-[10px] text-[color:var(--c-fg-8c867a)] leading-relaxed flex items-start gap-1.5">
+                        <div className="p-2 rounded-lg bg-cyan-950/40 border border-cyan-500/20 text-[10px] text-cyan-200/80 leading-relaxed flex items-start gap-1.5">
                           <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                           <span>
                             {server.url.includes('localhost')
-                              ? 'Ativado no Éden, mas o serviço local ainda não foi iniciado no computador. Inicie o container Docker para que a IA possa usar as ferramentas.'
+                              ? 'Ativado no Éden, mas o serviço local ainda não foi iniciado no computador. Inicie o servidor local para que a IA possa usar as ferramentas.'
                               : 'Ativado no Éden, aguardando conexão com o servidor remoto.'}
                           </span>
                         </div>
@@ -475,11 +424,11 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                           {server.tools.map((t) => (
                             <div
                               key={t.name}
-                              className="p-2 rounded-lg bg-[color:var(--c-bg-141311)] border border-[color:var(--c-bg-2d2a25)] text-xs space-y-0.5"
+                              className="p-2 rounded-lg bg-cyan-950/40 border border-cyan-500/20 text-xs space-y-0.5"
                             >
-                              <div className="font-mono text-emerald-400 font-semibold">{t.name}</div>
+                              <div className="font-mono text-cyan-300 font-semibold">{t.name}</div>
                               {t.description && (
-                                <p className="text-[11px] text-[color:var(--c-fg-8c867a)] leading-tight">{t.description}</p>
+                                <p className="text-[11px] text-cyan-100/70 leading-tight">{t.description}</p>
                               )}
                             </div>
                           ))}
@@ -693,7 +642,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
           <div className="w-full max-w-sm rounded-2xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3b3831)] p-4 space-y-3 shadow-2xl text-xs">
             <div className="flex items-center justify-between pb-2 border-b border-[color:var(--c-bg-3b3831)]">
               <span className="font-semibold text-[color:var(--c-fg-f3efe6)] flex items-center gap-1.5">
-                <Server className="w-4 h-4 text-emerald-400" />
+                <Server className="w-4 h-4 text-cyan-400" />
                 Conectar Servidor MCP
               </span>
               <button
@@ -713,23 +662,12 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setNewMcpName('Maxun Web Scraper');
-                      setNewMcpUrl('http://localhost:8080/mcp');
-                    }}
-                    className="px-2 py-1 rounded-md bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 text-[10px] font-medium transition cursor-pointer flex items-center gap-1"
-                  >
-                    <Globe className="w-3 h-3" />
-                    <span>Maxun Scraper</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
                       setNewMcpName('Context7 Docs');
-                      setNewMcpUrl('https://mcp.context7.dev/rpc');
+                      setNewMcpUrl('https://mcp.context7.com/mcp');
                     }}
-                    className="px-2 py-1 rounded-md bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 text-[10px] font-medium transition cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-md bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-300 text-[10px] font-medium transition cursor-pointer flex items-center gap-1.5"
                   >
-                    <Server className="w-3 h-3" />
+                    <Server className="w-3 h-3 text-cyan-400" />
                     <span>Context7 Docs</span>
                   </button>
                 </div>
@@ -743,7 +681,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   placeholder="Ex: Servidor de Dados Local"
                   value={newMcpName}
                   onChange={(e) => setNewMcpName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-emerald-400"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
@@ -752,10 +690,10 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                 <input
                   type="url"
                   required
-                  placeholder="https://meu-mcp.com/rpc ou http://localhost:3001"
+                  placeholder="https://mcp.context7.com/mcp ou http://meu-servidor:3001"
                   value={newMcpUrl}
                   onChange={(e) => setNewMcpUrl(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-emerald-400 font-mono text-[11px]"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-cyan-400 font-mono text-[11px]"
                 />
               </div>
 
@@ -766,7 +704,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   placeholder="Bearer token..."
                   value={newMcpApiKey}
                   onChange={(e) => setNewMcpApiKey(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-emerald-400"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] text-[color:var(--c-fg-f3efe6)] focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
@@ -780,7 +718,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-sm cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium shadow-[0_2px_10px_rgba(6,182,212,0.3)] cursor-pointer transition"
                 >
                   Conectar Servidor
                 </button>

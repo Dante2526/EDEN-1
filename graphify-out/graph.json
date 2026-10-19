@@ -1264,8 +1264,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "package_dependencies_cheerio",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 1009,
+      "community_name": "cheerio",
       "norm_label": "cheerio"
     },
     {
@@ -1275,8 +1275,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "cheerio",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 1009,
+      "community_name": "cheerio",
       "norm_label": "cheerio"
     },
     {
@@ -1550,8 +1550,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "package_dependencies_react",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "react"
     },
     {
@@ -1561,8 +1561,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "react",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "react"
     },
     {
@@ -4377,8 +4377,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "runtimeerror",
-      "community": 5,
-      "community_name": "fetch_volunteers.py",
+      "community": 928,
+      "community_name": "RuntimeError",
       "norm_label": "runtimeerror"
     },
     {
@@ -5732,8 +5732,8 @@
       "source_location": "L606",
       "_origin": "ast",
       "id": "skills_design_design_templates_ppt_html_ppt_zhangzara_pin_and_paper_assets_deck_stage_deckstage_index",
-      "community": 24,
-      "community_name": "DeckStage",
+      "community": 14,
+      "community_name": "types.ts",
       "norm_label": ".index()"
     },
     {
@@ -5776,8 +5776,8 @@
       "source_location": "L612",
       "_origin": "ast",
       "id": "skills_design_design_templates_ppt_html_ppt_zhangzara_pin_and_paper_assets_deck_stage_deckstage_prev",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": ".prev()"
     },
     {
@@ -6172,8 +6172,8 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_docxxmleditor_init",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 32,
+      "community_name": "DocxXMLEditor",
       "norm_label": ".__init__()"
     },
     {
@@ -6458,8 +6458,8 @@
       "source_location": "L964",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_setup_tracking",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "._setup_tracking()"
     },
     {
@@ -6469,8 +6469,8 @@
       "source_location": "L985",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_update_people_xml",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "._update_people_xml()"
     },
     {
@@ -6491,8 +6491,8 @@
       "source_location": "L1003",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_relationship_for_people",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "._add_relationship_for_people()"
     },
     {
@@ -6590,8 +6590,8 @@
       "source_location": "L1217",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_relationship",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "._has_relationship()"
     },
     {
@@ -6612,8 +6612,8 @@
       "source_location": "L1231",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_author",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "._has_author()"
     },
     {
@@ -6623,8 +6623,8 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_author_to_people",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "._add_author_to_people()"
     },
     {
@@ -6689,8 +6689,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_101",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 32,
+      "community_name": "DocxXMLEditor",
       "norm_label": "initialize with required rsid and optional author.          args:"
     },
     {
@@ -6975,8 +6975,8 @@
       "source_location": "L965",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_965",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "set up comment infrastructure in unpacked directory.          args:"
     },
     {
@@ -6986,8 +6986,8 @@
       "source_location": "L986",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_986",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "create people.xml if it doesn't exist."
     },
     {
@@ -7008,8 +7008,8 @@
       "source_location": "L1004",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1004",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "add people.xml relationship to document.xml.rels if not already present."
     },
     {
@@ -7107,8 +7107,8 @@
       "source_location": "L1218",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1218",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 42,
+      "community_name": "chat-message.tsx",
       "norm_label": "check if a relationship with given target exists."
     },
     {
@@ -7129,8 +7129,8 @@
       "source_location": "L1232",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1232",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "check if an author already exists in people.xml."
     },
     {
@@ -7140,8 +7140,8 @@
       "source_location": "L1239",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1239",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "add author to people.xml (called during initialization)."
     },
     {
@@ -11410,8 +11410,8 @@
       "source_location": "L1056",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_form_info",
-      "community": 12,
-      "community_name": ".error",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "form_info()"
     },
     {
@@ -11729,8 +11729,8 @@
       "source_location": "L2332",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_has_glyph",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "_has_glyph()"
     },
     {
@@ -11740,8 +11740,8 @@
       "source_location": "L2347",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_best_font_for_char",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "_best_font_for_char()"
     },
     {
@@ -11751,8 +11751,8 @@
       "source_location": "L2377",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_font_fallback",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "font_fallback()"
     },
     {
@@ -12213,8 +12213,8 @@
       "source_location": "L1057",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_1057",
-      "community": 12,
-      "community_name": ".error",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "return structured json describing every form field (pikepdf + check_fillable)."
     },
     {
@@ -12477,8 +12477,8 @@
       "source_location": "L2333",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_2333",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "check whether *font_name* has a real glyph outline for *code*."
     },
     {
@@ -12488,8 +12488,8 @@
       "source_location": "L2348",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_2348",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "return the best registered font for a single character *code*."
     },
     {
@@ -12499,8 +12499,8 @@
       "source_location": "L2378",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_2378",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "wrap characters that *base_font* cannot render with ``<font>`` tags.      pres"
     },
     {
@@ -24271,8 +24271,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_chat_header",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 40,
+      "community_name": "deployment-service.ts",
       "norm_label": "chat-header.tsx"
     },
     {
@@ -24282,8 +24282,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_components_chat_header_chatheaderprops",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 40,
+      "community_name": "deployment-service.ts",
       "norm_label": "chatheaderprops"
     },
     {
@@ -24293,8 +24293,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_components_chat_header_chatheader",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 40,
+      "community_name": "deployment-service.ts",
       "norm_label": "chatheader"
     },
     {
@@ -24304,8 +24304,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_chat_input",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "chat-input.tsx"
     },
     {
@@ -24315,8 +24315,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_chat_input_chatinputprops",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "chatinputprops"
     },
     {
@@ -24326,8 +24326,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_chat_input_chatinput",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "chatinput"
     },
     {
@@ -24359,8 +24359,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_components_chat_message_chatimage",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "chatimage()"
     },
     {
@@ -24381,8 +24381,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_chat_sidebar",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "chat-sidebar.tsx"
     },
     {
@@ -24392,8 +24392,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_projectspanel",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "projectspanel"
     },
     {
@@ -24414,8 +24414,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_swipeableconversationitem",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "swipeableconversationitem()"
     },
     {
@@ -24425,8 +24425,8 @@
       "source_location": "L312",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_chatsidebarprops",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "chatsidebarprops"
     },
     {
@@ -24436,8 +24436,8 @@
       "source_location": "L351",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_chatsidebar",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "chatsidebar"
     },
     {
@@ -24447,8 +24447,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_claude_logo",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claude-logo.tsx"
     },
     {
@@ -24458,8 +24458,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogoprops",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogoprops"
     },
     {
@@ -24469,8 +24469,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogo",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogo()"
     },
     {
@@ -24480,8 +24480,8 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_components_claude_logo_claudelogoprops",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claudelogoprops"
     },
     {
@@ -24524,8 +24524,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_compaction_marker",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "compaction-marker.tsx"
     },
     {
@@ -24535,8 +24535,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_compaction_marker_compactionmarkerprops",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "compactionmarkerprops"
     },
     {
@@ -24546,8 +24546,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_compaction_marker_compactionmarker",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "compactionmarker()"
     },
     {
@@ -24557,8 +24557,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_dark_mode_toggle",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "dark-mode-toggle.tsx"
     },
     {
@@ -24568,8 +24568,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_dark_mode_toggle_darkmodetoggleprops",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "darkmodetoggleprops"
     },
     {
@@ -24579,8 +24579,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_dark_mode_toggle_darkmodetoggle",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "darkmodetoggle()"
     },
     {
@@ -24689,8 +24689,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "downloader-panel.tsx"
     },
     {
@@ -24700,8 +24700,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_pickeritem",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pickeritem"
     },
     {
@@ -24711,8 +24711,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_downloadresult",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "downloadresult"
     },
     {
@@ -24722,8 +24722,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_historyitem",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "historyitem"
     },
     {
@@ -24733,8 +24733,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_platform_icons",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "platform_icons"
     },
     {
@@ -24744,8 +24744,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_supported_platforms",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "supported_platforms"
     },
     {
@@ -24755,8 +24755,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_downloaderpanel",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "downloaderpanel()"
     },
     {
@@ -24766,8 +24766,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_eden_logo",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "eden-logo.tsx"
     },
     {
@@ -24829,7 +24829,7 @@
       "label": "ExtensionsPanelProps",
       "file_type": "code",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L30",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_extensions_extensions_panel_extensionspanelprops",
       "community": 55,
@@ -24840,7 +24840,7 @@
       "label": "ExtensionsPanel()",
       "file_type": "code",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L47",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "src_components_extensions_extensions_panel_extensionspanel",
       "community": 55,
@@ -24854,8 +24854,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_github_create_repo_modal",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "create-repo-modal.tsx"
     },
     {
@@ -24865,8 +24865,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_github_create_repo_modal_createrepomodalprops",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "createrepomodalprops"
     },
     {
@@ -24876,8 +24876,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_github_create_repo_modal_createrepomodal",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "createrepomodal()"
     },
     {
@@ -24920,8 +24920,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_github_repo_list",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "repo-list.tsx"
     },
     {
@@ -24931,8 +24931,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_github_repo_list_repolistprops",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "repolistprops"
     },
     {
@@ -24942,8 +24942,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_github_repo_list_repolist",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "repolist()"
     },
     {
@@ -24953,8 +24953,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_global_error_boundary",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "global-error-boundary.tsx"
     },
     {
@@ -24964,8 +24964,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_errorboundaryprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "errorboundaryprops"
     },
     {
@@ -24975,8 +24975,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_errorboundarystate",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "errorboundarystate"
     },
     {
@@ -24986,8 +24986,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "globalerrorboundary"
     },
     {
@@ -24997,8 +24997,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_constructor",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": ".constructor()"
     },
     {
@@ -25008,8 +25008,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_getderivedstatefromerror",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": ".getderivedstatefromerror()"
     },
     {
@@ -25019,8 +25019,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_componentdidcatch",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": ".componentdidcatch()"
     },
     {
@@ -25030,8 +25030,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_handlereload",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": ".handlereload()"
     },
     {
@@ -25041,8 +25041,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_handledismiss",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": ".handledismiss()"
     },
     {
@@ -25052,8 +25052,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_handlecopyerror",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": ".handlecopyerror()"
     },
     {
@@ -25063,8 +25063,8 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_components_global_error_boundary_globalerrorboundary_render",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": ".render()"
     },
     {
@@ -25173,8 +25173,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_model_controls",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "model-controls.tsx"
     },
     {
@@ -25184,8 +25184,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_components_model_controls_modelcontrolsprops",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "modelcontrolsprops"
     },
     {
@@ -25195,8 +25195,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_components_model_controls_modelcontrols",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "modelcontrols()"
     },
     {
@@ -25382,8 +25382,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_pwa_install_button",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pwa-install-button.tsx"
     },
     {
@@ -25393,8 +25393,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_components_pwa_install_button_pwainstallbutton",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pwainstallbutton()"
     },
     {
@@ -25448,8 +25448,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_settings_modal",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "settings-modal.tsx"
     },
     {
@@ -25459,8 +25459,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodalprops",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "settingsmodalprops"
     },
     {
@@ -25470,8 +25470,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodal",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "settingsmodal()"
     },
     {
@@ -25481,8 +25481,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "diff-viewer.tsx"
     },
     {
@@ -25492,8 +25492,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer_reactdiffviewer",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "reactdiffviewer"
     },
     {
@@ -25503,8 +25503,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer_diffviewerprops",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "diffviewerprops"
     },
     {
@@ -25514,8 +25514,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer_diffviewer",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "diffviewer()"
     },
     {
@@ -25525,8 +25525,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_source_control_source_control_panel",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "source-control-panel.tsx"
     },
     {
@@ -25536,8 +25536,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_components_source_control_source_control_panel_sourcecontrolpanelprops",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "sourcecontrolpanelprops"
     },
     {
@@ -25547,8 +25547,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_source_control_source_control_panel_sourcecontrolpanel",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "sourcecontrolpanel()"
     },
     {
@@ -25558,8 +25558,8 @@
       "source_location": "L1187",
       "_origin": "ast",
       "id": "src_components_source_control_source_control_panel_changerowprops",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "changerowprops"
     },
     {
@@ -25569,8 +25569,8 @@
       "source_location": "L1194",
       "_origin": "ast",
       "id": "src_components_source_control_source_control_panel_changerow",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "changerow()"
     },
     {
@@ -26207,8 +26207,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_clipboard_utils_test",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "clipboard-utils.test.ts"
     },
     {
@@ -26218,8 +26218,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_clipboard_utils",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "clipboard-utils.ts"
     },
     {
@@ -26229,8 +26229,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_clipboard_utils_extractimagesfromclipboarddata",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "extractimagesfromclipboarddata()"
     },
     {
@@ -26680,8 +26680,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_file_patcher_test",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "file-patcher.test.ts"
     },
     {
@@ -26691,8 +26691,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_file_patcher",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "file-patcher.ts"
     },
     {
@@ -26702,8 +26702,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_file_patcher_patchblock",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "patchblock"
     },
     {
@@ -26713,8 +26713,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_file_patcher_patchresult",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "patchresult"
     },
     {
@@ -26724,8 +26724,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_file_patcher_effectivefileresolution",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "effectivefileresolution"
     },
     {
@@ -26735,8 +26735,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_file_patcher_normalizerepopath",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "normalizerepopath()"
     },
     {
@@ -26746,8 +26746,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_file_patcher_normalizepatchargs",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "normalizepatchargs()"
     },
     {
@@ -26757,8 +26757,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_lib_file_patcher_countoccurrences",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "countoccurrences()"
     },
     {
@@ -26768,8 +26768,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_lib_file_patcher_applyfilepatches",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "applyfilepatches()"
     },
     {
@@ -26779,8 +26779,8 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "src_lib_file_patcher_resolveeffectivefilecontent",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "resolveeffectivefilecontent()"
     },
     {
@@ -26977,8 +26977,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_github_commit",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "github-commit.ts"
     },
     {
@@ -26988,8 +26988,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_github_commit_commitresult",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "commitresult"
     },
     {
@@ -26999,8 +26999,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_github_commit_commitstagedchanges",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "commitstagedchanges()"
     },
     {
@@ -27032,8 +27032,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_github_setgithubpat",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "setgithubpat()"
     },
     {
@@ -27043,8 +27043,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_github_removegithubpat",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "removegithubpat()"
     },
     {
@@ -27109,8 +27109,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_lib_github_fetchuserrepos",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "fetchuserrepos()"
     },
     {
@@ -27186,8 +27186,8 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "src_lib_github_createrepo",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "createrepo()"
     },
     {
@@ -27604,8 +27604,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_lazy_retry_test",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "lazy-retry.test.ts"
     },
     {
@@ -27615,8 +27615,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_lazy_retry",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "lazy-retry.ts"
     },
     {
@@ -27626,8 +27626,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_lib_lazy_retry_isdynamicchunkerror",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "isdynamicchunkerror()"
     },
     {
@@ -27637,8 +27637,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_lib_lazy_retry_lazywithretry",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "lazywithretry()"
     },
     {
@@ -27648,8 +27648,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_mcp_client_test",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "mcp-client.test.ts"
     },
     {
@@ -27659,8 +27659,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_mcp_client_test_runtests",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "runtests()"
     },
     {
@@ -27670,8 +27670,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_mcp_client",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "mcp-client.ts"
     },
     {
@@ -27681,8 +27681,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_mcp_client_mcprpcrequest",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "mcprpcrequest"
     },
     {
@@ -27692,8 +27692,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_mcp_client_buildmcprpcrequest",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "buildmcprpcrequest()"
     },
     {
@@ -27703,8 +27703,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_mcp_client_convertmcptoolstoopenai",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "convertmcptoolstoopenai()"
     },
     {
@@ -27714,8 +27714,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_lib_mcp_client_parsemcptoolresponse",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "parsemcptoolresponse()"
     },
     {
@@ -27725,8 +27725,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_lib_mcp_client_parsemcpresponsepayload",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "parsemcpresponsepayload()"
     },
     {
@@ -27736,8 +27736,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "src_lib_mcp_client_testmcpconnection",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "testmcpconnection()"
     },
     {
@@ -27747,8 +27747,8 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "src_lib_mcp_client_executemcptoolcall",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "executemcptoolcall()"
     },
     {
@@ -28044,8 +28044,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_pending_changes",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pending-changes.tsx"
     },
     {
@@ -28055,8 +28055,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_pending_changes_loadpendingchangesfromdb",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "loadpendingchangesfromdb()"
     },
     {
@@ -28066,8 +28066,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_pending_changes_savependingchangestodb",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "savependingchangestodb()"
     },
     {
@@ -28077,8 +28077,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontexttype",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pendingchangescontexttype"
     },
     {
@@ -28088,8 +28088,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontext",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pendingchangescontext"
     },
     {
@@ -28099,8 +28099,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangesprovider",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pendingchangesprovider()"
     },
     {
@@ -28110,8 +28110,8 @@
       "source_location": "L264",
       "_origin": "ast",
       "id": "src_lib_pending_changes_usependingchanges",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "usependingchanges()"
     },
     {
@@ -29496,8 +29496,8 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "src_lib_storage_exportconversationstojson",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "exportconversationstojson()"
     },
     {
@@ -29548,7 +29548,7 @@
       "label": "saveMcpServers()",
       "file_type": "code",
       "source_file": "src/lib/storage.ts",
-      "source_location": "L363",
+      "source_location": "L369",
       "_origin": "ast",
       "id": "src_lib_storage_savemcpservers",
       "community": 2,
@@ -29559,7 +29559,7 @@
       "label": "loadKnowledgeFacts()",
       "file_type": "code",
       "source_file": "src/lib/storage.ts",
-      "source_location": "L371",
+      "source_location": "L377",
       "_origin": "ast",
       "id": "src_lib_storage_loadknowledgefacts",
       "community": 2,
@@ -29570,7 +29570,7 @@
       "label": "saveKnowledgeFacts()",
       "file_type": "code",
       "source_file": "src/lib/storage.ts",
-      "source_location": "L381",
+      "source_location": "L387",
       "_origin": "ast",
       "id": "src_lib_storage_saveknowledgefacts",
       "community": 2,
@@ -29749,8 +29749,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_studio_config",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "studio-config.ts"
     },
     {
@@ -29760,8 +29760,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_studio_config_default_studio_config",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "default_studio_config"
     },
     {
@@ -29771,8 +29771,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_studio_config_loadstudioconfig",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "loadstudioconfig()"
     },
     {
@@ -29782,8 +29782,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_studio_config_savestudioconfig",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "savestudioconfig()"
     },
     {
@@ -30079,8 +30079,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_types_changetype",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "changetype"
     },
     {
@@ -30090,8 +30090,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_lib_types_pendingchange",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "pendingchange"
     },
     {
@@ -30101,8 +30101,8 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_lib_types_githubrepo",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "githubrepo"
     },
     {
@@ -30123,8 +30123,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "src_lib_types_activerepostate",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "activerepostate"
     },
     {
@@ -30145,8 +30145,8 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "src_lib_types_githubcommititem",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "githubcommititem"
     },
     {
@@ -30189,8 +30189,8 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_lib_types_contextcompaction",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "contextcompaction"
     },
     {
@@ -30211,8 +30211,8 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "src_lib_types_modelid",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "modelid"
     },
     {
@@ -30222,8 +30222,8 @@
       "source_location": "L224",
       "_origin": "ast",
       "id": "src_lib_types_reasoningeffort",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "reasoningeffort"
     },
     {
@@ -30233,8 +30233,8 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "src_lib_types_appsettings",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "appsettings"
     },
     {
@@ -30266,8 +30266,8 @@
       "source_location": "L248",
       "_origin": "ast",
       "id": "src_lib_types_mcptool",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "mcptool"
     },
     {
@@ -30354,8 +30354,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_usepwainstall",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "usepwainstall.ts"
     },
     {
@@ -30365,8 +30365,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_usepwainstall_beforeinstallpromptevent",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "beforeinstallpromptevent"
     },
     {
@@ -30376,8 +30376,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_usepwainstall_usepwainstall",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "usepwainstall()"
     },
     {
@@ -30420,8 +30420,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_utils_formatdate",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "formatdate()"
     },
     {
@@ -30431,8 +30431,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_utils_generatetitlefrommessage",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "generatetitlefrommessage()"
     },
     {
@@ -30937,8 +30937,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "main.tsx"
     },
     {
@@ -30948,8 +30948,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_main_handlechunkerror",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 110,
+      "community_name": "run_pipeline",
       "norm_label": "handlechunkerror()"
     },
     {
@@ -31058,8 +31058,8 @@
       "source_location": "L272",
       "_origin": "ast",
       "id": "src_studio_studio_engine_executetool",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "executetool()"
     },
     {
@@ -31113,8 +31113,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_studio_studio_panel_props",
-      "community": 21,
-      "community_name": "graphify-engine.ts",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "props"
     },
     {
@@ -31212,8 +31212,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_studio_studio_types_studioagent",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 148,
+      "community_name": "dotenv",
       "norm_label": "studioagent"
     },
     {
@@ -32337,6 +32337,28 @@
       "community": 924,
       "community_name": "graphify.md",
       "norm_label": "graphify"
+    },
+    {
+      "label": "mobile-first.md",
+      "file_type": "document",
+      "source_file": ".agents/rules/mobile-first.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_rules_mobile_first",
+      "community": 150,
+      "community_name": "idb-keyval",
+      "norm_label": "mobile-first.md"
+    },
+    {
+      "label": "mobile-first-mandatory",
+      "file_type": "document",
+      "source_file": ".agents/rules/mobile-first.md",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "agents_rules_mobile_first_mobile_first_mandatory",
+      "community": 150,
+      "community_name": "idb-keyval",
+      "norm_label": "mobile-first-mandatory"
     },
     {
       "label": "graphify.md",
@@ -163470,6 +163492,17 @@
       "norm_label": "114. maxun mcp oficial e gravador visual de scraping & automacao no-code (\"browser recipes\")"
     },
     {
+      "label": "115. Refinamento de UX: Responsividade Mobile do Gravador de Rob\u00f4s, \u00cdcone Workflow e Clareza de Status MCP",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L1980",
+      "_origin": "ast",
+      "id": "walkthrough_115_refinamento_de_ux_responsividade_mobile_do_gravador_de_rob\u00f4s_\u00edcone_workflow_e_clareza_de_status_mcp",
+      "community": 58,
+      "community_name": "._validate_single_file_xsd",
+      "norm_label": "115. refinamento de ux: responsividade mobile do gravador de robos, icone workflow e clareza de status mcp"
+    },
+    {
       "label": "executeTerminalCommand",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
@@ -211690,7 +211723,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L47",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211701,7 +211734,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L30",
+      "source_location": "L27",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211713,7 +211746,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L28",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211725,7 +211758,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L28",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211737,7 +211770,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L28",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211749,7 +211782,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L28",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211761,7 +211794,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L28",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211773,7 +211806,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L28",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel",
@@ -211785,7 +211818,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L42",
+      "source_location": "L39",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel_extensionspanelprops",
@@ -211797,7 +211830,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L41",
+      "source_location": "L38",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel_extensionspanelprops",
@@ -211809,7 +211842,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L35",
+      "source_location": "L32",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel_extensionspanelprops",
@@ -211821,7 +211854,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/components/extensions/extensions-panel.tsx",
-      "source_location": "L33",
+      "source_location": "L30",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_extensions_extensions_panel_extensionspanelprops",
@@ -222599,7 +222632,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/storage.ts",
-      "source_location": "L371",
+      "source_location": "L377",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_storage",
@@ -222665,7 +222698,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/storage.ts",
-      "source_location": "L381",
+      "source_location": "L387",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_storage",
@@ -222676,7 +222709,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/storage.ts",
-      "source_location": "L363",
+      "source_location": "L369",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_storage",
@@ -222834,6 +222867,18 @@
       "_origin": "ast",
       "source": "src_lib_storage_loadskills",
       "target": "src_lib_storage_saveskills",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/storage.ts",
+      "source_location": "L357",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_storage_loadmcpservers",
+      "target": "src_lib_storage_savemcpservers",
       "confidence_score": 1.0
     },
     {
@@ -227089,6 +227134,17 @@
       "_origin": "ast",
       "source": "agents_rules_graphify",
       "target": "agents_rules_graphify_graphify",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".agents/rules/mobile-first.md",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "agents_rules_mobile_first",
+      "target": "agents_rules_mobile_first_mobile_first_mandatory",
       "confidence_score": 1.0
     },
     {
@@ -349701,6 +349757,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "walkthrough.md",
+      "source_location": "L1980",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_walkthrough_revis\u00e3o_e_hardening_arquitetura_e_infraestrutura",
+      "target": "walkthrough_115_refinamento_de_ux_responsividade_mobile_do_gravador_de_rob\u00f4s_\u00edcone_workflow_e_clareza_de_status_mcp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
       "source_location": "L67",
       "weight": 1.0,
       "_origin": "ast",
@@ -350788,5 +350855,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "1379382cbd189cc9d99698b10bf65ca83353d715"
+  "built_at_commit": "f344f9bf2f5234955b4329078cdeebf6387c1250"
 }

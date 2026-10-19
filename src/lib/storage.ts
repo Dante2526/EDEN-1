@@ -351,9 +351,15 @@ export async function loadMcpServers(): Promise<McpServer[]> {
     if (!data || data.length === 0) {
       return DEFAULT_MCP_SERVERS;
     }
-    const existingIds = new Set(data.map((s) => s.id));
+    // Remove conexões legadas do Maxun local (localhost:8080/mcp)
+    const sanitized = data.filter((s) => !s.url?.includes('localhost:8080/mcp') && s.id !== 'maxun');
+    if (sanitized.length !== data.length) {
+      await saveMcpServers(sanitized.length > 0 ? sanitized : DEFAULT_MCP_SERVERS);
+    }
+    const currentList = sanitized.length > 0 ? sanitized : DEFAULT_MCP_SERVERS;
+    const existingIds = new Set(currentList.map((s) => s.id));
     const missingDefaults = DEFAULT_MCP_SERVERS.filter((d) => !existingIds.has(d.id));
-    return [...data, ...missingDefaults];
+    return [...currentList, ...missingDefaults];
   } catch (error) {
     console.error('Failed to load MCP servers from IndexedDB:', error);
     return DEFAULT_MCP_SERVERS;
