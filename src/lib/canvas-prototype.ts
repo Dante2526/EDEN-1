@@ -33,16 +33,52 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
 
   const isFullDoc = /<!doctype\s+html>/i.test(html) || /<html[\s>]/i.test(html);
 
+  const scrollbarAndFontStyles = `
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+  </style>`;
+
   if (isFullDoc) {
-    // Garante que o Tailwind e viewport estejam presentes no head
+    // Garante que o Tailwind, viewport, fontes e scrollbar estejam presentes no head
     if (!html.includes('cdn.tailwindcss.com')) {
-      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>`;
+      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>${scrollbarAndFontStyles}`;
       if (/<head[\s>]/i.test(html)) {
         html = html.replace(/<head[\s>]/i, `<head>\n  ${headInjection}`);
       } else if (/<html[\s>]/i.test(html)) {
         html = html.replace(/<html[\s>]/i, `<html>\n<head>\n  ${headInjection}\n</head>`);
       } else {
         html = `<head>\n  ${headInjection}\n</head>\n${html}`;
+      }
+    } else if (!html.includes('scrollbar-width')) {
+      // Injeta os estilos de scrollbar e fonte no head existente se ainda não tiver
+      if (/<head[\s>]/i.test(html)) {
+        html = html.replace(/<head[\s>]/i, `<head>\n  ${scrollbarAndFontStyles}`);
+      } else if (/<html[\s>]/i.test(html)) {
+        html = html.replace(/<html[\s>]/i, `<html>\n<head>\n  ${scrollbarAndFontStyles}\n</head>`);
       }
     }
     return html;
@@ -68,13 +104,9 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
       }
     }
   </script>
-  <style>
-    /* Reset ergonômico mobile */
-    * { -webkit-tap-highlight-color: transparent; }
-    body { font-family: system-ui, -apple-system, sans-serif; }
-  </style>
+  ${scrollbarAndFontStyles}
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen p-0 sm:p-4">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen p-0 sm:p-4 antialiased">
   ${html}
 </body>
 </html>`;

@@ -159,6 +159,31 @@ export const BUILTIN_SKILLS: Skill[] = [
       '3. Padrão Mobile-First: O HTML do protótipo DEVE ser projetado para telas móveis (360px a 430px) com alternador opcional para desktop, alvos de toque ergonômicos (mínimo 44px) e zero overflow horizontal.\n' +
       '4. Aguarde Aprovação: Após exibir o protótipo no Canvas, pare a execução do turno e aguarde o usuário clicar em "Aprovar e Gerar Código" ou solicitar ajustes visuais.',
   },
+  {
+    id: 'claude-design',
+    name: 'Claude Design (UI Sênior)',
+    description: 'Proíbe AI-Slop genérico e força padrões de Product Designer sênior (Stripe/Linear): tipografia refinada, microinterações e sombras sutis.',
+    icon: 'palette',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você é um Especialista Sênior em Design de Interfaces e Design Systems (padrão Claude Design / Linear / Stripe):\n' +
+      '1. PROIBIÇÃO ABSOLUTA DE "AI SLOP":\n' +
+      '   - Proibido criar caixas escuras genéricas com bordas duras simples, botões sem hover/focus e tipografia padrão do navegador.\n' +
+      '   - Proibido usar gradientes agressivos ou emojis soltos como marcadores de lista.\n' +
+      '   - Proibido contrastes pobres ou cinzas sem vida; use paletas sofisticadas com acentos de cor vibrantes e harmônicos (ex: violet, indigo, emerald, amber, sky).\n' +
+      '2. HIERARQUIA TIPOGRÁFICA REFINADA:\n' +
+      '   - Use fontes modernas e legíveis (Inter, Plus Jakarta Sans, Geist).\n' +
+      '   - Estabeleça escala tipográfica intencional: títulos fortes com tracking ligeiramente negativo (`tracking-tight`), pesos contrastantes (ex: `font-semibold` com `text-xs text-zinc-400`), textos de apoio em tamanhos menores com entrelinha arejada.\n' +
+      '3. PROFUNDIDADE E SUPERFÍCIES (LAYERED DESIGN):\n' +
+      '   - Crie profundidade real com camadas: fundos escuros refinados (`bg-zinc-950` ou `bg-slate-950`), superfícies elevadas com fundos translúcidos (`bg-zinc-900/60 backdrop-blur-md`), bordas sutis (`border border-white/10` ou `border-zinc-800`) e sombras multicamadas elegantes.\n' +
+      '   - Aplique anéis de foco sutis (`ring-1 ring-white/15 focus:ring-2 focus:ring-brand/50`) e cantos arredondados generosos (`rounded-2xl` ou `rounded-xl`).\n' +
+      '4. MICROINTERAÇÕES E ESTADOS DE ALTA FIDELIDADE:\n' +
+      '   - Todo botão ou elemento clicável DEVE ter transições suaves (`transition-all duration-150`), efeitos de hover (`hover:scale-[1.02] active:scale-[0.98]`), feedbacks táteis e alvos de toque mínimos de 44x44px.\n' +
+      '   - Inputs devem ter ícones integrados, placeholders contextuais elegantes, estados de foco destacados e rótulos claros.\n' +
+      '5. ACABAMENTO PROFISSIONAL:\n' +
+      '   - Em protótipos de Canvas e componentes, entregue detalhes de produto real: badges contextuais, estados ativos/inativos, métricas formatadas e espaçamento consistente no grid de 4px/8px.',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {

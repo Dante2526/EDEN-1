@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792421225.7566676,
-    "ast_hash": "d72cb4867c03c8988e453a2051d06117",
+    "mtime": 1792440561.9525414,
+    "ast_hash": "43149ac7c0d1f7c985b56fb09535101f",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": "8921224c171256f9c22792a47f66e52e"
   },
   "src/components/extensions/extensions-panel.tsx": {
-    "mtime": 1792420055.3962324,
-    "ast_hash": "2ad4d0aa701005c6515954e097964049",
+    "mtime": 1792440459.5338125,
+    "ast_hash": "24e7d84280334a3e81496128db5a5a83",
     "semantic_hash": ""
   },
   "src/components/github/create-repo-modal.tsx": {
@@ -1355,9 +1355,9 @@
     "semantic_hash": "164bab753be8e8e8fb8da4ec920f836b"
   },
   "src/lib/skills-extractor.ts": {
-    "mtime": 1792173262.132941,
-    "ast_hash": "d0d8adc547675af80a4a2f178b9dcc3f",
-    "semantic_hash": "d0d8adc547675af80a4a2f178b9dcc3f"
+    "mtime": 1792440950.6639671,
+    "ast_hash": "26f4efcf0b016d441de91c478722c1d6",
+    "semantic_hash": ""
   },
   "src/lib/sound-effects.ts": {
     "mtime": 1792030703.5451703,
@@ -1375,8 +1375,8 @@
     "semantic_hash": "123089b80edf7590952dbee86c167693"
   },
   "src/lib/storage.ts": {
-    "mtime": 1792420025.8788917,
-    "ast_hash": "148109a52b2848ab0787a188d4a0eaad",
+    "mtime": 1792440490.7212133,
+    "ast_hash": "a7932bec8f0e3cb2e917b495fe98bef8",
     "semantic_hash": ""
   },
   "src/lib/streaming-speech-queue.test.ts": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792419947.2949183,
-    "ast_hash": "66f5ea4af73e531866dc03c4bfbf3e70",
+    "mtime": 1792440430.5180278,
+    "ast_hash": "a5577c1e33bdc3ae69b489e8541ad0cd",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792418193.2737882,
-    "ast_hash": "7bf4199c2185a810ca02d80e5f0dd52d",
+    "mtime": 1792421350.5459716,
+    "ast_hash": "b7c42568b03d07a5d9c5eaecb32a2d18",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6070,13 +6070,13 @@
     "semantic_hash": ""
   },
   "src/lib/canvas-prototype.test.ts": {
-    "mtime": 1792421207.2932434,
-    "ast_hash": "8570b96fd7d574032e57e1d8a6737d00",
+    "mtime": 1792440940.625413,
+    "ast_hash": "d0233adea3b1d27722fce73b8fd4ec89",
     "semantic_hash": ""
   },
   "src/lib/canvas-prototype.ts": {
-    "mtime": 1792421193.053554,
-    "ast_hash": "35fa69711a7ccc787d83d730f2b9f7c5",
+    "mtime": 1792440929.831021,
+    "ast_hash": "f9d3197950a307f26f00f1065a64f7df",
     "semantic_hash": ""
   },
   ".agents/rules/canvas-prototyping.md": {

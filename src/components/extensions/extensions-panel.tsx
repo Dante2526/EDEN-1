@@ -22,6 +22,7 @@ import {
   Cloud,
   Bot,
   Layout,
+  Palette,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -132,6 +133,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
         return <Bot className="w-4 h-4 text-emerald-400" />;
       case 'layout':
         return <Layout className="w-4 h-4 text-amber-400" />;
+      case 'palette':
+        return <Palette className="w-4 h-4 text-violet-400" />;
       default:
         return <Blocks className="w-4 h-4 text-purple-400" />;
     }

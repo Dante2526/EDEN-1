@@ -30,6 +30,7 @@ export function extractUsedSkills(
       'Systematic Debugging',
       'Test-Driven Development (TDD)',
       'Conventional Commits',
+      'Claude Design (UI Sênior)',
       'Mobile-First Design & UX',
     ]) {
       if (activeNames.includes(core)) {

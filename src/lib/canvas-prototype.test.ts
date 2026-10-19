@@ -15,6 +15,8 @@ describe('Canvas Prototype Engine (Prototipagem Visual Antes de Código)', () =>
     assert.ok(output.includes('<!DOCTYPE html>'), 'Deve conter doctype html');
     assert.ok(output.includes('<meta name="viewport"'), 'Deve conter meta viewport');
     assert.ok(output.includes('cdn.tailwindcss.com'), 'Deve injetar o Tailwind Play CDN');
+    assert.ok(output.includes('Inter'), 'Deve injetar a fonte moderna Inter');
+    assert.ok(output.includes('scrollbar-width'), 'Deve injetar reset anti-scrollbar branca do Windows');
     assert.ok(output.includes('Entrar'), 'Deve preservar o conteúdo HTML original');
   });
 
@@ -34,6 +36,13 @@ describe('Canvas Prototype Engine (Prototipagem Visual Antes de Código)', () =>
     const htmlOccurrences = (output.match(/<html/gi) || []).length;
     assert.equal(htmlOccurrences, 1, 'Não deve duplicar a tag html');
     assert.ok(output.includes('Dashboard'));
+  });
+
+  it('deve injetar scrollbar e fonte Inter em documento completo mesmo com a palavra Interface no título', () => {
+    const doc = '<!DOCTYPE html><html><head><title>Interface de Usuário</title><script src="https://cdn.tailwindcss.com"></script></head><body><h1>Interface</h1></body></html>';
+    const output = sanitizePrototypeHtml(doc);
+    assert.ok(output.includes('scrollbar-width'), 'Deve conter estilos de scrollbar');
+    assert.ok(output.includes('family=Inter'), 'Deve conter link da fonte Inter');
   });
 
   it('deve injetar Tailwind e viewport mesmo se o documento HTML completo não tiver tag head', () => {

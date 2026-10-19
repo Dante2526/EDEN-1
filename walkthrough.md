@@ -2058,3 +2058,25 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado em 2.65s e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerado com sucesso.
   - `graphify update .`: grafo de conhecimento sincronizado com 14.865 nós, 16.795 arestas e 1.013 comunidades.
   - Code Review aprovado com incorporação de todas as recomendações de segurança e robustez.
+## 119. Skill Claude Design (UI Sênior & Anti-Slop) e Eliminação da Barra de Rolagem Branca
+- **Solicitação do Usuário:** *"Sim, coloca na diretriz e transforma essa Claude Design em uma skill para ativar ou desativar. Em toda criação, torna obrigatório qualquer modelo usar essa skill de design em toda criação."* + *"Não, no antigravity não precisa não. Ele já faz esse trabalho excelente. É só lá no eden mesmo"*
+- **Implementações Realizadas:**
+  1. **Tipagem e Ícone (`src/lib/types.ts` & `src/components/extensions/extensions-panel.tsx`):**
+     - Adicionado `'palette'` ao tipo `SkillIcon`.
+     - Adicionado o ícone `Palette` do `lucide-react` em violeta (`text-violet-400`) no renderizador de ícones do painel de extensões.
+  2. **Skill Built-in no Storage com Toggle (`src/lib/storage.ts`):**
+     - Registrada a skill `claude-design` (*"Claude Design (UI Sênior)"*) com `enabled: true`, ícone `'palette'` e diretrizes anti-slop inspiradas no padrão oficial do Claude.ai.
+     - Auto-migração transparente em `loadSkills()`, injetando a skill no IndexedDB de usuários existentes.
+  3. **Reset CSS de Scrollbar & Tipografia Inter no Canvas (`src/lib/canvas-prototype.ts`):**
+     - Injeção da Google Font `Inter` no `<head>` do sandbox com preconnect.
+     - Reset de scrollbars finas e translúcidas (`scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.15) transparent; ::-webkit-scrollbar ...`), eliminando a barra de rolagem branca nativa do Windows no iframe.
+     - Tratamento robusto contra falsos negativos de substring em documentos completos.
+  4. **Diretriz de Design no System Prompt (`src/App.tsx`, `src/lib/skills-extractor.ts`):**
+     - Injetada Regra 11 no System Prompt do Éden exigindo padrões de design system sênior (Stripe/Linear): tipografia refinada com `tracking-tight`, superfícies em camadas com glassmorphism suave (`bg-zinc-900/60 backdrop-blur-md`), bordas translúcidas (`border-white/10`) e microinterações táteis nos botões (`hover:scale-[1.02] active:scale-[0.98]`).
+     - Adicionado `'Claude Design (UI Sênior)'` na extração de habilidades de transparência no chat.
+- **Evidências de Verificação:**
+  - `npm test`: **160/160 testes unitários passando em 36 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso.
+  - `graphify update .`: grafo de conhecimento atualizado com 14.866 nós, 16.796 arestas e 1.013 comunidades.
+  - Code Review formal aprovado sem pendências.
