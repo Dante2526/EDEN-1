@@ -307,14 +307,34 @@ const FETCH_URL_TOOL = {
   function: {
     name: 'fetch_url',
     description:
-      'Lê e extrai o conteúdo textual limpo de uma página web, documentação ou artigo online a partir de uma URL. ' +
-      'Use após `web_search` para acessar os detalhes de um link encontrado ou diretamente quando o usuário enviar um link.',
+      'Faz requisições HTTP (estilo `curl`) e inspeciona páginas web, APIs, players embed ou streams de vídeo (.mp4, .m3u8, .ts estilo `ffprobe`). ' +
+      'Suporta headers customizados (`Referer`, `Range`, `User-Agent`, `Origin`), `raw: true` para obter o HTML bruto com todos os `<iframe src>` e links de vídeo ocultos, e `probe_media: true` para validar codec/resolução/duração real de um stream de vídeo.',
     parameters: {
       type: 'object',
       properties: {
         url: {
           type: 'string',
-          description: 'A URL completa e válida (começando com http:// ou https://) da página a ser lida.',
+          description: 'A URL completa e válida (http:// ou https://) a ser requisitada ou inspecionada.',
+        },
+        method: {
+          type: 'string',
+          enum: ['GET', 'HEAD', 'POST'],
+          description: 'Método HTTP (padrão: GET). Use HEAD para checar apenas cabeçalhos/status.',
+        },
+        headers: {
+          type: 'object',
+          description:
+            'Cabeçalhos HTTP customizados opcionais (ex.: {"Referer": "https://mxdrop.top/", "Range": "bytes=0-1023"}).',
+        },
+        raw: {
+          type: 'boolean',
+          description:
+            'Se true, retorna o HTML bruto sem sanitização + lista automática de `iframes` e `mediaUrls` (.mp4/.m3u8) encontrados.',
+        },
+        probe_media: {
+          type: 'boolean',
+          description:
+            'Se true, inspeciona os bytes do stream de vídeo (estilo ffprobe) e retorna codec (h264/aac), resolução (width x height), duração e validade de pacotes HLS/MP4/TS.',
         },
       },
       required: ['url'],
@@ -328,7 +348,9 @@ const PYTHON_TOOL = {
     name: 'run_python',
     description:
       'Executa scripts Python 3 reais no navegador via WebAssembly (Pyodide). ' +
-      'Use SEMPRE para cálculos matemáticos complexos, estatística, testes de algoritmos, simulações ou manipulação de dados.',
+      'Possui acesso real à internet via `urllib.request.urlopen` (com suporte a `Request(url, headers={...})`), ' +
+      'e instala pacotes automaticamente sob demanda (`bs4` / `BeautifulSoup`, `lxml`, `numpy`, `pandas`). ' +
+      'Use para web scraping avançado, regex em HTML, stress test de Range requests, cálculos matemáticos ou simulações.',
     parameters: {
       type: 'object',
       properties: {
@@ -1869,18 +1891,43 @@ function AppContent() {
     if (name === 'fetch_url') {
       try {
         const targetUrl = args.url || args.link || '';
-        const res = await fetch(`/api/fetch-url?url=${encodeURIComponent(targetUrl)}`, {
-          headers: { 'x-api-key': import.meta.env.VITE_API_SECRET || '' },
+        const res = await fetch('/api/fetch-url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
+          body: JSON.stringify({
+            url: targetUrl,
+            method: args.method || 'GET',
+            headers: args.headers || {},
+            raw: Boolean(args.raw),
+            probeMedia: Boolean(args.probe_media || args.probeMedia),
+          }),
         });
         const data = await res.json();
         if (!res.ok) {
-          return { result: JSON.stringify({ error: data.error || `Erro HTTP ${res.status}` }) };
+          return {
+            result: JSON.stringify({
+              error: data.error || `Erro HTTP ${res.status}`,
+              status: data.status || res.status,
+              headers: data.headers,
+              ttfbMs: data.ttfbMs,
+            }),
+          };
         }
         return {
           result: JSON.stringify({
             url: data.url,
+            finalUrl: data.finalUrl,
+            status: data.status,
+            ttfbMs: data.ttfbMs,
+            headers: data.headers,
             title: data.title,
             content: data.content,
+            iframes: data.iframes,
+            mediaUrls: data.mediaUrls,
+            mediaProbe: data.mediaProbe,
             truncated: data.truncated,
           }),
         };

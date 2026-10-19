@@ -377,6 +377,147 @@ export async function executeEmulatedCommand(
       }
     }
 
+    if (command === 'curl') {
+      const headers: Record<string, string> = {};
+      let method: 'GET' | 'HEAD' | 'POST' = 'GET';
+      let targetUrl = '';
+      let includeStatusFmt = '';
+
+      // Re-parseia os tokens brutos para preservar múltiplos -H "Header: Val"
+      const rawTokens: string[] = [];
+      let cur = '';
+      let inQ = false;
+      let qCh = '';
+      for (let i = 0; i < trimmed.length; i++) {
+        const ch = trimmed[i];
+        if ((ch === '"' || ch === "'") && !inQ) {
+          inQ = true;
+          qCh = ch;
+        } else if (ch === qCh && inQ) {
+          inQ = false;
+          qCh = '';
+        } else if (ch === ' ' && !inQ) {
+          if (cur) {
+            rawTokens.push(cur);
+            cur = '';
+          }
+        } else {
+          cur += ch;
+        }
+      }
+      if (cur) rawTokens.push(cur);
+
+      for (let i = 1; i < rawTokens.length; i++) {
+        const tok = rawTokens[i];
+        if (tok === '-I' || tok === '--head') {
+          method = 'HEAD';
+        } else if ((tok === '-X' || tok === '--request') && i + 1 < rawTokens.length) {
+          const m = rawTokens[++i].toUpperCase();
+          if (m === 'GET' || m === 'HEAD' || m === 'POST') method = m;
+        } else if ((tok === '-H' || tok === '--header') && i + 1 < rawTokens.length) {
+          const hdr = rawTokens[++i];
+          const colonIdx = hdr.indexOf(':');
+          if (colonIdx !== -1) {
+            headers[hdr.slice(0, colonIdx).trim()] = hdr.slice(colonIdx + 1).trim();
+          }
+        } else if ((tok === '-w' || tok === '--write-out') && i + 1 < rawTokens.length) {
+          includeStatusFmt = rawTokens[++i];
+        } else if ((tok === '-o' || tok === '-m' || tok === '--max-time') && i + 1 < rawTokens.length) {
+          i++; // ignora argumento de arquivo de saída ou timeout
+        } else if (!tok.startsWith('-') && /^https?:\/\//i.test(tok)) {
+          targetUrl = tok;
+        }
+      }
+
+      if (!targetUrl) {
+        return makeResult('', 'Uso: curl [-I] [-H "Referer: ..."] [-H "Range: bytes=0-1023"] <URL>', 1);
+      }
+
+      try {
+        const res = await fetch('/api/fetch-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: targetUrl,
+            method,
+            headers,
+            raw: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok && !data.status) {
+          return makeResult('', `curl: (22) ${data.error || `HTTP error ${res.status}`}`, 22);
+        }
+
+        const outParts: string[] = [];
+        if (method === 'HEAD') {
+          outParts.push(`HTTP/1.1 ${data.status || res.status} ${data.statusText || ''}`);
+          if (data.headers) {
+            for (const [k, v] of Object.entries(data.headers)) {
+              outParts.push(`${k}: ${v}`);
+            }
+          }
+        } else {
+          outParts.push(data.rawHtml || data.content || '');
+          if (Array.isArray(data.iframes) && data.iframes.length > 0) {
+            outParts.push(`\n[Éden Inspector — Iframes detectados: ${data.iframes.join(', ')}]`);
+          }
+          if (Array.isArray(data.mediaUrls) && data.mediaUrls.length > 0) {
+            outParts.push(`[Éden Inspector — Streams detectados: ${data.mediaUrls.join(', ')}]`);
+          }
+        }
+
+        if (includeStatusFmt) {
+          outParts.push(
+            includeStatusFmt
+              .replace(/%\{http_code\}/g, String(data.status || res.status))
+              .replace(/\\n/g, '\n')
+          );
+        }
+
+        return makeResult(outParts.join('\n').trim());
+      } catch (err: any) {
+        return makeResult('', `curl erro: ${err?.message || String(err)}`, 1);
+      }
+    }
+
+    if (command === 'ffprobe' || command === 'ffmpeg') {
+      const urlArg = args.find((a) => /^https?:\/\//i.test(a));
+      if (!urlArg) {
+        return makeResult(
+          '',
+          `Uso: ${command} <URL-do-stream-mp4-ou-m3u8>`,
+          1
+        );
+      }
+
+      try {
+        const res = await fetch('/api/fetch-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: urlArg,
+            probeMedia: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return makeResult('', `${command}: falha ao inspecionar ${urlArg}: ${data.error || res.status}`, 1);
+        }
+
+        const probe = data.mediaProbe || {};
+        const summary = {
+          url: data.finalUrl || urlArg,
+          status: data.status,
+          ttfbMs: data.ttfbMs,
+          probe,
+        };
+        return makeResult(JSON.stringify(summary, null, 2));
+      } catch (err: any) {
+        return makeResult('', `${command} erro: ${err?.message || String(err)}`, 1);
+      }
+    }
+
     // ==========================================
     // 2. GIT COMMANDS (GitHub REST API Emulator)
     // ==========================================

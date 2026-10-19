@@ -1773,5 +1773,27 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: compilado com sucesso.
   - `graphify update .`: grafo de conhecimento atualizado.
 
+## 107. Superpoderes de Scraping, `curl`, `ffprobe` e Ponte de Rede Python no Éden
+- **Solicitação do Usuário:** Integrar nativamente no aplicativo web **Éden** os recursos de inspeção de páginas, embeds e streams de vídeo (`curl` com `Referer` e `Range`, `ffprobe`/`ffmpeg`, `urllib.request.urlopen` e `pip install` sob demanda no Python).
+- **Implementações Realizadas:**
+  1. **Motor Nativo de Inspeção de Mídia e HTML Bruto (`src/lib/media-probe.ts` + `src/lib/media-probe.test.ts`):**
+     - `parseMp4Buffer`: lê os átomos binários ISO-BMFF (`ftyp`, `moov`, `mvhd`, `tkhd`, `stsd`) e extrai codec (`h264`, `hevc`, `aac`, etc.), resolução (`width` x `height`) e duração em segundos.
+     - `parseHlsManifest`: analisa playlists `.m3u8` Master (variantes, bandwidth, resoluções) e Media (contagem de segmentos `.ts`, duração total e URLs de amostra).
+     - `inspectMpegTsSegment`: valida pacotes de vídeo MPEG-TS reais checando o byte de sincronismo `0x47` a cada 188 bytes.
+     - `extractEmbedsAndStreamsFromHtml`: extrai `<iframe src>`, `<video>`, `<source>` e links `.mp4`/`.m3u8`/`get_video` ocultos no HTML bruto.
+  2. **Upgrade do Proxy Serverless `/api/fetch-url` (`api/fetch-url.ts`):**
+     - Suporte a `GET` e `POST` com cabeçalhos customizados (`Referer`, `Range`, `User-Agent`, `Origin`, `Accept`, `Cookie`), método `HEAD`, medição de `ttfbMs`, modo `raw: true` (HTML bruto + `iframes` + `mediaUrls`) e modo `probeMedia: true` (auto-injetando `Range: bytes=0-65535` para inspecionar streams sem baixar centenas de MB).
+  3. **Ponte de Rede Síncrona e Auto-Micropip no Pyodide (`src/workers/pyodide-worker.ts`):**
+     - Monkey-patch transparente em `urllib.request.urlopen` usando `XMLHttpRequest` síncrono apontando para `/api/fetch-url`, permitindo que scripts Python no navegador acessem URLs externas com headers `Referer`/`Range` sem bloqueio de CORS ou erro de socket WASM.
+     - Auto-detecção e instalação sob demanda via `micropip` para pacotes como `bs4` (`beautifulsoup4`), `lxml` e `html5lib`.
+  4. **Evolução da Tool `fetch_url` e Comandos de Terminal (`src/App.tsx`, `src/lib/git-terminal-emulator.ts`, `src/lib/smart-prefill.ts`):**
+     - Schema da tool `fetch_url` expandido com `headers`, `raw`, `method` e `probe_media`.
+     - Comandos `curl` (suportando `-I`, `-X`, `-H`, `-w`), `ffprobe` e `ffmpeg` adicionados ao emulador de terminal do Éden.
+     - `PYTHON_INTENT_REGEX` ampliado para ativar `run_python` em prompts de scraping, `urllib`, `bs4`, `m3u8`, `mp4` e `ffprobe`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: 116/116 testes unitários passando em 31 suítes (incluindo os 4 novos testes de `media-probe.test.ts`).
+  - `npm run build`: `dist/_worker.js` (145.6 kB) e bundle de produção compilados com 0 erros.
+
 
 

@@ -15,7 +15,7 @@ const DOC_INTENT_REGEX =
   /\b(?:pdf|excel|xlsx|planilha|word|docx|pptx|powerpoint|slide|slides|apresenta[çc][ãa]o|relat[oó]rio|contrato|documento|exportar\s+arquivo|baixar\s+arquivo)\b/i;
 
 const PYTHON_INTENT_REGEX =
-  /\b(?:python|pyodide|script\s+python|calcul|c[aá]lculo|estat[ií]stic|regress[ãa]o|simul|equa[çc][ãa]o|matriz|integral|derivada|pandas|numpy)\b/i;
+  /\b(?:python|pyodide|script\s+python|calcul|c[aá]lculo|estat[ií]stic|regress[ãa]o|simul|equa[çc][ãa]o|matriz|integral|derivada|pandas|numpy|scraping|scraper|urllib|beautifulsoup|bs4|regex|parse\s+html|m3u8|mp4|streamtape|ffprobe|ffmpeg|curl|iframe)\b/i;
 
 const SANDPACK_INTENT_REGEX =
   /\b(?:sandpack|novo\s+projeto\s+local|criar\s+projeto\s+no\s+preview|abrir\s+projeto\s+salvo|template\s+react)\b/i;
