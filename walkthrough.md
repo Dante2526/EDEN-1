@@ -2142,3 +2142,16 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle de produção e Worker compilados com sucesso em 1.80s.
   - Code Review formal: Aprovado.
   - Commit: `b6e0926` enviado para `origin/main`.
+
+## 124. Despoluição Visual do Cabeçalho de Conversas Recentes na Sidebar
+- **Solicitação do Usuário:** *"Esse apagar e arquivar, remove dai, ja tem aqueles que aprece quando a gente arrasta o cartão"* (anexado print destacando o texto `‹ apagar | arquivar ›` ao lado de `RECENTES (1)`).
+- **Implementações Realizadas (`src/components/chat-sidebar.tsx`):**
+  1. Removido o elemento de dica `‹ apagar | arquivar ›` do cabeçalho da lista de conversas recentes.
+  2. Simplificada a marcação para focar apenas no contador `Recentes ({activeConversations.length})`.
+  3. Preservada integralmente a mecânica de gesto swipe nos cartões (`SwipeableConversationItem`), mantendo a funcionalidade de arrastar para deletar (esquerda) e arquivar (direita).
+- **Evidências de Verificação:**
+  - `npm test`: **160/160 testes unitários passando em 36 suítes**.
+  - `tsc --noEmit`: **0 erros**.
+  - `npm run build`: bundle de produção compilado com sucesso.
+  - Code Review formal: Aprovado sem ressalvas.
+  - Commit: `1bdbbd2` enviado para `origin/main`.
