@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792407163.469673,
-    "ast_hash": "4559dfa7148f7cbd53e8982d8ce4dbc8",
+    "mtime": 1792408291.097474,
+    "ast_hash": "7ac292de8ce2c3d105678944a57f3b2c",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792379053.9540968,
-    "ast_hash": "4ee853cfad62c8f786bdfda3e3bcadde",
+    "mtime": 1792408382.8040524,
+    "ast_hash": "2c1105b28dd108c660c931244a730b52",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {

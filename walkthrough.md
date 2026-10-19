@@ -1886,9 +1886,12 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   4. **Feedback Visual no Chat e Configurações (`src/components/chat-message.tsx`, `src/components/settings-modal.tsx`):**
      - Card ciano de "Navegador Autônomo" com URL, status da ação e miniatura de screenshot capturada com zoom/lightbox.
      - Campo em Configurações para salvar token opcional do Browserless.io.
+  5. **Regra Anti-Recusa e Descrição Explícita de Ferramentas (`src/App.tsx`):**
+     - Schema da ferramenta `run_terminal_command` atualizado para declarar explicitamente suporte a `curl`, `ffprobe`, `ffmpeg` e `playwright`.
+     - Injetada regra suprema no `basePrompt` proibindo expressamente o modelo de recusar ferramentas, dizer que suas ferramentas são fixas ou mandar o usuário rodar externamente.
 - **Evidências de Verificação:**
   - `npm test`: **136/136 testes unitários passando em 35 suítes** (100% verde).
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
-  - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 168.5 kB) compilados com sucesso em 2.32s.
-  - `graphify update .`: grafo atualizado com 14.795 nós e 16.625 arestas.
+  - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 168.5 kB) compilados com sucesso em 2.54s.
+  - `graphify update .`: grafo atualizado.
 
