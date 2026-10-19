@@ -1,7 +1,7 @@
 import { CanvasPrototype } from './types.js';
 
 export const CANVAS_PROTOTYPE_INTENT_REGEX =
-  /\b(tela|p[aá]gina|interface|layout|view|modal|drawer|painel|dashboard|mockup|prot[oó]tip[ao]|design|v[ií]deo|anima[cç][aã]o|teaser|hyperframes)\b/i;
+  /\b(telas?|p[aá]ginas?|interfaces?|layouts?|views?|modais|modals?|drawers?|pain[eé]is|painels?|dashboards?|mockups?|prot[oó]tip[aos]?|designs?|v[ií]deos?|anima[cç](?:[aã]o|[õo]es)|teasers?|hyperframes)\b/i;
 
 /**
  * Verifica se a mensagem do usuário envolve criação ou redesign de interface visual.
@@ -66,7 +66,8 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
   if (isFullDoc) {
     // Garante que o Tailwind, GSAP, viewport, fontes e scrollbar estejam presentes no head
     if (!html.includes('cdn.tailwindcss.com')) {
-      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>\n  ${gsapScript}${scrollbarAndFontStyles}`;
+      const injectGsap = !html.includes('gsap') ? `${gsapScript}\n  ` : '';
+      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>\n  ${injectGsap}${scrollbarAndFontStyles}`;
       if (/<head[\s>]/i.test(html)) {
         html = html.replace(/<head[\s>]/i, `<head>\n  ${headInjection}`);
       } else if (/<html[\s>]/i.test(html)) {

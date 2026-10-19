@@ -94,6 +94,11 @@ O que achou da disposição dos botões?`;
     assert.equal(isCanvasPrototypingIntent('cria uma nova página de perfil'), true);
     assert.equal(isCanvasPrototypingIntent('crie um vídeo teaser para o produto com HyperFrames'), true);
     assert.equal(isCanvasPrototypingIntent('faça uma animação com GSAP para o lançamento'), true);
+    assert.equal(isCanvasPrototypingIntent('crie vídeos promocionais para a campanha'), true);
+    assert.equal(isCanvasPrototypingIntent('faça animações fluidas para o app'), true);
+    assert.equal(isCanvasPrototypingIntent('desenhe modais responsivos'), true);
+    assert.equal(isCanvasPrototypingIntent('gere painéis de controle modernos'), true);
+    assert.equal(isCanvasPrototypingIntent('crie teasers cinematográficos'), true);
     assert.equal(isCanvasPrototypingIntent('corrija o erro de null pointer no arquivo auth.ts'), false);
     assert.equal(isCanvasPrototypingIntent('rode npm test no terminal'), false);
   });
@@ -110,5 +115,13 @@ O que achou da disposição dos botões?`;
     assert.ok(output.includes('gsap@3.12.5/dist/gsap.min.js'), 'Deve injetar GSAP no head existente');
     const occurrences = (output.match(/gsap\.min\.js/g) || []).length;
     assert.equal(occurrences, 1, 'Não deve duplicar a injeção de GSAP');
+  });
+
+  it('não deve duplicar GSAP em documento completo que já o possui mesmo sem Tailwind', () => {
+    const docWithGsap = `<!DOCTYPE html><html><head><title>Vídeo Existente</title><script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script></head><body><p>Animação</p></body></html>`;
+    const output = sanitizePrototypeHtml(docWithGsap);
+    assert.ok(output.includes('cdn.tailwindcss.com'), 'Deve injetar Tailwind');
+    const occurrences = (output.match(/gsap\.min\.js/g) || []).length;
+    assert.equal(occurrences, 1, 'Deve manter exatamente 1 script do GSAP sem duplicar');
   });
 });

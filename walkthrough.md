@@ -2167,14 +2167,14 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
      - Auto-migração via `missingBuiltins` no `loadSkills()`, injetando a nova skill ativada por padrão no IndexedDB do usuário sem sobrescrever configurações prévias.
   3. **Injeção do GSAP 3 e Suporte no Sandbox do Canvas (`src/lib/canvas-prototype.ts`):**
      - Injetada a biblioteca GSAP 3 via CDN seguro (`https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js`) tanto para fragmentos quanto para documentos HTML5 completos no `sanitizePrototypeHtml`.
-     - Adicionada blindagem defensiva contra duplicação de scripts se o documento já incluir GSAP.
-     - Expandido o regex `CANVAS_PROTOTYPE_INTENT_REGEX` para reconhecer pedidos de vídeos, animações, teasers e composições HyperFrames.
+     - Adicionada blindagem defensiva contra duplicação de scripts se o documento já incluir GSAP (mesmo sem Tailwind).
+     - Expandido o regex `CANVAS_PROTOTYPE_INTENT_REGEX` para reconhecer termos no singular e plural (`v[ií]deos?`, `anima[cç](?:[aã]o|[õo]es)`, `teasers?`, `modais`, `painéis`, etc.).
   4. **System Prompt e Transparência no Chat (`src/App.tsx`, `src/lib/skills-extractor.ts`):**
      - Injetada a Regra 12 no System Prompt do Éden exigindo que vídeos e animações sejam estruturados como composições determinísticas com timelines do GSAP e exibidos no Canvas.
      - Adicionado `'HyperFrames (Vídeo em Código)'` na lista de fallback de transparência de habilidades em `skills-extractor.ts`.
 - **Evidências de Verificação:**
-  - `npm test`: **162/162 testes unitários passando em 36 suítes** (100% verde).
+  - `npm test`: **163/163 testes unitários passando em 36 suítes** (100% verde).
   - `tsc --noEmit`: **0 erros**.
-  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso em 2.83s.
-  - Code Review formal: Aprovado (Zero issues críticas/importantes).
+  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso em 2.60s.
+  - Code Review formal: Aprovado com incorporação de todas as recomendações de plurais e idempotência.
 
