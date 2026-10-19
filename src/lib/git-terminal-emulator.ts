@@ -9,6 +9,12 @@ import {
   callGitHubApi,
   GitHubUser,
 } from './github';
+import {
+  parseFfmpegCliArgs,
+  formatFfmpegDecodeLog,
+  decodeVideoSampleInBrowser,
+} from './video-decoder-engine';
+import { runFfmpegWasm } from './ffmpeg-wasm-client';
 
 export interface TerminalEmulatorContext {
   activeRepo: ActiveRepoState | null;
@@ -207,6 +213,8 @@ export async function executeEmulatedCommand(
         '  \x1b[33mgit commit -m\x1b[0m     Realiza commit e push para o GitHub',
         '  \x1b[33mgit diff\x1b[0m          Exibe o diff unificado com realce de sintaxe',
         '  \x1b[33mls / cat / pwd\x1b[0m    Navega e lê arquivos do repositório',
+        '  \x1b[33mcurl / playwright\x1b[0m Inspeciona páginas e executa Chromium headless',
+        '  \x1b[33mffprobe / ffmpeg\x1b[0m  Decodifica e afere streams de vídeo/áudio',
         '  \x1b[33mclear\x1b[0m             Limpa a tela do terminal',
         '────────────────────────────────────────────────────────',
       ].join('\n');
@@ -481,12 +489,12 @@ export async function executeEmulatedCommand(
       }
     }
 
-    if (command === 'ffprobe' || command === 'ffmpeg') {
+    if (command === 'ffprobe') {
       const urlArg = args.find((a) => /^https?:\/\//i.test(a));
       if (!urlArg) {
         return makeResult(
           '',
-          `Uso: ${command} <URL-do-stream-mp4-ou-m3u8>`,
+          'Uso: ffprobe <URL-do-stream-mp4-ou-m3u8> [-show_streams] [-show_format] [-print_format json]',
           1
         );
       }
@@ -502,19 +510,73 @@ export async function executeEmulatedCommand(
         });
         const data = await res.json();
         if (!res.ok) {
-          return makeResult('', `${command}: falha ao inspecionar ${urlArg}: ${data.error || res.status}`, 1);
+          return makeResult('', `ffprobe: falha ao inspecionar ${urlArg}: ${data.error || res.status}`, 1);
         }
 
         const probe = data.mediaProbe || {};
-        const summary = {
-          url: data.finalUrl || urlArg,
-          status: data.status,
-          ttfbMs: data.ttfbMs,
-          probe,
-        };
-        return makeResult(JSON.stringify(summary, null, 2));
+        const isJson = args.includes('json') || args.includes('-print_format') || args.includes('-of');
+        if (isJson) {
+          const summary = {
+            url: data.finalUrl || urlArg,
+            status: data.status,
+            ttfbMs: data.ttfbMs,
+            probe,
+          };
+          return makeResult(JSON.stringify(summary, null, 2));
+        }
+
+        const lines = [
+          'ffprobe version 6.1.1-synap Copyright (c) 2007-2024 the FFmpeg developers',
+          `  Input #0, ${probe.format || 'unknown'}, from '${urlArg}':`,
+          `  Duration: ${probe.durationSec ? `${probe.durationSec}s` : 'N/A'}, bitrate: ${probe.bitrateKbps ? `${probe.bitrateKbps} kb/s` : 'N/A'}`,
+        ];
+        if (probe.streams && Array.isArray(probe.streams)) {
+          probe.streams.forEach((s: any, idx: number) => {
+            lines.push(`    Stream #${idx}: ${s.codec_type} (${s.codec_name}), ${s.width ? `${s.width}x${s.height}` : ''} ${s.sample_rate ? `${s.sample_rate} Hz` : ''}`);
+          });
+        } else {
+          if (probe.hasVideo) lines.push(`    Stream #0:0: Video: ${probe.videoCodec || 'h264'}, ${probe.width || '?'}x${probe.height || '?'}`);
+          if (probe.hasAudio) lines.push(`    Stream #0:1: Audio: ${probe.audioCodec || 'aac'}`);
+        }
+        return makeResult(lines.join('\n'));
       } catch (err: any) {
-        return makeResult('', `${command} erro: ${err?.message || String(err)}`, 1);
+        return makeResult('', `ffprobe erro: ${err?.message || String(err)}`, 1);
+      }
+    }
+
+    if (command === 'ffmpeg') {
+      const parsed = parseFfmpegCliArgs(trimmed);
+      if (!parsed.inputUrl) {
+        return makeResult(
+          '',
+          'Uso: ffmpeg -i <URL-do-stream> [-t 5] [-f null -] [--wasm]',
+          1
+        );
+      }
+
+      try {
+        if (parsed.isWasmRequested) {
+          const wasmRes = await runFfmpegWasm(args);
+          const out = wasmRes.stdout || wasmRes.stderr || 'FFmpeg WASM concluído.';
+          if (!wasmRes.success) {
+            return makeResult(out, wasmRes.error || wasmRes.stderr || 'Falha no FFmpeg WASM', 1);
+          }
+          return makeResult(out);
+        }
+
+        // Modo Híbrido Padrão: Decodificação Real Nativa (GPU / WebCodecs / HTML5 Video Sandbox)
+        const decodeResult = await decodeVideoSampleInBrowser(parsed.inputUrl, {
+          durationSec: parsed.durationSec,
+        });
+        const log = formatFfmpegDecodeLog(decodeResult);
+
+        if (decodeResult.integrity === 'verified') {
+          return makeResult(log);
+        } else {
+          return makeResult(log, decodeResult.error || `Integridade: ${decodeResult.integrity}`, 1);
+        }
+      } catch (err: any) {
+        return makeResult('', `ffmpeg erro: ${err?.message || String(err)}`, 1);
       }
     }
 

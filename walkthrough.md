@@ -1811,3 +1811,28 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): 0 erros.
   - `npm test`: **120/120 testes unitários passando em 32 suítes** (incluindo os 4 novos testes de `remote-gate.test.ts`).
   - `npm run build`: `dist/_worker.js` (158.0 kB) compilado com sucesso.
+
+## 109. Decodificação Real de Vídeo e Áudio no Navegador (Motor Híbrido 5s FFmpeg + WASM)
+- **Solicitação do Usuário:** *"⚠️ Sem decode real (5s de ffmpeg), só probe , como melhoramso isso?"* -> Escolhida a Opção 3 (Híbrido: WebCodecs/GPU nativa ultrarrápida por padrão + FFmpeg WASM sob demanda para conversões e transcode).
+- **Diagnóstico da Causa Raiz:**
+  - A Seção 107 inspecionava apenas os átomos de cabeçalho ISO-BMFF / MP4 (`Range: bytes=0-65535`) e playlists HLS (`.m3u8`), sem decodificar frames reais de vídeo na GPU.
+  - Não havia aferição de frames descartados (`dropped frames`), taxa real de quadros (`actual FPS`), integridade de áudio via Web Audio API (`AudioContext`/`AnalyserNode`), nem prova irrefutável com captura de snapshot em canvas.
+- **Implementações Realizadas:**
+  1. **Motor Nativo de Decodificação Real (`src/lib/video-decoder-engine.ts` + `src/lib/video-decoder-engine.test.ts`):**
+     - `decodeVideoSampleInBrowser`: decodifica 5 segundos reais de stream/arquivo na GPU usando `HTMLVideoElement`, `requestVideoFrameCallback` e `getVideoPlaybackQuality()`.
+     - Medição precisa de `decodedFrames`, `droppedFrames`, `actualFps` e integridade (`verified`, `corrupted`, `drm_blocked`, `codec_unsupported`).
+     - Web Audio API (`AudioContext`, `createMediaElementSource`, `AnalyserNode`): afere presença de amplitude de áudio e calcula RMS em dB.
+     - Captura automática de frame JPEG em Canvas (`capturedFrameBase64`) como prova visual da decodificação.
+     - `parseFfmpegCliArgs` e `formatFfmpegDecodeLog`: emula com fidelidade o banner, estatísticas e saída de terminal do FFmpeg oficial.
+  2. **Cliente FFmpeg WASM sob Demanda (`src/lib/ffmpeg-wasm-client.ts`):**
+     - Lazy-load dinâmico de `@ffmpeg/ffmpeg` via CDN UMD sem poluir o bundle inicial da aplicação.
+     - Executa comandos complexos do FFmpeg (`-vn -c:a mp3`, filtros, conversões reais e arquivos de saída) via WebAssembly apenas quando solicitado pelo usuário (`--wasm` ou conversão de extensão).
+  3. **Integração no Emulador de Terminal (`src/lib/git-terminal-emulator.ts`):**
+     - Separação completa de `ffprobe` e `ffmpeg`.
+     - `ffprobe`: exibe streams, codecs, taxa de bits e duração formatados ou JSON via `-print_format json`.
+     - `ffmpeg`: executa o motor híbrido de decodificação real padrão ou despacha para FFmpeg WASM se `--wasm`/transcode for solicitado.
+- **Evidências de Verificação:**
+  - `npm test`: **123/123 testes unitários passando em 33 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle de produção Vite (936 kB) e Cloudflare Pages Worker (`dist/_worker.js`, 158.0 kB) compilados com sucesso em 1.49s.
+  - `graphify update .`: grafo de conhecimento atualizado com 14.757 nós e 35.052 arestas.

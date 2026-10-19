@@ -637,8 +637,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "api_transcribe",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "transcribe.ts"
     },
     {
@@ -648,8 +648,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "api_transcribe_config",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "config"
     },
     {
@@ -659,8 +659,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "api_transcribe_base64toblob",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "base64toblob()"
     },
     {
@@ -670,8 +670,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "api_transcribe_getaudiofilename",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "getaudiofilename()"
     },
     {
@@ -681,8 +681,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "api_transcribe_handler",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1004,
+      "community_name": "voice-button.tsx",
       "norm_label": "handler()"
     },
     {
@@ -879,8 +879,8 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "lib_server_security_checkauthandratelimit",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 26,
+      "community_name": "Document",
       "norm_label": "checkauthandratelimit()"
     },
     {
@@ -1220,8 +1220,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "package_dependencies_cheerio",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "cheerio"
     },
     {
@@ -1231,8 +1231,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "cheerio",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1008,
+      "community_name": "remark-gfm",
       "norm_label": "cheerio"
     },
     {
@@ -1594,8 +1594,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "package_dependencies_remark_gfm",
-      "community": 1008,
-      "community_name": "remark-gfm",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "remark-gfm"
     },
     {
@@ -1605,8 +1605,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "remark_gfm",
-      "community": 1008,
-      "community_name": "remark-gfm",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "remark-gfm"
     },
     {
@@ -4333,8 +4333,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "runtimeerror",
-      "community": 5,
-      "community_name": "fetch_volunteers.py",
+      "community": 656,
+      "community_name": "RuntimeError",
       "norm_label": "runtimeerror"
     },
     {
@@ -5732,8 +5732,8 @@
       "source_location": "L612",
       "_origin": "ast",
       "id": "skills_design_design_templates_ppt_html_ppt_zhangzara_pin_and_paper_assets_deck_stage_deckstage_prev",
-      "community": 24,
-      "community_name": "DeckStage",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": ".prev()"
     },
     {
@@ -6128,8 +6128,8 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_docxxmleditor_init",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 32,
+      "community_name": "DocxXMLEditor",
       "norm_label": ".__init__()"
     },
     {
@@ -6414,8 +6414,8 @@
       "source_location": "L964",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_setup_tracking",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "._setup_tracking()"
     },
     {
@@ -6425,8 +6425,8 @@
       "source_location": "L985",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_update_people_xml",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "._update_people_xml()"
     },
     {
@@ -6447,8 +6447,8 @@
       "source_location": "L1003",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_relationship_for_people",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "._add_relationship_for_people()"
     },
     {
@@ -6546,8 +6546,8 @@
       "source_location": "L1217",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_relationship",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "._has_relationship()"
     },
     {
@@ -6568,8 +6568,8 @@
       "source_location": "L1231",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_author",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "._has_author()"
     },
     {
@@ -6579,8 +6579,8 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_author_to_people",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "._add_author_to_people()"
     },
     {
@@ -6645,8 +6645,8 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_101",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 32,
+      "community_name": "DocxXMLEditor",
       "norm_label": "initialize with required rsid and optional author.          args:"
     },
     {
@@ -6931,8 +6931,8 @@
       "source_location": "L965",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_965",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "set up comment infrastructure in unpacked directory.          args:"
     },
     {
@@ -6942,8 +6942,8 @@
       "source_location": "L986",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_986",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "create people.xml if it doesn't exist."
     },
     {
@@ -6964,8 +6964,8 @@
       "source_location": "L1004",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1004",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "add people.xml relationship to document.xml.rels if not already present."
     },
     {
@@ -7063,8 +7063,8 @@
       "source_location": "L1218",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1218",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 926,
+      "community_name": "cheerio",
       "norm_label": "check if a relationship with given target exists."
     },
     {
@@ -7085,8 +7085,8 @@
       "source_location": "L1232",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1232",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "check if an author already exists in people.xml."
     },
     {
@@ -7096,8 +7096,8 @@
       "source_location": "L1239",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1239",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "add author to people.xml (called during initialization)."
     },
     {
@@ -24216,8 +24216,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_chat_message",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "chat-message.tsx"
     },
     {
@@ -24227,8 +24227,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_components_chat_message_chatmessageprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "chatmessageprops"
     },
     {
@@ -24249,8 +24249,8 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "src_components_chat_message_chatmessage",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "chatmessage"
     },
     {
@@ -24326,8 +24326,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_claude_logo",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claude-logo.tsx"
     },
     {
@@ -24337,8 +24337,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogoprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogoprops"
     },
     {
@@ -24348,8 +24348,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogo",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogo()"
     },
     {
@@ -24359,8 +24359,8 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_components_claude_logo_claudelogoprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claudelogoprops"
     },
     {
@@ -24370,8 +24370,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_code_block",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "code-block.tsx"
     },
     {
@@ -24381,8 +24381,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_components_code_block_codeblockprops",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "codeblockprops"
     },
     {
@@ -24392,8 +24392,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_code_block_codeblock",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "codeblock()"
     },
     {
@@ -24645,8 +24645,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_eden_logo",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "eden-logo.tsx"
     },
     {
@@ -25294,8 +25294,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_settings_modal",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "settings-modal.tsx"
     },
     {
@@ -25305,8 +25305,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodalprops",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 14,
+      "community_name": "types.ts",
       "norm_label": "settingsmodalprops"
     },
     {
@@ -25316,8 +25316,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodal",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "settingsmodal()"
     },
     {
@@ -26223,14 +26223,69 @@
       "norm_label": "lookslikeecho()"
     },
     {
+      "label": "ffmpeg-wasm-client.ts",
+      "file_type": "code",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_lib_ffmpeg_wasm_client",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "ffmpeg-wasm-client.ts"
+    },
+    {
+      "label": "FfmpegWasmResult",
+      "file_type": "code",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "src_lib_ffmpeg_wasm_client_ffmpegwasmresult",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "ffmpegwasmresult"
+    },
+    {
+      "label": "isFfmpegWasmSupported()",
+      "file_type": "code",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L21",
+      "_origin": "ast",
+      "id": "src_lib_ffmpeg_wasm_client_isffmpegwasmsupported",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "isffmpegwasmsupported()"
+    },
+    {
+      "label": "loadFfmpegWasm()",
+      "file_type": "code",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "src_lib_ffmpeg_wasm_client_loadffmpegwasm",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "loadffmpegwasm()"
+    },
+    {
+      "label": "runFfmpegWasm()",
+      "file_type": "code",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L86",
+      "_origin": "ast",
+      "id": "src_lib_ffmpeg_wasm_client_runffmpegwasm",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "runffmpegwasm()"
+    },
+    {
       "label": "file-patcher.test.ts",
       "file_type": "code",
       "source_file": "src/lib/file-patcher.test.ts",
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_file_patcher_test",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "file-patcher.test.ts"
     },
     {
@@ -26240,8 +26295,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_file_patcher",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "file-patcher.ts"
     },
     {
@@ -26251,8 +26306,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_file_patcher_patchblock",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "patchblock"
     },
     {
@@ -26262,8 +26317,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_file_patcher_patchresult",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "patchresult"
     },
     {
@@ -26273,8 +26328,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_file_patcher_effectivefileresolution",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "effectivefileresolution"
     },
     {
@@ -26284,8 +26339,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_lib_file_patcher_normalizerepopath",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "normalizerepopath()"
     },
     {
@@ -26295,8 +26350,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_file_patcher_normalizepatchargs",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "normalizepatchargs()"
     },
     {
@@ -26306,8 +26361,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_lib_file_patcher_countoccurrences",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "countoccurrences()"
     },
     {
@@ -26317,8 +26372,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "src_lib_file_patcher_applyfilepatches",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "applyfilepatches()"
     },
     {
@@ -26328,8 +26383,8 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "src_lib_file_patcher_resolveeffectivefilecontent",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "resolveeffectivefilecontent()"
     },
     {
@@ -26347,7 +26402,7 @@
       "label": "TerminalEmulatorContext",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L13",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "src_lib_git_terminal_emulator_terminalemulatorcontext",
       "community": 7,
@@ -26358,7 +26413,7 @@
       "label": "TerminalEmulatorResult",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L25",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "src_lib_git_terminal_emulator_terminalemulatorresult",
       "community": 7,
@@ -26369,7 +26424,7 @@
       "label": "resolvePath()",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L37",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_git_terminal_emulator_resolvepath",
       "community": 7,
@@ -26380,7 +26435,7 @@
       "label": "parseCommandArgs()",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L62",
+      "source_location": "L68",
       "_origin": "ast",
       "id": "src_lib_git_terminal_emulator_parsecommandargs",
       "community": 7,
@@ -26391,7 +26446,7 @@
       "label": "executeEmulatedCommand()",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L135",
+      "source_location": "L141",
       "_origin": "ast",
       "id": "src_lib_git_terminal_emulator_executeemulatedcommand",
       "community": 7,
@@ -26460,8 +26515,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_github_setgithubpat",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "setgithubpat()"
     },
     {
@@ -26471,8 +26526,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_github_removegithubpat",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "removegithubpat()"
     },
     {
@@ -26504,8 +26559,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_github_getclientauthheaders",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "getclientauthheaders()"
     },
     {
@@ -26526,8 +26581,8 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_lib_github_verifygithubpat",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "verifygithubpat()"
     },
     {
@@ -26911,8 +26966,8 @@
       "source_location": "L311",
       "_origin": "ast",
       "id": "src_lib_graphify_engine_querygraphcontext",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "querygraphcontext()"
     },
     {
@@ -27472,8 +27527,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_pending_changes",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "pending-changes.tsx"
     },
     {
@@ -27483,8 +27538,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_pending_changes_loadpendingchangesfromdb",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "loadpendingchangesfromdb()"
     },
     {
@@ -27494,8 +27549,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_pending_changes_savependingchangestodb",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "savependingchangestodb()"
     },
     {
@@ -27505,8 +27560,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontexttype",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "pendingchangescontexttype"
     },
     {
@@ -27516,8 +27571,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontext",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "pendingchangescontext"
     },
     {
@@ -27527,8 +27582,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangesprovider",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "pendingchangesprovider()"
     },
     {
@@ -28319,8 +28374,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_lib_remote_gate_buildheadlessrenderurl",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "buildheadlessrenderurl()"
     },
     {
@@ -28363,8 +28418,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_test",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "smart-prefill.test.ts"
     },
     {
@@ -28374,8 +28429,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_test_mock_tools",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "mock_tools"
     },
     {
@@ -28385,8 +28440,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_test_mock_skills",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "mock_skills"
     },
     {
@@ -28396,8 +28451,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_smart_prefill",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "smart-prefill.ts"
     },
     {
@@ -28407,8 +28462,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_smarttoolselectioncontext",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "smarttoolselectioncontext"
     },
     {
@@ -28418,8 +28473,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_smartskillselectioncontext",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "smartskillselectioncontext"
     },
     {
@@ -28429,8 +28484,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_selectcontextualtools",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "selectcontextualtools()"
     },
     {
@@ -28440,8 +28495,8 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "src_lib_smart_prefill_selectcontextualskills",
-      "community": 14,
-      "community_name": "types.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "selectcontextualskills()"
     },
     {
@@ -28748,8 +28803,8 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "src_lib_storage_loadsettings",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "loadsettings()"
     },
     {
@@ -28770,8 +28825,8 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "src_lib_storage_exportconversationstojson",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "exportconversationstojson()"
     },
     {
@@ -29023,8 +29078,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_studio_config",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "studio-config.ts"
     },
     {
@@ -29034,8 +29089,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_studio_config_default_studio_config",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "default_studio_config"
     },
     {
@@ -29045,8 +29100,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_studio_config_loadstudioconfig",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "loadstudioconfig()"
     },
     {
@@ -29056,8 +29111,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_studio_config_savestudioconfig",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "savestudioconfig()"
     },
     {
@@ -29353,8 +29408,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_types_changetype",
-      "community": 926,
-      "community_name": "cheerio",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "changetype"
     },
     {
@@ -29441,8 +29496,8 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "src_lib_types_message",
-      "community": 42,
-      "community_name": "chat-message.tsx",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "message"
     },
     {
@@ -29496,8 +29551,8 @@
       "source_location": "L212",
       "_origin": "ast",
       "id": "src_lib_types_appsettings",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "appsettings"
     },
     {
@@ -29694,8 +29749,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_utils_generatetitlefrommessage",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "generatetitlefrommessage()"
     },
     {
@@ -29730,6 +29785,105 @@
       "community": 82,
       "community_name": "mcp-client.ts",
       "norm_label": "filetobase64()"
+    },
+    {
+      "label": "video-decoder-engine.test.ts",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_test",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "video-decoder-engine.test.ts"
+    },
+    {
+      "label": "video-decoder-engine.ts",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "video-decoder-engine.ts"
+    },
+    {
+      "label": "VideoIntegrityStatus",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L10",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_videointegritystatus",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "videointegritystatus"
+    },
+    {
+      "label": "VideoDecodeResult",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_videodecoderesult",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "videodecoderesult"
+    },
+    {
+      "label": "ParsedFfmpegArgs",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L31",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_parsedffmpegargs",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "parsedffmpegargs"
+    },
+    {
+      "label": "parseFfmpegCliArgs()",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L47",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_parseffmpegcliargs",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "parseffmpegcliargs()"
+    },
+    {
+      "label": "evaluateVideoIntegrity()",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L132",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_evaluatevideointegrity",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "evaluatevideointegrity()"
+    },
+    {
+      "label": "formatFfmpegDecodeLog()",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L157",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_formatffmpegdecodelog",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "formatffmpegdecodelog()"
+    },
+    {
+      "label": "decodeVideoSampleInBrowser()",
+      "file_type": "code",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L213",
+      "_origin": "ast",
+      "id": "src_lib_video_decoder_engine_decodevideosampleinbrowser",
+      "community": 7,
+      "community_name": "github.ts",
+      "norm_label": "decodevideosampleinbrowser()"
     },
     {
       "label": "video-extractors.test.ts",
@@ -30024,8 +30178,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_studio_studio_engine",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "studio-engine.ts"
     },
     {
@@ -30046,8 +30200,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_studio_studio_engine_cachedfileentry",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "cachedfileentry"
     },
     {
@@ -30057,8 +30211,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_studio_studio_engine_buildstudioskillssection",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "buildstudioskillssection()"
     },
     {
@@ -30068,8 +30222,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_studio_studio_engine_buildstudiomcptools",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "buildstudiomcptools()"
     },
     {
@@ -30079,8 +30233,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_studio_studio_engine_read_tools",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "read_tools"
     },
     {
@@ -30090,8 +30244,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "src_studio_studio_engine_submit_plan_tool",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "submit_plan_tool"
     },
     {
@@ -30101,8 +30255,8 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "src_studio_studio_engine_submit_review_tool",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "submit_review_tool"
     },
     {
@@ -30112,8 +30266,8 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "src_studio_studio_engine_callchat",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "callchat()"
     },
     {
@@ -30123,8 +30277,8 @@
       "source_location": "L272",
       "_origin": "ast",
       "id": "src_studio_studio_engine_executetool",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "executetool()"
     },
     {
@@ -30134,8 +30288,8 @@
       "source_location": "L448",
       "_origin": "ast",
       "id": "src_studio_studio_engine_runplanner",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "runplanner()"
     },
     {
@@ -30145,8 +30299,8 @@
       "source_location": "L548",
       "_origin": "ast",
       "id": "src_studio_studio_engine_runreviewer",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "runreviewer()"
     },
     {
@@ -30156,8 +30310,8 @@
       "source_location": "L651",
       "_origin": "ast",
       "id": "src_studio_studio_engine_runimplementer",
-      "community": 82,
-      "community_name": "mcp-client.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "runimplementer()"
     },
     {
@@ -30277,8 +30431,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_studio_studio_types_studioagent",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 82,
+      "community_name": "mcp-client.ts",
       "norm_label": "studioagent"
     },
     {
@@ -162456,6 +162610,28 @@
       "community": 58,
       "community_name": "._validate_single_file_xsd",
       "norm_label": "107. superpoderes de scraping, `curl`, `ffprobe` e ponte de rede python no eden"
+    },
+    {
+      "label": "108. Browser Headless Real (`render_js` / Playwright Free) e Hard-Gate de Autoriza\u00e7\u00e3o para VPS",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L1795",
+      "_origin": "ast",
+      "id": "walkthrough_108_browser_headless_real_render_js_playwright_free_e_hard_gate_de_autoriza\u00e7\u00e3o_para_vps",
+      "community": 58,
+      "community_name": "._validate_single_file_xsd",
+      "norm_label": "108. browser headless real (`render_js` / playwright free) e hard-gate de autorizacao para vps"
+    },
+    {
+      "label": "109. Decodifica\u00e7\u00e3o Real de V\u00eddeo e \u00c1udio no Navegador (Motor H\u00edbrido 5s FFmpeg + WASM)",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L1815",
+      "_origin": "ast",
+      "id": "walkthrough_109_decodifica\u00e7\u00e3o_real_de_v\u00eddeo_e_\u00e1udio_no_navegador_motor_h\u00edbrido_5s_ffmpeg_wasm",
+      "community": 58,
+      "community_name": "._validate_single_file_xsd",
+      "norm_label": "109. decodificacao real de video e audio no navegador (motor hibrido 5s ffmpeg + wasm)"
     }
   ],
   "links": [
@@ -213724,6 +213900,110 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_ffmpeg_wasm_client",
+      "target": "src_lib_ffmpeg_wasm_client_ffmpegwasmresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_ffmpeg_wasm_client",
+      "target": "src_lib_ffmpeg_wasm_client_isffmpegwasmsupported",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_ffmpeg_wasm_client",
+      "target": "src_lib_ffmpeg_wasm_client_loadffmpegwasm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L86",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_ffmpeg_wasm_client",
+      "target": "src_lib_ffmpeg_wasm_client_runffmpegwasm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_ffmpeg_wasm_client",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_ffmpeg_wasm_client_loadffmpegwasm",
+      "target": "src_lib_ffmpeg_wasm_client_isffmpegwasmsupported",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/ffmpeg-wasm-client.ts",
+      "source_location": "L106",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_ffmpeg_wasm_client_runffmpegwasm",
+      "target": "src_lib_ffmpeg_wasm_client_loadffmpegwasm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_ffmpeg_wasm_client_runffmpegwasm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L559",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
+      "target": "src_lib_ffmpeg_wasm_client_runffmpegwasm"
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -214115,7 +214395,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L135",
+      "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
@@ -214126,7 +214406,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L62",
+      "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
@@ -214137,7 +214417,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L37",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
@@ -214148,7 +214428,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L13",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
@@ -214159,7 +214439,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L25",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator",
@@ -214323,12 +214603,60 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_video_decoder_engine",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_video_decoder_engine_decodevideosampleinbrowser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_video_decoder_engine_formatffmpegdecodelog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator",
+      "target": "src_lib_video_decoder_engine_parseffmpegcliargs",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "references",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L218",
+      "source_location": "L226",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214339,7 +214667,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L18",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_terminalemulatorcontext",
@@ -214351,7 +214679,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L14",
+      "source_location": "L20",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_terminalemulatorcontext",
@@ -214363,7 +214691,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L15",
+      "source_location": "L21",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_terminalemulatorcontext",
@@ -214375,7 +214703,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L258",
+      "source_location": "L266",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214387,7 +214715,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L153",
+      "source_location": "L159",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214400,7 +214728,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L688",
+      "source_location": "L750",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214412,7 +214740,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L322",
+      "source_location": "L330",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214424,7 +214752,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L659",
+      "source_location": "L721",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214436,7 +214764,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L724",
+      "source_location": "L786",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214448,7 +214776,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L275",
+      "source_location": "L283",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
@@ -214460,11 +214788,47 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/lib/git-terminal-emulator.ts",
-      "source_location": "L366",
+      "source_location": "L374",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
       "target": "src_lib_github_searchcode"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L568",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
+      "target": "src_lib_video_decoder_engine_decodevideosampleinbrowser"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L571",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
+      "target": "src_lib_video_decoder_engine_formatffmpegdecodelog"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/lib/git-terminal-emulator.ts",
+      "source_location": "L548",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_git_terminal_emulator_executeemulatedcommand",
+      "target": "src_lib_video_decoder_engine_parseffmpegcliargs"
     },
     {
       "relation": "imports_from",
@@ -221127,6 +221491,143 @@
       "_origin": "ast",
       "source": "src_studio_studio_panel_studiopanel",
       "target": "src_lib_utils_filetobase64"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine_test",
+      "target": "src_lib_video_decoder_engine",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine_test",
+      "target": "src_lib_video_decoder_engine_evaluatevideointegrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine_test",
+      "target": "src_lib_video_decoder_engine_formatffmpegdecodelog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine_test",
+      "target": "src_lib_video_decoder_engine_parseffmpegcliargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine_test",
+      "target": "src_lib_video_decoder_engine_videodecoderesult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L213",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine",
+      "target": "src_lib_video_decoder_engine_decodevideosampleinbrowser",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L132",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine",
+      "target": "src_lib_video_decoder_engine_evaluatevideointegrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L157",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine",
+      "target": "src_lib_video_decoder_engine_formatffmpegdecodelog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine",
+      "target": "src_lib_video_decoder_engine_parsedffmpegargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L47",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine",
+      "target": "src_lib_video_decoder_engine_parseffmpegcliargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine",
+      "target": "src_lib_video_decoder_engine_videodecoderesult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/video-decoder-engine.ts",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_video_decoder_engine",
+      "target": "src_lib_video_decoder_engine_videointegritystatus",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -345888,6 +346389,28 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "walkthrough.md",
+      "source_location": "L1795",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_walkthrough_revis\u00e3o_e_hardening_arquitetura_e_infraestrutura",
+      "target": "walkthrough_108_browser_headless_real_render_js_playwright_free_e_hard_gate_de_autoriza\u00e7\u00e3o_para_vps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
+      "source_location": "L1815",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_walkthrough_revis\u00e3o_e_hardening_arquitetura_e_infraestrutura",
+      "target": "walkthrough_109_decodifica\u00e7\u00e3o_real_de_v\u00eddeo_e_\u00e1udio_no_navegador_motor_h\u00edbrido_5s_ffmpeg_wasm",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
       "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
@@ -346986,5 +347509,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8ad2ff46ac92a0d31d296da9bead0be691dfb551"
+  "built_at_commit": "9f5978c850836c97e795bebfc1d58957d04c4537"
 }
