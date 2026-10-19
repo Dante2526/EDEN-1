@@ -1220,8 +1220,8 @@
     "semantic_hash": "05fc5454d8770ed9133080ecc821c695"
   },
   "src/lib/git-terminal-emulator.ts": {
-    "mtime": 1792373055.747718,
-    "ast_hash": "6ca0478f5054df3785eff0838dbfdd98",
+    "mtime": 1792376179.0955863,
+    "ast_hash": "7284b63f38c7c033697f67bde8bee5fe",
     "semantic_hash": ""
   },
   "src/lib/github-commit.ts": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792373148.244418,
-    "ast_hash": "dee71fe16d5aec61a1fcd9289725998c",
+    "mtime": 1792376379.3242896,
+    "ast_hash": "402384456757d158f11642d564bbc3ba",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -5982,6 +5982,21 @@
   "src/lib/remote-gate.ts": {
     "mtime": 1792372496.1844606,
     "ast_hash": "89296cdd6f3dd826d55eb54e43288954",
+    "semantic_hash": ""
+  },
+  "src/lib/ffmpeg-wasm-client.ts": {
+    "mtime": 1792375951.1605673,
+    "ast_hash": "e108c5662c6003d39f3d0652bca69f6e",
+    "semantic_hash": ""
+  },
+  "src/lib/video-decoder-engine.test.ts": {
+    "mtime": 1792375851.3801808,
+    "ast_hash": "f24458ed822361e77fcb635d09363df1",
+    "semantic_hash": ""
+  },
+  "src/lib/video-decoder-engine.ts": {
+    "mtime": 1792375900.0136693,
+    "ast_hash": "55577ed66b21b7861630a4c2715fefa6",
     "semantic_hash": ""
   }
 }
