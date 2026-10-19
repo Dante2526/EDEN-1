@@ -165,10 +165,10 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
               : 'text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-c4bfb6)] hover:bg-[color:var(--c-bg-201e1a)]'
           }`}
         >
-          <Server className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <Server className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           <span>MCP</span>
           {connectedMcpCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">
+            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
               {connectedMcpCount}
             </span>
           )}
@@ -284,9 +284,9 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddMcpOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-950/30 hover:bg-cyan-900/40 border border-cyan-500/30 text-xs font-medium text-cyan-200 transition cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[color:var(--c-bg-2b2823)] hover:bg-[color:var(--c-bg-38342e)] border border-[color:var(--c-bg-3e3b33)] text-xs font-medium text-[color:var(--c-fg-f3efe6)] transition cursor-pointer"
               >
-                <Plus className="w-3 h-3 text-cyan-400" />
+                <Plus className="w-3 h-3 text-emerald-400" />
                 <span>Conectar</span>
               </button>
             </div>
@@ -294,7 +294,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
             {/* MCP Server List */}
             {mcpServers.length === 0 ? (
               <div className="p-4 rounded-xl border border-dashed border-cyan-500/20 bg-cyan-950/10 text-center space-y-2">
-                <Server className="w-6 h-6 text-cyan-400/50 mx-auto" />
+                <Server className="w-6 h-6 text-emerald-400/50 mx-auto" />
                 <p className="text-xs text-cyan-200/80">Nenhum servidor MCP conectado.</p>
                 <p className="text-[11px] text-cyan-300/50">
                   Conecte servidores remotos para expor bancos de dados, APIs ou serviços à IA.
@@ -642,7 +642,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
           <div className="w-full max-w-sm rounded-2xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3b3831)] p-4 space-y-3 shadow-2xl text-xs">
             <div className="flex items-center justify-between pb-2 border-b border-[color:var(--c-bg-3b3831)]">
               <span className="font-semibold text-[color:var(--c-fg-f3efe6)] flex items-center gap-1.5">
-                <Server className="w-4 h-4 text-cyan-400" />
+                <Server className="w-4 h-4 text-emerald-400" />
                 Conectar Servidor MCP
               </span>
               <button
@@ -667,7 +667,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                     }}
                     className="px-2.5 py-1 rounded-md bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-300 text-[10px] font-medium transition cursor-pointer flex items-center gap-1.5"
                   >
-                    <Server className="w-3 h-3 text-cyan-400" />
+                    <Server className="w-3 h-3 text-emerald-400" />
                     <span>Context7 Docs</span>
                   </button>
                 </div>

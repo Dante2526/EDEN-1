@@ -2016,3 +2016,15 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado com sucesso e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerado em 2.31s.
   - `graphify update .`: grafo de conhecimento atualizado com 14.850 nós, 16.758 arestas e 1.011 comunidades.
 
+## 117. Restauração do Ícone MCP Verde Esmeralda Original
+- **Solicitação do Usuário:** *"Ok. Agora icone do mcp, continua na cor original verde ta"*
+- **Implementações Realizadas (`src/components/extensions/extensions-panel.tsx`):**
+  1. **Ícone `<Server>` da Sub-aba MCP:** Restaurado para o tom verde esmeralda original (`text-emerald-400`), juntamente com o badge numérico de servidores ativos (`bg-emerald-500/20 text-emerald-300`).
+  2. **Botão "Conectar":** Restaurado com o ícone `<Plus className="w-3 h-3 text-emerald-400" />` e tokens de estilo consistentes com a aba de Skills.
+  3. **Modal de Conexão MCP:** Ícone `<Server className="w-4 h-4 text-emerald-400" />` no título do modal e `<Server className="w-3 h-3 text-emerald-400" />` no preset do Context7 Docs.
+  4. **Preservação dos Cards Ciano Oceano:** O fundo, as bordas, a chavinha (toggle `bg-cyan-500`), o status online e a lista expandida de ferramentas mantiveram integralmente o estilo azul ciano oceano aprovado pelo usuário.
+- **Evidências de Verificação:**
+  - `npm test`: **152/152 testes unitários passando em 35 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle e worker Cloudflare Pages compilados em 2.20s.
+  - `graphify update .`: grafo sincronizado com 14.851 nós e 16.759 arestas.

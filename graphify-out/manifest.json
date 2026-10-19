@@ -1050,8 +1050,8 @@
     "semantic_hash": "8921224c171256f9c22792a47f66e52e"
   },
   "src/components/extensions/extensions-panel.tsx": {
-    "mtime": 1792417305.4374268,
-    "ast_hash": "9557a9d68f350e6f5827572f682949f1",
+    "mtime": 1792417959.8263469,
+    "ast_hash": "9ae7855bf2c7a8a45db304e153240214",
     "semantic_hash": ""
   },
   "src/components/github/create-repo-modal.tsx": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792415650.6594882,
-    "ast_hash": "068101bbf1b31f7ebdf0a6536d16426b",
+    "mtime": 1792417415.1197214,
+    "ast_hash": "71afa8febac93bd0cf1c3582fa1113ed",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
