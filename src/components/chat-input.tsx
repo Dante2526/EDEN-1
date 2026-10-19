@@ -463,7 +463,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                   onClick={onStopGeneration}
                   aria-label="Parar resposta"
                   title="Parar resposta"
-                  className="w-8 h-8 rounded-xl bg-[#d97757] hover:bg-[#c86341] text-white transition-all duration-150 flex items-center justify-center shadow-sm hover:scale-[1.04] active:scale-[0.96] cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-gradient-to-r from-[#ff6b35] to-[#ea580c] hover:from-[#ff7a47] hover:to-[#f97316] text-white transition-all duration-150 flex items-center justify-center shadow-[0_2px_12px_rgba(255,107,53,0.35)] border border-[#ff8c42]/40 hover:scale-[1.04] active:scale-[0.96] cursor-pointer"
                 >
                   <Square className="w-3.5 h-3.5 fill-white" />
                 </button>
@@ -476,7 +476,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                   title="Enviar mensagem (Enter)"
                   className={`w-8 h-8 rounded-xl transition-all duration-150 flex items-center justify-center ${
                     canSend
-                      ? 'bg-[#d97757] hover:bg-[#c86341] text-white shadow-sm hover:shadow-[#d97757]/30 hover:scale-[1.04] active:scale-[0.96] cursor-pointer'
+                      ? 'bg-gradient-to-r from-[#ff6b35] to-[#ea580c] hover:from-[#ff7a47] hover:to-[#f97316] text-white shadow-[0_2px_12px_rgba(255,107,53,0.35)] border border-[#ff8c42]/40 hover:scale-[1.04] active:scale-[0.96] cursor-pointer'
                       : 'bg-[color:var(--c-bg-312f2a)] text-[color:var(--c-fg-6b675e)] cursor-not-allowed opacity-50'
                   }`}
                 >

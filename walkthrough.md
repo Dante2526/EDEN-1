@@ -2080,3 +2080,16 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso.
   - `graphify update .`: grafo de conhecimento atualizado com 14.866 nós, 16.796 arestas e 1.013 comunidades.
   - Code Review formal aprovado sem pendências.
+## 120. Harmonização Visual dos Botões de Parar e Enviar com as Abas do Cabeçalho
+- **Solicitação do Usuário:** *"troca a cor dess biotão pela cor que ta usando nos uperiores de chat preview e studio"* (anexado print do botão de stop generation com fundo terracota `#d97757`).
+- **Implementações Realizadas (`src/components/chat-input.tsx`):**
+  1. **Botão de Parar Resposta (`isLoading`):**
+     - Substituída a cor sólida `#d97757` pelo gradiente vibrante moderno das abas ativas do cabeçalho: `bg-gradient-to-r from-[#ff6b35] to-[#ea580c] hover:from-[#ff7a47] hover:to-[#f97316]`.
+     - Adicionado brilho e borda harmonizada: `shadow-[0_2px_12px_rgba(255,107,53,0.35)] border border-[#ff8c42]/40`.
+  2. **Botão de Envio de Mensagem (`canSend`):**
+     - Harmonizado com a mesma paleta `bg-gradient-to-r from-[#ff6b35] to-[#ea580c]` com hover suave, mantendo coerência visual total entre todas as ações primárias da aplicação.
+- **Evidências de Verificação:**
+  - `npm test`: **160/160 testes unitários passando em 36 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso.
+  - `graphify update .`: grafo atualizado com 14.867 nós e 16.797 arestas.
