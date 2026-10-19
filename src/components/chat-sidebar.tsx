@@ -626,13 +626,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
 
         {/* Conversation list (Estilo clássico limpo com Swipe para deletar/arquivar) */}
         <div className="flex-1 overflow-y-auto px-2.5 py-1 space-y-1">
-          <div className="flex items-center justify-between text-[10px] font-bold text-zinc-600 dark:text-[color:var(--c-fg-8c867a)] px-2 py-1 uppercase tracking-wider font-mono">
-            <span>Recentes ({activeConversations.length})</span>
-            {activeConversations.length > 0 && (
-              <span className="text-[9px] font-normal lowercase tracking-normal text-zinc-500 dark:text-[color:var(--c-fg-736e65)] select-none">
-                ‹ apagar | arquivar ›
-              </span>
-            )}
+          <div className="text-[10px] font-bold text-zinc-600 dark:text-[color:var(--c-fg-8c867a)] px-2 py-1 uppercase tracking-wider font-mono">
+            Recentes ({activeConversations.length})
           </div>
 
           {activeConversations.length === 0 ? (
