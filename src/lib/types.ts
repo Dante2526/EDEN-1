@@ -158,6 +158,26 @@ export interface Message {
   streamError?: string;
   usedSkills?: string[]; // Habilidades aplicadas pela IA nesta resposta/alteração
   isConnected?: boolean; // true assim que o backend recebe HTTP 200 da NVIDIA/provedor
+  pendingRemoteAction?: {
+    id: string;
+    provider: 'vps_webhook' | 'github_workflow' | 'cloudflare_hook';
+    targetHost: string;
+    summary: string;
+    filesOrCommand: string;
+    status: 'pending' | 'approved' | 'rejected' | 'executed' | 'failed';
+    createdAt: number;
+    resultMessage?: string;
+    payload: {
+      endpoint?: string;
+      filePath?: string;
+      fileContent?: string;
+      command?: string;
+      workflowId?: string;
+      branch?: string;
+      owner?: string;
+      repo?: string;
+    };
+  };
 }
 
 export interface ContextCompaction {

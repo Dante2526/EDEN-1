@@ -1792,8 +1792,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
      - `PYTHON_INTENT_REGEX` ampliado para ativar `run_python` em prompts de scraping, `urllib`, `bs4`, `m3u8`, `mp4` e `ffprobe`.
 - **Evidências de Verificação:**
   - `npm run lint` (`tsc --noEmit`): 0 erros.
-  - `npm test`: 116/116 testes unitários passando em 31 suítes (incluindo os 4 novos testes de `media-probe.test.ts`).
-  - `npm run build`: `dist/_worker.js` (145.6 kB) e bundle de produção compilados com 0 erros.
-
-
-
+## 108. Browser Headless Real (`render_js` / Playwright Free) e Hard-Gate de Autorização para VPS
+- **Solicitação do Usuário:** Resolver os itens 4 (Playwright / Chromium sem peso de VPS na Cloudflare Free) e 7 (Envio para VPS sem expor SSH na porta 22 bloqueada), adicionando uma trava obrigatória (Hard-Gate) no chat que exige autorização por clique em botão antes de qualquer envio.
+- **Implementações Realizadas:**
+  1. **Motor de Browser Headless Gratuito (`api/fetch-url.ts`, `src/lib/remote-gate.ts` + `src/lib/remote-gate.test.ts`):**
+     - Flag `render_js: true` (e parâmetro `wait_for_selector`) na tool `fetch_url` e comando `playwright <url>` no terminal do Éden.
+     - Executa o JavaScript dinâmico de páginas SPA e protegidas via motor Chromium Headless na nuvem (Jina Reader Engine via `r.jina.ai` com `X-Return-Format: html`), extraindo o DOM final hidratado, `<iframe src>` e streams de mídia gerados via JS.
+  2. **Hard-Gate de Autorização para VPS / Servidor Remoto no Chat (`src/components/chat-message.tsx`):**
+     - Trava de segurança no rodapé da mensagem da IA (layout idêntico ao de aprovação de plano) exibindo o host de destino, resumo da operação e código/arquivo.
+     - Dois botões de decisão: **"Cancelar Envio"** (descarta a operação com status `rejected`) e **"Autorizar e Enviar para VPS"** (dispara a execução autorizada com status `approved` → `executed`).
+  3. **Backend de Execução Segura (`api/deployments.ts`):**
+     - Rota POST `action=trigger` com barreira rígida: rejeita HTTP 403 se `userAuthorized !== true`.
+     - Suporte a Webhooks HTTPS de VPS, Deploy Hooks da Cloudflare e pipelines do GitHub Actions (`workflow_dispatch`).
+  4. **Interceptação no Terminal e Poda Contextual (`src/App.tsx`, `src/lib/git-terminal-emulator.ts`, `src/lib/smart-prefill.ts`):**
+     - Comandos `ssh`, `scp`, `sftp` e `deploy` no terminal da IA são interceptados e bloqueados com código 126, convertendo-se em cards de autorização no chat.
+     - Tool `request_remote_deploy` podada contextual via `REMOTE_DEPLOY_INTENT_REGEX`.
+- **Evidências de Verificação:**
+  - `npm run lint` (`tsc --noEmit`): 0 erros.
+  - `npm test`: **120/120 testes unitários passando em 32 suítes** (incluindo os 4 novos testes de `remote-gate.test.ts`).
+  - `npm run build`: `dist/_worker.js` (158.0 kB) compilado com sucesso.

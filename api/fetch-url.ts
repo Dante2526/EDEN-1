@@ -6,6 +6,7 @@ import {
   inspectMpegTsSegment,
   extractEmbedsAndStreamsFromHtml,
 } from '../src/lib/media-probe';
+import { buildHeadlessRenderUrl } from '../src/lib/remote-gate';
 
 export const config = {
   runtime: 'edge',
@@ -131,6 +132,8 @@ export interface FetchUrlOptions {
   headers?: Record<string, string>;
   raw?: boolean;
   probeMedia?: boolean;
+  renderJs?: boolean;
+  waitForSelector?: string;
   body?: string;
 }
 
@@ -147,11 +150,20 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     reqUrl.searchParams.get('probe_media') === 'true' ||
     reqUrl.searchParams.get('probeMedia') === 'true' ||
     reqUrl.searchParams.get('probe') === '1';
+  let renderJs =
+    reqUrl.searchParams.get('render_js') === 'true' ||
+    reqUrl.searchParams.get('renderJs') === 'true' ||
+    reqUrl.searchParams.get('playwright') === '1';
+  let waitForSelector = reqUrl.searchParams.get('wait_for_selector') || reqUrl.searchParams.get('selector') || undefined;
   let forwardBody: string | undefined;
 
   if (req.method === 'POST') {
     try {
-      const bodyJson = (await req.json()) as Partial<FetchUrlOptions> & { probe_media?: boolean };
+      const bodyJson = (await req.json()) as Partial<FetchUrlOptions> & {
+        probe_media?: boolean;
+        render_js?: boolean;
+        wait_for_selector?: string;
+      };
       if (bodyJson.url) targetUrl = String(bodyJson.url);
       if (bodyJson.method && ['GET', 'HEAD', 'POST'].includes(bodyJson.method.toUpperCase())) {
         reqMethod = bodyJson.method.toUpperCase() as 'GET' | 'HEAD' | 'POST';
@@ -162,6 +174,10 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       if (typeof bodyJson.raw === 'boolean') rawMode = bodyJson.raw;
       if (typeof bodyJson.probeMedia === 'boolean') probeMedia = bodyJson.probeMedia;
       if (typeof bodyJson.probe_media === 'boolean') probeMedia = bodyJson.probe_media;
+      if (typeof bodyJson.renderJs === 'boolean') renderJs = bodyJson.renderJs;
+      if (typeof bodyJson.render_js === 'boolean') renderJs = bodyJson.render_js;
+      if (typeof bodyJson.waitForSelector === 'string') waitForSelector = bodyJson.waitForSelector;
+      if (typeof bodyJson.wait_for_selector === 'string') waitForSelector = bodyJson.wait_for_selector;
       if (typeof bodyJson.body === 'string') forwardBody = bodyJson.body;
     } catch {
       // Fallback para query params caso o body não seja JSON válido
@@ -215,12 +231,24 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   const startTime = Date.now();
 
   try {
-    const response = await fetch(targetUrl, {
+    let fetchTargetUrl = targetUrl;
+    let fetchHeaders = outgoingHeaders;
+
+    if (renderJs && !probeMedia) {
+      const headlessSpec = buildHeadlessRenderUrl(targetUrl, {
+        waitForSelector,
+        timeoutSeconds: 12,
+      });
+      fetchTargetUrl = headlessSpec.url;
+      fetchHeaders = { ...outgoingHeaders, ...headlessSpec.headers };
+    }
+
+    const response = await fetch(fetchTargetUrl, {
       method: reqMethod,
-      headers: outgoingHeaders,
+      headers: fetchHeaders,
       body: reqMethod === 'POST' && forwardBody ? forwardBody : undefined,
       redirect: 'follow',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(renderJs ? 15000 : 10000),
     });
 
     const ttfbMs = Date.now() - startTime;

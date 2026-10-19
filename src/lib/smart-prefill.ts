@@ -26,6 +26,9 @@ const GIT_COMMIT_INTENT_REGEX =
 const CLOUDFLARE_INTENT_REGEX =
   /\b(?:cloudflare|worker|_worker|_routes|wrangler|pages|edge|serverless|api\/|endpoint|backend|kv|d1|r2)\b/i;
 
+const REMOTE_DEPLOY_INTENT_REGEX =
+  /\b(?:deploy|vps|servidor|ssh|scp|sftp|paramiko|webhook|production|produ[çc][ãa]o|workflow|actions|subir\s+no\s+ar)\b/i;
+
 /**
  * Filtra dinamicamente as ferramentas enviadas à API da NVIDIA NIM para reduzir
  * o tamanho do JSON Schema (Guided Decoding + Prefill) e acelerar o Time-To-First-Token (TTFT).
@@ -73,6 +76,11 @@ export function selectContextualTools<T extends { function?: { name?: string } }
 
     // 5. Interpretador Python (Pyodide) só vai quando o prompt envolve Python, cálculos ou simulações
     if (name === 'run_python' && !wantsPython) {
+      return false;
+    }
+
+    // 6. Envio/Deploy Remoto (request_remote_deploy) só é injetado se houver intenção de deploy/vps/ssh
+    if (name === 'request_remote_deploy' && !REMOTE_DEPLOY_INTENT_REGEX.test(text)) {
       return false;
     }
 

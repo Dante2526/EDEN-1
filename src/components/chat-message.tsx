@@ -44,6 +44,8 @@ interface ChatMessageProps {
   onOpenGraph?: (focusFile?: string) => void;
   onApprovePlan?: () => void;
   onTogglePlanMode?: () => void;
+  onApproveRemoteAction?: (messageId: string) => void;
+  onRejectRemoteAction?: (messageId: string) => void;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -199,6 +201,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onOpenGraph,
   onApprovePlan,
   onTogglePlanMode,
+  onApproveRemoteAction,
+  onRejectRemoteAction,
 }) => {
   const isUser = message.role === 'user';
   const [showReasoning, setShowReasoning] = useState(false);
@@ -1577,6 +1581,77 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   <Check className="w-3.5 h-3.5" />
                   <span>Aprovar e Executar Plano</span>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Card de Autorização Obrigatória para Envio à VPS / Deploy Remoto (Hard-Gate) */}
+          {message.pendingRemoteAction && (
+            <div className="w-full mt-4 p-3.5 sm:p-4 rounded-2xl bg-[color:var(--c-bg-221f1b)] border border-[#d97757]/50 shadow-md flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-xl bg-[#d97757]/15 border border-[#d97757]/30 shrink-0">
+                    <Terminal className="w-4 h-4 text-[#d97757]" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)]">
+                      {message.pendingRemoteAction.status === 'pending'
+                        ? `Autorização exigida para envio à VPS / Remoto (${message.pendingRemoteAction.targetHost})`
+                        : message.pendingRemoteAction.status === 'approved'
+                        ? `Enviando para ${message.pendingRemoteAction.targetHost}…`
+                        : message.pendingRemoteAction.status === 'executed'
+                        ? `Envio para VPS concluído (${message.pendingRemoteAction.targetHost})`
+                        : message.pendingRemoteAction.status === 'rejected'
+                        ? 'Envio para VPS cancelado pelo usuário'
+                        : 'Falha no envio remoto'}
+                    </span>
+                    <span className="text-[11px] text-[color:var(--c-fg-9c9589)] mt-0.5 leading-snug">
+                      {message.pendingRemoteAction.summary}
+                    </span>
+                    {message.pendingRemoteAction.filesOrCommand && (
+                      <code className="text-[10px] font-mono text-[color:var(--c-fg-d1cbc0)] bg-[color:var(--c-bg-181714)] px-2 py-1 rounded-lg mt-1.5 border border-[color:var(--c-bg-312f2a)] truncate">
+                        {message.pendingRemoteAction.filesOrCommand}
+                      </code>
+                    )}
+                    {message.pendingRemoteAction.resultMessage && (
+                      <span
+                        className={`text-[11px] mt-1 font-mono ${
+                          message.pendingRemoteAction.status === 'executed'
+                            ? 'text-emerald-400'
+                            : message.pendingRemoteAction.status === 'failed'
+                            ? 'text-rose-400'
+                            : 'text-[color:var(--c-fg-9c9589)]'
+                        }`}
+                      >
+                        {message.pendingRemoteAction.resultMessage}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {message.pendingRemoteAction.status === 'pending' && (
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    {onRejectRemoteAction && (
+                      <button
+                        type="button"
+                        onClick={() => onRejectRemoteAction(message.id)}
+                        className="px-3 py-2 rounded-xl bg-[color:var(--c-bg-2c2924)] hover:bg-[color:var(--c-bg-36322c)] border border-[color:var(--c-bg-3e3a33)] text-[color:var(--c-fg-b8b3a8)] hover:text-[color:var(--c-fg-f3efe6)] text-xs font-medium transition cursor-pointer"
+                      >
+                        Cancelar Envio
+                      </button>
+                    )}
+                    {onApproveRemoteAction && (
+                      <button
+                        type="button"
+                        onClick={() => onApproveRemoteAction(message.id)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#d97757] hover:bg-[#c4663f] text-white text-xs font-semibold transition shadow-sm cursor-pointer select-none"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Autorizar e Enviar para VPS</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -518,6 +518,64 @@ export async function executeEmulatedCommand(
       }
     }
 
+    if (command === 'playwright') {
+      const urlArg = args.find((a) => /^https?:\/\//i.test(a));
+      if (!urlArg) {
+        return makeResult('', 'Uso: playwright <URL> [--wait=ms] [--selector="css"]', 1);
+      }
+
+      const waitMatch = trimmed.match(/--wait=(\d+)/i);
+      const selectorMatch = trimmed.match(/--selector=(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+      const waitMs = waitMatch ? parseInt(waitMatch[1], 10) : undefined;
+      const selector = selectorMatch ? selectorMatch[1] || selectorMatch[2] || selectorMatch[3] : undefined;
+
+      try {
+        const res = await fetch('/api/fetch-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: urlArg,
+            renderJs: true,
+            raw: true,
+            waitForSelector: selector,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return makeResult('', `playwright: falha ao renderizar ${urlArg}: ${data.error || res.status}`, 1);
+        }
+
+        const outParts: string[] = [
+          `\x1b[32m✓ Playwright Headless Chromium executado com sucesso\x1b[0m (${data.ttfbMs || 0}ms)`,
+          `URL: ${data.finalUrl || urlArg}`,
+          `Título: ${data.title || 'Sem título'}`,
+        ];
+
+        if (Array.isArray(data.iframes) && data.iframes.length > 0) {
+          outParts.push(`\n[Iframes dinâmicos detectados após JS]:\n  ${data.iframes.join('\n  ')}`);
+        }
+        if (Array.isArray(data.mediaUrls) && data.mediaUrls.length > 0) {
+          outParts.push(`\n[Streams/Vídeos detectados após JS]:\n  ${data.mediaUrls.join('\n  ')}`);
+        }
+
+        outParts.push(`\n[DOM Renderizado (${(data.rawHtml || data.content || '').length} caracteres)]:\n${(data.rawHtml || data.content || '').slice(0, 3000)}...`);
+
+        return makeResult(outParts.join('\n'));
+      } catch (err: any) {
+        return makeResult('', `playwright erro: ${err?.message || String(err)}`, 1);
+      }
+    }
+
+    if (command === 'ssh' || command === 'scp' || command === 'sftp' || command === 'deploy') {
+      return makeResult(
+        '',
+        `⚠️ Bloqueado pelo Hard-Gate de Segurança:\n` +
+        `Envios ou comandos para VPS/servidor remoto exigem autorização explícita do usuário.\n` +
+        `Peça à IA para usar a ferramenta 'request_remote_deploy' — um card com botões de autorização será exibido diretamente no chat para sua aprovação.`,
+        126
+      );
+    }
+
     // ==========================================
     // 2. GIT COMMANDS (GitHub REST API Emulator)
     // ==========================================

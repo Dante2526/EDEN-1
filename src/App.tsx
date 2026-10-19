@@ -57,6 +57,7 @@ import { DiffViewer } from './components/source-control/diff-viewer';
 import { fetchFileContent, fetchRepoContents, searchCode } from './lib/github';
 import { TerminalPanel, TerminalEntry } from './components/terminal-panel';
 import { executeEmulatedCommand } from './lib/git-terminal-emulator';
+import { buildPendingRemoteAction, isRemoteCommandRequiringApproval } from './lib/remote-gate';
 import { commitStagedChanges } from './lib/github-commit';
 import { StudioPanel } from './studio/studio-panel';
 import { ErrorModal, AppErrorInfo } from './components/error-modal';
@@ -335,6 +336,15 @@ const FETCH_URL_TOOL = {
           type: 'boolean',
           description:
             'Se true, inspeciona os bytes do stream de vídeo (estilo ffprobe) e retorna codec (h264/aac), resolução (width x height), duração e validade de pacotes HLS/MP4/TS.',
+        },
+        render_js: {
+          type: 'boolean',
+          description:
+            'Se true, abre a página em um navegador Chromium headless real (estilo Playwright) e retorna o DOM DEPOIS do JavaScript rodar. Use para sites SPA, players carregados via JS ou páginas com proteção Cloudflare.',
+        },
+        wait_for_selector: {
+          type: 'string',
+          description: 'Opcional (com render_js): seletor CSS a aguardar antes de capturar o DOM (ex.: "iframe", "video").',
         },
       },
       required: ['url'],
@@ -667,8 +677,47 @@ const IMAGE_GEN_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, ...GITHUB_TOOLS];
+// ============================================================================
+// REMOTE DEPLOY TOOL — Envio para VPS / servidor remoto com HARD-GATE
+// ============================================================================
+// A IA NUNCA envia nada direto. A chamada só cria um card de autorização no chat;
+// o POST real para /api/deployments?action=trigger só acontece quando o usuário
+// clicar em "Autorizar e Enviar para VPS".
+// ============================================================================
+const REMOTE_DEPLOY_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'request_remote_deploy',
+    description:
+      'Solicita o envio de arquivo/comando para uma VPS ou servidor remoto (substitui ssh/scp/paramiko, que não funcionam aqui). ' +
+      'NÃO executa nada sozinho: cria um card de autorização no chat e aguarda o usuário clicar em "Autorizar". ' +
+      'Provedores: "vps_webhook" (POST HTTPS para um agente/webhook na VPS), "github_workflow" (dispara workflow_dispatch do GitHub Actions) e "cloudflare_hook" (Deploy Hook).',
+    parameters: {
+      type: 'object',
+      properties: {
+        provider: {
+          type: 'string',
+          enum: ['vps_webhook', 'github_workflow', 'cloudflare_hook'],
+          description: 'Canal de envio.',
+        },
+        target_host: { type: 'string', description: 'Host/IP ou nome do servidor de destino (para exibir ao usuário).' },
+        summary: { type: 'string', description: 'Resumo curto do que será enviado e por quê.' },
+        endpoint: { type: 'string', description: 'URL HTTPS do webhook/deploy hook (vps_webhook / cloudflare_hook).' },
+        file_path: { type: 'string', description: 'Caminho de destino do arquivo no servidor (opcional).' },
+        file_content: { type: 'string', description: 'Conteúdo do arquivo a enviar (opcional).' },
+        command: { type: 'string', description: 'Comando a executar no servidor (opcional).' },
+        workflow_id: { type: 'string', description: 'Arquivo do workflow (github_workflow), ex.: "deploy.yml".' },
+        branch: { type: 'string', description: 'Branch/ref do workflow (padrão: main).' },
+        owner: { type: 'string', description: 'Dono do repositório (github_workflow).' },
+        repo: { type: 'string', description: 'Nome do repositório (github_workflow).' },
+      },
+      required: ['provider', 'summary'],
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -1863,6 +1912,93 @@ function AppContent() {
     setIsStreaming(false);
   }, []);
 
+  // ====== HARD-GATE DE ENVIO PARA VPS / SERVIDOR REMOTO ======
+  // Atualiza o card de autorização anexado a uma mensagem (procura em todas as conversas).
+  const patchRemoteAction = useCallback(
+    (messageId: string, patch: Partial<NonNullable<Message['pendingRemoteAction']>>) => {
+      setConversations((prev) =>
+        prev.map((c) => ({
+          ...c,
+          messages: c.messages.map((m) =>
+            m.id === messageId && m.pendingRemoteAction
+              ? { ...m, pendingRemoteAction: { ...m.pendingRemoteAction, ...patch } }
+              : m
+          ),
+        }))
+      );
+    },
+    []
+  );
+
+  // Anexa o card "pendente" na mensagem da IA que está sendo gerada agora.
+  const attachPendingRemoteAction = (pending: NonNullable<Message['pendingRemoteAction']>) => {
+    const targetMessageId = currentAssistantMessageIdRef.current;
+    if (!targetMessageId) return;
+    setConversations((prev) =>
+      prev.map((c) => ({
+        ...c,
+        messages: c.messages.map((m) =>
+          m.id === targetMessageId ? { ...m, pendingRemoteAction: pending } : m
+        ),
+      }))
+    );
+  };
+
+  const handleRejectRemoteAction = useCallback(
+    (messageId: string) => {
+      patchRemoteAction(messageId, {
+        status: 'rejected',
+        resultMessage: 'Nada foi enviado.',
+      });
+    },
+    [patchRemoteAction]
+  );
+
+  const handleApproveRemoteAction = useCallback(
+    async (messageId: string) => {
+      const msg = conversations.flatMap((c) => c.messages).find((m) => m.id === messageId);
+      const action = msg?.pendingRemoteAction;
+      if (!action || action.status !== 'pending') return;
+
+      patchRemoteAction(messageId, { status: 'approved', resultMessage: 'Enviando…' });
+
+      try {
+        const res = await fetch('/api/deployments?action=trigger', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
+          body: JSON.stringify({
+            userAuthorized: true,
+            provider: action.provider,
+            targetHost: action.targetHost,
+            summary: action.summary,
+            payload: action.payload,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          patchRemoteAction(messageId, {
+            status: 'failed',
+            resultMessage: data.error || `Falha HTTP ${res.status}`,
+          });
+          return;
+        }
+        patchRemoteAction(messageId, {
+          status: 'executed',
+          resultMessage: data.message || 'Envio concluído.',
+        });
+      } catch (err: any) {
+        patchRemoteAction(messageId, {
+          status: 'failed',
+          resultMessage: err?.message || 'Erro de rede ao enviar.',
+        });
+      }
+    },
+    [conversations, patchRemoteAction]
+  );
+
   // Helper to execute client-side GitHub and web tools
   const executeGitHubTool = async (
     name: string,
@@ -1888,6 +2024,38 @@ function AppContent() {
       }
     }
 
+    if (name === 'request_remote_deploy') {
+      const pending = buildPendingRemoteAction({
+        provider: args.provider || 'vps_webhook',
+        targetHost: args.target_host || args.targetHost || args.endpoint || args.repo || '',
+        summary: args.summary || '',
+        filesOrCommand:
+          args.command ||
+          (args.file_path ? `put → ${args.file_path}` : '') ||
+          (args.workflow_id ? `workflow_dispatch ${args.workflow_id}` : ''),
+        payload: {
+          endpoint: args.endpoint,
+          filePath: args.file_path,
+          fileContent: args.file_content,
+          command: args.command,
+          workflowId: args.workflow_id,
+          branch: args.branch,
+          owner: args.owner,
+          repo: args.repo,
+        },
+      });
+      attachPendingRemoteAction(pending);
+      return {
+        result: JSON.stringify({
+          status: 'awaiting_user_authorization',
+          id: pending.id,
+          instruction:
+            'Envio BLOQUEADO pelo Hard-Gate. Um card de autorização foi exibido ao usuário no chat. ' +
+            'NÃO tente reenviar nem usar outro caminho. Informe ao usuário o que será enviado e aguarde ele clicar em "Autorizar e Enviar para VPS".',
+        }),
+      };
+    }
+
     if (name === 'fetch_url') {
       try {
         const targetUrl = args.url || args.link || '';
@@ -1903,6 +2071,8 @@ function AppContent() {
             headers: args.headers || {},
             raw: Boolean(args.raw),
             probeMedia: Boolean(args.probe_media || args.probeMedia),
+            renderJs: Boolean(args.render_js || args.renderJs),
+            waitForSelector: args.wait_for_selector || args.waitForSelector,
           }),
         });
         const data = await res.json();
@@ -2080,6 +2250,31 @@ function AppContent() {
     if (name === 'run_terminal_command' || name === 'terminal') {
       try {
         const cmd = args.command || args.cmd || '';
+
+        // Hard-Gate: comandos que enviam algo para VPS/servidor remoto nunca rodam sem autorização
+        if (isRemoteCommandRequiringApproval(cmd)) {
+          const hostMatch = cmd.match(/[\w.-]+@([\w.-]+)/);
+          const pending = buildPendingRemoteAction({
+            provider: 'vps_webhook',
+            targetHost: hostMatch ? hostMatch[1] : 'Servidor Remoto / VPS',
+            summary: 'A IA tentou executar um comando de envio remoto pelo terminal.',
+            filesOrCommand: cmd,
+            payload: { command: cmd },
+          });
+          attachPendingRemoteAction(pending);
+          return {
+            result: JSON.stringify({
+              command: cmd,
+              exitCode: 126,
+              success: false,
+              status: 'awaiting_user_authorization',
+              stderr:
+                'Bloqueado pelo Hard-Gate: SSH/SCP (porta 22) não roda aqui e envio remoto exige autorização do usuário. ' +
+                'Um card foi exibido no chat. Para executar de verdade, use request_remote_deploy com um endpoint HTTPS (vps_webhook) ou um workflow do GitHub Actions.',
+            }),
+          };
+        }
+
         const termData = await executeEmulatedCommand(cmd, {
           activeRepo,
           changes,
@@ -4555,6 +4750,8 @@ function AppContent() {
                       }}
                       onOpenGraph={handleOpenGraph}
                       onApprovePlan={handleApprovePlan}
+                      onApproveRemoteAction={handleApproveRemoteAction}
+                      onRejectRemoteAction={handleRejectRemoteAction}
                       onTogglePlanMode={handleTogglePlanMode}
                     />
                   </React.Fragment>

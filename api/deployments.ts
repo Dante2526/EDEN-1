@@ -292,6 +292,139 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       );
     }
 
+    // =========================================================================
+    // 3. ACTION: TRIGGER (ENVIO PARA VPS / DEPLOY REMOTO AUTORIZADO PELO USUÁRIO)
+    // =========================================================================
+    if (action === 'trigger') {
+      if (req.method !== 'POST') {
+        return new Response(
+          JSON.stringify({ error: 'Ação `trigger` exige método POST.' }),
+          { status: 405, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const body: any = await req.json().catch(() => ({}));
+
+      // Hard-Gate de Segurança: bloqueia qualquer tentativa se userAuthorized !== true
+      if (body.userAuthorized !== true) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Envio bloqueado pelo Hard-Gate: autorização explícita do usuário no botão do chat é obrigatória.',
+          }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const provider = body.provider || 'vps_webhook';
+      const payload = body.payload || {};
+
+      // Caso 1: Webhook / Agente HTTP de VPS ou Deploy Hook da Cloudflare
+      if (provider === 'vps_webhook' || provider === 'cloudflare_hook') {
+        const endpoint = payload.endpoint || '';
+        if (!endpoint || !/^https?:\/\//i.test(endpoint)) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'URL do Webhook/Endpoint da VPS não informada ou inválida.',
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const hookRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'eden-authorized-deploy',
+            targetHost: body.targetHost,
+            summary: body.summary,
+            filePath: payload.filePath,
+            fileContent: payload.fileContent,
+            command: payload.command,
+            timestamp: Date.now(),
+          }),
+          signal: AbortSignal.timeout(12000),
+        });
+
+        const resText = await hookRes.text().catch(() => '');
+        if (!hookRes.ok) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Servidor remoto respondeu com HTTP ${hookRes.status}: ${resText.slice(0, 300)}`,
+            }),
+            { status: 502, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            provider,
+            message: `Envio autorizado concluído com sucesso em ${body.targetHost || endpoint} (HTTP ${hookRes.status}).`,
+            responseSnippet: resText.slice(0, 500),
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Caso 2: GitHub Actions workflow_dispatch (para deploy na VPS via Actions sem expor SSH)
+      if (provider === 'github_workflow') {
+        const targetOwner = payload.owner || owner;
+        const targetRepo = payload.repo || repo;
+        const workflowId = payload.workflowId || 'deploy.yml';
+        const ref = payload.branch || 'main';
+
+        if (!ghToken) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Token do GitHub não configurado para disparar workflow_dispatch.',
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const wfUrl = `https://api.github.com/repos/${targetOwner}/${targetRepo}/actions/workflows/${workflowId}/dispatches`;
+        const wfRes = await fetch(wfUrl, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${ghToken}`,
+            Accept: 'application/vnd.github+json',
+            'User-Agent': 'Synap-Deployment-Monitor',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ref }),
+        });
+
+        if (!wfRes.ok) {
+          const errText = await wfRes.text().catch(() => '');
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Falha ao disparar GitHub Actions (${wfRes.status}): ${errText.slice(0, 300)}`,
+            }),
+            { status: 502, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            provider: 'github_workflow',
+            message: `Workflow '${workflowId}' autorizado e disparado em ${targetOwner}/${targetRepo} (branch ${ref}).`,
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: false, error: `Provedor remoto desconhecido: ${provider}` }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: `Ação não suportada: ${action}` }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
