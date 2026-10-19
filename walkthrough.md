@@ -2093,3 +2093,16 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
   - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso.
   - `graphify update .`: grafo atualizado com 14.867 nós e 16.797 arestas.
+
+## 121. Botão de Pesquisa Web Minimalista (Icon-Only)
+- **Solicitação do Usuário:** *"tira o texto web"*.
+- **Implementações Realizadas (`src/components/chat-input.tsx`):**
+  1. Removido o elemento `<span>Web</span>` do botão de alternância de pesquisa web ao vivo no chat.
+  2. Ajustado layout para `flex items-center justify-center` com padding uniforme `p-1.5 rounded-lg`, alinhando-se perfeitamente em proporção com o botão adjacente de anexo (`Paperclip`).
+  3. Preservados `aria-label` e `title` para suporte completo a acessibilidade e navegação por teclado.
+- **Evidências de Verificação:**
+  - `npm test`: **160/160 testes unitários passando em 36 suítes**.
+  - `tsc --noEmit`: **0 erros**.
+  - `npm run build`: compilado com sucesso.
+  - Code Review formal: Aprovado.
+  - Commit: `be7a60c` enviado para `origin/main`.
