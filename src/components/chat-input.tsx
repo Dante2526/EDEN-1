@@ -393,16 +393,13 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                   disabled={isLoading}
                   aria-label={isWebSearchActive ? 'Desativar pesquisa na Web' : 'Ativar pesquisa na Web'}
                   title={isWebSearchActive ? 'Pesquisa Web ao Vivo ATIVA (fontes em tempo real)' : 'Pesquisar na Web ao vivo (estilo Perplexity)'}
-                  className={`p-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer text-xs ${
+                  className={`p-1.5 rounded-lg transition-all flex items-center justify-center cursor-pointer text-xs ${
                     isWebSearchActive
                       ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-semibold shadow-xs'
                       : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)] border border-transparent'
                   }`}
                 >
                   <Globe className="w-4 h-4" />
-                  <span className={`text-[11px] ${isWebSearchActive ? 'inline font-medium' : 'hidden sm:inline'}`}>
-                    Web
-                  </span>
                 </button>
               )}
 
