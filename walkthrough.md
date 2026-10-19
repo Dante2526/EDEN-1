@@ -2119,3 +2119,26 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: compilado com sucesso.
   - Code Review formal: Aprovado sem ressalvas.
   - Commit: `923ba0e` enviado para `origin/main`.
+
+## 123. Reposicionamento do Botão de Deploy (Icon-Only no Extremo Superior Direito)
+- **Solicitação do Usuário:** *"coloca esse deploy no mesmo jeito e lugar que foi feito no mobile la pro lado direito superior"* (anexado print mostrando o botão Deploy colado ao lado do Studio e antes de Grafo).
+- **Diagnóstico da Causa Raiz:**
+  1. No desktop, o `DeploymentStatusBadge` estava inserido como o primeiro item do contêiner da direita, ficando adjacente ao switcher central (`[Chat] [Preview] [Studio]`) e espremendo a aba Studio.
+  2. No componente `DeploymentStatusBadge`, o texto `"Deploy"` estava visível no desktop (`sm:inline`), ocupando largura desnecessária (~75px), enquanto no mobile já era icon-only.
+  3. No mobile, o badge havia sido alocado temporariamente à esquerda ao lado do menu lateral, gerando assimetria entre plataformas.
+- **Implementações Realizadas:**
+  1. **Componente Icon-Only Unificado (`src/components/deployments/deployment-status-badge.tsx`):**
+     - Removido o rótulo de texto `"Deploy"` em todos os 4 estados (`building`, `failure`, `success`, `idle`), transformando-o em botão quadrado compacto icon-only (`p-1.5 rounded-lg`), exatamente como o padrão mobile.
+     - Removida importação não utilizada do `Loader2`.
+     - Preservados `aria-label` e `title` descritivos completos para acessibilidade.
+  2. **Reposicionamento no Topo Direito (`src/components/chat-header.tsx`):**
+     - Removido o badge duplicado do container esquerdo do mobile.
+     - Movido o `DeploymentStatusBadge` para a extrema direita (após o botão do Terminal), tornando-o o último elemento no canto superior direito.
+     - Ajustado espaçamento para `gap-1.5 sm:gap-2 shrink-0`, garantindo folga extra em viewports mobile (360px).
+     - Restabelecido amplo respiro visual entre as abas centrais e as ferramentas da direita.
+- **Evidências de Verificação:**
+  - `npm test`: **160/160 testes unitários passando em 36 suítes**.
+  - `tsc --noEmit`: **0 erros**.
+  - `npm run build`: bundle de produção e Worker compilados com sucesso em 1.80s.
+  - Code Review formal: Aprovado.
+  - Commit: `b6e0926` enviado para `origin/main`.
