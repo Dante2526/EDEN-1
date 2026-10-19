@@ -357,7 +357,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 ? 'Pesquisar na web ao vivo ou fazer uma pergunta...'
                 : isPlanMode
                 ? 'Escreva uma mensagem para criar um Plano Estruturado...'
-                : 'Escreva uma mensagem ou cole um print (Ctrl+V)...'
+                : 'Escreva uma mensagem...'
             }
             className="w-full max-h-[160px] sm:max-h-[220px] py-1 px-1 text-sm sm:text-base text-[color:var(--c-fg-f3efe6)] placeholder-[color:var(--c-fg-857f75)] bg-transparent resize-none border-0 focus:outline-none focus:ring-0 leading-relaxed font-sans"
           />
