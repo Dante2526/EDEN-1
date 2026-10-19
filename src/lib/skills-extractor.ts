@@ -31,6 +31,7 @@ export function extractUsedSkills(
       'Test-Driven Development (TDD)',
       'Conventional Commits',
       'Claude Design (UI Sênior)',
+      'HyperFrames (Vídeo em Código)',
       'Mobile-First Design & UX',
     ]) {
       if (activeNames.includes(core)) {

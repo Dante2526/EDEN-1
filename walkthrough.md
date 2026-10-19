@@ -2155,3 +2155,26 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle de produção compilado com sucesso.
   - Code Review formal: Aprovado sem ressalvas.
   - Commit: `1bdbbd2` enviado para `origin/main`.
+
+## 125. Skill HyperFrames (Vídeos e Animações em Código com HTML, Tailwind e GSAP 3)
+- **Solicitação do Usuário:** Integrar a skill nativa **HyperFrames (Vídeos em Código com HTML, Tailwind e GSAP)** no Éden, permitindo que qualquer modelo de IA crie animações determinísticas, teasers e vídeos executáveis diretamente no Canvas interativo.
+- **Implementações Realizadas:**
+  1. **Tipagem e Ícone (`src/lib/types.ts` & `src/components/extensions/extensions-panel.tsx`):**
+     - Adicionado `'video'` na união `SkillIcon`.
+     - Importado ícone `Video` de `lucide-react` com acabamento em rosa suave (`text-rose-400`) no renderizador do catálogo de extensões.
+  2. **Catálogo de Habilidades e Migração Automática (`src/lib/storage.ts`):**
+     - Registrada a skill `hyperframes` (*"HyperFrames (Vídeo em Código)"*) com `enabled: true`, ícone `'video'` e diretrizes estruturadas para animações determinísticas, controle de cenas (#scene-1, #scene-2), proporções de vídeo (16:9, 9:16 e 1:1) e controles interativos (Play/Pause/Replay).
+     - Auto-migração via `missingBuiltins` no `loadSkills()`, injetando a nova skill ativada por padrão no IndexedDB do usuário sem sobrescrever configurações prévias.
+  3. **Injeção do GSAP 3 e Suporte no Sandbox do Canvas (`src/lib/canvas-prototype.ts`):**
+     - Injetada a biblioteca GSAP 3 via CDN seguro (`https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js`) tanto para fragmentos quanto para documentos HTML5 completos no `sanitizePrototypeHtml`.
+     - Adicionada blindagem defensiva contra duplicação de scripts se o documento já incluir GSAP.
+     - Expandido o regex `CANVAS_PROTOTYPE_INTENT_REGEX` para reconhecer pedidos de vídeos, animações, teasers e composições HyperFrames.
+  4. **System Prompt e Transparência no Chat (`src/App.tsx`, `src/lib/skills-extractor.ts`):**
+     - Injetada a Regra 12 no System Prompt do Éden exigindo que vídeos e animações sejam estruturados como composições determinísticas com timelines do GSAP e exibidos no Canvas.
+     - Adicionado `'HyperFrames (Vídeo em Código)'` na lista de fallback de transparência de habilidades em `skills-extractor.ts`.
+- **Evidências de Verificação:**
+  - `npm test`: **162/162 testes unitários passando em 36 suítes** (100% verde).
+  - `tsc --noEmit`: **0 erros**.
+  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso em 2.83s.
+  - Code Review formal: Aprovado (Zero issues críticas/importantes).
+

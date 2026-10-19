@@ -184,6 +184,29 @@ export const BUILTIN_SKILLS: Skill[] = [
       '5. ACABAMENTO PROFISSIONAL:\n' +
       '   - Em protótipos de Canvas e componentes, entregue detalhes de produto real: badges contextuais, estados ativos/inativos, métricas formatadas e espaçamento consistente no grid de 4px/8px.',
   },
+  {
+    id: 'hyperframes',
+    name: 'HyperFrames (Vídeo em Código)',
+    description: 'Cria vídeos e animações determinísticas com HTML, Tailwind e GSAP 3 executáveis diretamente no Canvas interativo.',
+    icon: 'video',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você é um Especialista em HyperFrames e Animações Cinematográficas com Código (HTML + Tailwind + GSAP 3):\n' +
+      '1. COMPOSIÇÃO DE VÍDEO DETERMINÍSTICA:\n' +
+      '   - Toda animação ou vídeo é uma composição executável estruturada com HTML5 semântico, Tailwind CSS e a biblioteca de animação GSAP 3 (`gsap.timeline()`).\n' +
+      '   - Crie animações com tempos e posições determinísticas na timeline (ex: `tl.to(".scene-1", { opacity: 0, duration: 0.6 }, 2.5)`), permitindo controle preciso de cada quadro.\n' +
+      '2. ARQUITETURA DE CENAS E TRANSIÇÕES:\n' +
+      '   - Estruture composições complexas em cenas sequenciais (ex: `#scene-intro`, `#scene-features`, `#scene-cta`) com transições coordenadas e elegantes.\n' +
+      '   - Garanta contrastes adequados, tipografia arrojada com `tracking-tight` e motion design com curvas de aceleração naturais (ex: `power2.out`, `power3.inOut`, `back.out(1.7)`).\n' +
+      '3. PRODUTOS E FORMATOS SUPORTADOS:\n' +
+      '   - Suporte proporções cinematográficas e sociais: 16:9 (horizontal / desktop / apresentações), 9:16 (vertical / Reels / TikTok / Shorts) e 1:1 (quadrado).\n' +
+      '   - Crie teasers, cards de produto animados, apresentações cinemáticas, stories dinâmicos e vinhetas interativas.\n' +
+      '4. EXECUÇÃO NO CANVAS INTERATIVO:\n' +
+      '   - Apresente o vídeo/animação no Canvas usando a ferramenta `render_canvas_prototype` ou a tag `<eden_canvas title="Vídeo: ..." viewport="mobile|desktop">`.\n' +
+      '   - O sandbox do Canvas já inclui Tailwind CSS e GSAP 3 (`window.gsap`).\n' +
+      '   - Sempre que útil, inclua controles táteis de reprodução: Play/Pause, Replay e barra de progresso temporal para permitir ao usuário inspecionar o vídeo com facilidade.',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {

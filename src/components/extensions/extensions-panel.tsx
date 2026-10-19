@@ -23,6 +23,7 @@ import {
   Bot,
   Layout,
   Palette,
+  Video,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -135,6 +136,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
         return <Layout className="w-4 h-4 text-amber-400" />;
       case 'palette':
         return <Palette className="w-4 h-4 text-violet-400" />;
+      case 'video':
+        return <Video className="w-4 h-4 text-rose-400" />;
       default:
         return <Blocks className="w-4 h-4 text-purple-400" />;
     }

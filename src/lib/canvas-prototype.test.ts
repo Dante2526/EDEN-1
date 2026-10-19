@@ -92,7 +92,23 @@ O que achou da disposição dos botões?`;
     assert.equal(isCanvasPrototypingIntent('desenhe um modal de configurações de usuário'), true);
     assert.equal(isCanvasPrototypingIntent('faça uma nova interface para o painel de pedidos'), true);
     assert.equal(isCanvasPrototypingIntent('cria uma nova página de perfil'), true);
+    assert.equal(isCanvasPrototypingIntent('crie um vídeo teaser para o produto com HyperFrames'), true);
+    assert.equal(isCanvasPrototypingIntent('faça uma animação com GSAP para o lançamento'), true);
     assert.equal(isCanvasPrototypingIntent('corrija o erro de null pointer no arquivo auth.ts'), false);
     assert.equal(isCanvasPrototypingIntent('rode npm test no terminal'), false);
+  });
+
+  it('deve injetar a biblioteca GSAP 3 no fragmento para suportar animações HyperFrames', () => {
+    const rawHtml = '<div class="scene-1 bg-black text-white p-4"><h1>Teaser</h1></div>';
+    const output = sanitizePrototypeHtml(rawHtml);
+    assert.ok(output.includes('gsap@3.12.5/dist/gsap.min.js'), 'Deve injetar o script CDN do GSAP 3');
+  });
+
+  it('deve injetar GSAP 3 no head de documento completo quando ausente', () => {
+    const completeHtml = `<!DOCTYPE html><html><head><title>Vídeo Teaser</title><script src="https://cdn.tailwindcss.com"></script></head><body><div id="scene">Cena 1</div></body></html>`;
+    const output = sanitizePrototypeHtml(completeHtml);
+    assert.ok(output.includes('gsap@3.12.5/dist/gsap.min.js'), 'Deve injetar GSAP no head existente');
+    const occurrences = (output.match(/gsap\.min\.js/g) || []).length;
+    assert.equal(occurrences, 1, 'Não deve duplicar a injeção de GSAP');
   });
 });

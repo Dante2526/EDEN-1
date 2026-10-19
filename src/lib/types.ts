@@ -244,7 +244,7 @@ export interface AppSettings {
   browserEndpoint?: string;
 }
 
-export type SkillIcon = 'flask' | 'bug' | 'shield' | 'zap' | 'sparkles' | 'file-text' | 'git-commit' | 'smartphone' | 'cloud' | 'bot' | 'layout' | 'palette';
+export type SkillIcon = 'flask' | 'bug' | 'shield' | 'zap' | 'sparkles' | 'file-text' | 'git-commit' | 'smartphone' | 'cloud' | 'bot' | 'layout' | 'palette' | 'video';
 
 export interface Skill {
   id: string;

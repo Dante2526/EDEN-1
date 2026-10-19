@@ -1,7 +1,7 @@
 import { CanvasPrototype } from './types.js';
 
 export const CANVAS_PROTOTYPE_INTENT_REGEX =
-  /\b(tela|p[aá]gina|interface|layout|view|modal|drawer|painel|dashboard|mockup|prot[oó]tip[ao]|design)\b/i;
+  /\b(tela|p[aá]gina|interface|layout|view|modal|drawer|painel|dashboard|mockup|prot[oó]tip[ao]|design|v[ií]deo|anima[cç][aã]o|teaser|hyperframes)\b/i;
 
 /**
  * Verifica se a mensagem do usuário envolve criação ou redesign de interface visual.
@@ -32,6 +32,7 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
   html = html.replace(/^```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n```$/g, '$1').trim();
 
   const isFullDoc = /<!doctype\s+html>/i.test(html) || /<html[\s>]/i.test(html);
+  const gsapScript = '<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>';
 
   const scrollbarAndFontStyles = `
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,9 +64,9 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
   </style>`;
 
   if (isFullDoc) {
-    // Garante que o Tailwind, viewport, fontes e scrollbar estejam presentes no head
+    // Garante que o Tailwind, GSAP, viewport, fontes e scrollbar estejam presentes no head
     if (!html.includes('cdn.tailwindcss.com')) {
-      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>${scrollbarAndFontStyles}`;
+      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>\n  ${gsapScript}${scrollbarAndFontStyles}`;
       if (/<head[\s>]/i.test(html)) {
         html = html.replace(/<head[\s>]/i, `<head>\n  ${headInjection}`);
       } else if (/<html[\s>]/i.test(html)) {
@@ -73,12 +74,22 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
       } else {
         html = `<head>\n  ${headInjection}\n</head>\n${html}`;
       }
-    } else if (!html.includes('scrollbar-width')) {
+    } else {
+      // Injeta GSAP caso ainda não esteja presente
+      if (!html.includes('gsap')) {
+        if (/<head[\s>]/i.test(html)) {
+          html = html.replace(/<head[\s>]/i, `<head>\n  ${gsapScript}`);
+        } else if (/<html[\s>]/i.test(html)) {
+          html = html.replace(/<html[\s>]/i, `<html>\n<head>\n  ${gsapScript}\n</head>`);
+        }
+      }
       // Injeta os estilos de scrollbar e fonte no head existente se ainda não tiver
-      if (/<head[\s>]/i.test(html)) {
-        html = html.replace(/<head[\s>]/i, `<head>\n  ${scrollbarAndFontStyles}`);
-      } else if (/<html[\s>]/i.test(html)) {
-        html = html.replace(/<html[\s>]/i, `<html>\n<head>\n  ${scrollbarAndFontStyles}\n</head>`);
+      if (!html.includes('scrollbar-width')) {
+        if (/<head[\s>]/i.test(html)) {
+          html = html.replace(/<head[\s>]/i, `<head>\n  ${scrollbarAndFontStyles}`);
+        } else if (/<html[\s>]/i.test(html)) {
+          html = html.replace(/<html[\s>]/i, `<html>\n<head>\n  ${scrollbarAndFontStyles}\n</head>`);
+        }
       }
     }
     return html;
@@ -91,6 +102,7 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  ${gsapScript}
   <script>
     tailwind.config = {
       darkMode: 'class',
