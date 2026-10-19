@@ -93,16 +93,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           <PanelLeft className="w-5 h-5" />
         </button>
 
-        {/* Cloudflare Pages Deployment Status Badge (mobile < sm) */}
-        {deployment && (
-          <div className="sm:hidden">
-            <DeploymentStatusBadge
-              deployment={deployment}
-              isLoading={isLoadingDeployment}
-              onClick={onOpenDeploymentLogs}
-            />
-          </div>
-        )}
 
         {activeRepo && (
           <div className="hidden xl:flex items-center gap-1.5 p-1 px-2.5 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b33)] text-xs font-mono min-w-0 shadow-xs ml-1">
@@ -199,7 +189,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
       )}
 
       {/* Right side: Terminal button & Settings */}
-      <div className="flex items-center gap-2 z-10">
+      <div className="flex items-center gap-1.5 sm:gap-2 z-10 shrink-0">
         {hasApiKey === false && (
           <div
             title="Chave de API não configurada no servidor (.env.local)"
@@ -223,17 +213,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               {errorCount}
             </span>
           </button>
-        )}
-
-        {/* Cloudflare Pages Deployment Status Badge (desktop >= sm) */}
-        {deployment && (
-          <div className="hidden sm:block">
-            <DeploymentStatusBadge
-              deployment={deployment}
-              isLoading={isLoadingDeployment}
-              onClick={onOpenDeploymentLogs}
-            />
-          </div>
         )}
 
         {onOpenGraph && (
@@ -282,6 +261,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
               }`}
             />
           </button>
+        )}
+
+        {/* Cloudflare Pages Deployment Status Badge (lado direito superior) */}
+        {deployment && (
+          <DeploymentStatusBadge
+            deployment={deployment}
+            isLoading={isLoadingDeployment}
+            onClick={onOpenDeploymentLogs}
+          />
         )}
       </div>
     </header>
