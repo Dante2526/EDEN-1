@@ -158,6 +158,8 @@ export interface Message {
   streamError?: string;
   usedSkills?: string[]; // Habilidades aplicadas pela IA nesta resposta/alteração
   isConnected?: boolean; // true assim que o backend recebe HTTP 200 da NVIDIA/provedor
+  webSources?: WebSourceItem[]; // Fontes ao vivo da Web estilo Perplexity
+  isWebSearchMode?: boolean; // Se foi gerada com o modo Web ao Vivo ativado
   pendingRemoteAction?: {
     id: string;
     provider: 'vps_webhook' | 'github_workflow' | 'cloudflare_hook';
@@ -180,6 +182,14 @@ export interface Message {
   };
 }
 
+export interface WebSourceItem {
+  title: string;
+  snippet: string;
+  link: string;
+  content?: string;
+  domain?: string;
+}
+
 export interface ContextCompaction {
   summary: string;
   compactedUpToMessageId: string;
@@ -196,6 +206,7 @@ export interface Conversation {
   model: string;
   reasoningEffort: 'low' | 'high' | 'max';
   isPlanMode?: boolean;
+  isWebSearchMode?: boolean;
   activeRepo?: ActiveRepoState | null;
   contextCompaction?: ContextCompaction;
   isArchived?: boolean;

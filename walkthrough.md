@@ -1836,3 +1836,34 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
   - `npm run build`: bundle de produção Vite (936 kB) e Cloudflare Pages Worker (`dist/_worker.js`, 158.0 kB) compilados com sucesso em 1.49s.
   - `graphify update .`: grafo de conhecimento atualizado com 14.757 nós e 35.052 arestas.
+
+## 110. Modo "🌐 Web ao Vivo" Estilo Perplexity (Pré-busca Instantânea, Citações Inline e Carrossel de Fontes)
+- **Solicitação do Usuário:** *"e o perplexity em nosso app èden internet ao vivo oque acha dissow"*, *"e gratis e?"*, *"o botão poderia ficar dentro do espaço de chat do lado daquele de anexar arquivos"* -> Aprovada a implementação da experiência Perplexity 100% gratuita no Éden.
+- **Implementações Realizadas:**
+  1. **Motor de Citações e Busca Web TDD (`src/lib/web-search-engine.ts` + `src/lib/web-search-engine.test.ts`):**
+     - `extractDomainFromUrl`: extrai o domínio limpo da URL (ex: `g1.globo.com`, `github.com`).
+     - `getFaviconUrl`: gera link para o ícone oficial via Google S2 Favicons em 32x32.
+     - `parseWebSourcesFromSearchResults`: mapeia e deduplica respostas brutas da API `/api/search` em `WebSourceItem[]`.
+     - `buildLiveWebPrompt`: constrói bloco contextual de injeção em tempo real com diretrizes rigorosas de síntese e citação de fontes numeradas (`[1]`, `[2]`).
+     - `linkifyCitations`: converte marcadores `[1]`, `[2]` em links markdown interativos apontando para as fontes correspondentes.
+     - `fetchLiveWebSources`: cliente HTTP com AbortController de 4.0s para pré-busca instantânea no `/api/search`.
+  2. **Botão Toggle "🌐 Web" Dentro do Chat Input (`src/components/chat-input.tsx`):**
+     - Posicionado ergonomicamente na barra de ferramentas inferior da caixa de digitação, logo ao lado do botão de anexar arquivos (`Paperclip`).
+     - Estado ativo com destaque ciano vibrante (`bg-cyan-500/20 text-cyan-400 border-cyan-500/40`), badge `Web` e placeholder dinâmico (*"Pesquisar na web ao vivo ou fazer uma pergunta..."*).
+     - Persistência em `localStorage` (`synap_web_mode_v1`) e memória por conversa.
+  3. **Pré-busca Instantânea e Injeção no Contexto (`src/App.tsx`, `src/lib/context-compactor.ts`, `src/lib/types.ts`):**
+     - Ao enviar mensagem com `Web ON`, o Éden pré-busca automaticamente as páginas via `/api/search` em paralelo antes de iniciar o streaming do LLM.
+     - Anexa `webSources` na mensagem do assistente e injeta `liveWebPrompt` no contexto do modelo (`prepareMessagesForApi`), permitindo respostas no 1º turno sem latência de tool call.
+     - Quando o modelo chama a tool `web_search` dinamicamente, os resultados também enriquecem as `webSources` da mensagem atual.
+  4. **Carrossel de Fontes e Citações Estilo Perplexity (`src/components/chat-message.tsx`):**
+     - Cabeçalho expansível **"Fontes da Web (N)"** no topo da resposta com cards horizontais roláveis (favicon, domínio limpo, badge numérico e título).
+     - Renderizador customizado de links no `ReactMarkdown` que exibe citações `[1]`, `[2]` como pílulas ciano sobrescritas (`align-super`) com link direto para a fonte.
+  5. **Obrigatoriedade Compulsória (Regra Suprema de Web ao Vivo):**
+     - O prompt injetado proíbe categoricamente o modelo de ignorar as fontes ou responder com conhecimento pré-corte desatualizado quando a Web estiver ligada.
+     - Obriga citações `[1]`, `[2]` no corpo do texto para cada dado ou fato.
+     - Caso a pré-busca automática não retorne fontes a tempo (timeout de 4s), o modelo recebe ordem expressa para disparar a tool `web_search` IMEDIATAMENTE no primeiro turno antes de responder.
+- **Evidências de Verificação:**
+  - `npm test`: **130/130 testes unitários passando em 34 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker compilados com 0 erros em 2.63s.
+  - `graphify update .`: grafo de conhecimento atualizado com 14.781 nós e 16.583 arestas.

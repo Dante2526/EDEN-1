@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792372904.85297,
-    "ast_hash": "7a93648cb2ec3dbea5c5e7716eaac989",
+    "mtime": 1792378951.8251612,
+    "ast_hash": "cf58f8d1f2415b78978fb0c57a0b14df",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -985,13 +985,13 @@
     "semantic_hash": "e6b397b016b3853017d816c1681a654c"
   },
   "src/components/chat-input.tsx": {
-    "mtime": 1792195223.1178257,
-    "ast_hash": "c550ac6f78b57af703ba8b44a1dd40c3",
-    "semantic_hash": "c550ac6f78b57af703ba8b44a1dd40c3"
+    "mtime": 1792377904.549098,
+    "ast_hash": "0e5fb3f782663c8be87c4d76287cc649",
+    "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
-    "mtime": 1792372920.5625222,
-    "ast_hash": "3c32952c9b2aefa156f531456d442aa7",
+    "mtime": 1792378317.185773,
+    "ast_hash": "dc1913521a51a637d8dc91449ec5ed19",
     "semantic_hash": ""
   },
   "src/components/chat-sidebar.tsx": {
@@ -1190,9 +1190,9 @@
     "semantic_hash": "242959bb5772ffa7d7424721ca2193bb"
   },
   "src/lib/context-compactor.ts": {
-    "mtime": 1792030703.519011,
-    "ast_hash": "55c5465799a168b45ccf053621430843",
-    "semantic_hash": "55c5465799a168b45ccf053621430843"
+    "mtime": 1792377968.159304,
+    "ast_hash": "98dc634318657e3a9081f1c2ec6143f5",
+    "semantic_hash": ""
   },
   "src/lib/deployment-service.test.ts": {
     "mtime": 1792078497.667623,
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792372588.546988,
-    "ast_hash": "82d9f09244c3ad6561292aee4388779e",
+    "mtime": 1792377770.4758973,
+    "ast_hash": "23394daa9505ffeb8a1b7df13636b677",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -5510,13 +5510,13 @@
     "semantic_hash": ""
   },
   "task.md": {
-    "mtime": 1792118502.3788042,
-    "ast_hash": "302ac8a2ca1b295b9b40813af87addcb",
+    "mtime": 1792378451.3866804,
+    "ast_hash": "7276b8aa4a571b7f98cac9205b783d47",
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792376379.3242896,
-    "ast_hash": "402384456757d158f11642d564bbc3ba",
+    "mtime": 1792378469.3270767,
+    "ast_hash": "3f39c42766cb2574f3c5c8a1ce18f2de",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -5997,6 +5997,16 @@
   "src/lib/video-decoder-engine.ts": {
     "mtime": 1792375900.0136693,
     "ast_hash": "55577ed66b21b7861630a4c2715fefa6",
+    "semantic_hash": ""
+  },
+  "src/lib/web-search-engine.test.ts": {
+    "mtime": 1792378944.7517767,
+    "ast_hash": "c379dc4d8dcce455b00b59a523737082",
+    "semantic_hash": ""
+  },
+  "src/lib/web-search-engine.ts": {
+    "mtime": 1792378938.7021682,
+    "ast_hash": "e92e2f49ecf1157d2c0bd1a07aa7adf1",
     "semantic_hash": ""
   }
 }

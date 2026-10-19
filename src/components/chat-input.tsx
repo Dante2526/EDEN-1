@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X } from 'lucide-react';
+import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X, Globe } from 'lucide-react';
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
@@ -19,6 +19,8 @@ interface ChatInputProps {
   onSelectReasoningEffort: (effort: ReasoningEffort) => void;
   isPlanMode: boolean;
   onTogglePlanMode: () => void;
+  isWebSearchActive?: boolean;
+  onToggleWebSearch?: () => void;
   conversationTokens?: {
     promptTokens: number;
     completionTokens: number;
@@ -46,6 +48,8 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   onSelectReasoningEffort,
   isPlanMode,
   onTogglePlanMode,
+  isWebSearchActive = false,
+  onToggleWebSearch,
   conversationTokens,
   onOpenTerminal,
   isContinuousVoiceActive = false,
@@ -349,6 +353,8 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
             placeholder={
               selectedElements.length > 0
                 ? `Instrua a IA sobre o que alterar no(s) ${selectedElements.length} componente(s) selecionado(s)...`
+                : isWebSearchActive
+                ? 'Pesquisar na web ao vivo ou fazer uma pergunta...'
                 : isPlanMode
                 ? 'Escreva uma mensagem para criar um Plano Estruturado...'
                 : 'Escreva uma mensagem ou cole um print (Ctrl+V)...'
@@ -358,7 +364,7 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
 
           {/* Claude Bottom Toolbar */}
           <div className="flex items-center justify-between gap-2 mt-2 pt-1">
-            {/* Left Tools: Attachment (Suporta anexar arquivos e colar prints via Ctrl+V) */}
+            {/* Left Tools: Attachment & Live Web Search */}
             <div className="flex items-center gap-1">
               <button
                 type="button"
@@ -378,6 +384,27 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
               >
                 <Paperclip className="w-4 h-4" />
               </button>
+
+              {/* Botão Web ao Vivo (Perplexity Style) */}
+              {onToggleWebSearch && (
+                <button
+                  type="button"
+                  onClick={onToggleWebSearch}
+                  disabled={isLoading}
+                  aria-label={isWebSearchActive ? 'Desativar pesquisa na Web' : 'Ativar pesquisa na Web'}
+                  title={isWebSearchActive ? 'Pesquisa Web ao Vivo ATIVA (fontes em tempo real)' : 'Pesquisar na Web ao vivo (estilo Perplexity)'}
+                  className={`p-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer text-xs ${
+                    isWebSearchActive
+                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-semibold shadow-xs'
+                      : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)] border border-transparent'
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                  <span className={`text-[11px] ${isWebSearchActive ? 'inline font-medium' : 'hidden sm:inline'}`}>
+                    Web
+                  </span>
+                </button>
+              )}
 
               {(images.length > 0 || documents.length > 0) && (
                 <span className="text-[11px] font-mono text-[color:var(--c-fg-8c867a)] ml-0.5">

@@ -34,6 +34,7 @@ import { formatFileSize } from '../lib/utils';
 import { CodeBlock } from './code-block';
 import { SpeakButton } from './speak-button';
 import { ClaudeLogo } from './claude-logo';
+import { getFaviconUrl, extractDomainFromUrl, linkifyCitations } from '../lib/web-search-engine';
 
 interface ChatMessageProps {
   message: Message;
@@ -209,6 +210,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   const [copied, setCopied] = useState(false);
   const [showTokenDetails, setShowTokenDetails] = useState(false);
   const [isToolsExpanded, setIsToolsExpanded] = useState(false);
+  const [isSourcesExpanded, setIsSourcesExpanded] = useState(true);
 
   // Extract reasoning if formatted with <think>...</think> tags or message.reasoning
   let thinkingContent = message.reasoning || '';
@@ -238,6 +240,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
   // Remove tags de declaração [Habilidade: ...] do texto bruto (elas são renderizadas nas badges visuais)
   cleanContent = cleanContent.replace(/\[Habilidade(?:s)?(?:\s*Usada(?:s)?)?:\s*[^\]]+\]/gi, '').trimEnd();
+
+  // Se houver fontes da web, converte citações numéricas [1], [2] em links diretos para as fontes
+  if (message.webSources && message.webSources.length > 0) {
+    cleanContent = linkifyCitations(cleanContent, message.webSources);
+  }
 
   // Apenas considera que há conteúdo se houver texto real após trim (evita flicker com \n ou espaços)
   const hasRealContent = Boolean(cleanContent && cleanContent.trim().length > 0);
@@ -1409,6 +1416,71 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             </div>
           )}
 
+          {/* Perplexity-style Live Web Sources Header & Carousel */}
+          {message.webSources && message.webSources.length > 0 && (
+            <div className="mb-3 p-3 rounded-2xl bg-[color:var(--c-bg-1e1c19)] border border-cyan-500/25 shadow-xs">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400">
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Fontes da Web ({message.webSources.length})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSourcesExpanded(!isSourcesExpanded)}
+                  className="text-[11px] font-medium text-[color:var(--c-fg-8c867a)] hover:text-[color:var(--c-fg-f3efe6)] transition cursor-pointer flex items-center gap-1"
+                >
+                  <span>{isSourcesExpanded ? 'Ocultar' : 'Expandir'}</span>
+                  {isSourcesExpanded ? (
+                    <ChevronUp className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+
+              {isSourcesExpanded && (
+                <div className="flex items-stretch gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin">
+                  {message.webSources.map((source, idx) => {
+                    const num = idx + 1;
+                    const domain = source.domain || extractDomainFromUrl(source.link);
+                    return (
+                      <a
+                        key={source.link + idx}
+                        href={source.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col justify-between p-2 rounded-xl bg-[color:var(--c-bg-272521)] hover:bg-[color:var(--c-bg-322f29)] border border-[color:var(--c-bg-3a362f)] hover:border-cyan-500/40 min-w-[150px] max-w-[190px] shrink-0 transition-all text-left no-underline"
+                        title={source.snippet || source.title}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <img
+                              src={getFaviconUrl(source.link)}
+                              alt=""
+                              className="w-3.5 h-3.5 rounded-xs shrink-0 bg-zinc-700"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                            <span className="text-[10px] text-[color:var(--c-fg-8c867a)] group-hover:text-cyan-300 truncate font-mono">
+                              {domain}
+                            </span>
+                          </div>
+                          <span className="text-[9px] font-mono font-bold text-cyan-400 bg-cyan-950/70 border border-cyan-800/50 px-1 py-0.2 rounded shrink-0">
+                            {num}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-medium text-[color:var(--c-fg-dcd7cc)] group-hover:text-white line-clamp-2 leading-snug">
+                          {source.title}
+                        </p>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Assistant Rendered Markdown */}
           <div className="w-full prose prose-invert max-w-none text-[15px] sm:text-[16px] text-[color:var(--c-fg-f3efe6)] leading-relaxed break-words font-sans">
             {hasRealContent ? (
@@ -1465,6 +1537,21 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     return <ChatImage src={src} alt={alt} />;
                   },
                   a({ href, children }) {
+                    const isCitation =
+                      typeof children === 'string' && /^\d+$/.test(children);
+                    if (isCitation) {
+                      return (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center px-1.5 py-0.2 mx-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/20 hover:bg-cyan-500/35 text-cyan-300 border border-cyan-500/40 no-underline transition-colors align-super"
+                          title={`Fonte [${children}]: ${href}`}
+                        >
+                          {children}
+                        </a>
+                      );
+                    }
                     return (
                       <a
                         href={href}

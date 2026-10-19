@@ -17,6 +17,7 @@ import {
   KnowledgeFact,
   KnowledgeCategory,
   SelectedPreviewElement,
+  WebSourceItem,
 } from './lib/types';
 import {
   loadConversations,
@@ -99,10 +100,16 @@ import {
   isPlanApprovalReply,
 } from './lib/plan-mode-gate';
 import { selectContextualTools, selectContextualSkills } from './lib/smart-prefill';
+import {
+  fetchLiveWebSources,
+  buildLiveWebPrompt,
+  parseWebSourcesFromSearchResults,
+} from './lib/web-search-engine';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
 const PLAN_MODE_STORAGE_KEY = 'synap_plan_mode_v1';
+const WEB_SEARCH_MODE_STORAGE_KEY = 'synap_web_mode_v1';
 
 // Tools que funcionam SEM repo ativo (busca global no GitHub)
 const SEARCH_GITHUB_REPOS_TOOL = {
@@ -1124,6 +1131,12 @@ function AppContent() {
     }
     return false;
   });
+  const [isWebSearchMode, setIsWebSearchMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(WEB_SEARCH_MODE_STORAGE_KEY) === 'true';
+    }
+    return false;
+  });
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
   const [terminalEntries, setTerminalEntries] = useState<TerminalEntry[]>([]);
   const [isTerminalRunning, setIsTerminalRunning] = useState<boolean>(false);
@@ -1370,6 +1383,7 @@ function AppContent() {
         if (initialConv.model) setSelectedModel(initialConv.model as ModelId);
         if (initialConv.reasoningEffort) setReasoningEffort(initialConv.reasoningEffort);
         if (initialConv.isPlanMode !== undefined) setIsPlanMode(initialConv.isPlanMode);
+        if (initialConv.isWebSearchMode !== undefined) setIsWebSearchMode(initialConv.isWebSearchMode);
         if (initialConv.activeRepo) setActiveRepo(initialConv.activeRepo);
         else setActiveRepo(null);
       }
@@ -1763,6 +1777,21 @@ function AppContent() {
     });
   }, [reasoningEffort, activeId]);
 
+  const handleToggleWebSearchMode = useCallback(() => {
+    setIsWebSearchMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(WEB_SEARCH_MODE_STORAGE_KEY, String(next));
+      } catch {}
+      if (activeId) {
+        setConversations((all) =>
+          all.map((c) => (c.id === activeId ? { ...c, isWebSearchMode: next } : c))
+        );
+      }
+      return next;
+    });
+  }, [activeId]);
+
   const handleSelectModel = useCallback((model: ModelId) => {
     setSelectedModel(model);
     localStorage.setItem(MODEL_STORAGE_KEY, model);
@@ -1803,6 +1832,8 @@ function AppContent() {
     if (target) {
       if (target.model) setSelectedModel(target.model as ModelId);
       if (target.reasoningEffort) setReasoningEffort(target.reasoningEffort);
+      if (target.isPlanMode !== undefined) setIsPlanMode(target.isPlanMode);
+      if (target.isWebSearchMode !== undefined) setIsWebSearchMode(target.isWebSearchMode);
       setActiveRepo(target.activeRepo || null);
 
       // Se o chat tem repo vinculado, procura um projeto Sandpack
@@ -1846,6 +1877,7 @@ function AppContent() {
         if (remaining[0].model) setSelectedModel(remaining[0].model as ModelId);
         if (remaining[0].reasoningEffort) setReasoningEffort(remaining[0].reasoningEffort);
         if (remaining[0].isPlanMode !== undefined) setIsPlanMode(remaining[0].isPlanMode);
+        if (remaining[0].isWebSearchMode !== undefined) setIsWebSearchMode(remaining[0].isWebSearchMode);
         setActiveRepo(remaining[0].activeRepo || null);
       } else {
         setActiveId(null);
@@ -1872,6 +1904,7 @@ function AppContent() {
         if (remaining[0].model) setSelectedModel(remaining[0].model as ModelId);
         if (remaining[0].reasoningEffort) setReasoningEffort(remaining[0].reasoningEffort);
         if (remaining[0].isPlanMode !== undefined) setIsPlanMode(remaining[0].isPlanMode);
+        if (remaining[0].isWebSearchMode !== undefined) setIsWebSearchMode(remaining[0].isWebSearchMode);
         setActiveRepo(remaining[0].activeRepo || null);
       } else {
         setActiveId(null);
@@ -2018,6 +2051,27 @@ function AppContent() {
         });
         if (!res.ok) throw new Error(`Falha na busca web (${res.status})`);
         const searchResults = await res.json();
+        const parsedSources = parseWebSourcesFromSearchResults(searchResults);
+        if (parsedSources.length > 0 && currentAssistantMessageIdRef.current) {
+          const targetMsgId = currentAssistantMessageIdRef.current;
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id !== activeId) return c;
+              return {
+                ...c,
+                messages: c.messages.map((m) => {
+                  if (m.id !== targetMsgId) return m;
+                  const existing = m.webSources || [];
+                  const combined = [...existing, ...parsedSources];
+                  const unique = combined.filter(
+                    (s, idx, arr) => arr.findIndex((x) => x.link === s.link) === idx
+                  );
+                  return { ...m, webSources: unique };
+                }),
+              };
+            })
+          );
+        }
         return { result: JSON.stringify(searchResults) };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || `Erro ao pesquisar ${args.query}` }) };
@@ -3196,6 +3250,15 @@ function AppContent() {
       );
     }
 
+    let preloadedWebSources: WebSourceItem[] = [];
+    if (isWebSearchMode && text.trim()) {
+      try {
+        preloadedWebSources = await fetchLiveWebSources(text.trim(), { timeoutMs: 4000 });
+      } catch (err) {
+        console.warn('[Synap] Falha na pré-busca web ao vivo:', err);
+      }
+    }
+
     const assistantMessageId = generateId();
     const assistantPlaceholder: Message = {
       id: assistantMessageId,
@@ -3204,6 +3267,8 @@ function AppContent() {
       reasoning: '',
       reasoningEffort: reasoningEffort,
       isPlanMode: activePlan,
+      isWebSearchMode: isWebSearchMode,
+      webSources: preloadedWebSources.length > 0 ? preloadedWebSources : undefined,
       createdAt: Date.now(),
     };
 
@@ -3337,8 +3402,13 @@ function AppContent() {
           model: effectiveModel,
           reasoningEffort,
           isPlanMode: activePlan,
+          isWebSearchMode: isWebSearchMode,
           activeRepo: chatActiveRepo,
         };
+
+    const liveWebPrompt = isWebSearchMode
+      ? buildLiveWebPrompt(text.trim() || userMessage.content, preloadedWebSources)
+      : undefined;
 
     const contextMessages = prepareMessagesForApi(convForPayload, {
       base: basePrompt,
@@ -3346,6 +3416,7 @@ function AppContent() {
       plan: planPrompt,
       skills: skillsPrompt,
       memories: memoriesPrompt,
+      liveWeb: liveWebPrompt,
     });
 
     const controller = new AbortController();
@@ -4786,6 +4857,8 @@ function AppContent() {
           onSelectReasoningEffort={handleSelectReasoningEffort}
           isPlanMode={isPlanMode}
           onTogglePlanMode={handleTogglePlanMode}
+          isWebSearchActive={isWebSearchMode}
+          onToggleWebSearch={handleToggleWebSearchMode}
           conversationTokens={conversationTokens}
           onOpenTerminal={handleOpenTerminal}
           isContinuousVoiceActive={continuousVoiceActive}
