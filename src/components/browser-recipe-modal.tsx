@@ -6,12 +6,13 @@ import {
   Trash2,
   Check,
   AlertCircle,
-  Globe,
+  Workflow,
   Loader2,
   Send,
   Eye,
   Layers,
   ArrowRight,
+  ArrowLeft,
   Clock,
   MousePointer,
   Type,
@@ -71,7 +72,8 @@ export const BrowserRecipeModal: React.FC<BrowserRecipeModalProps> = ({
     if (isOpen) {
       loadSavedRecipes().then((loaded) => {
         setRecipes(loaded);
-        if (loaded.length > 0 && !activeRecipe && !isCreatingNew) {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+        if (loaded.length > 0 && !activeRecipe && !isCreatingNew && !isMobile) {
           setActiveRecipe(loaded[0]);
         }
       });
@@ -221,17 +223,20 @@ export const BrowserRecipeModal: React.FC<BrowserRecipeModalProps> = ({
     onClose();
   };
 
+  const isDetailViewActive = isCreatingNew || Boolean(activeRecipe);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
-      <div className="w-full max-w-4xl h-[85vh] flex flex-col rounded-2xl bg-[color:var(--c-bg-181714)] border border-[color:var(--c-bg-3b3831)] shadow-2xl overflow-hidden text-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-0 sm:p-4">
+      <div className="w-full sm:max-w-4xl h-full sm:h-[85vh] flex flex-col rounded-none sm:rounded-2xl bg-[color:var(--c-bg-181714)] border-0 sm:border border-[color:var(--c-bg-3b3831)] shadow-2xl overflow-hidden text-xs">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[color:var(--c-bg-201e1a)] border-b border-[color:var(--c-bg-3b3831)]">
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-cyan-400" />
-            <h2 className="font-semibold text-sm text-[color:var(--c-fg-f3efe6)]">
-              Gravador de Scraping & Automações Web (Estilo Maxun)
+        <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-[color:var(--c-bg-201e1a)] border-b border-[color:var(--c-bg-3b3831)] shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Workflow className="w-4 h-4 text-cyan-400 shrink-0" />
+            <h2 className="font-semibold text-xs sm:text-sm text-[color:var(--c-fg-f3efe6)] truncate">
+              <span className="hidden sm:inline">Gravador de Scraping & Automações Web (Estilo Maxun)</span>
+              <span className="sm:hidden">Robôs de Scraping (Maxun)</span>
             </h2>
-            <span className="px-1.5 py-0.2 rounded font-mono text-[10px] bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+            <span className="px-1.5 py-0.2 rounded font-mono text-[10px] bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 shrink-0">
               No-Code
             </span>
           </div>
@@ -247,7 +252,11 @@ export const BrowserRecipeModal: React.FC<BrowserRecipeModalProps> = ({
         {/* Content Body: Split View (List + Editor/Viewer) */}
         <div className="flex-1 min-h-0 flex overflow-hidden">
           {/* Sidebar: Lista de Robôs */}
-          <div className="w-64 border-r border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-1c1b17)] flex flex-col p-3 space-y-2">
+          <div
+            className={`w-full sm:w-64 shrink-0 sm:border-r border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-1c1b17)] flex flex-col p-3 space-y-2 ${
+              isDetailViewActive ? 'hidden sm:flex' : 'flex'
+            }`}
+          >
             <div className="flex items-center justify-between mb-1">
               <span className="text-[11px] font-semibold text-[color:var(--c-fg-a39d93)] uppercase tracking-wider">
                 Robôs Salvos ({recipes.length})
@@ -316,7 +325,29 @@ export const BrowserRecipeModal: React.FC<BrowserRecipeModalProps> = ({
           </div>
 
           {/* Main Area: Editor or Runner */}
-          <div className="flex-1 min-h-0 flex flex-col overflow-y-auto p-4 space-y-4 bg-[color:var(--c-bg-181714)]">
+          <div
+            className={`flex-1 min-h-0 flex flex-col overflow-y-auto p-3 sm:p-4 space-y-4 bg-[color:var(--c-bg-181714)] ${
+              !isDetailViewActive ? 'hidden sm:flex' : 'flex'
+            }`}
+          >
+            {/* Mobile Header / Voltar para lista */}
+            <div className="sm:hidden flex items-center justify-between pb-2 border-b border-[color:var(--c-bg-3b3831)] shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveRecipe(null);
+                  setIsCreatingNew(false);
+                  setEditingRecipeId(null);
+                }}
+                className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 font-medium cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Voltar para lista</span>
+              </button>
+              <span className="text-[10px] text-zinc-500 font-mono">
+                {isCreatingNew ? (editingRecipeId ? 'Editando' : 'Novo') : 'Detalhes'}
+              </span>
+            </div>
             {isCreatingNew ? (
               /* Formulário de Criação */
               <div className="space-y-3">
@@ -573,7 +604,7 @@ export const BrowserRecipeModal: React.FC<BrowserRecipeModalProps> = ({
               </div>
             ) : (
               <div className="p-8 text-center text-[color:var(--c-fg-8c867a)] space-y-2">
-                <Globe className="w-8 h-8 mx-auto opacity-40 text-cyan-400" />
+                <Workflow className="w-8 h-8 mx-auto opacity-40 text-cyan-400" />
                 <p>Selecione um robô na lista ou crie um novo para começar.</p>
               </div>
             )}

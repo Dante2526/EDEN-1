@@ -1977,6 +1977,27 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
   - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) compilados com sucesso em 18.55s.
 
+## 115. Refinamento de UX: Responsividade Mobile do Gravador de Robôs, Ícone Workflow e Clareza de Status MCP
+- **Solicitações do Usuário:**
+  1. *Dúvida sobre a aba MCP:* Dificuldade em entender se o servidor está ligado/desligado (bolinha cinza com toggle verde).
+  2. *Troca do ícone de Robôs:* O ícone de globo/planeta se confundia com a pesquisa Web do chat.
+  3. *Otimização para celulares:* O modal de robôs ficava quebrado horizontalmente em telas móveis devido à coluna fixa de 256px.
+- **Implementações Realizadas:**
+  1. **Clareza de Conexão MCP (`src/components/extensions/extensions-panel.tsx`):**
+     - Adicionado badge explícito de status com cores semânticas (`Online` verde, `Conectando...` âmbar, `Offline` cinza).
+     - Adicionado card explicativo com ícone `AlertCircle` quando um servidor local (ex.: Maxun `http://localhost:8080/mcp`) está habilitado no Éden mas ainda não foi iniciado via Docker na máquina.
+  2. **Novo Ícone Exclusivo `Workflow` (`src/components/chat-header.tsx`, `src/components/browser-recipe-modal.tsx`):**
+     - Substituído o ícone `Globe` pelo ícone `Workflow` (fluxo de passos e automação) no botão "Robôs" do cabeçalho e nos headers do modal, eliminando qualquer colisão com a ferramenta Web.
+  3. **Layout Fluido Mobile-First no Gravador de Robôs (`src/components/browser-recipe-modal.tsx`):**
+     - Implementado padrão master-detail responsivo: no mobile, a lista de robôs ocupa 100% da largura. Ao selecionar ou criar um robô, a tela transiciona suavemente para o editor/executor em tela cheia com botão *"← Voltar para lista"*.
+     - Modal ocupa tela inteira no celular (`h-full p-0 rounded-none sm:h-[85vh] sm:p-4 sm:rounded-2xl`).
+     - Desabilitada a auto-seleção inicial de robô em telas < 640px para que o usuário em celular visualize a lista de robôs primeiro.
+- **Evidências de Verificação:**
+  - `npm test`: **152/152 testes unitários passando em 35 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: compilado com sucesso com Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB).
+
+
 
 
 

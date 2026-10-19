@@ -980,8 +980,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
-    "mtime": 1792413957.2068315,
-    "ast_hash": "b1c2684bf041d364078c069e79145ca6",
+    "mtime": 1792415342.90229,
+    "ast_hash": "cbac4b993d1f2fd8c196bd65e0cba998",
     "semantic_hash": ""
   },
   "src/components/chat-input.tsx": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": "8921224c171256f9c22792a47f66e52e"
   },
   "src/components/extensions/extensions-panel.tsx": {
-    "mtime": 1792414491.5586004,
-    "ast_hash": "94770fab2092c3a501b259df3349177a",
+    "mtime": 1792415374.2883537,
+    "ast_hash": "8e09ca6e9c19cc5e8db2e9b351d002f1",
     "semantic_hash": ""
   },
   "src/components/github/create-repo-modal.tsx": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792414134.6190267,
-    "ast_hash": "f2acb5131c8ee72c558c5e18655fd36e",
+    "mtime": 1792415650.6594882,
+    "ast_hash": "068101bbf1b31f7ebdf0a6536d16426b",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6045,8 +6045,8 @@
     "semantic_hash": ""
   },
   "src/components/browser-recipe-modal.tsx": {
-    "mtime": 1792414644.1262872,
-    "ast_hash": "1fe5d5f23c8d9a86839002d7495e45e0",
+    "mtime": 1792415484.9892697,
+    "ast_hash": "81816e4eea52cec621adabc4282f1f2f",
     "semantic_hash": ""
   },
   "src/lib/browser-recipe-engine.test.ts": {

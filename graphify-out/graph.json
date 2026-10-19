@@ -1264,8 +1264,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "package_dependencies_cheerio",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 150,
+      "community_name": "idb-keyval",
       "norm_label": "cheerio"
     },
     {
@@ -1275,8 +1275,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "cheerio",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 150,
+      "community_name": "idb-keyval",
       "norm_label": "cheerio"
     },
     {
@@ -1638,8 +1638,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "package_dependencies_remark_gfm",
-      "community": 1012,
-      "community_name": "remark-gfm",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "remark-gfm"
     },
     {
@@ -1649,8 +1649,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "remark_gfm",
-      "community": 1012,
-      "community_name": "remark-gfm",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "remark-gfm"
     },
     {
@@ -6612,8 +6612,8 @@
       "source_location": "L1231",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_author",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._has_author()"
     },
     {
@@ -6623,8 +6623,8 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_author_to_people",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_author_to_people()"
     },
     {
@@ -7129,8 +7129,8 @@
       "source_location": "L1232",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1232",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "check if an author already exists in people.xml."
     },
     {
@@ -7140,8 +7140,8 @@
       "source_location": "L1239",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1239",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add author to people.xml (called during initialization)."
     },
     {
@@ -11410,8 +11410,8 @@
       "source_location": "L1056",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_form_info",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 12,
+      "community_name": ".error",
       "norm_label": "form_info()"
     },
     {
@@ -11729,8 +11729,8 @@
       "source_location": "L2332",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_has_glyph",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "_has_glyph()"
     },
     {
@@ -11740,8 +11740,8 @@
       "source_location": "L2347",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_best_font_for_char",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "_best_font_for_char()"
     },
     {
@@ -11751,8 +11751,8 @@
       "source_location": "L2377",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_font_fallback",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "font_fallback()"
     },
     {
@@ -12213,8 +12213,8 @@
       "source_location": "L1057",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_1057",
-      "community": 90,
-      "community_name": "_gather_fields",
+      "community": 12,
+      "community_name": ".error",
       "norm_label": "return structured json describing every form field (pikepdf + check_fillable)."
     },
     {
@@ -12477,8 +12477,8 @@
       "source_location": "L2333",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_2333",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "check whether *font_name* has a real glyph outline for *code*."
     },
     {
@@ -12488,8 +12488,8 @@
       "source_location": "L2348",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_2348",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "return the best registered font for a single character *code*."
     },
     {
@@ -12499,8 +12499,8 @@
       "source_location": "L2378",
       "_origin": "ast",
       "id": "skills_pdf_scripts_pdf_rationale_2378",
-      "community": 150,
-      "community_name": "idb-keyval",
+      "community": 90,
+      "community_name": "_gather_fields",
       "norm_label": "wrap characters that *base_font* cannot render with ``<font>`` tags.      pres"
     },
     {
@@ -24246,7 +24246,7 @@
       "label": "BrowserRecipeModalProps",
       "file_type": "code",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L34",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "src_components_browser_recipe_modal_browserrecipemodalprops",
       "community": 14,
@@ -24257,7 +24257,7 @@
       "label": "BrowserRecipeModal()",
       "file_type": "code",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L42",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "src_components_browser_recipe_modal_browserrecipemodal",
       "community": 14,
@@ -135569,8 +135569,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "skills_market_research_reports_references_data_analysis_patterns",
-      "community": 882,
-      "community_name": "Research Sources",
+      "community": 712,
+      "community_name": "Data Analysis Patterns for Market Research",
       "norm_label": "data_analysis_patterns.md"
     },
     {
@@ -135580,8 +135580,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "skills_market_research_reports_references_data_analysis_patterns_data_analysis_patterns_for_market_research",
-      "community": 882,
-      "community_name": "Research Sources",
+      "community": 712,
+      "community_name": "Data Analysis Patterns for Market Research",
       "norm_label": "data analysis patterns for market research"
     },
     {
@@ -135756,8 +135756,8 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "skills_market_research_reports_references_data_analysis_patterns_pestle_analysis",
-      "community": 882,
-      "community_name": "Research Sources",
+      "community": 712,
+      "community_name": "Data Analysis Patterns for Market Research",
       "norm_label": "pestle analysis"
     },
     {
@@ -175746,7 +175746,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L383",
+      "source_location": "L414",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -209939,7 +209939,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L42",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -209950,7 +209950,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L34",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -209962,7 +209962,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -209974,7 +209974,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -209986,7 +209986,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -209998,7 +209998,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210010,7 +210010,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210022,7 +210022,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210034,7 +210034,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210046,7 +210046,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210058,7 +210058,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210070,7 +210070,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210082,7 +210082,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal",
@@ -210095,7 +210095,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L168",
+      "source_location": "L170",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -210107,7 +210107,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L136",
+      "source_location": "L138",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -210119,7 +210119,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L88",
+      "source_location": "L90",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -210131,7 +210131,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L154",
+      "source_location": "L156",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -210143,7 +210143,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L72",
+      "source_location": "L73",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -210155,7 +210155,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L144",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -210167,7 +210167,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/browser-recipe-modal.tsx",
-      "source_location": "L139",
+      "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_browser_recipe_modal_browserrecipemodal",
@@ -350788,5 +350788,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6dfc22f4c02a20e08556f454257b2d7dbb093e44"
+  "built_at_commit": "1379382cbd189cc9d99698b10bf65ca83353d715"
 }

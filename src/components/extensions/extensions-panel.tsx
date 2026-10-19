@@ -377,8 +377,25 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                             }`}
                           />
                           <div>
-                            <span className="text-xs font-medium text-[color:var(--c-fg-f3efe6)]">{server.name}</span>
-                            <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono truncate max-w-[160px]">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-medium text-[color:var(--c-fg-f3efe6)]">{server.name}</span>
+                              <span
+                                className={`text-[9px] font-mono px-1.5 py-0.2 rounded border ${
+                                  isConnected
+                                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                    : server.status === 'connecting'
+                                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                                    : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                                }`}
+                              >
+                                {isConnected
+                                  ? 'Online'
+                                  : server.status === 'connecting'
+                                  ? 'Conectando...'
+                                  : 'Offline'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-[color:var(--c-fg-8c867a)] font-mono truncate max-w-[170px] sm:max-w-[220px]">
                               {server.url}
                             </p>
                           </div>
@@ -437,11 +454,20 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                         )}
                       </div>
 
-                      {server.errorMessage && (
+                      {server.errorMessage ? (
                         <p className="text-[10px] text-rose-400 bg-rose-500/10 p-1.5 rounded border border-rose-500/20">
                           {server.errorMessage}
                         </p>
-                      )}
+                      ) : !isConnected && server.enabled ? (
+                        <div className="p-2 rounded-lg bg-zinc-900/80 border border-zinc-800 text-[10px] text-[color:var(--c-fg-8c867a)] leading-relaxed flex items-start gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                          <span>
+                            {server.url.includes('localhost')
+                              ? 'Ativado no Éden, mas o serviço local ainda não foi iniciado no computador. Inicie o container Docker para que a IA possa usar as ferramentas.'
+                              : 'Ativado no Éden, aguardando conexão com o servidor remoto.'}
+                          </span>
+                        </div>
+                      ) : null}
 
                       {/* Expanded Tools List */}
                       {isExpanded && server.tools.length > 0 && (

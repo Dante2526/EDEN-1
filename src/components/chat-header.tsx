@@ -16,7 +16,7 @@ import {
   Moon,
   Eye,
   Network,
-  Globe,
+  Workflow,
 } from 'lucide-react';
 import { ClaudeLogo } from './claude-logo';
 import { ActiveRepoState } from '../lib/types';
@@ -257,7 +257,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
             title="Abrir Robôs de Navegação e Scraping (Maxun No-Code)"
             className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-all duration-150 active:scale-[0.97] cursor-pointer select-none bg-[color:var(--c-bg-25231f)] hover:bg-[color:var(--c-bg-2e2a24)] text-zinc-800 dark:text-[color:var(--c-fg-c4bfb6)] hover:text-zinc-950 dark:hover:text-[color:var(--c-fg-f3efe6)] border-zinc-300/80 dark:border-[color:var(--c-bg-36332d)]"
           >
-            <Globe className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />
+            <Workflow className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />
             <span className="hidden sm:inline font-medium">Robôs</span>
           </button>
         )}
