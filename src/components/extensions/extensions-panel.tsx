@@ -21,6 +21,7 @@ import {
   Smartphone,
   Cloud,
   Bot,
+  Layout,
 } from 'lucide-react';
 import { Skill, McpServer, SkillIcon, KnowledgeFact, KnowledgeCategory } from '../../lib/types';
 
@@ -129,6 +130,8 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
         return <Cloud className="w-4 h-4 text-slate-300" />;
       case 'bot':
         return <Bot className="w-4 h-4 text-emerald-400" />;
+      case 'layout':
+        return <Layout className="w-4 h-4 text-amber-400" />;
       default:
         return <Blocks className="w-4 h-4 text-purple-400" />;
     }

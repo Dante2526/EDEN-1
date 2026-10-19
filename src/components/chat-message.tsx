@@ -29,11 +29,12 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
-import { Message } from '../lib/types';
+import { Message, CanvasPrototype } from '../lib/types';
 import { formatFileSize } from '../lib/utils';
 import { CodeBlock } from './code-block';
 import { SpeakButton } from './speak-button';
 import { ClaudeLogo } from './claude-logo';
+import { CanvasPrototypeCard } from './canvas-prototype-card';
 import { getFaviconUrl, extractDomainFromUrl, linkifyCitations } from '../lib/web-search-engine';
 
 interface ChatMessageProps {
@@ -47,6 +48,8 @@ interface ChatMessageProps {
   onTogglePlanMode?: () => void;
   onApproveRemoteAction?: (messageId: string) => void;
   onRejectRemoteAction?: (messageId: string) => void;
+  onApproveCanvasPrototype?: (prototype: CanvasPrototype) => void;
+  onRequestCanvasPrototypeChanges?: (prototype: CanvasPrototype) => void;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -204,6 +207,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onTogglePlanMode,
   onApproveRemoteAction,
   onRejectRemoteAction,
+  onApproveCanvasPrototype,
+  onRequestCanvasPrototypeChanges,
 }) => {
   const isUser = message.role === 'user';
   const [showReasoning, setShowReasoning] = useState(false);
@@ -240,6 +245,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
   // Remove tags de declaração [Habilidade: ...] do texto bruto (elas são renderizadas nas badges visuais)
   cleanContent = cleanContent.replace(/\[Habilidade(?:s)?(?:\s*Usada(?:s)?)?:\s*[^\]]+\]/gi, '').trimEnd();
+
+  // Remove tags de protótipo de canvas <eden_canvas>...</eden_canvas> (são renderizadas no CanvasPrototypeCard)
+  cleanContent = cleanContent.replace(/<eden_canvas(?:\s+[^>]*?)?>[\s\S]*?(?:<\/eden_canvas>|$)/gi, '').trimEnd();
 
   // Se houver fontes da web, converte citações numéricas [1], [2] em links diretos para as fontes
   if (message.webSources && message.webSources.length > 0) {
@@ -530,6 +538,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   if (tc.name === 'dispatch_subagent') return false;
                   if (tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph') return false;
                   if (tc.name === 'control_browser' || tc.name === 'browser_action') return false;
+                  if (tc.name === 'render_canvas_prototype') return false;
                   return true;
                 };
 
@@ -542,7 +551,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                 try {
                   parsedArgs = JSON.parse(tc.arguments || '{}');
                 } catch {}
-                const targetParam = parsedArgs.filename || parsedArgs.code || parsedArgs.url || parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
+                const targetParam = parsedArgs.title || parsedArgs.filename || parsedArgs.code || parsedArgs.url || parsedArgs.path || parsedArgs.query || parsedArgs.prompt || '';
 
                 if (tc.status === 'running') {
                   const isThisWebSearch = tc.name === 'web_search' || tc.name === 'search_web';
@@ -552,10 +561,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisMemory = tc.name === 'save_memory' || tc.name === 'forget_memory';
                   const isThisSubagent = tc.name === 'dispatch_subagent';
                   const isThisGraph = tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph';
-                  const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph
+                  const isThisCanvas = tc.name === 'render_canvas_prototype';
+                  const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph || isThisCanvas
                     ? 'weaving'
                     : 'composing';
-                  const orbLabel = isThisGraph
+                  const orbLabel = isThisCanvas
+                    ? 'Prototipando no Canvas…'
+                    : isThisGraph
                     ? 'Mapeando arquitetura…'
                     : isThisMemory
                     ? (tc.name === 'save_memory' ? 'Guardando na memória…' : 'Atualizando memória…')
@@ -568,7 +580,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Juntando as fontes…'
                     : 'Executando…';
-                  const actionTitle = isThisGraph
+                  const actionTitle = isThisCanvas
+                    ? 'Canvas Prototyping (Figma / v0)'
+                    : isThisGraph
                     ? 'Mapeando Arquitetura do Projeto'
                     : isThisSubagent
                     ? (parsedArgs.role ? `Subagente: ${parsedArgs.role}` : 'Subagente em Ação')
@@ -583,7 +597,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Pesquisando na Internet'
                     : 'Executando';
-                  const actionBadge = isThisGraph
+                  const actionBadge = isThisCanvas
+                    ? 'Tailwind Sandbox'
+                    : isThisGraph
                     ? 'Graphify (GraphRAG)'
                     : isThisSubagent
                     ? 'Orquestração Paralela'
@@ -600,7 +616,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : tc.name === 'edit_file'
                     ? 'Editando arquivo…'
                     : getToolActionLabel(tc.name);
-                  const actionDescription = isThisSubagent
+                  const actionDescription = isThisCanvas
+                    ? 'Renderizando interface interativa no Canvas antes de codificar…'
+                    : isThisSubagent
                     ? (parsedArgs.task || 'Executando subtarefa autônoma em segundo plano…')
                     : isThisDocGen
                     ? 'Compilando arquivo binário e preparando link para download no navegador…'
@@ -1325,6 +1343,29 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   );
                 }
 
+                if (tc.name === 'render_canvas_prototype') {
+                  const prototypeFromMsg = message.canvasPrototype;
+                  const prototypeData: CanvasPrototype = prototypeFromMsg || {
+                    id: tc.id || `canvas_${Date.now()}`,
+                    title: (parsedArgs?.title as string) || 'Protótipo Visual no Canvas',
+                    description: parsedArgs?.description as string | undefined,
+                    html: (parsedArgs?.html as string) || '',
+                    viewport: (parsedArgs?.viewport as 'mobile' | 'desktop') || 'mobile',
+                    status: 'pending',
+                    createdAt: Date.now(),
+                  };
+
+                  return (
+                    <div key={tc.id} className="w-full my-2">
+                      <CanvasPrototypeCard
+                        prototype={prototypeData}
+                        onApprove={onApproveCanvasPrototype}
+                        onRequestChanges={onRequestCanvasPrototypeChanges}
+                      />
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={tc.id}
@@ -1914,6 +1955,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Protótipo Visual no Canvas (quando gerado via tag <eden_canvas> ou carregado do histórico sem tool call direta) */}
+          {message.canvasPrototype && !message.toolCalls?.some((tc) => tc.name === 'render_canvas_prototype') && (
+            <div className="w-full mt-3">
+              <CanvasPrototypeCard
+                prototype={message.canvasPrototype}
+                onApprove={onApproveCanvasPrototype}
+                onRequestChanges={onRequestCanvasPrototypeChanges}
+              />
             </div>
           )}
 

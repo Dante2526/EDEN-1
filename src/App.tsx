@@ -18,6 +18,7 @@ import {
   KnowledgeCategory,
   SelectedPreviewElement,
   WebSourceItem,
+  CanvasPrototype,
 } from './lib/types';
 import {
   loadConversations,
@@ -106,6 +107,11 @@ import {
   parseWebSourcesFromSearchResults,
 } from './lib/web-search-engine';
 import { formatBrowserToolResultForModel } from './lib/browser-agent-engine';
+import {
+  sanitizePrototypeHtml,
+  extractCanvasPrototypeFromText,
+  formatCanvasToolResultForModel,
+} from './lib/canvas-prototype';
 import {
   PreviewConsoleLog,
   PreviewNetworkRequest,
@@ -848,8 +854,42 @@ const RUN_BROWSER_RECIPE_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
+const CANVAS_PROTOTYPE_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'render_canvas_prototype',
+    description:
+      'Gera um protótipo visual interativo no Canvas (estilo Claude Artifacts / v0 / Figma) ANTES de escrever código de produção de telas, páginas ou modais. ' +
+      'Permite ao usuário visualizar, testar o design interativo com Tailwind, alternar entre Mobile (360px-430px) e Desktop, e aprovar o layout com 1 clique antes da escrita dos arquivos. ' +
+      'O parâmetro `html` DEVE conter HTML5 autossuficiente com Tailwind CSS, componentes responsivos Mobile-First e interatividade com JavaScript puro.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: {
+          type: 'string',
+          description: 'Título do protótipo (ex: "Novo Dashboard Financeiro", "Modal de Checkout Mobile")',
+        },
+        description: {
+          type: 'string',
+          description: 'Explicação concisa do design, fluxo e ergonomia mobile adotada.',
+        },
+        html: {
+          type: 'string',
+          description: 'Código HTML completo e funcional com Tailwind CSS para o protótipo visual.',
+        },
+        viewport: {
+          type: 'string',
+          enum: ['mobile', 'desktop'],
+          description: 'Visualização padrão recomendada (padrão: "mobile").',
+        },
+      },
+      required: ['title', 'html'],
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -2360,6 +2400,46 @@ function AppContent() {
       }
     }
 
+    if (name === 'render_canvas_prototype') {
+      try {
+        const title = (args.title as string) || 'Protótipo Visual no Canvas';
+        const description = args.description as string | undefined;
+        const rawHtml = (args.html as string) || '';
+        const viewport = (args.viewport as 'mobile' | 'desktop') || 'mobile';
+
+        const prototypeData: CanvasPrototype = {
+          id: `canvas_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          title,
+          description,
+          html: sanitizePrototypeHtml(rawHtml),
+          viewport,
+          status: 'pending',
+          createdAt: Date.now(),
+        };
+
+        if (currentAssistantMessageIdRef.current) {
+          const targetMsgId = currentAssistantMessageIdRef.current;
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id !== activeId) return c;
+              return {
+                ...c,
+                messages: c.messages.map((m) => {
+                  if (m.id !== targetMsgId) return m;
+                  return { ...m, canvasPrototype: prototypeData };
+                }),
+              };
+            })
+          );
+        }
+
+        const formatted = formatCanvasToolResultForModel(title, viewport);
+        return { result: formatted };
+      } catch (err: any) {
+        return { result: `Erro ao renderizar protótipo no Canvas: ${err?.message || 'Falha desconhecida'}` };
+      }
+    }
+
     if (name === 'get_preview_devtools_logs') {
       try {
         const filter = args.filter || 'all';
@@ -3638,7 +3718,7 @@ function AppContent() {
         (chatActiveRepo && graphRagSummary ? `\n\n${graphRagSummary}` : '')
       : 'Você é o assistente Éden com ferramentas avançadas integradas.\n' +
         'REGRA SUPREMA DE CAPACIDADES DO ÉDEN (PROIBIDO RECUSAR OU DIZER QUE NÃO TEM FERRAMENTAS):\n' +
-        'Você É o assistente oficial do Éden e TEM TODAS as ferramentas reais integradas no chat: `control_browser` (Playwright / Browser-Use), `run_browser_recipe` e `list_browser_recipes` (Robôs de Scraping estilo Maxun), `get_preview_devtools_logs` (Chrome DevTools Console e Network do Live Preview), `run_terminal_command` (com curl, ffprobe, ffmpeg e playwright), `run_python` (Python 3 com internet e bs4), `fetch_url`, `web_search`, `generate_document` e `save_memory`.\n' +
+        'Você É o assistente oficial do Éden e TEM TODAS as ferramentas reais integradas no chat: `render_canvas_prototype` (Canvas de Prototipagem Visual Figma/v0), `control_browser` (Playwright / Browser-Use), `run_browser_recipe` e `list_browser_recipes` (Robôs de Scraping estilo Maxun), `get_preview_devtools_logs` (Chrome DevTools Console e Network do Live Preview), `run_terminal_command` (com curl, ffprobe, ffmpeg e playwright), `run_python` (Python 3 com internet e bs4), `fetch_url`, `web_search`, `generate_document` e `save_memory`.\n' +
         'É TERMINANTEMENTE PROIBIDO responder dizendo que "minhas ferramentas são fixas", "não tenho acesso ao Éden", "não posso rodar curl/ffmpeg/playwright" ou mandar o usuário rodar externamente. Se o usuário pedir para inspecionar com curl, testar mídia com ffprobe/ffmpeg, navegar na web ou rodar script, EMITA A CHAMADA DE FERRAMENTA IMEDIATAMENTE NA SUA RESPOSTA!\n' +
         'REGRA DE EXECUÇÃO IMEDIATA (ZERO PREÂMBULO - FERRAMENTAS REAIS):\n' +
         'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
@@ -3652,7 +3732,8 @@ function AppContent() {
         '6. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.\n' +
         '7. Controle Autônomo de Navegador (Playwright / Browser-Use): Você tem a ferramenta `control_browser` para navegar e interagir autonomamente com páginas da web em um navegador real. Você pode abrir URLs (navigate), clicar em botões e links (click), preencher campos e pesquisar (type), rolar a tela (scroll) e capturar screenshots. Ao receber os elementos interativos numerados da página (ex: [1] <button>, [2] <input>), use os seletores fornecidos para prosseguir autonomamente passo a passo até atingir o objetivo solicitado pelo usuário.\n' +
         '8. Chrome DevTools Integrado (get_preview_devtools_logs): Você pode inspecionar o console e a rede do Live Preview em tempo real para diagnosticar exceções de runtime, erros de renderização React, falhas de CSS/Tailwind ou endpoints com erro (404, 500). Use sempre que o usuário relatar que a página está em branco, não renderizou ou deu erro.\n' +
-        '9. Robôs de Navegação e Scraping Salvos (list_browser_recipes e run_browser_recipe): O usuário pode criar robôs visuais de automação no Éden (estilo Maxun). Use `list_browser_recipes` para descobrir quais robôs estão gravados e `run_browser_recipe` para disparar extrações de dados completas de forma confiável e obter os dados estruturados de volta no chat.';
+        '9. Robôs de Navegação e Scraping Salvos (list_browser_recipes e run_browser_recipe): O usuário pode criar robôs visuais de automação no Éden (estilo Maxun). Use `list_browser_recipes` para descobrir quais robôs estão gravados e `run_browser_recipe` para disparar extrações de dados completas de forma confiável e obter os dados estruturados de volta no chat.\n' +
+        '10. Canvas Prototyping (render_canvas_prototype): Quando a skill de prototipagem visual estiver ativa e a solicitação envolver criar uma tela nova, página, modal, drawer, dashboard ou redesign de interface, você DEVE gerar PRIMEIRO o protótipo visual interativo via `render_canvas_prototype` (ou tag `<eden_canvas title="..." viewport="mobile|desktop">...html...</eden_canvas>`) com HTML e Tailwind CSS. Não altere arquivos do projeto antes que o usuário aprove o protótipo visual no Canvas.';
 
     const planPrompt = activePlan
       ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject))
@@ -4491,6 +4572,27 @@ function AppContent() {
         }
       }
 
+      // Suporte a protótipo emitido via tag textual <eden_canvas> caso o modelo não use function call
+      if (streamingAccumulatedTextRef.current) {
+        const textualPrototype = extractCanvasPrototypeFromText(streamingAccumulatedTextRef.current);
+        if (textualPrototype) {
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id !== currentConvId) return c;
+              return {
+                ...c,
+                messages: c.messages.map((m) => {
+                  if (m.id === assistantMessageId && !m.canvasPrototype) {
+                    return { ...m, canvasPrototype: textualPrototype };
+                  }
+                  return m;
+                }),
+              };
+            })
+          );
+        }
+      }
+
       // Aviso se atingiu o limite de segurança de iterações (45 rodadas automáticas)
       if (loopCount >= MAX_TOOL_ITERATIONS && hasToolCallsToProcess) {
         setConversations((prev) =>
@@ -4826,6 +4928,63 @@ function AppContent() {
     );
   }, [isStreaming, handleSendMessage]);
 
+  // Handlers para o Canvas Prototyping (Aprovar design e liberar codificação / Pedir ajustes)
+  const handleApproveCanvasPrototype = useCallback(
+    (prototype: CanvasPrototype) => {
+      if (isStreaming) return;
+      const targetConvId = activeId;
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== targetConvId) return c;
+          return {
+            ...c,
+            messages: c.messages.map((m) => {
+              if (
+                m.canvasPrototype?.id === prototype.id ||
+                m.canvasPrototype?.title === prototype.title
+              ) {
+                return {
+                  ...m,
+                  canvasPrototype: { ...m.canvasPrototype, status: 'approved' as const },
+                };
+              }
+              return m;
+            }),
+          };
+        })
+      );
+      handleSendMessage(
+        `⚡ Design do protótipo "${prototype.title}" APROVADO! Pode implementar o código final deste design no projeto agora via patch_file ou edit_file.`,
+        [],
+        [],
+        false
+      );
+    },
+    [activeId, isStreaming, handleSendMessage]
+  );
+
+  const handleRequestCanvasPrototypeChanges = useCallback(
+    (prototype: CanvasPrototype) => {
+      const inputEl = document.querySelector('textarea') as HTMLTextAreaElement | null;
+      const defaultText = `Quero ajustar o seguinte no protótipo "${prototype.title}": `;
+      if (inputEl) {
+        const nativeSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLTextAreaElement.prototype,
+          'value'
+        )?.set;
+        if (nativeSetter) {
+          nativeSetter.call(inputEl, defaultText);
+        } else {
+          inputEl.value = defaultText;
+        }
+        inputEl.focus();
+        inputEl.setSelectionRange(defaultText.length, defaultText.length);
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    },
+    []
+  );
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bom dia';
@@ -5114,6 +5273,8 @@ function AppContent() {
                       onApproveRemoteAction={handleApproveRemoteAction}
                       onRejectRemoteAction={handleRejectRemoteAction}
                       onTogglePlanMode={handleTogglePlanMode}
+                      onApproveCanvasPrototype={handleApproveCanvasPrototype}
+                      onRequestCanvasPrototypeChanges={handleRequestCanvasPrototypeChanges}
                     />
                   </React.Fragment>
                 );

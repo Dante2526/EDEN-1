@@ -2028,3 +2028,33 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
   - `npm run build`: bundle e worker Cloudflare Pages compilados em 2.20s.
   - `graphify update .`: grafo sincronizado com 14.851 nós e 16.759 arestas.
+## 118. Canvas Prototyping (Figma / Claude Canvas / v0) Ativo por Padrão
+- **Solicitação do Usuário:** *"Eu queria implantar uma parada tanto aqui quanto lá no Eden para os modelos de lá também usarem. É uma coisa que o Claude usa, Cloud Canvas, que é prototipar, tipo Figma. Então, antes de criar a tela, porque no caso a pessoa o modelo está programando e tal, e eu só vou saber como fica a tela, o designer, quando fica pronto. Então seria o antes, né, o canvas. Aí eu mudaria lá antes de criar código. Acho que até economizaria token."* + *"Coloca como skill e já deixa ativada por padrão. Força quando a skill estiver ativada ela usar, desativada não precisa. E sim, vai ser a opção A."*
+- **Implementações Realizadas:**
+  1. **Configuração Global e Regras no Antigravity:**
+     - Criada a skill `~/.gemini/config/skills/canvas-prototyping/SKILL.md` orientando o agente a gerar protótipos interativos com HTML + Tailwind CSS antes de criar ou modificar telas em qualquer projeto.
+     - Adicionada regra `.agents/rules/canvas-prototyping.md` estipulando a obrigatoriedade do Canvas quando a skill estiver ativa.
+  2. **Motor TDD no Éden (`src/lib/canvas-prototype.ts` + `src/lib/canvas-prototype.test.ts`):**
+     - Interface `CanvasPrototype` com viewport (`mobile` | `desktop`), status (`pending` | `approved` | `rejected`), título, descrição e HTML.
+     - Função `sanitizePrototypeHtml`: isolamento sandbox com meta viewport mobile-first, Tailwind Play CDN e injeção resiliente de `<head>`.
+     - Função `extractCanvasPrototypeFromText`: suporte híbrido para extração de tags textuais `<eden_canvas>` com atributos durante o streaming.
+     - Suíte TDD com 7 novos testes unitários (159/159 testes passando na suíte completa).
+  3. **Skill Built-in no Storage do Éden (`src/lib/storage.ts`, `src/components/extensions/extensions-panel.tsx`):**
+     - Registrada a skill nativa `canvas-prototyping` em `BUILTIN_SKILLS` com `enabled: true`, ícone `'layout'` e auto-migração no IndexedDB.
+     - Suporte ao ícone `Layout` nos cards do Painel de Extensões.
+  4. **Componente Visual Interativo (`src/components/canvas-prototype-card.tsx`):**
+     - Moldura mobile-first (375px) com alternador Desktop em 1 clique.
+     - Sandbox seguro com `sandbox="allow-scripts allow-forms allow-modals"` (sem same-origin, origem nula protegida contra ataques ao DOM do Éden).
+     - Botões de ação com feedback de 1 clique: *"⚡ Aprovar e Gerar Código"* (marca status como aprovado e instrui a IA a codificar) e *"💬 Pedir Ajustes"* (preenche o campo de mensagem com texto padrão via setter nativo).
+     - Abertura protegida em nova aba com `noopener,noreferrer` e revogação de URL Blob.
+  5. **Integração no Chat e Handlers da IA (`src/App.tsx`, `src/components/chat-message.tsx`):**
+     - Ferramenta `render_canvas_prototype` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Diretiva de prototipagem visual obrigatória injetada no System Prompt.
+     - ThinkingOrb dinâmico no modo `weaving` com badge *"Canvas Prototyping (Figma / v0)"* e *"Tailwind Sandbox"*.
+     - Remoção limpa das tags `<eden_canvas>` do texto markdown para prevenir vazamento de HTML bruto na mensagem.
+- **Evidências de Verificação:**
+  - `npm test`: **159/159 testes passando em 36 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle compilado em 2.65s e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerado com sucesso.
+  - `graphify update .`: grafo de conhecimento sincronizado com 14.865 nós, 16.795 arestas e 1.013 comunidades.
+  - Code Review aprovado com incorporação de todas as recomendações de segurança e robustez.

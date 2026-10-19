@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792414686.2911794,
-    "ast_hash": "d74051f597e1f5e27a593a873e169dcc",
+    "mtime": 1792421225.7566676,
+    "ast_hash": "d72cb4867c03c8988e453a2051d06117",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
-    "mtime": 1792411562.3887858,
-    "ast_hash": "d23065ccb7b9899fc780efc338b7de9e",
+    "mtime": 1792421164.4320934,
+    "ast_hash": "16b83a0a0dd026a58644953fc9b6a637",
     "semantic_hash": ""
   },
   "src/components/chat-sidebar.tsx": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": "8921224c171256f9c22792a47f66e52e"
   },
   "src/components/extensions/extensions-panel.tsx": {
-    "mtime": 1792417959.8263469,
-    "ast_hash": "9ae7855bf2c7a8a45db304e153240214",
+    "mtime": 1792420055.3962324,
+    "ast_hash": "2ad4d0aa701005c6515954e097964049",
     "semantic_hash": ""
   },
   "src/components/github/create-repo-modal.tsx": {
@@ -1375,8 +1375,8 @@
     "semantic_hash": "123089b80edf7590952dbee86c167693"
   },
   "src/lib/storage.ts": {
-    "mtime": 1792417262.9000888,
-    "ast_hash": "980de4fca22720fb81fd7578f3b9779b",
+    "mtime": 1792420025.8788917,
+    "ast_hash": "148109a52b2848ab0787a188d4a0eaad",
     "semantic_hash": ""
   },
   "src/lib/streaming-speech-queue.test.ts": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792407038.1050003,
-    "ast_hash": "cd34cc27f040bad0074fcd41fbbaa3f3",
+    "mtime": 1792419947.2949183,
+    "ast_hash": "66f5ea4af73e531866dc03c4bfbf3e70",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792417415.1197214,
-    "ast_hash": "71afa8febac93bd0cf1c3582fa1113ed",
+    "mtime": 1792418193.2737882,
+    "ast_hash": "7bf4199c2185a810ca02d80e5f0dd52d",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6062,6 +6062,26 @@
   ".agents/rules/mobile-first.md": {
     "mtime": 1792416065.4279432,
     "ast_hash": "848b204d3b2dbc0f2668aa670a6b63d8",
+    "semantic_hash": ""
+  },
+  "src/components/canvas-prototype-card.tsx": {
+    "mtime": 1792421179.6824756,
+    "ast_hash": "8bdfaee2f6eb28f04718cb77ff3adf1f",
+    "semantic_hash": ""
+  },
+  "src/lib/canvas-prototype.test.ts": {
+    "mtime": 1792421207.2932434,
+    "ast_hash": "8570b96fd7d574032e57e1d8a6737d00",
+    "semantic_hash": ""
+  },
+  "src/lib/canvas-prototype.ts": {
+    "mtime": 1792421193.053554,
+    "ast_hash": "35fa69711a7ccc787d83d730f2b9f7c5",
+    "semantic_hash": ""
+  },
+  ".agents/rules/canvas-prototyping.md": {
+    "mtime": 1792419927.199865,
+    "ast_hash": "e26ea1bdb3922a089a25c710adca0995",
     "semantic_hash": ""
   }
 }

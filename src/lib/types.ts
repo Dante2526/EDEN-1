@@ -183,6 +183,17 @@ export interface Message {
     };
   };
   browserResult?: BrowserActionResult;
+  canvasPrototype?: CanvasPrototype;
+}
+
+export interface CanvasPrototype {
+  id: string;
+  title: string;
+  description?: string;
+  html: string;
+  viewport?: 'mobile' | 'desktop';
+  status?: 'pending' | 'approved' | 'rejected';
+  createdAt?: number;
 }
 
 export interface WebSourceItem {
@@ -233,7 +244,7 @@ export interface AppSettings {
   browserEndpoint?: string;
 }
 
-export type SkillIcon = 'flask' | 'bug' | 'shield' | 'zap' | 'sparkles' | 'file-text' | 'git-commit' | 'smartphone' | 'cloud' | 'bot';
+export type SkillIcon = 'flask' | 'bug' | 'shield' | 'zap' | 'sparkles' | 'file-text' | 'git-commit' | 'smartphone' | 'cloud' | 'bot' | 'layout';
 
 export interface Skill {
   id: string;

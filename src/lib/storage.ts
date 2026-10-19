@@ -145,6 +145,20 @@ export const BUILTIN_SKILLS: Skill[] = [
       '3. Papéis Especializados: Atribua nomes claros aos papéis dos subagentes (ex: "Pesquisador Context7", "Auditor de Código", "Especialista em Banco", "Arquiteto de Frontend").\n' +
       '4. Consolidação: Colete os relatórios dos subagentes executados, sintetize as conclusões e entregue a resposta final unificada, coesa e completa para o usuário.',
   },
+  {
+    id: 'canvas-prototyping',
+    name: 'Canvas Prototyping (Figma / v0)',
+    description: 'Prototipa telas e interfaces no Canvas interativo antes de codificar, economizando tokens e permitindo ajustes visuais prévios.',
+    icon: 'layout',
+    enabled: true,
+    isBuiltin: true,
+    systemPrompt:
+      'Você possui a habilidade mandatória de Prototipagem Visual no Canvas (`render_canvas_prototype`):\n' +
+      '1. REGRA ABSOLUTA DE PROTOTIPAGEM ANTES DO CÓDIGO: Sempre que o usuário solicitar uma tela nova, página, modal, drawer, dashboard ou redesign de interface, você DEVE gerar PRIMEIRO um protótipo visual interativo via ferramenta `render_canvas_prototype` (ou tag `<eden_canvas title="..." viewport="mobile|desktop">...html...</eden_canvas>`) antes de alterar qualquer arquivo de código com `patch_file` ou `edit_file`.\n' +
+      '2. Economia de Tokens e Validação: Não gere centenas de linhas de código de produção no escuro. Apresente a tela pronta no Canvas com botões clicáveis, cards e estilo Tailwind para o usuário testar e aprovar visualmente.\n' +
+      '3. Padrão Mobile-First: O HTML do protótipo DEVE ser projetado para telas móveis (360px a 430px) com alternador opcional para desktop, alvos de toque ergonômicos (mínimo 44px) e zero overflow horizontal.\n' +
+      '4. Aguarde Aprovação: Após exibir o protótipo no Canvas, pare a execução do turno e aguarde o usuário clicar em "Aprovar e Gerar Código" ou solicitar ajustes visuais.',
+  },
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -256,6 +270,9 @@ export async function loadSkills(): Promise<Skill[]> {
     const existingIds = new Set(migrated.map((s) => s.id));
     const missingBuiltins = BUILTIN_SKILLS.filter((b) => !existingIds.has(b.id));
     const result = [...migrated, ...missingBuiltins];
+    if (missingBuiltins.length > 0) {
+      await saveSkills(result);
+    }
 
     // Se as habilidades de engenharia essenciais estiverem desativadas por estado legado, ativa-as compulsoriamente
     const hasAnyCoreEnabled = result.some(
