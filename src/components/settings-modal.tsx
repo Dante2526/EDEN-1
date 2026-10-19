@@ -19,6 +19,7 @@ import {
   Loader2,
   LogOut,
   Zap,
+  Globe,
 } from 'lucide-react';
 import { AppSettings, Conversation, ModelId, ReasoningEffort } from '../lib/types';
 import { exportConversationsToJSON } from '../lib/storage';
@@ -349,6 +350,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
               </div>
             )}
+          </div>
+
+          {/* Navegador Autônomo & Playwright (Browserless.io) */}
+          <div className="p-4 rounded-xl border border-[color:var(--c-bg-3b3831)] bg-[color:var(--c-bg-1d1b18)] text-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-medium text-[color:var(--c-fg-f3efe6)]">
+                <Globe className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs sm:text-sm">Navegador Autônomo (Playwright / Browserless)</span>
+              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-medium ${
+                  settings.browserlessApiKey
+                    ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+                    : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                }`}
+              >
+                {settings.browserlessApiKey ? 'Browserless Conectado' : 'Fallback Headless Gratuito'}
+              </span>
+            </div>
+
+            <p className="text-[color:var(--c-fg-a39d93)] text-[11px] leading-relaxed">
+              Permite que os modelos naveguem, cliquem em botões, preencham campos e capturem screenshots de páginas da web autonomamente.
+              O Éden já inclui o motor Chromium gratuito ativo por padrão. Se possuir uma chave do{' '}
+              <a
+                href="https://browserless.io"
+                target="_blank"
+                rel="noreferrer"
+                className="text-cyan-400 underline inline-flex items-center gap-0.5"
+              >
+                Browserless.io <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+              , insira abaixo para sessões Puppeteer completas:
+            </p>
+
+            <div className="space-y-1.5">
+              <input
+                type="password"
+                placeholder="Token do Browserless (opcional, ex: 8a7b6c...)"
+                value={settings.browserlessApiKey || ''}
+                onChange={(e) => onUpdateSettings({ browserlessApiKey: e.target.value })}
+                className="w-full bg-[color:var(--c-bg-181614)] border border-[color:var(--c-bg-2b2924)] rounded-lg px-2.5 py-1.5 text-xs text-[color:var(--c-fg-a39d93)] focus:border-cyan-500 focus:outline-none font-mono"
+              />
+            </div>
           </div>
 
           {/* Grouped Settings Card - Claude Style */}

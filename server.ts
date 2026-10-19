@@ -13,6 +13,7 @@ import fetchUrlHandler from './api/fetch-url';
 import downloadHandler from './api/download';
 import transcribeHandler from './api/transcribe';
 import deploymentsHandler from './api/deployments';
+import browserHandler from './api/browser';
 import { Env } from './lib/server/env';
 
 dotenv.config({ path: '.env.local' });
@@ -137,6 +138,7 @@ app.all('/api/fetch-url', adaptWebHandler(fetchUrlHandler));
 app.all('/api/download', adaptWebHandler(downloadHandler));
 app.all('/api/transcribe', adaptWebHandler(transcribeHandler));
 app.all('/api/deployments', adaptWebHandler(deploymentsHandler));
+app.all('/api/browser', adaptWebHandler(browserHandler));
 
 // Fallback explícito para rotas de API inexistentes (evita retornar HTML do SPA)
 app.all('/api/*', (req, res) => {

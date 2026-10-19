@@ -58,6 +58,10 @@ export interface Env {
   // ====== CF Pages: binding nativo Workers AI (env.AI) ======
   AI?: { run: (model: string, input: any) => Promise<any> };
 
+  // ====== Navegador Remoto / Playwright (Browserless.io / Chromium Headless) ======
+  BROWSERLESS_API_KEY?: string;
+  BROWSER_ENDPOINT?: string;
+
   // ====== CF Pages: KV namespaces opcionais (futuro) ======
   // Ex: SYNAP_KV?: KVNamespace;
 }
@@ -94,6 +98,8 @@ export function getEnv(envArg?: Env): Env {
         KV_REST_API_URL: process.env.KV_REST_API_URL,
         KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
         VITE_API_SECRET: process.env.VITE_API_SECRET,
+        BROWSERLESS_API_KEY: process.env.BROWSERLESS_API_KEY,
+        BROWSER_ENDPOINT: process.env.BROWSER_ENDPOINT,
       };
     }
   } catch {

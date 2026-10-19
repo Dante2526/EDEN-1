@@ -105,6 +105,7 @@ import {
   buildLiveWebPrompt,
   parseWebSourcesFromSearchResults,
 } from './lib/web-search-engine';
+import { formatBrowserToolResultForModel } from './lib/browser-agent-engine';
 
 const MODEL_STORAGE_KEY = 'nim_chat_selected_model';
 const REASONING_STORAGE_KEY = 'nim_chat_reasoning_effort';
@@ -723,8 +724,60 @@ const REMOTE_DEPLOY_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
+const BROWSER_CONTROL_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'control_browser',
+    description:
+      'Navega e interage autonomamente com páginas da web em um navegador real (estilo Playwright / Browser-Use). ' +
+      'Permite navegar para URLs (action: "navigate"), clicar em botões/links (action: "click"), digitar em campos (action: "type"), ' +
+      'pressionar teclas (action: "press_key"), rolar páginas (action: "scroll"), aguardar (action: "wait") ou capturar screenshot (action: "screenshot"). ' +
+      'Retorna título, URL, resumo de conteúdo, elementos interativos numerados e screenshot da tela.',
+    parameters: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['navigate', 'click', 'type', 'press_key', 'scroll', 'wait', 'screenshot'],
+          description: 'Ação a ser executada no navegador.',
+        },
+        url: {
+          type: 'string',
+          description: 'URL completa para navegar (obrigatório se action="navigate", ex: "https://github.com/login").',
+        },
+        selector: {
+          type: 'string',
+          description: 'Seletor CSS ou ID do elemento para clicar ou digitar (ex: "#login_field", "button.submit").',
+        },
+        text: {
+          type: 'string',
+          description: 'Texto a ser digitado no campo (obrigatório se action="type").',
+        },
+        key: {
+          type: 'string',
+          description: 'Tecla a pressionar (se action="press_key", ex: "Enter", "Tab", "Escape").',
+        },
+        scroll_direction: {
+          type: 'string',
+          enum: ['down', 'up'],
+          description: 'Direção da rolagem (se action="scroll", padrão: "down").',
+        },
+        scroll_amount: {
+          type: 'number',
+          description: 'Quantidade de pixels para rolar (padrão: 500).',
+        },
+        wait_ms: {
+          type: 'number',
+          description: 'Tempo de espera em milissegundos após a ação (padrão: 1000).',
+        },
+      },
+      required: ['action'],
+    },
+  },
+};
+
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -2160,6 +2213,52 @@ function AppContent() {
       }
     }
 
+    if (name === 'control_browser' || name === 'browser_action') {
+      try {
+        const res = await fetch('/api/browser', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
+          body: JSON.stringify({
+            action: args.action,
+            url: args.url,
+            selector: args.selector,
+            text: args.text,
+            key: args.key,
+            scrollDirection: args.scroll_direction || args.scrollDirection,
+            scrollAmount: args.scroll_amount || args.scrollAmount,
+            waitMs: args.wait_ms || args.waitMs,
+            apiKey: settings.browserlessApiKey,
+            browserEndpoint: settings.browserEndpoint,
+          }),
+        });
+
+        const browserData = await res.json();
+        if (browserData && currentAssistantMessageIdRef.current) {
+          const targetMsgId = currentAssistantMessageIdRef.current;
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id !== activeId) return c;
+              return {
+                ...c,
+                messages: c.messages.map((m) => {
+                  if (m.id !== targetMsgId) return m;
+                  return { ...m, browserResult: browserData };
+                }),
+              };
+            })
+          );
+        }
+
+        const formatted = formatBrowserToolResultForModel(browserData);
+        return { result: formatted };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao executar ação no navegador' }) };
+      }
+    }
+
     if (name === 'generate_image') {
       try {
         const prompt = args.prompt || '';
@@ -3367,7 +3466,8 @@ function AppContent() {
         '3. Execução de Python: Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Use-a sempre que precisar fazer cálculos matemáticos exatos, simulações, testar algoritmos, analisar dados ou quando o usuário pedir para rodar código Python. Ela opera em sandbox no navegador e NÃO tem acesso aos arquivos do repositório GitHub nem ao disco local; NUNCA use Python para tentar manipular ou decodificar arquivos de código.\n' +
         '4. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +
         '5. Base de Conhecimento e Memória Persistente: Você tem as ferramentas `save_memory` e `forget_memory`. Sempre que o usuário mencionar preferências permanentes (ex: estilo de comunicação, diretrizes de código), stack do projeto (ex: Tailwind v4, Vercel Hobby, Node 24) ou regras permanentes, SALVE imediatamente com `save_memory`. Esses fatos são mantidos entre conversas no navegador do usuário.\n' +
-        '6. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.';
+        '6. Subagentes Autônomos: Você tem a ferramenta `dispatch_subagent(role, task, context)`. Sempre que uma tarefa for complexa, multifacetada ou exigir pesquisas e análises paralelas (ex: pesquisar docs técnicas no Context7, auditar código, inspecionar regras), DISPARE subagentes especializados em segundo plano. Consolide os relatórios retornados para entregar uma resposta final completa ao usuário.\n' +
+        '7. Controle Autônomo de Navegador (Playwright / Browser-Use): Você tem a ferramenta `control_browser` para navegar e interagir autonomamente com páginas da web em um navegador real. Você pode abrir URLs (navigate), clicar em botões e links (click), preencher campos e pesquisar (type), rolar a tela (scroll) e capturar screenshots. Ao receber os elementos interativos numerados da página (ex: [1] <button>, [2] <input>), use os seletores fornecidos para prosseguir autonomamente passo a passo até atingir o objetivo solicitado pelo usuário.';
 
     const planPrompt = activePlan
       ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject))

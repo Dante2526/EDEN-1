@@ -1,3 +1,5 @@
+import type { BrowserActionResult } from './browser-agent-engine';
+
 export type Role = 'user' | 'assistant' | 'system' | 'tool';
 
 // ====================================================================
@@ -180,6 +182,7 @@ export interface Message {
       repo?: string;
     };
   };
+  browserResult?: BrowserActionResult;
 }
 
 export interface WebSourceItem {
@@ -226,6 +229,8 @@ export interface AppSettings {
   darkMode: boolean;
   speechVoice?: string;
   speechRate?: number;
+  browserlessApiKey?: string;
+  browserEndpoint?: string;
 }
 
 export type SkillIcon = 'flask' | 'bug' | 'shield' | 'zap' | 'sparkles' | 'file-text' | 'git-commit' | 'smartphone' | 'cloud' | 'bot';

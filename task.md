@@ -1,7 +1,8 @@
-# Tarefa: Modo "🌐 Web ao Vivo" Estilo Perplexity (100% Gratuito)
+# Tarefa: Navegador Autônomo para Modelos de IA (Browser Control)
 
-- [x] **Passo 1 (Tipos & TDD Engine):** Criar `src/lib/web-search-engine.ts` e `src/lib/web-search-engine.test.ts` para extração de domínios, montagem de prompts e formatação de citações `[1]`
-- [x] **Passo 2 (UI Toggle no ChatInput):** Adicionar botão `Web ON / OFF` (ícone `Globe`) dentro da caixa de digitação, ao lado do botão de anexar arquivos (`Paperclip`)
-- [x] **Passo 3 (Pré-busca e Injeção no Chat):** Integrar pré-busca instantânea e anexação de `webSources` em `src/App.tsx`
-- [x] **Passo 4 (Cards de Fontes no ChatMessage):** Renderizar carrossel de fontes estilo Perplexity e citações clicáveis em `src/components/chat-message.tsx`
-- [x] **Passo 5 (Verificação & Review):** Executar `npm test`, `npm run lint`, `npm run build`, `graphify update .` e documentar na Seção 110 do `walkthrough.md`
+- [x] **Tarefa 1 (Motor TDD & Testes):** Criar `src/lib/browser-agent-engine.ts` e `src/lib/browser-agent-engine.test.ts` (gerador de script puppeteer, parse de elementos interativos e formatação de saída)
+- [x] **Tarefa 2 (Backend Serverless API):** Criar `api/browser.ts` e registrar rotas em `_worker.ts` e `server.ts`
+- [x] **Tarefa 3 (Tipos & Settings):** Atualizar `src/lib/types.ts` com tipos de browser action e campo de chave em `AppSettings` + modal de configurações
+- [x] **Tarefa 4 (Tool & Prompt dos Modelos):** Registrar `control_browser` em `src/App.tsx` e configurar loop autônomo com diretrizes no prompt
+- [x] **Tarefa 5 (UI de Visualização no Chat):** Exibir card de ação do navegador com screenshot e miniatura expansível em `src/components/chat-message.tsx`
+- [x] **Tarefa 6 (Verificação & Review):** Rodar testes unitários, lint, build e atualizar `walkthrough.md`

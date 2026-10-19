@@ -1867,3 +1867,28 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run lint` (`tsc --noEmit`): **0 erros**.
   - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker compilados com 0 erros em 2.63s.
   - `graphify update .`: grafo de conhecimento atualizado com 14.781 nós e 16.583 arestas.
+
+## 111. Controle Autônomo de Navegador para Modelos de IA (Playwright / Browser-Use)
+- **Solicitação do Usuário:** *"ja temos o playwright para meus modelos conseguirem controlar o navegador sozinho?"* -> Escolhida a Opção 1 (Integração em nuvem com Browserless.io / Puppeteer com fallback gratuito e feedback visual de screenshots).
+- **Implementações Realizadas:**
+  1. **Motor de Ações de Navegador TDD (`src/lib/browser-agent-engine.ts` + `src/lib/browser-agent-engine.test.ts`):**
+     - `buildPuppeteerFunctionScript`: gera scripts dinâmicos de automação para executar `navigate`, `click`, `type`, `press_key`, `scroll`, `wait` e `screenshot`.
+     - `parseInteractiveElementsFromHtml`: parseia o DOM renderizado e extrai lista estruturada de botões, links e inputs numerados (`[1] Botão 'Entrar'`, `[2] Input 'Pesquisar'`) com seletores CSS amigáveis.
+     - `formatBrowserToolResultForModel`: formata o resultado em Markdown de alta densidade sem poluir a janela de contexto do LLM.
+  2. **Backend Serverless API (`api/browser.ts`, `_worker.ts`, `server.ts`, `lib/server/env.ts`):**
+     - Rota POST `/api/browser` compatível com Cloudflare Pages Edge Worker e Node local.
+     - Suporte transparente a token do Browserless.io (`BROWSERLESS_API_KEY` ou `browserEndpoint` customizado).
+     - Fallback Edge sem chave: usa renderização Chromium Headless e parse de DOM interativo para nunca falhar mesmo quando o usuário não tiver token configurado.
+  3. **Ferramenta `control_browser` e Diretrizes de Navegação Autônoma (`src/App.tsx`, `src/lib/types.ts`):**
+     - Registrada em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Injetada regra 7 no System Prompt instruindo os modelos a navegar passo a passo guiados pelos elementos interativos da página.
+     - `executeGitHubTool`: despacha ações para `/api/browser` e anexa `browserResult` na mensagem do assistente.
+  4. **Feedback Visual no Chat e Configurações (`src/components/chat-message.tsx`, `src/components/settings-modal.tsx`):**
+     - Card ciano de "Navegador Autônomo" com URL, status da ação e miniatura de screenshot capturada com zoom/lightbox.
+     - Campo em Configurações para salvar token opcional do Browserless.io.
+- **Evidências de Verificação:**
+  - `npm test`: **136/136 testes unitários passando em 35 suítes** (100% verde).
+  - `npm run lint` (`tsc --noEmit`): **0 erros**.
+  - `npm run build`: bundle de produção Vite e Cloudflare Pages Worker (`dist/_worker.js`, 168.5 kB) compilados com sucesso em 2.32s.
+  - `graphify update .`: grafo atualizado com 14.795 nós e 16.625 arestas.
+

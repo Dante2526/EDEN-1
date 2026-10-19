@@ -286,6 +286,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
         return 'Juntando as fontes…';
       case 'fetch_url':
         return 'Lendo página…';
+      case 'control_browser':
+      case 'browser_action':
+        return 'Navegando na página…';
       case 'patch_file':
         return 'Aplicando patch cirúrgico…';
       case 'edit_file':
@@ -526,6 +529,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   if (tc.name === 'save_memory' || tc.name === 'forget_memory') return false;
                   if (tc.name === 'dispatch_subagent') return false;
                   if (tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph') return false;
+                  if (tc.name === 'control_browser' || tc.name === 'browser_action') return false;
                   return true;
                 };
 
@@ -1147,6 +1151,80 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           <span>Abrir Mapa</span>
                         </button>
                       )}
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'control_browser' || tc.name === 'browser_action') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = JSON.parse(tc.result || '{}');
+                  } catch {}
+                  const browserData = message.browserResult || parsedResult;
+                  const actionType = parsedArgs?.action || browserData?.action || 'navigate';
+                  const actionUrl = browserData?.currentUrl || parsedArgs?.url || '';
+                  const actionTitle = browserData?.title || '';
+                  const actionDesc = browserData?.actionDescription || `Ação: ${actionType}`;
+                  const screenshot = browserData?.screenshotBase64;
+                  const hasError = tc.status === 'error' || (browserData && browserData.success === false);
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="synap-card overflow-hidden my-2 text-xs w-full border-cyan-500/30 bg-[color:var(--c-bg-192022)]"
+                    >
+                      <div className="flex items-center justify-between px-3.5 py-2.5 bg-[color:var(--c-bg-161d1f)] border-b border-cyan-500/20">
+                        <div className="flex items-center gap-2 truncate">
+                          <Globe className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                          <span className="font-semibold text-cyan-200">Navegador Autônomo</span>
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-mono uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                            {actionType}
+                          </span>
+                          {actionUrl && (
+                            <span className="text-[11px] text-[color:var(--c-fg-a39d93)] truncate max-w-[200px] sm:max-w-[340px]">
+                              {actionUrl}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {hasError ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                              erro
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                              sucesso
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2 text-[11px]">
+                          <span className="text-[color:var(--c-fg-f3efe6)] font-medium">
+                            {actionDesc}
+                          </span>
+                          {actionTitle && (
+                            <span className="text-[10px] text-[color:var(--c-fg-8c867a)] truncate max-w-[240px]">
+                              {actionTitle}
+                            </span>
+                          )}
+                        </div>
+
+                        {screenshot && (
+                          <div className="relative group rounded-xl overflow-hidden border border-cyan-500/20 bg-black/60 max-h-60 flex justify-center">
+                            <img
+                              src={screenshot}
+                              alt="Screenshot da página capturada pelo navegador"
+                              className="w-full object-cover object-top hover:object-contain transition-all duration-200 cursor-zoom-in"
+                              onClick={() => window.open(screenshot, '_blank')}
+                            />
+                            <div className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-xs text-[10px] text-cyan-300 px-2 py-0.5 rounded-md border border-cyan-500/30 font-mono">
+                              Clique para abrir imagem cheia
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 }

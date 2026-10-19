@@ -27,6 +27,7 @@ import statusHandler from './api/status';
 import ttsHandler from './api/tts';
 import transcribeHandler from './api/transcribe';
 import deploymentsHandler from './api/deployments';
+import browserHandler from './api/browser';
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
@@ -69,6 +70,9 @@ export default {
       }
       if (path === '/api/deployments' || path === '/api/deployments/') {
         return await deploymentsHandler(request, env);
+      }
+      if (path === '/api/browser' || path === '/api/browser/') {
+        return await browserHandler(request, env);
       }
 
       // /api/* que não casa com nenhuma rota conhecida — 404 JSON (não cair no SPA fallback)
