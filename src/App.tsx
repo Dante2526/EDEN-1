@@ -716,7 +716,8 @@ const INPAINT_IMAGE_TOOL = {
     description:
       'Aplica edição localizada (inpainting com máscara) em uma imagem existente. ' +
       'Substitui apenas a área pintada pelo usuário com base no novo prompt de descrição, ' +
-      'preservando 100% dos pixels e resolução do restante da imagem.',
+      'preservando 100% dos pixels e resolução do restante da imagem. ' +
+      'Nota: A IA não deve inventar dados Base64 de máscaras; se o usuário pedir para alterar um detalhe de uma foto no chat, oriente-o a usar o botão interativo "Pincelar" presente no card da imagem.',
     parameters: {
       type: 'object',
       properties: {
@@ -2590,13 +2591,14 @@ function AppContent() {
         const image = args.image || '';
         const mask = args.mask || '';
         const prompt = args.prompt || '';
+        const aspectRatio = args.aspect_ratio || args.aspectRatio || '1:1';
         const res = await fetch('/api/inpaint', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': import.meta.env.VITE_API_SECRET || '',
           },
-          body: JSON.stringify({ image, mask, prompt }),
+          body: JSON.stringify({ image, mask, prompt, aspect_ratio: aspectRatio }),
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
@@ -5067,12 +5069,20 @@ function AppContent() {
   );
 
   const handleInpaintImage = useCallback(
-    async ({ image, mask, prompt }: { image: string; mask: string; prompt: string }) => {
+    async ({ image, mask, prompt, aspectRatio }: { image: string; mask: string; prompt: string; aspectRatio?: string }) => {
       if (!activeConversation) return;
 
       const currentConvId = activeConversation.id;
-      const assistantMessageId = 'msg-' + Date.now();
+      const userMessageId = 'msg-' + Date.now();
+      const assistantMessageId = 'msg-' + (Date.now() + 1);
       const toolCallId = 'tc-' + Date.now();
+
+      const newUserMessage: Message = {
+        id: userMessageId,
+        role: 'user',
+        content: `Pincelar na imagem: "${prompt}"`,
+        createdAt: Date.now(),
+      };
 
       const newAssistantMessage: Message = {
         id: assistantMessageId,
@@ -5094,7 +5104,7 @@ function AppContent() {
           if (c.id !== currentConvId) return c;
           return {
             ...c,
-            messages: [...c.messages, newAssistantMessage],
+            messages: [...c.messages, newUserMessage, newAssistantMessage],
             updatedAt: Date.now(),
           };
         })
@@ -5107,7 +5117,7 @@ function AppContent() {
             'Content-Type': 'application/json',
             'x-api-key': import.meta.env.VITE_API_SECRET || '',
           },
-          body: JSON.stringify({ image, mask, prompt }),
+          body: JSON.stringify({ image, mask, prompt, aspect_ratio: aspectRatio }),
         });
 
         const data = await res.json();
@@ -5137,7 +5147,7 @@ function AppContent() {
                         is_data_url: Boolean(data.is_data_url),
                         model: data.model,
                         provider: data.provider,
-                        aspect_ratio: data.aspect_ratio || '1:1',
+                        aspect_ratio: data.aspect_ratio || aspectRatio || '1:1',
                         prompt,
                         type: 'inpaint',
                       }),

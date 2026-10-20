@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792501869.6960504,
-    "ast_hash": "0a5180bb2cb5989e001b1044632ab915",
+    "mtime": 1792502721.4120486,
+    "ast_hash": "98517e3e17750fa514c6035c74c11bca",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
-    "mtime": 1792501532.5279977,
-    "ast_hash": "83964bc18517c322a161957e87a2c830",
+    "mtime": 1792502408.276821,
+    "ast_hash": "3b4c034a9a9a21c81f4224720229714d",
     "semantic_hash": ""
   },
   "src/components/chat-sidebar.tsx": {
@@ -6100,23 +6100,23 @@
     "semantic_hash": ""
   },
   "api/inpaint.ts": {
-    "mtime": 1792501108.800415,
-    "ast_hash": "c0b4de1733705d1886d934e3e807d59d",
+    "mtime": 1792502565.8716707,
+    "ast_hash": "b6f442dc09484a4f6eefe6204d838c7e",
     "semantic_hash": ""
   },
   "src/components/image-inpaint-modal.tsx": {
-    "mtime": 1792502003.741809,
-    "ast_hash": "42d18f26b1dd4efbab934fa432f9e2df",
+    "mtime": 1792502383.2115045,
+    "ast_hash": "8e2e479982cb3cfe1c9dbce10b2de918",
     "semantic_hash": ""
   },
   "src/lib/image-inpaint.test.ts": {
-    "mtime": 1792501189.1662774,
-    "ast_hash": "e9488385ea0f66d96546c2ec7eef2d06",
+    "mtime": 1792502580.6535425,
+    "ast_hash": "ba9758ce274fb00967d2d0fea2393689",
     "semantic_hash": ""
   },
   "src/lib/image-inpaint.ts": {
-    "mtime": 1792501058.538502,
-    "ast_hash": "1c16f2fb96ed4d4735ac30336daf88da",
+    "mtime": 1792502542.0396676,
+    "ast_hash": "cea0b298454592dfe39a6bf09d7efbde",
     "semantic_hash": ""
   }
 }

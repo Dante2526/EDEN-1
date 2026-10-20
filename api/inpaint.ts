@@ -57,6 +57,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   const image: string = body.image;
   const mask: string = body.mask;
   const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 1_000_000);
+  const aspectRatio: string = body.aspect_ratio || body.aspectRatio || '1:1';
   const safeAltText = cleanPrompt.replace(/[\n\r\[\]]/g, ' ').trim().slice(0, 60);
 
   // =========================================================================
@@ -102,7 +103,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
               prompt: cleanPrompt,
               model: 'black-forest-labs/flux.1-kontext-dev',
               provider: 'NVIDIA NIM (FLUX.1 Kontext)',
-              aspect_ratio: body.aspect_ratio || '1:1',
+              aspect_ratio: aspectRatio,
               markdown: `![${safeAltText}](${dataUrl})`,
               is_data_url: true,
               type: 'inpaint',
@@ -170,7 +171,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
               prompt: cleanPrompt,
               model: cfModelId,
               provider: 'Cloudflare Workers AI (Inpaint)',
-              aspect_ratio: body.aspect_ratio || '1:1',
+              aspect_ratio: aspectRatio,
               markdown: `![${safeAltText}](${dataUrl})`,
               is_data_url: true,
               type: 'inpaint',

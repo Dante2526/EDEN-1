@@ -138,10 +138,18 @@ export function buildInpaintCloudflarePayload(params: InpaintParams) {
   const rawMask = extractRawBase64(params.mask);
   const steps = params.steps ?? 20;
 
+  let maskArray: number[] | undefined;
+  if (typeof Buffer !== 'undefined' && rawMask) {
+    try {
+      maskArray = Array.from(Buffer.from(rawMask, 'base64'));
+    } catch {}
+  }
+
   return {
     prompt: params.prompt.trim(),
     image_b64: rawImage,
     mask_b64: rawMask,
+    ...(maskArray ? { mask: maskArray } : {}),
     num_steps: Math.min(steps, 20),
     strength: 1.0,
     guidance: 7.5,

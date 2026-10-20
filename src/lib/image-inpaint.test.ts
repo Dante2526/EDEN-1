@@ -108,6 +108,7 @@ describe('image-inpaint (Motor Lógico de Inpainting com Máscara)', () => {
     assert.equal(payload.image_b64, 'AAAA');
     assert.equal(payload.mask_b64, 'BBBB');
     assert.equal(payload.num_steps, 20);
+    assert.equal(Array.isArray((payload as any).mask), true);
   });
 
   it('deve normalizar chaves de modelo de inpaint', () => {

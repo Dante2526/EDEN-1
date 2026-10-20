@@ -52,7 +52,7 @@ interface ChatMessageProps {
   onRejectRemoteAction?: (messageId: string) => void;
   onApproveCanvasPrototype?: (prototype: CanvasPrototype) => void;
   onRequestCanvasPrototypeChanges?: (prototype: CanvasPrototype) => void;
-  onInpaintImage?: (params: { image: string; mask: string; prompt: string }) => Promise<void>;
+  onInpaintImage?: (params: { image: string; mask: string; prompt: string; aspectRatio?: string }) => Promise<void>;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -1024,7 +1024,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                               <button
                                 type="button"
                                 onClick={() => setInpaintTarget({ imageUrl, prompt, aspectRatio })}
-                                className="min-h-[44px] flex items-center gap-1.5 px-2.5 sm:px-3 rounded-lg bg-[color:var(--c-bg-27241f)] hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 border border-amber-500/30 text-xs font-medium transition cursor-pointer select-none"
+                                className="min-h-[44px] min-w-[44px] flex items-center justify-center gap-1.5 px-2.5 sm:px-3 rounded-lg bg-[color:var(--c-bg-27241f)] hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 border border-amber-500/30 text-xs font-medium transition cursor-pointer select-none"
                                 title="Pincelar / Editar área da foto com IA"
                               >
                                 <Paintbrush className="w-3.5 h-3.5" />

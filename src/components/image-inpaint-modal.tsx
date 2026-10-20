@@ -16,7 +16,7 @@ export interface ImageInpaintModalProps {
   originalPrompt?: string;
   aspectRatio?: string;
   onClose: () => void;
-  onSubmit: (params: { image: string; mask: string; prompt: string }) => Promise<void>;
+  onSubmit: (params: { image: string; mask: string; prompt: string; aspectRatio?: string }) => Promise<void>;
 }
 
 export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
@@ -134,6 +134,15 @@ export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
     } catch {}
   };
 
+  // Calcula o diâmetro do pincel em pixels internos para corresponder à escala na tela (Mobile-First)
+  const getEffectiveBrushSize = useCallback(() => {
+    const canvas = maskCanvasRef.current;
+    if (!canvas) return brushSize;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0) return brushSize;
+    return brushSize * (canvas.width / rect.width);
+  }, [brushSize]);
+
   // Desenha um ponto no canvas de máscara
   const drawPoint = (x: number, y: number) => {
     const canvas = maskCanvasRef.current;
@@ -150,7 +159,8 @@ export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
     }
 
     ctx.beginPath();
-    ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+    const effectiveSize = getEffectiveBrushSize();
+    ctx.arc(x, y, effectiveSize / 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
@@ -175,7 +185,8 @@ export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = brushSize;
+    const effectiveSize = getEffectiveBrushSize();
+    ctx.lineWidth = effectiveSize;
 
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
@@ -225,12 +236,14 @@ export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
         const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
         const binData = offCtx.createImageData(maskCanvas.width, maskCanvas.height);
         const totalPixels = maskCanvas.width * maskCanvas.height;
+        let whitePixelsCount = 0;
 
         for (let i = 0; i < totalPixels; i++) {
           const alpha = maskData.data[i * 4 + 3];
           const binIdx = i * 4;
           if (alpha > 10) {
             // Branco puro (#FFFFFF) = área onde a IA irá gerar
+            whitePixelsCount++;
             binData.data[binIdx] = 255;
             binData.data[binIdx + 1] = 255;
             binData.data[binIdx + 2] = 255;
@@ -242,6 +255,11 @@ export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
             binData.data[binIdx + 2] = 0;
             binData.data[binIdx + 3] = 255;
           }
+        }
+        if (whitePixelsCount === 0) {
+          setErrorMessage('Nenhuma área selecionada. Pincele o detalhe que deseja alterar.');
+          setIsSubmitting(false);
+          return;
         }
         offCtx.putImageData(binData, 0, 0);
       }
@@ -261,6 +279,7 @@ export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
         image: originalImageUrl,
         mask: binaryMaskUrl,
         prompt: cleanPrompt,
+        aspectRatio,
       });
 
       onClose();
@@ -406,7 +425,7 @@ export const ImageInpaintModal: React.FC<ImageInpaintModalProps> = ({
                   key={b.size}
                   type="button"
                   onClick={() => setBrushSize(b.size)}
-                  className={`min-h-[40px] px-2.5 sm:px-3 flex items-center gap-1.5 rounded-lg text-xs transition cursor-pointer ${
+                  className={`min-h-[44px] min-w-[44px] px-3 flex items-center justify-center gap-1.5 rounded-lg text-xs transition cursor-pointer ${
                     brushSize === b.size
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
                       : 'text-[color:var(--c-fg-a39d93)] hover:text-white'
