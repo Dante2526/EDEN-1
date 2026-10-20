@@ -294,3 +294,29 @@ export interface SelectedPreviewElement {
   outerHtmlSnippet?: string;
 }
 
+export type VideoAspectRatio = '16:9' | '9:16' | '1:1' | '4:5';
+
+export interface OpenCutClip {
+  id: string;
+  name?: string;
+  src?: string;
+  start: number;
+  duration: number;
+  type: 'video' | 'audio' | 'image' | 'text';
+  text?: string;
+}
+
+export interface OpenCutTrack {
+  id: string;
+  name: string;
+  type: 'video' | 'audio' | 'text';
+  clips: OpenCutClip[];
+}
+
+export interface OpenCutTimeline {
+  title: string;
+  aspectRatio?: VideoAspectRatio;
+  duration?: number;
+  tracks: OpenCutTrack[];
+}
+

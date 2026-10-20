@@ -239,7 +239,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                         {renderSkillIcon(skill.icon)}
                       </div>
                       <div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-medium text-[color:var(--c-fg-f3efe6)]">{skill.name}</span>
                           {skill.isBuiltin && (
                             <span className="text-[9px] px-1 py-0.2 rounded bg-zinc-800 text-zinc-400 font-mono">
@@ -667,7 +667,7 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
               {/* Presets Rápidos */}
               <div>
                 <span className="block text-[10px] text-[color:var(--c-fg-8c867a)] mb-1">Preenchimento rápido:</span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
                     onClick={() => {
@@ -678,6 +678,17 @@ export const ExtensionsPanel: React.FC<ExtensionsPanelProps> = ({
                   >
                     <Server className="w-3 h-3 text-emerald-400" />
                     <span>Context7 Docs</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewMcpName('OpenCut Video Studio');
+                      setNewMcpUrl('https://opencut.app/mcp');
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-300 text-[10px] font-medium transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Video className="w-3 h-3 text-rose-400" />
+                    <span>OpenCut MCP</span>
                   </button>
                 </div>
               </div>

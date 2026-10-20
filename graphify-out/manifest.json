@@ -975,13 +975,13 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792502721.4120486,
-    "ast_hash": "98517e3e17750fa514c6035c74c11bca",
+    "mtime": 1792521276.4248793,
+    "ast_hash": "fa0567ee04b215386761da2d3e7bf390",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
-    "mtime": 1792444234.4207292,
-    "ast_hash": "b2160c3cb62b1338e9e4dcfc6f0a6e8a",
+    "mtime": 1792520875.7608473,
+    "ast_hash": "55e5d9161d6803ae7d2ff38ee948bc8c",
     "semantic_hash": ""
   },
   "src/components/chat-input.tsx": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
-    "mtime": 1792502408.276821,
-    "ast_hash": "3b4c034a9a9a21c81f4224720229714d",
+    "mtime": 1792521340.074115,
+    "ast_hash": "495e7b0f6ab62db9269a52cbfa18e8dd",
     "semantic_hash": ""
   },
   "src/components/chat-sidebar.tsx": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": "8921224c171256f9c22792a47f66e52e"
   },
   "src/components/extensions/extensions-panel.tsx": {
-    "mtime": 1792449169.4850402,
-    "ast_hash": "93931e382f2ed5ec7138ddddb8cb5abf",
+    "mtime": 1792520586.1532388,
+    "ast_hash": "2adb8b69ecba39bb88e16c21532d6a7b",
     "semantic_hash": ""
   },
   "src/components/github/create-repo-modal.tsx": {
@@ -1375,8 +1375,8 @@
     "semantic_hash": "123089b80edf7590952dbee86c167693"
   },
   "src/lib/storage.ts": {
-    "mtime": 1792460693.7105145,
-    "ast_hash": "e9d772e191bc0929fb4cd5186b626018",
+    "mtime": 1792520559.0516593,
+    "ast_hash": "4f654b6976d9314933362f982a9ad6c1",
     "semantic_hash": ""
   },
   "src/lib/streaming-speech-queue.test.ts": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792449126.320768,
-    "ast_hash": "e8f7fdb8a2d1a4a28e49224e5d5f771f",
+    "mtime": 1792520633.6711092,
+    "ast_hash": "80fa0809a7f83059f0f3e8a185225738",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -6117,6 +6117,21 @@
   "src/lib/image-inpaint.ts": {
     "mtime": 1792502542.0396676,
     "ast_hash": "cea0b298454592dfe39a6bf09d7efbde",
+    "semantic_hash": ""
+  },
+  "src/components/video/opencut-modal.tsx": {
+    "mtime": 1792520694.8640316,
+    "ast_hash": "e618f96e1ca1d748f07705d6e5c7302a",
+    "semantic_hash": ""
+  },
+  "src/lib/opencut-integration.test.ts": {
+    "mtime": 1792520475.2473485,
+    "ast_hash": "7918dc676dc40c7e694f8aacc9d5331e",
+    "semantic_hash": ""
+  },
+  "src/lib/opencut-integration.ts": {
+    "mtime": 1792520494.4072852,
+    "ast_hash": "d6ce12919c00f38abd891e8081a0df3e",
     "semantic_hash": ""
   }
 }

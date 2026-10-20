@@ -28,9 +28,11 @@ import {
   Network,
   Sparkles,
   Paintbrush,
+  Video,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
-import { Message, CanvasPrototype } from '../lib/types';
+import { Message, CanvasPrototype, VideoAspectRatio } from '../lib/types';
+import { buildOpenCutUrl } from '../lib/opencut-integration';
 import { formatFileSize } from '../lib/utils';
 import { CodeBlock } from './code-block';
 import { SpeakButton } from './speak-button';
@@ -53,6 +55,7 @@ interface ChatMessageProps {
   onApproveCanvasPrototype?: (prototype: CanvasPrototype) => void;
   onRequestCanvasPrototypeChanges?: (prototype: CanvasPrototype) => void;
   onInpaintImage?: (params: { image: string; mask: string; prompt: string; aspectRatio?: string }) => Promise<void>;
+  onOpenVideoEditor?: (params?: { title?: string; aspectRatio?: VideoAspectRatio; description?: string }) => void;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -213,6 +216,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onApproveCanvasPrototype,
   onRequestCanvasPrototypeChanges,
   onInpaintImage,
+  onOpenVideoEditor,
 }) => {
   const isUser = message.role === 'user';
   const [inpaintTarget, setInpaintTarget] = useState<{
@@ -543,7 +547,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   if (tc.name === 'run_terminal_command' || tc.name === 'terminal') return false;
                   if (tc.name === 'run_python') return false;
                   if (tc.name === 'generate_document') return false;
-                  if (tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image') return false;
+                  if (tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image' || tc.name === 'open_video_editor' || tc.name === 'opencut_editor') return false;
                   if (tc.name === 'save_memory' || tc.name === 'forget_memory') return false;
                   if (tc.name === 'dispatch_subagent') return false;
                   if (tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph') return false;
@@ -573,10 +577,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisGraph = tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph';
                   const isThisCanvas = tc.name === 'render_canvas_prototype';
                   const isThisImage = tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image';
-                  const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph || isThisCanvas || isThisImage
+                  const isThisVideoEditor = tc.name === 'open_video_editor' || tc.name === 'opencut_editor';
+                  const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph || isThisCanvas || isThisImage || isThisVideoEditor
                     ? 'weaving'
                     : 'composing';
-                  const orbLabel = tc.name === 'inpaint_image'
+                  const orbLabel = isThisVideoEditor
+                    ? 'Preparando OpenCut Video Studio…'
+                    : tc.name === 'inpaint_image'
                     ? 'Aplicando inpainting com FLUX…'
                     : isThisImage
                     ? 'Gerando imagem com FLUX…'
@@ -595,7 +602,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Juntando as fontes…'
                     : 'Executando…';
-                  const actionTitle = tc.name === 'inpaint_image'
+                  const actionTitle = isThisVideoEditor
+                    ? 'OpenCut Video Studio'
+                    : tc.name === 'inpaint_image'
                     ? 'Edição com Pincel (FLUX Inpaint)'
                     : isThisImage
                     ? 'Geração de Imagem (FLUX.1)'
@@ -616,7 +625,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Pesquisando na Internet'
                     : 'Executando';
-                  const actionBadge = isThisImage
+                  const actionBadge = isThisVideoEditor
+                    ? 'CapCut Open Source (Web)'
+                    : isThisImage
                     ? 'NVIDIA NIM / FLUX'
                     : isThisCanvas
                     ? 'Tailwind Sandbox'
@@ -1071,6 +1082,76 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           </p>
                         </div>
                       )}
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'open_video_editor' || tc.name === 'opencut_editor') {
+                  const title: string = parsedArgs?.title || 'Projeto OpenCut';
+                  const aspectRatio: VideoAspectRatio = (parsedArgs?.aspect_ratio || parsedArgs?.aspectRatio || '9:16') as VideoAspectRatio;
+                  const description: string = parsedArgs?.description || '';
+                  const openCutUrl = buildOpenCutUrl({ projectTitle: title, aspectRatio });
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="rounded-2xl overflow-hidden my-3 bg-[color:var(--c-bg-201e1a)] border border-rose-500/30 shadow-xl flex flex-col w-full max-w-2xl transition-all"
+                    >
+                      <div className="flex items-center justify-between px-3.5 py-2.5 bg-[color:var(--c-bg-181714)] border-b border-[color:var(--c-bg-322e27)] gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 shrink-0 border border-rose-500/30">
+                            <Video className="w-4 h-4" />
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
+                            <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
+                              {title}
+                            </span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 font-semibold border border-rose-500/30">
+                              {aspectRatio}
+                            </span>
+                            <span className="text-[10px] text-[color:var(--c-fg-8c867a)] hidden sm:inline">
+                              OpenCut • CapCut Open Source
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <a
+                            href={openCutUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl text-[color:var(--c-fg-a39d93)] hover:text-white hover:bg-[color:var(--c-bg-2a2721)] transition cursor-pointer"
+                            title="Abrir em Nova Aba"
+                            aria-label="Abrir em Nova Aba"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+
+                      {description && (
+                        <div className="px-3.5 py-2.5 bg-[color:var(--c-bg-181714)]/40 border-b border-[color:var(--c-bg-2d2a23)]">
+                          <p className="text-xs text-[color:var(--c-fg-dcd7cb)] leading-relaxed">
+                            {description}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[color:var(--c-bg-201e1a)]">
+                        <div className="flex items-center gap-2 text-[11px] text-[color:var(--c-fg-8c867a)]">
+                          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                          <span>Funciona no celular e PC sem precisar de terminal ou servidor</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => onOpenVideoEditor?.({ title, aspectRatio, description })}
+                          className="w-full sm:w-auto min-h-[44px] min-w-[44px] px-4 py-2 flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md transition cursor-pointer"
+                        >
+                          <Video className="w-4 h-4" />
+                          <span>Abrir no OpenCut</span>
+                        </button>
+                      </div>
                     </div>
                   );
                 }

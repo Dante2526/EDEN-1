@@ -19,6 +19,7 @@ import {
   SelectedPreviewElement,
   WebSourceItem,
   CanvasPrototype,
+  VideoAspectRatio,
 } from './lib/types';
 import {
   loadConversations,
@@ -119,6 +120,8 @@ import {
   parseDevToolsMessage,
 } from './lib/preview-devtools';
 import { BrowserRecipeModal } from './components/browser-recipe-modal';
+import { OpenCutModal } from './components/video/opencut-modal';
+import { buildOpenCutUrl, formatOpenCutToolResult } from './lib/opencut-integration';
 import {
   loadSavedRecipes,
   saveRecipe,
@@ -739,6 +742,36 @@ const INPAINT_IMAGE_TOOL = {
   },
 };
 
+const OPEN_VIDEO_EDITOR_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'open_video_editor',
+    description:
+      'Abre o estúdio de edição de vídeo OpenCut (alternativa open source ao CapCut) diretamente no navegador para o usuário. ' +
+      'Permite criar e editar projetos de vídeo (multitrack, cortes, ritmo, legendas e áudio) tanto no celular quanto no PC, 100% no cliente sem precisar de servidor ou terminal. ' +
+      'Use esta ferramenta sempre que o usuário pedir para editar um vídeo, cortar cenas, montar reels/tiktok ou produzir conteúdo audiovisual.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: {
+          type: 'string',
+          description: 'Título do projeto de vídeo (ex: "Reels de Lançamento Éden")',
+        },
+        aspect_ratio: {
+          type: 'string',
+          enum: ['9:16', '16:9', '1:1', '4:5'],
+          description: 'Proporção do vídeo: "9:16" para Reels/TikTok/Shorts, "16:9" para YouTube horizontal/PC, "1:1" para feed.',
+        },
+        description: {
+          type: 'string',
+          description: 'Resumo do roteiro, cenas planejadas ou instruções de cortes para guiar o usuário na edição.',
+        },
+      },
+      required: ['title'],
+    },
+  },
+};
+
 // REMOTE DEPLOY TOOL — Envio para VPS / servidor remoto com HARD-GATE
 // ============================================================================
 // A IA NUNCA envia nada direto. A chamada só cria um card de autorização no chat;
@@ -918,8 +951,8 @@ const CANVAS_PROTOTYPE_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, REMOTE_DEPLOY_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, OPEN_VIDEO_EDITOR_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, OPEN_VIDEO_EDITOR_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -959,6 +992,14 @@ function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
+  const [openCutState, setOpenCutState] = useState<{
+    isOpen: boolean;
+    projectTitle?: string;
+    aspectRatio?: VideoAspectRatio;
+    scriptDescription?: string;
+  }>({
+    isOpen: false,
+  });
   const [isStreaming, setIsStreaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
@@ -2619,6 +2660,42 @@ function AppContent() {
         };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || 'Falha ao processar inpainting com FLUX' }) };
+      }
+    }
+
+    if (name === 'open_video_editor' || name === 'opencut_editor') {
+      try {
+        const title = args.title || 'Projeto Éden';
+        const aspectRatio = (args.aspect_ratio || args.aspectRatio || '9:16') as VideoAspectRatio;
+        const description = args.description || '';
+
+        setOpenCutState({
+          isOpen: true,
+          projectTitle: title,
+          aspectRatio,
+          scriptDescription: description,
+        });
+
+        const formatted = formatOpenCutToolResult({
+          title,
+          aspectRatio,
+          duration: 30,
+          tracks: [],
+        });
+
+        return {
+          result: JSON.stringify({
+            success: true,
+            title,
+            aspect_ratio: aspectRatio,
+            description,
+            url: buildOpenCutUrl({ projectTitle: title, aspectRatio }),
+            formatted,
+            hint: 'O editor OpenCut Video Studio foi aberto no app para o usuário. Faça um breve comentário encorajador sobre o projeto e sugira cortes ou trilhas.',
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao abrir OpenCut Video Studio' }) };
       }
     }
 
@@ -5297,6 +5374,7 @@ function AppContent() {
           onToggleTheme={handleToggleTheme}
           onOpenGraph={() => handleOpenGraph()}
           onOpenScraperRecipes={() => setIsRecipeModalOpen(true)}
+          onOpenVideoEditor={() => setOpenCutState({ isOpen: true, projectTitle: 'Projeto Éden', aspectRatio: '9:16' })}
         />
 
         {/* Global Error Banner */}
@@ -5481,6 +5559,14 @@ function AppContent() {
                       onApproveCanvasPrototype={handleApproveCanvasPrototype}
                       onRequestCanvasPrototypeChanges={handleRequestCanvasPrototypeChanges}
                       onInpaintImage={handleInpaintImage}
+                      onOpenVideoEditor={(params) =>
+                        setOpenCutState({
+                          isOpen: true,
+                          projectTitle: params?.title || 'Projeto OpenCut',
+                          aspectRatio: params?.aspectRatio || '9:16',
+                          scriptDescription: params?.description,
+                        })
+                      }
                     />
                   </React.Fragment>
                 );
@@ -5598,6 +5684,15 @@ function AppContent() {
         onSendToChat={(text) => handleSendMessage(text)}
         browserEndpoint={settings.browserEndpoint}
         browserlessApiKey={settings.browserlessApiKey}
+      />
+
+      {/* OpenCut Video Studio Modal (Mobile & PC) */}
+      <OpenCutModal
+        isOpen={openCutState.isOpen}
+        onClose={() => setOpenCutState((prev) => ({ ...prev, isOpen: false }))}
+        projectTitle={openCutState.projectTitle}
+        initialAspectRatio={openCutState.aspectRatio}
+        scriptDescription={openCutState.scriptDescription}
       />
     </div>
   );

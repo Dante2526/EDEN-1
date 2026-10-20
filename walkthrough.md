@@ -2318,3 +2318,35 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado em 2.55s e Cloudflare Pages Worker (`dist/_worker.js`, 182.2 kB) gerado com sucesso.
   - `graphify update .`: grafo de conhecimento sincronizado com 14.887 nós, 16.843 arestas e 1.015 comunidades.
   - Code Review formal: **Ready to merge: Yes** (com salvaguarda defensiva contra tainted canvas implementada).
+
+
+## 131. Integração do OpenCut Video Studio (Mobile & PC) via MCP e Webview
+- **Solicitação do Usuário:** *"E TBM VOU USAR ESSE OPEN CUT NO PC TA"* (implementar integração com o editor open source OpenCut estilo CapCut no Éden, mantendo o HyperFrames intacto, com funcionamento perfeito tanto no celular quanto no PC, sem necessidade de terminal ou servidor).
+- **Implementações Realizadas:**
+  1. **Tipos e Modelagem de Timeline (`src/lib/types.ts`):**
+     - Interfaces `OpenCutClip`, `OpenCutTrack`, `OpenCutTimeline` e tipo `VideoAspectRatio` ('16:9', '9:16', '1:1', '4:5').
+  2. **Motor Lógico e Conversor de Roteiros (`src/lib/opencut-integration.ts` & `src/lib/opencut-integration.test.ts`):**
+     - Função `validateOpenCutTimeline` para garantir integridade de faixas e clipes.
+     - Função `buildOpenCutUrl` para montagem de URLs do OpenCut Web com parâmetros de projeto e proporção.
+     - Função `formatOpenCutToolResult` para resumo claro no chat.
+     - Função `parseScriptToOpenCutTimeline` para conversão de roteiro textual com timestamps (`[00:00 - 00:05]`) em faixas de vídeo e texto.
+     - Suíte de 6 testes unitários TDD (205/205 testes passando no total).
+  3. **Skill Built-in & Preset MCP (`src/lib/storage.ts` & `src/components/extensions/extensions-panel.tsx`):**
+     - Skill nativa `opencut-video-editor` com diretrizes para roteiro, cortes de alta retenção (3-5s), trilha sonora, legendas e acionamento da ferramenta de vídeo.
+     - Preset rápido "OpenCut MCP" no modal de conexões de servidores MCP.
+  4. **Componente de Modal Responsivo (`src/components/video/opencut-modal.tsx`):**
+     - Mobile-First: tela cheia no smartphone (<640px) e modal flutuante amplo no desktop (`sm:h-[92vh] sm:w-[96vw] max-w-7xl` com toggle de maximização).
+     - Iframe seguro apontando para `https://opencut.app` com permissões completas de hardware: `autoplay; camera; microphone; clipboard-write; fullscreen; web-share; display-capture`.
+     - Controles táteis: botão "← Voltar ao Chat", alternador de proporção 9:16 / 16:9 com touch targets $\ge 44\text{px}$, botão "Abrir em Nova Aba" e recarregamento.
+     - Sincronização reativa de proporção via `useEffect` ao reabrir.
+  5. **Integração no Chat e Cabeçalho (`src/components/chat-header.tsx`, `src/components/chat-message.tsx`, `src/App.tsx`):**
+     - Botão "Vídeo" com ícone `Video` no cabeçalho do app para abertura rápida com 1 clique.
+     - Ferramenta `open_video_editor` registrada no OpenAI Function Calling schema da IA (`DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`).
+     - Card interativo de vídeo no histórico do chat com badge "OpenCut · CapCut Open Source", descrição do roteiro e botões "Abrir no OpenCut" e "Nova Aba".
+     - HyperFrames (vídeo em código GSAP 3) preservado 100% funcional.
+- **Evidências de Verificação:**
+  - `npm test`: **205/205 testes unitários passando em 41 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle compilado em 2.16s e Cloudflare Pages Worker (`dist/_worker.js`, 182.4 kB) gerado com sucesso.
+  - `graphify update .`: grafo de conhecimento sincronizado com 14.919 nós, 16.934 arestas e 1.009 comunidades.
+  - Code Review formal: **Ready to merge: Yes** (com sincronização reativa e touch targets $\ge 44\text{px}$ aplicados).
