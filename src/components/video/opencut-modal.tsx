@@ -254,7 +254,7 @@ export const OpenCutModal: React.FC<OpenCutModalProps> = ({
               src={openCutUrl}
               title="OpenCut Video Studio"
               className="w-full h-full border-0"
-              allow="autoplay; camera; microphone; clipboard-write; fullscreen; web-share; display-capture"
+              allow="autoplay; camera; microphone; clipboard-write; fullscreen; web-share; display-capture; cross-origin-isolated"
               onLoad={() => setIsLoading(false)}
               onError={() => {
                 setIsLoading(false);

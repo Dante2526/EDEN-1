@@ -2397,3 +2397,16 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: **207/207 testes unitários passando em 41 suítes** (100% verde).
   - `npx tsc --noEmit`: **0 erros de compilação**.
   - `npm run build`: bundle compilado em 4.86s e Cloudflare Pages Worker (`dist/_worker.js`, 186.8 kB) gerado com sucesso.
+
+## 134. Liberação do OpenCut Video Studio no CSP (Eliminação do Ícone de Erro)
+- **Diagnóstico da Causa Raiz:**
+  - O navegador Chromium exibiu o ícone cinza de erro / documento quebrado (`ERR_BLOCKED_BY_CSP`) porque as diretivas de Content Security Policy em `_headers` e `vercel.json` restringiam `frame-src` a `https://stackblitz.com`, bloqueando a conexão do iframe com `https://opencut.app` e `https://new.opencut.app`.
+- **Implementações Realizadas:**
+  1. **Atualização do CSP (`_headers` e `vercel.json`):**
+     - Adicionados `https://opencut.app`, `https://*.opencut.app` e `https://new.opencut.app` à lista autorizada de `frame-src`.
+  2. **Permissões de Hardware no Modal (`src/components/video/opencut-modal.tsx`):**
+     - Incluído `cross-origin-isolated` na lista de permissões do atributo `allow` do iframe.
+- **Evidências de Verificação:**
+  - `npm test`: **207/207 testes verdes**.
+  - `npx tsc --noEmit`: **0 erros**.
+  - `npm run build`: `dist/_headers` gerado com sucesso contendo o CSP atualizado.
