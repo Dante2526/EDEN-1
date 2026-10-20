@@ -49,7 +49,7 @@ export function validateOpenCutTimeline(timeline: Partial<OpenCutTimeline>): { v
  * Monta a URL de acesso ao OpenCut Web Editor com parâmetros seguros
  */
 export function buildOpenCutUrl(options?: OpenCutLaunchOptions): string {
-  const baseUrl = 'https://opencut.app';
+  const baseUrl = 'https://opencut.app/projects';
   if (!options) return baseUrl;
 
   const params = new URLSearchParams();

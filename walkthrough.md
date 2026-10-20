@@ -2410,3 +2410,13 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: **207/207 testes verdes**.
   - `npx tsc --noEmit`: **0 erros**.
   - `npm run build`: `dist/_headers` gerado com sucesso contendo o CSP atualizado.
+
+## 135. Acesso Direto à Tela de Projetos do OpenCut (Bypass da Landing Page)
+- **Solicitação do Usuário:** *"APARECE ESSA TELA EM PRIMEIRO, TEM COMO PULAR E IR DIRETP PRA DE PROJETOS?"*
+- **Implementação Realizada:**
+  - Alterada a URL base em `src/lib/opencut-integration.ts` de `https://opencut.app` para `https://opencut.app/projects`.
+  - Ao abrir o modal no Éden (seja no frame embutido ou em nova aba), o usuário cai direto na área de criação e gerenciamento de projetos de vídeo, sem passar pela landing page de marketing.
+- **Evidências de Verificação:**
+  - `npm test`: **207/207 testes unitários passando em 41 suítes**.
+  - `npx tsc --noEmit`: **0 erros**.
+  - `npm run build`: compilado com sucesso em 5.07s.

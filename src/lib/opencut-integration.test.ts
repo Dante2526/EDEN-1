@@ -100,7 +100,7 @@ describe('OpenCut Integration (Engine Lógica de Vídeo e Timeline)', () => {
 
   it('deve gerar URL do OpenCut Web com parâmetros codificados', () => {
     const defaultUrl = buildOpenCutUrl();
-    assert.equal(defaultUrl, 'https://opencut.app');
+    assert.equal(defaultUrl, 'https://opencut.app/projects');
 
     const customUrl = buildOpenCutUrl({
       projectTitle: 'Vídeo do Éden #1',
@@ -108,7 +108,7 @@ describe('OpenCut Integration (Engine Lógica de Vídeo e Timeline)', () => {
       remoteMcpUrl: 'https://mcp.exemplo.com',
     });
 
-    assert.ok(customUrl.startsWith('https://opencut.app'));
+    assert.ok(customUrl.startsWith('https://opencut.app/projects'));
     assert.ok(customUrl.includes('title=V%C3%ADdeo+do+%C3%89den+%231') || customUrl.includes('title=V%C3%ADdeo%20do%20%C3%89den%20%231'));
     assert.ok(customUrl.includes('aspect=9%3A16'));
     assert.ok(customUrl.includes('mcp=https%3A%2F%2Fmcp.exemplo.com'));
