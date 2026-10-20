@@ -2284,3 +2284,37 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado em 1.97s e Cloudflare Pages Worker (`dist/_worker.js`, 174.9 kB) gerado com sucesso.
   - `graphify update .`: grafo de conhecimento sincronizado com 14.884 nós, 16.839 arestas e 1.012 comunidades.
   - Code Review formal: **Ready to merge: Yes** (ajustes de touch target, aspect ratio e sanitização defensiva aplicados).
+
+
+## 130. Edição Localizada de Imagem (Inpainting com Máscara e Pincel Mobile-First)
+- **Solicitação do Usuário:** *"Sim, eu quero sim. Não esquece de levar em conta a tela no mobile, tá?"* (implementar a seleção e edição de detalhes específicos da foto via máscara/inpainting, com respeito irrestrito aos viewports de smartphone de 360px a 430px).
+- **Implementações Realizadas:**
+  1. **Motor Lógico e Resolução de Toque (`src/lib/image-inpaint.ts`):**
+     - Função `getCanvasCoordinates` que calcula as coordenadas relativas reais do toque/clique considerando a relação entre o tamanho de renderização CSS responsivo e a resolução interna de pixels da imagem (`internalWidth / rect.width`), com clamping defensivo.
+     - Validação estrita de payload (`validateInpaintPayload`) rejeitando imagens, máscaras ou prompts vazios.
+     - Extrator de Base64 puro (`extractRawBase64`) e construtores de payload para NVIDIA NIM e Cloudflare Workers AI.
+  2. **Suíte TDD de Testes Unitários (`src/lib/image-inpaint.test.ts`):**
+     - 12 testes unitários cobrindo validações de erro, normalização de prompts, cálculo de coordenadas escalonadas, clamping, formatação de payload e validações de HTTP 405 e 400 do handler.
+  3. **Backend Resiliente em Camadas (`api/inpaint.ts`, `server.ts`, `_worker.ts`):**
+     - Endpoint `/api/inpaint` autenticado e protegido contra abusos de taxa via `checkAuthAndRateLimit`.
+     - **Camada 1 (NVIDIA NIM):** Invocação de `black-forest-labs/flux.1-kontext-dev` com timeout de 24s.
+     - **Camada 2 (Cloudflare Workers AI Fallback):** Invocação de `@cf/runwayml/stable-diffusion-v1-5-inpainting` com timeout de 18s.
+     - Roteamento nativo unificado no Express local e no Cloudflare Pages Worker.
+  4. **Componente de Modal Mobile-First (`src/components/image-inpaint-modal.tsx`):**
+     - Layout em tela cheia no celular (< 640px) com navegação clara (`← Voltar`) e modal centralizado em desktop.
+     - Diretiva `touch-action: none` obrigatória no canvas para evitar scroll acidental ou saltos de viewport ao desenhar com o dedo.
+     - Pointer Events unificados (`onPointerDown`, `onPointerMove`, `onPointerUp`) com captura de ponteiro (`setPointerCapture`) e interpolação linear contínua entre pontos.
+     - Camada dupla de canvas: fundo com imagem original + camada de pintura com feedback visual néon translúcido (laranja `#f97316` a 55% de opacidade).
+     - Seletor ergonômico de espessura de pincel (Fino 14px, Médio 32px, Grosso 60px) e alternância para Borracha, com touch targets $\ge 44\text{px}$.
+     - Gerador de máscara binária monocromática offscreen (preto = intocado, branco = substituição) com fallback defensivo contra canvas *tainted* por restrições CORS.
+  5. **Integração no Chat e Histórico (`src/components/chat-message.tsx` & `src/App.tsx`):**
+     - Botão "Pincelar" adicionado ao card da imagem com touch target de 44px e ícone `Paintbrush`.
+     - Ao submeter a edição, uma nova mensagem do assistente é inserida na conversa com a tool `inpaint_image` e badge "FLUX Inpaint", permitindo edições sucessivas em cadeia.
+     - Registro da tool `inpaint_image` em `DEFAULT_CHAT_TOOLS` e `ALL_CHAT_TOOLS`.
+     - Proteção de context bloat: substituição de strings Base64 volumosas por marcadores compactos antes do envio para a LLM.
+- **Evidências de Verificação:**
+  - `npm test`: **199/199 testes unitários passando em 40 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle compilado em 2.55s e Cloudflare Pages Worker (`dist/_worker.js`, 182.2 kB) gerado com sucesso.
+  - `graphify update .`: grafo de conhecimento sincronizado com 14.887 nós, 16.843 arestas e 1.015 comunidades.
+  - Code Review formal: **Ready to merge: Yes** (com salvaguarda defensiva contra tainted canvas implementada).

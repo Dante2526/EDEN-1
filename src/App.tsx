@@ -709,6 +709,35 @@ const IMAGE_GEN_TOOL = {
 };
 
 // ============================================================================
+const INPAINT_IMAGE_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'inpaint_image',
+    description:
+      'Aplica edição localizada (inpainting com máscara) em uma imagem existente. ' +
+      'Substitui apenas a área pintada pelo usuário com base no novo prompt de descrição, ' +
+      'preservando 100% dos pixels e resolução do restante da imagem.',
+    parameters: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          description: 'Data URL ou URL da imagem original a ser editada.',
+        },
+        mask: {
+          type: 'string',
+          description: 'Data URL da máscara monocromática em PNG onde a área pintada é branca (#ffffff).',
+        },
+        prompt: {
+          type: 'string',
+          description: 'Descrição em texto do que deve ser gerado na área mascarada.',
+        },
+      },
+      required: ['image', 'mask', 'prompt'],
+    },
+  },
+};
+
 // REMOTE DEPLOY TOOL — Envio para VPS / servidor remoto com HARD-GATE
 // ============================================================================
 // A IA NUNCA envia nada direto. A chamada só cria um card de autorização no chat;
@@ -888,8 +917,8 @@ const CANVAS_PROTOTYPE_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -2553,6 +2582,41 @@ function AppContent() {
         };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || 'Falha ao gerar imagem via FLUX.2 Dev' }) };
+      }
+    }
+
+    if (name === 'inpaint_image') {
+      try {
+        const image = args.image || '';
+        const mask = args.mask || '';
+        const prompt = args.prompt || '';
+        const res = await fetch('/api/inpaint', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
+          body: JSON.stringify({ image, mask, prompt }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          return { result: JSON.stringify({ error: data.error || `Erro HTTP ${res.status} ao processar inpaint` }) };
+        }
+        return {
+          result: JSON.stringify({
+            success: true,
+            url: data.url,
+            is_data_url: Boolean(data.is_data_url),
+            model: data.model,
+            provider: data.provider,
+            aspect_ratio: data.aspect_ratio || '1:1',
+            prompt,
+            type: 'inpaint',
+            hint: 'A edição localizada (inpaint) da imagem foi concluída com sucesso e já está sendo exibida visualmente em destaque no card interativo para o usuário. Faça um comentário acolhedor sobre a alteração realizada e sugira novos ajustes se desejar.',
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao processar inpainting com FLUX' }) };
       }
     }
 
@@ -4396,7 +4460,7 @@ function AppContent() {
             }
 
             let contentForApi = result;
-            if (tc.name === 'generate_image' || tc.name === 'image_generator') {
+            if (tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image') {
               try {
                 const parsed = JSON.parse(result);
                 if ((parsed.is_data_url || parsed.url?.startsWith('data:')) && parsed.url && parsed.url.length > 200) {
@@ -5002,6 +5066,120 @@ function AppContent() {
     []
   );
 
+  const handleInpaintImage = useCallback(
+    async ({ image, mask, prompt }: { image: string; mask: string; prompt: string }) => {
+      if (!activeConversation) return;
+
+      const currentConvId = activeConversation.id;
+      const assistantMessageId = 'msg-' + Date.now();
+      const toolCallId = 'tc-' + Date.now();
+
+      const newAssistantMessage: Message = {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: `Aplicando edição com pincel (Inpaint): "${prompt}"...`,
+        createdAt: Date.now(),
+        toolCalls: [
+          {
+            id: toolCallId,
+            name: 'inpaint_image',
+            arguments: JSON.stringify({ prompt }),
+            status: 'running',
+          },
+        ],
+      };
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== currentConvId) return c;
+          return {
+            ...c,
+            messages: [...c.messages, newAssistantMessage],
+            updatedAt: Date.now(),
+          };
+        })
+      );
+
+      try {
+        const res = await fetch('/api/inpaint', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_API_SECRET || '',
+          },
+          body: JSON.stringify({ image, mask, prompt }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || `Erro HTTP ${res.status} ao processar inpainting`);
+        }
+
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== currentConvId) return c;
+            return {
+              ...c,
+              messages: c.messages.map((m) => {
+                if (m.id !== assistantMessageId) return m;
+                return {
+                  ...m,
+                  content: `Edição com pincel concluída com sucesso! Detalhe alterado: "${prompt}".`,
+                  toolCalls: [
+                    {
+                      id: toolCallId,
+                      name: 'inpaint_image',
+                      arguments: JSON.stringify({ prompt }),
+                      status: 'completed',
+                      result: JSON.stringify({
+                        success: true,
+                        url: data.url,
+                        is_data_url: Boolean(data.is_data_url),
+                        model: data.model,
+                        provider: data.provider,
+                        aspect_ratio: data.aspect_ratio || '1:1',
+                        prompt,
+                        type: 'inpaint',
+                      }),
+                    },
+                  ],
+                };
+              }),
+              updatedAt: Date.now(),
+            };
+          })
+        );
+      } catch (err: any) {
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id !== currentConvId) return c;
+            return {
+              ...c,
+              messages: c.messages.map((m) => {
+                if (m.id !== assistantMessageId) return m;
+                return {
+                  ...m,
+                  content: `Falha na edição com pincel: ${err?.message || 'Erro ao processar inpainting.'}`,
+                  toolCalls: [
+                    {
+                      id: toolCallId,
+                      name: 'inpaint_image',
+                      arguments: JSON.stringify({ prompt }),
+                      status: 'error',
+                      result: JSON.stringify({ error: err?.message || 'Falha ao processar inpaint' }),
+                    },
+                  ],
+                };
+              }),
+              updatedAt: Date.now(),
+            };
+          })
+        );
+      }
+    },
+    [activeConversation]
+  );
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bom dia';
@@ -5292,6 +5470,7 @@ function AppContent() {
                       onTogglePlanMode={handleTogglePlanMode}
                       onApproveCanvasPrototype={handleApproveCanvasPrototype}
                       onRequestCanvasPrototypeChanges={handleRequestCanvasPrototypeChanges}
+                      onInpaintImage={handleInpaintImage}
                     />
                   </React.Fragment>
                 );

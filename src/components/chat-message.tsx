@@ -27,6 +27,7 @@ import {
   ChevronUp,
   Network,
   Sparkles,
+  Paintbrush,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message, CanvasPrototype } from '../lib/types';
@@ -35,6 +36,7 @@ import { CodeBlock } from './code-block';
 import { SpeakButton } from './speak-button';
 import { ClaudeLogo } from './claude-logo';
 import { CanvasPrototypeCard } from './canvas-prototype-card';
+import { ImageInpaintModal } from './image-inpaint-modal';
 import { getFaviconUrl, extractDomainFromUrl, linkifyCitations } from '../lib/web-search-engine';
 
 interface ChatMessageProps {
@@ -50,6 +52,7 @@ interface ChatMessageProps {
   onRejectRemoteAction?: (messageId: string) => void;
   onApproveCanvasPrototype?: (prototype: CanvasPrototype) => void;
   onRequestCanvasPrototypeChanges?: (prototype: CanvasPrototype) => void;
+  onInpaintImage?: (params: { image: string; mask: string; prompt: string }) => Promise<void>;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -209,8 +212,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onRejectRemoteAction,
   onApproveCanvasPrototype,
   onRequestCanvasPrototypeChanges,
+  onInpaintImage,
 }) => {
   const isUser = message.role === 'user';
+  const [inpaintTarget, setInpaintTarget] = useState<{
+    imageUrl: string;
+    prompt: string;
+    aspectRatio: string;
+  } | null>(null);
   const [showReasoning, setShowReasoning] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showTokenDetails, setShowTokenDetails] = useState(false);
@@ -534,7 +543,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   if (tc.name === 'run_terminal_command' || tc.name === 'terminal') return false;
                   if (tc.name === 'run_python') return false;
                   if (tc.name === 'generate_document') return false;
-                  if (tc.name === 'generate_image' || tc.name === 'image_generator') return false;
+                  if (tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image') return false;
                   if (tc.name === 'save_memory' || tc.name === 'forget_memory') return false;
                   if (tc.name === 'dispatch_subagent') return false;
                   if (tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph') return false;
@@ -563,11 +572,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisSubagent = tc.name === 'dispatch_subagent';
                   const isThisGraph = tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph';
                   const isThisCanvas = tc.name === 'render_canvas_prototype';
-                  const isThisImage = tc.name === 'generate_image' || tc.name === 'image_generator';
+                  const isThisImage = tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image';
                   const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph || isThisCanvas || isThisImage
                     ? 'weaving'
                     : 'composing';
-                  const orbLabel = isThisImage
+                  const orbLabel = tc.name === 'inpaint_image'
+                    ? 'Aplicando inpainting com FLUX…'
+                    : isThisImage
                     ? 'Gerando imagem com FLUX…'
                     : isThisCanvas
                     ? 'Prototipando no Canvas…'
@@ -584,7 +595,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Juntando as fontes…'
                     : 'Executando…';
-                  const actionTitle = isThisImage
+                  const actionTitle = tc.name === 'inpaint_image'
+                    ? 'Edição com Pincel (FLUX Inpaint)'
+                    : isThisImage
                     ? 'Geração de Imagem (FLUX.1)'
                     : isThisCanvas
                     ? 'Canvas Prototyping (Figma / v0)'
@@ -944,7 +957,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   );
                 }
 
-                if (tc.name === 'generate_image' || tc.name === 'image_generator') {
+                if (tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image') {
                   let parsedResult: any = null;
                   try {
                     parsedResult = JSON.parse(tc.result || '{}');
@@ -985,7 +998,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           </div>
                           <div className="flex items-center gap-2 flex-wrap min-w-0">
                             <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
-                              FLUX.1 {modelName.includes('schnell') ? 'Schnell' : 'Dev'}
+                              {tc.name === 'inpaint_image' ? 'FLUX Inpaint' : `FLUX.1 ${modelName.includes('schnell') ? 'Schnell' : 'Dev'}`}
                             </span>
                             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
                               {aspectRatio}
@@ -1007,6 +1020,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                             >
                               <ExternalLink className="w-4 h-4" />
                             </a>
+                            {onInpaintImage && (
+                              <button
+                                type="button"
+                                onClick={() => setInpaintTarget({ imageUrl, prompt, aspectRatio })}
+                                className="min-h-[44px] flex items-center gap-1.5 px-2.5 sm:px-3 rounded-lg bg-[color:var(--c-bg-27241f)] hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 border border-amber-500/30 text-xs font-medium transition cursor-pointer select-none"
+                                title="Pincelar / Editar área da foto com IA"
+                              >
+                                <Paintbrush className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Pincelar</span>
+                              </button>
+                            )}
                             <a
                               href={imageUrl}
                               download="imagem-flux.jpg"
@@ -2190,6 +2214,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             </div>
           )}
         </div>
+      )}
+      {inpaintTarget && onInpaintImage && (
+        <ImageInpaintModal
+          isOpen={Boolean(inpaintTarget)}
+          imageUrl={inpaintTarget.imageUrl}
+          originalPrompt={inpaintTarget.prompt}
+          aspectRatio={inpaintTarget.aspectRatio}
+          onClose={() => setInpaintTarget(null)}
+          onSubmit={onInpaintImage}
+        />
       )}
     </div>
   );

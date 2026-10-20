@@ -15,6 +15,7 @@ import transcribeHandler from './api/transcribe';
 import deploymentsHandler from './api/deployments';
 import browserHandler from './api/browser';
 import imageHandler from './api/image';
+import inpaintHandler from './api/inpaint';
 import { Env } from './lib/server/env';
 
 dotenv.config({ path: '.env.local' });
@@ -141,6 +142,7 @@ app.all('/api/transcribe', adaptWebHandler(transcribeHandler));
 app.all('/api/deployments', adaptWebHandler(deploymentsHandler));
 app.all('/api/browser', adaptWebHandler(browserHandler));
 app.all('/api/image', adaptWebHandler(imageHandler));
+app.all('/api/inpaint', adaptWebHandler(inpaintHandler));
 
 // Fallback explícito para rotas de API inexistentes (evita retornar HTML do SPA)
 app.all('/api/*', (req, res) => {
