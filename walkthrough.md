@@ -2377,3 +2377,23 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado em 1.91s e Cloudflare Pages Worker (`dist/_worker.js`, 186.8 kB) gerado com sucesso.
   - `graphify update .`: grafo de conhecimento sincronizado com 14.922 nós, 16.945 arestas e 1.012 comunidades.
   - Code Review formal: **Ready to merge** com todas as recomendações de review incorporadas.
+
+## 133. Sincronização do Código com Google Drive e GitHub para Gemini Mobile
+- **Solicitação do Usuário:** Replicar a mesma solução desenvolvida para o projeto Play Infinity, onde o código do repositório é compactado e agrupado em arquivos Markdown leves e sincronizado automaticamente com o Google Drive via Webhook do Google Apps Script e GitHub Actions, permitindo que o app móvel do Gemini (@Google Drive) acesse e consulte o código em tempo real sem estourar limites de tokens.
+- **Implementações Realizadas:**
+  1. **Gerador de Markdowns Leves (`scripts/generate-drive-markdown.cjs`):**
+     - Varre o repositório, ignora estritamente `node_modules`, `dist`, `.git`, `graphify-out`, testes e JSONs pesados.
+     - Agrupa o código em 3 arquivos Markdown objetivos com sumário completo:
+       - `1_Frontend_e_Componentes.md` (919.2 KB): Telas, Chat, Modais, Sidebar, Header, Canvas e Temas.
+       - `2_Backend_e_APIs.md` (176.2 KB): Servidor local, Cloudflare Pages Worker e rotas Edge (`/api/*`).
+       - `3_Arquitetura_Motores_e_Tipos.md` (453.7 KB): Motores lógicos (Inpainting, OpenCut, Compactor, Storage) e tipos centrais.
+  2. **Script de Envio ao Webhook (`scripts/sync-to-gdrive.cjs`):**
+     - Envia os 3 arquivos via requisição POST autenticada para o Webhook do Google Apps Script (`GDRIVE_WEBHOOK_URL` e `GDRIVE_SECRET_TOKEN`).
+     - Suporte a redirects (`follow`) e validação de confirmação de gravação `OK:`.
+  3. **Workflow do GitHub Actions (`.github/workflows/sync-drive.yml`):**
+     - Automatiza a geração e envio ao Google Drive a cada push na branch `main` e via disparo manual `workflow_dispatch`.
+- **Evidências de Verificação:**
+  - `node scripts/generate-drive-markdown.cjs`: 3 arquivos gerados com sucesso na pasta `.tmp/drive-docs/`.
+  - `npm test`: **207/207 testes unitários passando em 41 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle compilado em 4.86s e Cloudflare Pages Worker (`dist/_worker.js`, 186.8 kB) gerado com sucesso.

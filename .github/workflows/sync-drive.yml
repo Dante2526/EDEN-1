@@ -1,0 +1,35 @@
+name: Sincronizar Código com Google Drive
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  sync-to-drive:
+    name: Gerar Markdowns e Enviar ao Google Drive
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar Repositório
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📝 Gerar Markdowns Leves (Frontend, Backend, Arquitetura)
+        run: node scripts/generate-drive-markdown.cjs
+
+      - name: ☁️ Enviar para o Google Drive
+        env:
+          GDRIVE_WEBHOOK_URL: ${{ secrets.GDRIVE_WEBHOOK_URL }}
+          GDRIVE_SECRET_TOKEN: ${{ secrets.GDRIVE_SECRET_TOKEN }}
+        run: |
+          if [ -z "$GDRIVE_WEBHOOK_URL" ]; then
+            echo "❌ ERRO FATAL: A secret GDRIVE_WEBHOOK_URL não foi encontrada nos Secrets do repositório!"
+            echo "Acesse Settings > Secrets and variables > Actions e adicione GDRIVE_WEBHOOK_URL."
+            exit 1
+          fi
+          node scripts/sync-to-gdrive.cjs
