@@ -2350,3 +2350,30 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado em 2.16s e Cloudflare Pages Worker (`dist/_worker.js`, 182.4 kB) gerado com sucesso.
   - `graphify update .`: grafo de conhecimento sincronizado com 14.919 nós, 16.934 arestas e 1.009 comunidades.
   - Code Review formal: **Ready to merge: Yes** (com sincronização reativa e touch targets $\ge 44\text{px}$ aplicados).
+
+## 132. Correção do Inpainting (Grama Azul) e Botão de Exclusão de Mensagens
+- **Solicitação do Usuário:** *"Dá uma olhada ali, eu usei a pincelada, selecionei a graminha verde e pedi para ela mudar para azul. Nenhuma das duas imagens mudou. A primeira não mudou e a segunda é para você remover."*
+- **Diagnóstico da Causa Raiz:**
+  1. **Ausência da Máscara no Cloudflare Workers AI:** `buildInpaintCloudflarePayload` dependia de `typeof Buffer !== 'undefined'`. No ambiente Cloudflare Pages/Workers (`workerd`), `Buffer` é indefinido por padrão, fazendo com que a propriedade `mask: number[]` nunca fosse enviada no JSON, levando o modelo `@cf/runwayml/stable-diffusion-v1-5-inpainting` a ignorar a área pintada e devolver a imagem inalterada.
+  2. **Prompt Conversacional em Português vs. Difusão:** O modelo de difusão de inpainting foi treinado em descrições de imagem em inglês. Comandos imperativos em português com typos comuns de celular (`"MUDA O VERDE DA GRAMA PARAA ZUL"`, `"MUDA PARA AZUL"`) não eram compreendidos como preenchimento.
+  3. **Impossibilidade de Remover Mensagens no Chat:** A interface só permitia excluir conversas completas na barra lateral, não existindo botão para apagar mensagens individuais.
+- **Implementações Realizadas:**
+  1. **Conversão Base64 sem Buffer Multiplataforma (`src/lib/image-inpaint.ts`):**
+     - Criada a função `base64ToUint8Array` baseada em `globalThis.atob` (com fallback para `Buffer`), funcionando nativamente em Cloudflare Workers Edge, Browsers e Node.js.
+     - Atualizado `buildInpaintCloudflarePayload` para sempre injetar `mask: Array.from(base64ToUint8Array(rawMask))` e `image: Array.from(...)`, garantindo que o array numérico de 8-bits da máscara seja entregue com sucesso à Cloudflare Workers AI.
+  2. **Normalizador e Tradutor Inteligente de Inpaint (`src/lib/image-inpaint.ts`):**
+     - Criada a função `formatInpaintPrompt` com tratamento de typos comuns de celular (`paraa` -> `para`, `zul` -> `azul`), detecção de comandos de substituição (`"muda/mude [origem] para/pra [destino]"`) para isolar a cor alvo e tradução/enriquecimento para descrições de difusão em inglês de alta fidelidade (`"vibrant glowing cobalt blue grass, electric blue moss, lush blue foliage, 8k, photorealistic"`).
+     - Aplicado em ambos os provedores (NVIDIA NIM e Cloudflare Workers AI).
+  3. **Resiliência em Imagens Remotas (`api/inpaint.ts`):**
+     - Adicionado download automático com validação anti-SSRF (`safeFetchWithRedirects`) caso a imagem de entrada seja uma URL remota HTTP/HTTPS, convertendo-a para Base64 Data URL antes do processamento.
+  4. **Botão de Exclusão de Mensagem Individual (`src/components/chat-message.tsx` & `src/App.tsx`):**
+     - Adicionada prop `onDeleteMessage` e botão `Trash2` com área de toque ergonômica mobile ($\ge 44\times 44\text{px}$) tanto na mensagem do usuário quanto na do assistente.
+     - Implementado `handleDeleteMessage` em `src/App.tsx` com remoção reativa do estado e persistência imediata no IndexedDB (`saveConversations`).
+  5. **Suíte TDD de Testes Unitários (`src/lib/image-inpaint.test.ts`):**
+     - Adicionados testes para `base64ToUint8Array`, `formatInpaintPrompt` (incluindo inversão de cores e typos) e validação de `mask`/`image` no payload.
+- **Evidências de Verificação:**
+  - `npm test`: **207/207 testes unitários passando em 41 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle compilado em 1.91s e Cloudflare Pages Worker (`dist/_worker.js`, 186.8 kB) gerado com sucesso.
+  - `graphify update .`: grafo de conhecimento sincronizado com 14.922 nós, 16.945 arestas e 1.012 comunidades.
+  - Code Review formal: **Ready to merge** com todas as recomendações de review incorporadas.

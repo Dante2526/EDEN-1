@@ -29,6 +29,7 @@ import {
   Sparkles,
   Paintbrush,
   Video,
+  Trash2,
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message, CanvasPrototype, VideoAspectRatio } from '../lib/types';
@@ -56,6 +57,7 @@ interface ChatMessageProps {
   onRequestCanvasPrototypeChanges?: (prototype: CanvasPrototype) => void;
   onInpaintImage?: (params: { image: string; mask: string; prompt: string; aspectRatio?: string }) => Promise<void>;
   onOpenVideoEditor?: (params?: { title?: string; aspectRatio?: VideoAspectRatio; description?: string }) => void;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 const ChatImage: React.FC<{ src?: string; alt?: string }> = ({ src, alt }) => {
@@ -217,6 +219,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onRequestCanvasPrototypeChanges,
   onInpaintImage,
   onOpenVideoEditor,
+  onDeleteMessage,
 }) => {
   const isUser = message.role === 'user';
   const [inpaintTarget, setInpaintTarget] = useState<{
@@ -389,7 +392,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
           </div>
 
           {/* User Message Action Bar (Copiar mensagem) */}
-          {Boolean(displayContent && displayContent.trim().length > 0) && (
+          {Boolean((displayContent && displayContent.trim().length > 0) || (message.images && message.images.length > 0) || (message.documents && message.documents.length > 0)) && (
             <div
               className={`flex items-center gap-1 mt-1 mr-1 text-[color:var(--c-fg-8c867a)] transition-opacity duration-150 ${
                 copied ? 'opacity-100' : 'opacity-80 sm:opacity-0 sm:group-hover:opacity-100'
@@ -414,6 +417,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   </>
                 )}
               </button>
+              {onDeleteMessage && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteMessage(message.id)}
+                  title="Excluir mensagem"
+                  aria-label="Excluir mensagem"
+                  className="px-2 py-1 rounded-lg hover:text-rose-400 hover:bg-rose-500/10 text-[color:var(--c-fg-8c867a)] transition-colors cursor-pointer flex items-center justify-center gap-1 text-xs min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="text-[11px] hidden sm:inline">Excluir</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -2213,6 +2228,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               </button>
 
               <SpeakButton text={displayContent} />
+              {onDeleteMessage && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteMessage(message.id)}
+                  title="Excluir mensagem"
+                  aria-label="Excluir mensagem"
+                  className="p-1.5 rounded-lg hover:text-rose-400 hover:bg-rose-500/10 text-[color:var(--c-fg-8c867a)] transition-colors cursor-pointer flex items-center justify-center gap-1 text-xs min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="text-[11px] hidden sm:inline">Excluir</span>
+                </button>
+              )}
 
               {message.isTruncated && (
                 <span

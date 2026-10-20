@@ -5264,7 +5264,25 @@ function AppContent() {
         );
       }
     },
-    [activeConversation]
+    [activeConversation?.id]
+  );
+
+  const handleDeleteMessage = useCallback(
+    (messageId: string) => {
+      if (!activeConversation) return;
+      const currentConvId = activeConversation.id;
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== currentConvId) return c;
+          return {
+            ...c,
+            messages: c.messages.filter((m) => m.id !== messageId),
+            updatedAt: Date.now(),
+          };
+        })
+      );
+    },
+    [activeConversation?.id]
   );
 
   const getGreeting = () => {
@@ -5559,6 +5577,7 @@ function AppContent() {
                       onApproveCanvasPrototype={handleApproveCanvasPrototype}
                       onRequestCanvasPrototypeChanges={handleRequestCanvasPrototypeChanges}
                       onInpaintImage={handleInpaintImage}
+                      onDeleteMessage={handleDeleteMessage}
                       onOpenVideoEditor={(params) =>
                         setOpenCutState({
                           isOpen: true,

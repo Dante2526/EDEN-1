@@ -1,5 +1,5 @@
 import { Env, getEnv } from '../lib/server/env';
-import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { checkAuthAndRateLimit, safeFetchWithRedirects } from '../lib/server/_security';
 import {
   validateInpaintPayload,
   buildInpaintNvidiaPayload,
@@ -54,11 +54,29 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   }
 
   const cleanPrompt = validation.cleanPrompt;
-  const image: string = body.image;
+  const rawImageInput: string = body.image;
   const mask: string = body.mask;
   const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 1_000_000);
   const aspectRatio: string = body.aspect_ratio || body.aspectRatio || '1:1';
   const safeAltText = cleanPrompt.replace(/[\n\r\[\]]/g, ' ').trim().slice(0, 60);
+
+  // Se a imagem original for uma URL remota HTTP/HTTPS, baixa os bytes para converter em Base64
+  let image = rawImageInput;
+  if (image.startsWith('http://') || image.startsWith('https://')) {
+    try {
+      const imgRes = await safeFetchWithRedirects(image, {
+        headers: { Accept: 'image/*' },
+      });
+      if (imgRes.ok) {
+        const imgBuffer = await imgRes.arrayBuffer();
+        const mime = imgRes.headers.get('content-type') || 'image/jpeg';
+        const b64 = arrayBufferToBase64(imgBuffer);
+        image = `data:${mime};base64,${b64}`;
+      }
+    } catch (e: any) {
+      console.warn('[Inpaint] Falha ao baixar imagem remota para inpainting:', e?.message || e);
+    }
+  }
 
   // =========================================================================
   // CAMADA 1: NVIDIA NIM (FLUX.1-Kontext-dev)

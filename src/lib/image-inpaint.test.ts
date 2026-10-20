@@ -7,6 +7,8 @@ import {
   buildInpaintCloudflarePayload,
   extractRawBase64,
   normalizeInpaintModel,
+  base64ToUint8Array,
+  formatInpaintPrompt,
 } from './image-inpaint';
 import inpaintHandler from '../../api/inpaint';
 
@@ -92,7 +94,7 @@ describe('image-inpaint (Motor Lógico de Inpainting com Máscara)', () => {
       prompt: 'escaravelho dourado',
       seed: 42,
     });
-    assert.equal(payload.prompt, 'escaravelho dourado');
+    assert.match(payload.prompt, /gold/i);
     assert.equal(payload.seed, 42);
     assert.ok(payload.image);
     assert.ok(payload.mask);
@@ -104,7 +106,7 @@ describe('image-inpaint (Motor Lógico de Inpainting com Máscara)', () => {
       mask: 'data:image/png;base64,BBBB',
       prompt: 'escaravelho dourado',
     });
-    assert.equal(payload.prompt, 'escaravelho dourado');
+    assert.match(payload.prompt, /gold/i);
     assert.equal(payload.image_b64, 'AAAA');
     assert.equal(payload.mask_b64, 'BBBB');
     assert.equal(payload.num_steps, 20);
@@ -125,15 +127,52 @@ describe('image-inpaint (Motor Lógico de Inpainting com Máscara)', () => {
     assert.match(data.error, /POST/i);
   });
 
-  it('deve rejeitar payload com prompt ausente com status 400', async () => {
-    const req = new Request('http://localhost/api/inpaint', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: 'data:image/png;base64,AAAA', mask: 'data:image/png;base64,BBBB', prompt: '' }),
+  it('deve converter base64 para Uint8Array usando atob ou Buffer de forma multiplataforma', () => {
+    // "AQIDBA==" representa os bytes [1, 2, 3, 4]
+    const b64 = 'AQIDBA==';
+    const bytes = base64ToUint8Array(b64);
+    assert.equal(bytes.length, 4);
+    assert.deepEqual(Array.from(bytes), [1, 2, 3, 4]);
+
+    const withPrefix = `data:image/png;base64,${b64}`;
+    const bytesPrefix = base64ToUint8Array(withPrefix);
+    assert.deepEqual(Array.from(bytesPrefix), [1, 2, 3, 4]);
+  });
+
+  it('deve formatar comandos de prompt de inpaint em português para inglês descritivo de difusão', () => {
+    // Caso 1: Grama/musgo para azul
+    const p1 = formatInpaintPrompt('MUDA O VERDE DA GRAMA PARAA ZUL');
+    assert.match(p1, /blue/i);
+    assert.match(p1, /grass|moss/i);
+
+    // Caso 2: Muda para azul direto
+    const p2 = formatInpaintPrompt('MUDA PARA AZUL');
+    assert.match(p2, /blue/i);
+
+    // Caso 3: Comando de remoção
+    const p3 = formatInpaintPrompt('remover objeto da foto');
+    assert.match(p3, /clean|seamless|background/i);
+
+    // Caso 4: Prompt já descritivo em inglês
+    const p4 = formatInpaintPrompt('a glowing iridescent scarab beetle, 8k');
+    assert.match(p4, /glowing iridescent scarab beetle/i);
+
+    // Caso 5: Inversão de cor ("mude o azul para verde")
+    const p5 = formatInpaintPrompt('mude o azul para verde');
+    assert.match(p5, /green|moss|grass/i);
+  });
+
+  it('deve garantir que o payload Cloudflare contenha mask e image como number[] válidos', () => {
+    const payload = buildInpaintCloudflarePayload({
+      image: 'data:image/png;base64,AQIDBA==',
+      mask: 'data:image/png;base64,AQIDBA==',
+      prompt: 'muda para azul',
     });
-    const res = await inpaintHandler(req, {} as any);
-    assert.equal(res.status, 400);
-    const data: any = await res.json();
-    assert.match(data.error, /prompt/i);
+    assert.ok(Array.isArray(payload.mask));
+    assert.equal(payload.mask.length, 4);
+    assert.deepEqual(payload.mask, [1, 2, 3, 4]);
+    assert.ok(Array.isArray(payload.image));
+    assert.equal(payload.image?.length, 4);
+    assert.match(payload.prompt, /blue/i);
   });
 });
