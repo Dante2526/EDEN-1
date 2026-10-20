@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   validateOpenCutTimeline,
   buildOpenCutUrl,
+  buildOpenCutTranslatedUrl,
   formatOpenCutToolResult,
   parseScriptToOpenCutTimeline,
 } from './opencut-integration';
@@ -112,6 +113,25 @@ describe('OpenCut Integration (Engine Lógica de Vídeo e Timeline)', () => {
     assert.ok(customUrl.includes('title=V%C3%ADdeo+do+%C3%89den+%231') || customUrl.includes('title=V%C3%ADdeo%20do%20%C3%89den%20%231'));
     assert.ok(customUrl.includes('aspect=9%3A16'));
     assert.ok(customUrl.includes('mcp=https%3A%2F%2Fmcp.exemplo.com'));
+  });
+
+  it('deve gerar URL do OpenCut traduzida em Português do Brasil (PT-BR)', () => {
+    const ptUrl = buildOpenCutUrl({ language: 'pt' });
+    assert.ok(ptUrl.startsWith('https://opencut-app.translate.goog/projects'));
+    assert.ok(ptUrl.includes('_x_tr_sl=en'));
+    assert.ok(ptUrl.includes('_x_tr_tl=pt'));
+    assert.ok(ptUrl.includes('_x_tr_hl=pt-BR'));
+    assert.ok(ptUrl.includes('_x_tr_pto=wapp'));
+
+    const ptCustomUrl = buildOpenCutTranslatedUrl({
+      projectTitle: 'Vídeo Éden PT',
+      aspectRatio: '9:16',
+    });
+    assert.ok(ptCustomUrl.startsWith('https://opencut-app.translate.goog/projects'));
+    assert.ok(ptCustomUrl.includes('title=V%C3%ADdeo+do+%C3%89den+PT') || ptCustomUrl.includes('title=V%C3%ADdeo%20%C3%89den%20PT') || ptCustomUrl.includes('title=V%C3%ADdeo+%C3%89den+PT'));
+    assert.ok(ptCustomUrl.includes('aspect=9%3A16'));
+    assert.ok(ptCustomUrl.includes('_x_tr_tl=pt'));
+    assert.ok(ptCustomUrl.includes('_x_tr_hl=pt-BR'));
   });
 
   it('deve formatar resultado da tool OpenCut para a IA e UI', () => {

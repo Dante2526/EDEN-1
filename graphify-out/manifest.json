@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792522748.278325,
-    "ast_hash": "85a3f2a68f2a24e0ca87519fe1a7cf36",
+    "mtime": 1792523149.6715684,
+    "ast_hash": "65069d04fead78a3af11453c5c94c950",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
-    "mtime": 1792522720.5454412,
-    "ast_hash": "199a2f41c2b7bbbccc8fc5aec7592547",
+    "mtime": 1792527336.9591584,
+    "ast_hash": "ada6fc41196dfadf32c5d8b00c6b132c",
     "semantic_hash": ""
   },
   "src/components/chat-sidebar.tsx": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792520633.6711092,
-    "ast_hash": "80fa0809a7f83059f0f3e8a185225738",
+    "mtime": 1792527190.0307553,
+    "ast_hash": "d552847950b2d9e811c3e4b3d63ee7bf",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -1495,9 +1495,9 @@
     "semantic_hash": "a9c33a623e0a0cbe468c8155e47cfb4a"
   },
   "vercel.json": {
-    "mtime": 1792030703.6713026,
-    "ast_hash": "1619c490e1733f1f9aa91408033d8c5a",
-    "semantic_hash": "1619c490e1733f1f9aa91408033d8c5a"
+    "mtime": 1792525913.5719693,
+    "ast_hash": "90deaf6682e7289ba5f55ac8f5acf113",
+    "semantic_hash": ""
   },
   "vite.config.ts": {
     "mtime": 1792030703.672547,
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792521750.9232528,
-    "ast_hash": "c45fe8990160e84d48fccf4b38064384",
+    "mtime": 1792526307.0849342,
+    "ast_hash": "b1899d98a76cf5c246bc64f97a53e782",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6110,28 +6110,48 @@
     "semantic_hash": ""
   },
   "src/lib/image-inpaint.test.ts": {
-    "mtime": 1792522563.2412739,
-    "ast_hash": "0e1f3b8cc369d82fd705c833587a78c2",
+    "mtime": 1792523115.6664732,
+    "ast_hash": "e2e50525eb5b078ebd220f3754351ee6",
     "semantic_hash": ""
   },
   "src/lib/image-inpaint.ts": {
-    "mtime": 1792522552.0925102,
-    "ast_hash": "cafa547437d8b3880c88e4977f7c9f5a",
+    "mtime": 1792523104.8450847,
+    "ast_hash": "b992ed3a92d0dd57dc1ff95d68d9cbf1",
     "semantic_hash": ""
   },
   "src/components/video/opencut-modal.tsx": {
-    "mtime": 1792521677.473876,
-    "ast_hash": "f767635a568f1a0b01cf7f18c9c242ed",
+    "mtime": 1792527275.4200704,
+    "ast_hash": "fe127679241cf6b51ec03422b37e6466",
     "semantic_hash": ""
   },
   "src/lib/opencut-integration.test.ts": {
-    "mtime": 1792520475.2473485,
-    "ast_hash": "7918dc676dc40c7e694f8aacc9d5331e",
+    "mtime": 1792527178.6737628,
+    "ast_hash": "64bb552a8d2d175f805b439cbb4f1df2",
     "semantic_hash": ""
   },
   "src/lib/opencut-integration.ts": {
-    "mtime": 1792520494.4072852,
-    "ast_hash": "d6ce12919c00f38abd891e8081a0df3e",
+    "mtime": 1792527206.152472,
+    "ast_hash": "862a5f804fe9f4b19075ef1c377a2cdb",
+    "semantic_hash": ""
+  },
+  ".github/workflows/sync-drive.yml": {
+    "mtime": 1792523640.8181334,
+    "ast_hash": "ceff85432627c27510e59a9c78d396f4",
+    "semantic_hash": ""
+  },
+  ".tmp/drive-docs/1_Frontend_e_Componentes.md": {
+    "mtime": 1792523652.680813,
+    "ast_hash": "19efab10e6b244fac35b0ce3a5cfc3cf",
+    "semantic_hash": ""
+  },
+  ".tmp/drive-docs/2_Backend_e_APIs.md": {
+    "mtime": 1792523652.683818,
+    "ast_hash": "5ebf67373dc96930476576f2a8395b67",
+    "semantic_hash": ""
+  },
+  ".tmp/drive-docs/3_Arquitetura_Motores_e_Tipos.md": {
+    "mtime": 1792523652.6889362,
+    "ast_hash": "771d3c62d82e5c9b4ddfaca528575e04",
     "semantic_hash": ""
   }
 }

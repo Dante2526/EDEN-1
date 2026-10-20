@@ -2420,3 +2420,32 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: **207/207 testes unitários passando em 41 suítes**.
   - `npx tsc --noEmit`: **0 erros**.
   - `npm run build`: compilado com sucesso em 5.07s.
+
+## 136. Abertura do OpenCut Traduzido em Português do Brasil (PT-BR)
+- **Solicitação do Usuário:** *"Tem como abrir o OpenCut traduzido? Porque está em inglês, e quando eu abro a página, o Google Tradutor age, mas aqui a gente não tem. Se der para dar um jeito de abrir já traduzido, seria ótimo, porque eu não quero ficar clicando naquele negócio do Google Tradutor. Eu já quero que abra traduzido, 100% português, pt-br."*
+- **Diagnóstico e Solução Arquitetural:**
+  - O OpenCut oficial é um app em inglês sem rotas localizadas (`/pt/projects` retorna HTTP 404).
+  - O Google Translate Web Proxy oficial opera sob o domínio `https://opencut-app.translate.goog/projects?_x_tr_sl=en&_x_tr_tl=pt&_x_tr_hl=pt-BR&_x_tr_pto=wapp`, traduzindo 100% dos botões, menus, timelines e telas dinamicamente sem necessidade de cliques na extensão do navegador.
+  - Para contornar bloqueios de `frame-ancestors` do Google Translate e entregar a melhor experiência tátil e de tela cheia, disponibilizamos abertura em nova aba / janela com 1 toque tanto no chat quanto no modal.
+- **Implementações Realizadas:**
+  1. **Tipagem e URLs Oficiais (`src/lib/types.ts` & `src/lib/opencut-integration.ts`):**
+     - Adicionado o tipo `OpenCutLanguage = 'pt' | 'en'`.
+     - Definidas constantes `OPENCUT_BASE_URL` e `OPENCUT_TRANSLATED_BASE_URL`.
+     - Atualizado `buildOpenCutUrl(options)` para suportar `language?: OpenCutLanguage`.
+     - Exportada a função utilitária `buildOpenCutTranslatedUrl(options)`.
+  2. **Testes Unitários TDD (`src/lib/opencut-integration.test.ts`):**
+     - Adicionado teste específico verificando geração de URL via proxy `.translate.goog`, validação dos parâmetros `_x_tr_sl=en`, `_x_tr_tl=pt`, `_x_tr_hl=pt-BR`, `_x_tr_pto=wapp` e preservação dos parâmetros de projeto (`title`, `aspect`).
+  3. **Acesso Direto no Modal (`src/components/video/opencut-modal.tsx`):**
+     - Adicionado botão de destaque no cabeçalho: `🇧🇷 Traduzido (PT-BR)` (com min-height 44px e exibição compacta `🇧🇷 PT-BR` em celulares).
+     - Adicionado botão de abertura traduzida na tela de erro/fallback do frame.
+     - Rodapé atualizado com aviso de suporte a português.
+     - Otimização ergonômica mobile: botão `X` da direita ocultado no celular (`hidden sm:flex`) em favor do botão `← Voltar` (44x44px), desobstruindo a barra superior em telas de 360px a 430px.
+  4. **Acesso Direto no Card do Chat (`src/components/chat-message.tsx`):**
+     - No card da ferramenta `open_video_editor`, adicionado botão primário `🇧🇷 Abrir Traduzido (PT-BR)` com touch target $\ge 44\times 44\text{px}$ ao lado do botão `No Estúdio`.
+     - No cabeçalho do card, adicionado link compacto `🇧🇷 PT-BR` com min-width 44px para abertura imediata.
+- **Evidências de Verificação:**
+  - `npm test`: **208/208 testes unitários passando em 41 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle compilado em 2.10s e Cloudflare Pages Worker (`dist/_worker.js`, 186.8 kB) gerado com sucesso.
+  - `python -m graphify update .`: grafo de conhecimento sincronizado com 15.056 nós, 17.083 arestas e 1.016 comunidades.
+  - Code Review formal aprovado (recomendações ergonômicas de mobile aplicadas integralmente).

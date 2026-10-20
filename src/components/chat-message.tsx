@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { Message, CanvasPrototype, VideoAspectRatio } from '../lib/types';
-import { buildOpenCutUrl } from '../lib/opencut-integration';
+import { buildOpenCutUrl, buildOpenCutTranslatedUrl } from '../lib/opencut-integration';
 import { formatFileSize } from '../lib/utils';
 import { CodeBlock } from './code-block';
 import { SpeakButton } from './speak-button';
@@ -1106,6 +1106,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const aspectRatio: VideoAspectRatio = (parsedArgs?.aspect_ratio || parsedArgs?.aspectRatio || '9:16') as VideoAspectRatio;
                   const description: string = parsedArgs?.description || '';
                   const openCutUrl = buildOpenCutUrl({ projectTitle: title, aspectRatio });
+                  const translatedUrl = buildOpenCutTranslatedUrl({ projectTitle: title, aspectRatio });
 
                   return (
                     <div
@@ -1132,11 +1133,22 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
                         <div className="flex items-center gap-1.5 shrink-0">
                           <a
+                            href={translatedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="min-h-[44px] min-w-[44px] px-2.5 py-1.5 flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-emerald-600/20 to-teal-600/20 hover:from-emerald-600/30 hover:to-teal-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition cursor-pointer"
+                            title="Abrir 100% Traduzido em Português (PT-BR) em Nova Aba"
+                            aria-label="Abrir Traduzido em Português (PT-BR)"
+                          >
+                            <span className="text-sm">🇧🇷</span>
+                            <span className="hidden sm:inline">PT-BR</span>
+                          </a>
+                          <a
                             href={openCutUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl text-[color:var(--c-fg-a39d93)] hover:text-white hover:bg-[color:var(--c-bg-2a2721)] transition cursor-pointer"
-                            title="Abrir em Nova Aba"
+                            title="Abrir em Nova Aba (Original EN)"
                             aria-label="Abrir em Nova Aba"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -1158,14 +1170,28 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           <span>Funciona no celular e PC sem precisar de terminal ou servidor</span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => onOpenVideoEditor?.({ title, aspectRatio, description })}
-                          className="w-full sm:w-auto min-h-[44px] min-w-[44px] px-4 py-2 flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md transition cursor-pointer"
-                        >
-                          <Video className="w-4 h-4" />
-                          <span>Abrir no OpenCut</span>
-                        </button>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <a
+                            href={translatedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 sm:flex-initial min-h-[44px] px-3.5 py-2 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-md transition cursor-pointer"
+                            title="Abrir OpenCut 100% em Português do Brasil"
+                          >
+                            <span className="text-sm">🇧🇷</span>
+                            <span>Abrir Traduzido (PT-BR)</span>
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => onOpenVideoEditor?.({ title, aspectRatio, description })}
+                            className="flex-1 sm:flex-initial min-h-[44px] px-3.5 py-2 flex items-center justify-center gap-1.5 rounded-xl bg-[color:var(--c-bg-2d2a25)] hover:bg-[color:var(--c-bg-38352e)] text-[color:var(--c-fg-f3efe6)] text-xs font-semibold border border-[color:var(--c-bg-38352e)] shadow-sm transition cursor-pointer"
+                            title="Abrir no Estúdio Embutido"
+                          >
+                            <Video className="w-4 h-4 text-rose-400" />
+                            <span>No Estúdio</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );

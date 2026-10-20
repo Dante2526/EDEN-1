@@ -296,6 +296,8 @@ export interface SelectedPreviewElement {
 
 export type VideoAspectRatio = '16:9' | '9:16' | '1:1' | '4:5';
 
+export type OpenCutLanguage = 'pt' | 'en';
+
 export interface OpenCutClip {
   id: string;
   name?: string;

@@ -1,9 +1,13 @@
-import { OpenCutTimeline, OpenCutTrack, OpenCutClip, VideoAspectRatio } from './types';
+import { OpenCutTimeline, OpenCutTrack, OpenCutClip, VideoAspectRatio, OpenCutLanguage } from './types';
+
+export const OPENCUT_BASE_URL = 'https://opencut.app/projects';
+export const OPENCUT_TRANSLATED_BASE_URL = 'https://opencut-app.translate.goog/projects';
 
 export interface OpenCutLaunchOptions {
   projectTitle?: string;
   aspectRatio?: VideoAspectRatio;
   remoteMcpUrl?: string;
+  language?: OpenCutLanguage;
 }
 
 /**
@@ -46,25 +50,40 @@ export function validateOpenCutTimeline(timeline: Partial<OpenCutTimeline>): { v
 }
 
 /**
- * Monta a URL de acesso ao OpenCut Web Editor com parâmetros seguros
+ * Monta a URL de acesso ao OpenCut Web Editor com parâmetros seguros.
+ * Suporta modo traduzido automático em Português do Brasil (PT-BR) via proxy oficial do Google Tradutor.
  */
 export function buildOpenCutUrl(options?: OpenCutLaunchOptions): string {
-  const baseUrl = 'https://opencut.app/projects';
-  if (!options) return baseUrl;
+  const language = options?.language ?? 'en';
+  const baseUrl = language === 'pt' ? OPENCUT_TRANSLATED_BASE_URL : OPENCUT_BASE_URL;
 
   const params = new URLSearchParams();
-  if (options.projectTitle?.trim()) {
+  if (options?.projectTitle?.trim()) {
     params.set('title', options.projectTitle.trim());
   }
-  if (options.aspectRatio) {
+  if (options?.aspectRatio) {
     params.set('aspect', options.aspectRatio);
   }
-  if (options.remoteMcpUrl?.trim()) {
+  if (options?.remoteMcpUrl?.trim()) {
     params.set('mcp', options.remoteMcpUrl.trim());
+  }
+
+  if (language === 'pt') {
+    params.set('_x_tr_sl', 'en');
+    params.set('_x_tr_tl', 'pt');
+    params.set('_x_tr_hl', 'pt-BR');
+    params.set('_x_tr_pto', 'wapp');
   }
 
   const queryString = params.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+}
+
+/**
+ * Monta a URL do OpenCut 100% traduzida em Português do Brasil (PT-BR)
+ */
+export function buildOpenCutTranslatedUrl(options?: Omit<OpenCutLaunchOptions, 'language'>): string {
+  return buildOpenCutUrl({ ...options, language: 'pt' });
 }
 
 /**
