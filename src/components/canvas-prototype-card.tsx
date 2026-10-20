@@ -35,12 +35,34 @@ export const CanvasPrototypeCard: React.FC<CanvasPrototypeCardProps> = ({
   };
 
   const handleOpenNewTab = () => {
-    const blob = new Blob([sanitizedHtml], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 60000);
+    // Blindagem de Isolamento de Origem Definitiva (SEC-01):
+    // Abre nova aba e encapsula o protótipo dentro de um iframe com sandbox estrito SEM 'allow-same-origin'.
+    // Isso garante origem opaca 'null' em TODOS os navegadores (Chrome, Edge, Firefox, Safari),
+    // impossibilitando acesso a window.localStorage, IndexedDB ou cookies do Synap/Éden.
+    const newWin = window.open('about:blank', '_blank');
+    if (!newWin) return;
+
+    try {
+      newWin.document.title = `${prototype.title || 'Canvas Prototype'} — Preview Sandboxed`;
+      newWin.document.body.style.margin = '0';
+      newWin.document.body.style.padding = '0';
+      newWin.document.body.style.width = '100%';
+      newWin.document.body.style.height = '100%';
+      newWin.document.body.style.overflow = 'hidden';
+      newWin.document.body.style.backgroundColor = '#0c0b0a';
+
+      const iframe = newWin.document.createElement('iframe');
+      iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals');
+      iframe.style.width = '100vw';
+      iframe.style.height = '100vh';
+      iframe.style.border = 'none';
+      iframe.style.display = 'block';
+      iframe.srcdoc = sanitizedHtml;
+
+      newWin.document.body.appendChild(iframe);
+    } catch (e) {
+      console.error('Falha ao instanciar sandbox na nova aba:', e);
+    }
   };
 
   const isApproved = prototype.status === 'approved';

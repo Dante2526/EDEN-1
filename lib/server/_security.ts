@@ -214,3 +214,157 @@ export async function checkAuthAndRateLimit(
 
   return null;
 }
+
+/**
+ * Validação rigorosa anti-SSRF: bloqueia requisições a loopbacks (127.0.0.0/8),
+ * Link-Local / Cloud Instance Metadata Services (169.254.0.0/16), redes privadas RFC 1918
+ * (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), CGNAT (100.64.0.0/10), IPv6 privados/locais
+ * e representações numéricas puras de IP.
+ */
+export function isLocalOrPrivateUrl(urlStr: string): boolean {
+  if (!urlStr || typeof urlStr !== 'string') return true;
+
+  try {
+    const parsed = new URL(urlStr);
+    const protocol = parsed.protocol.toLowerCase();
+
+    // Apenas protocolos web públicos permitidos
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return true;
+    }
+
+    // Normaliza hostname removendo colchetes de IPv6 e espaços
+    let hostname = parsed.hostname.toLowerCase().trim();
+    if (hostname.startsWith('[') && hostname.endsWith(']')) {
+      hostname = hostname.slice(1, -1);
+    }
+
+    // Nomes de domínio locais / internos conhecidos e wildcard DNS
+    if (
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.lan') ||
+      hostname.endsWith('.home') ||
+      hostname.endsWith('.corp') ||
+      hostname.endsWith('.nip.io') ||
+      hostname.endsWith('.sslip.io') ||
+      hostname.endsWith('.localtest.me') ||
+      hostname.endsWith('.vcap.me') ||
+      hostname.endsWith('.traefik.me') ||
+      hostname === '0.0.0.0' ||
+      hostname === '::'
+    ) {
+      return true;
+    }
+
+    // Bloqueia decimais/hex puros que contornam filtros de IP (ex: 2130706433 ou 0x7f000001)
+    if (/^\d+$/.test(hostname) || /^0x[0-9a-f]+$/i.test(hostname)) {
+      return true;
+    }
+
+    // IPv6 Loopback, Link-Local (fe80::/10), Site-Local (fec0::/10), ULA (fc00::/7) e IPv4-Mapped
+    const ipv6LocalRegex = /^(::1|0:0:0:0:0:0:0:1|::|f[cd][0-9a-f]{0,2}:|fe[8-f][0-9a-f]{0,1}:|::ffff:)/i;
+    if (ipv6LocalRegex.test(hostname)) {
+      return true;
+    }
+
+    // Se for IPv4 (4 octetos)
+    const ipv4Parts = hostname.split('.');
+    if (ipv4Parts.length === 4 && ipv4Parts.every((p) => /^\d+$/.test(p))) {
+      const [o1, o2] = ipv4Parts.map((p) => parseInt(p, 10));
+
+      // 127.0.0.0/8 (Loopback completo) e 0.0.0.0/8
+      if (o1 === 127 || o1 === 0) return true;
+
+      // 169.254.0.0/16 (Link-Local / AWS/GCP/Azure Instance Metadata 169.254.169.254)
+      if (o1 === 169 && o2 === 254) return true;
+
+      // 10.0.0.0/8 (Rede Privada Classe A)
+      if (o1 === 10) return true;
+
+      // 172.16.0.0/12 (Rede Privada Classe B: 172.16.x.x - 172.31.x.x)
+      if (o1 === 172 && o2 >= 16 && o2 <= 31) return true;
+
+      // 192.168.0.0/16 (Rede Privada Classe C)
+      if (o1 === 192 && o2 === 168) return true;
+
+      // 100.64.0.0/10 (Carrier-Grade NAT / Shared Address Space: 100.64 - 100.127)
+      if (o1 === 100 && o2 >= 64 && o2 <= 127) return true;
+
+      // 192.0.0.0/24 (IETF Protocol Assignments) e 198.18.0.0/15 (Benchmarking)
+      if (o1 === 192 && o2 === 0) return true;
+      if (o1 === 198 && (o2 === 18 || o2 === 19)) return true;
+
+      // 224.0.0.0/4 (Multicast Classes D) e 240.0.0.0/4 (Reservadas/Classe E)
+      if (o1 >= 224) return true;
+    }
+
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Executa fetch HTTP com validação anti-SSRF compulsória em cada hop de redirecionamento (CWE-918).
+ * Previne ataques de SSRF via HTTP 301/302/303/307/308 para metadados de nuvem ou redes privadas.
+ */
+export async function safeFetchWithRedirects(
+  initialUrl: string,
+  options: RequestInit = {},
+  maxRedirects = 5
+): Promise<Response & { finalUrl?: string }> {
+  let currentUrl = initialUrl;
+
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    if (isLocalOrPrivateUrl(currentUrl)) {
+      throw new Error(`SSRF Blocked: tentativa de conexão para endereço privado ou restrito (${currentUrl})`);
+    }
+
+    const res = await fetch(currentUrl, {
+      ...options,
+      redirect: 'manual',
+    });
+
+    const isRedirect =
+      res.status === 301 ||
+      res.status === 302 ||
+      res.status === 303 ||
+      res.status === 307 ||
+      res.status === 308;
+
+    if (!isRedirect) {
+      (res as any).finalUrl = currentUrl;
+      return res;
+    }
+
+    const location = res.headers.get('location');
+    if (!location) {
+      (res as any).finalUrl = currentUrl;
+      return res;
+    }
+
+    // Resolve URL de redirecionamento relativa ou absoluta
+    let nextUrl: string;
+    try {
+      nextUrl = new URL(location, currentUrl).href;
+    } catch {
+      throw new Error(`SSRF Blocked: URL de redirecionamento inválida (${location})`);
+    }
+
+    // Se o método era POST e o status for 303 (ou 301/302), converte para GET nas próximas requisições
+    if (res.status === 303 || ((res.status === 301 || res.status === 302) && options.method === 'POST')) {
+      options = {
+        ...options,
+        method: 'GET',
+        body: undefined,
+      };
+    }
+
+    currentUrl = nextUrl;
+  }
+
+  throw new Error(`Excedido o número máximo de redirecionamentos (${maxRedirects})`);
+}

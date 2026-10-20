@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { checkAuthAndRateLimit, isLocalOrPrivateUrl, safeFetchWithRedirects } from '../lib/server/_security';
 import { Env } from '../lib/server/env';
 import {
   extractMediaFromUrl,
@@ -46,37 +46,6 @@ interface CobaltResponse {
   output?: string;
 }
 
-function isLocalOrPrivateUrl(urlStr: string): boolean {
-  try {
-    const parsed = new URL(urlStr);
-    const hostname = parsed.hostname.toLowerCase();
-
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return true;
-    }
-
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '::1' ||
-      hostname === '0.0.0.0' ||
-      hostname.endsWith('.local')
-    ) {
-      return true;
-    }
-
-    if (/^10\./.test(hostname) || /^192\.168\./.test(hostname)) return true;
-    const match172 = hostname.match(/^172\.(\d+)\./);
-    if (match172) {
-      const secondOctet = parseInt(match172[1], 10);
-      if (secondOctet >= 16 && secondOctet <= 31) return true;
-    }
-
-    return false;
-  } catch {
-    return true;
-  }
-}
 
 async function tryCobaltInstance(
   instanceBaseUrl: string,
@@ -139,7 +108,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
         forwardHeaders['Range'] = rangeHeader;
       }
 
-      const upstreamRes = await fetch(streamTargetUrl, {
+      const upstreamRes = await safeFetchWithRedirects(streamTargetUrl, {
         headers: forwardHeaders,
         signal: req.signal,
       });
@@ -167,7 +136,12 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
         headers: responseHeaders,
       });
     } catch (err: any) {
-      // Fallback em caso de erro no pipe: redireciona para a URL direta
+      if (err?.message?.includes('SSRF Blocked') || isLocalOrPrivateUrl(streamTargetUrl)) {
+        return new Response(JSON.stringify({ error: 'Acesso bloqueado por diretrizes de segurança (SSRF).' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
       return Response.redirect(streamTargetUrl, 302);
     }
   }
@@ -227,16 +201,19 @@ async function resolveRedirectUrl(urlStr: string): Promise<string> {
   if (!isShortened) return urlStr;
 
   try {
-    const res = await fetch(urlStr, {
+    const res = await safeFetchWithRedirects(urlStr, {
       method: 'GET',
-      redirect: 'follow',
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
       },
       signal: AbortSignal.timeout(3500),
     });
-    return res.url || urlStr;
+    const finalUrl = (res as any).finalUrl || res.url || urlStr;
+    if (isLocalOrPrivateUrl(finalUrl)) {
+      return urlStr;
+    }
+    return finalUrl;
   } catch {
     return urlStr;
   }

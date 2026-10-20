@@ -1,4 +1,4 @@
-import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { checkAuthAndRateLimit, isLocalOrPrivateUrl, safeFetchWithRedirects } from '../lib/server/_security';
 import { Env } from '../lib/server/env';
 import {
   parseMp4Buffer,
@@ -12,39 +12,7 @@ export const config = {
   runtime: 'edge',
 };
 
-function isLocalOrPrivateUrl(urlStr: string): boolean {
-  try {
-    const parsed = new URL(urlStr);
-    const hostname = parsed.hostname.toLowerCase();
 
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return true;
-    }
-
-    if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '::1' ||
-      hostname === '0.0.0.0' ||
-      hostname.endsWith('.local')
-    ) {
-      return true;
-    }
-
-    if (/^10\./.test(hostname) || /^192\.168\./.test(hostname)) {
-      return true;
-    }
-    const match172 = hostname.match(/^172\.(\d+)\./);
-    if (match172) {
-      const secondOctet = parseInt(match172[1], 10);
-      if (secondOctet >= 16 && secondOctet <= 31) return true;
-    }
-
-    return false;
-  } catch {
-    return true;
-  }
-}
 
 // Extração de texto simples sem cheerio (funciona em Edge Runtime)
 function extractTextFromHtml(html: string): { title: string; content: string; length: number; truncated: boolean } {
@@ -243,11 +211,10 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       fetchHeaders = { ...outgoingHeaders, ...headlessSpec.headers };
     }
 
-    const response = await fetch(fetchTargetUrl, {
+    const response = await safeFetchWithRedirects(fetchTargetUrl, {
       method: reqMethod,
       headers: fetchHeaders,
       body: reqMethod === 'POST' && forwardBody ? forwardBody : undefined,
-      redirect: 'follow',
       signal: AbortSignal.timeout(renderJs ? 15000 : 10000),
     });
 
@@ -258,7 +225,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     });
 
     const contentType = response.headers.get('content-type') || '';
-    const finalUrl = response.url || targetUrl;
+    const finalUrl = response.finalUrl || response.url || targetUrl;
 
     // Modo HEAD (ex.: curl -I)
     if (reqMethod === 'HEAD') {
@@ -500,6 +467,12 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {
+    if (err?.message?.includes('SSRF Blocked')) {
+      return new Response(
+        JSON.stringify({ error: err.message }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     const isTimeout = err?.name === 'TimeoutError' || err?.message?.includes('timeout');
     return new Response(
       JSON.stringify({

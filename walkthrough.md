@@ -2197,3 +2197,33 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `tsc --noEmit`: **0 erros**.
   - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso em 2.44s.
   - Code Review formal: Aprovado com incorporação de todas as recomendações de precedência e relatórios analíticos.
+
+
+## 127. Hardening Adversarial de Segurança: SEC-01 e SEC-02 (Cloudflare Methodology)
+- **Solicitação do Usuário:** Executar auditoria de segurança adversarial completa e mitigar todas as vulnerabilidades confirmadas: **SEC-01** (quebra de isolamento de origem no Canvas ao abrir em nova aba) e **SEC-02** (blindagem anti-SSRF com bloqueio de 169.254, loopbacks, IPv6 ULA/Link-Local e redirects).
+- **Implementações Realizadas:**
+  1. **Centralização e Blindagem Anti-SSRF (`lib/server/_security.ts`):**
+     - Função unificada e exportada `isLocalOrPrivateUrl(urlStr: string): boolean`.
+     - Bloqueio completo de Link-Local e IMDS de nuvem: `169.254.0.0/16` (`169.254.169.254`).
+     - Bloqueio integral de loopbacks (`127.0.0.0/8`, `0.0.0.0/8`, `localhost`, `::1`).
+     - Bloqueio de subredes privadas RFC 1918 (`10/8`, `172.16/12`, `192.168/16`), CGNAT (`100.64/10`) e protocolos não-HTTP/HTTPS.
+     - Bloqueio de IPv6 ULA (`fc00::/7`), Link-Local (`fe80::/10`), Site-Local (`fec0::/10`) e IPv4-mapped IPv6 via regex unificada.
+     - Bloqueio de classes IPv4 Multicast (D) e Reservadas (E) (`o1 >= 224`), além de domínios públicos de wildcard DNS (`.nip.io`, `.sslip.io`, `.localtest.me`, `.vcap.me`, `.traefik.me`).
+     - Bypasses numéricos de IP em formato decimal puro (`2130706433`) ou hexadecimal (`0x7f000001`).
+  2. **Mitigação Definitiva de SSRF via HTTP Redirects CWE-918 (`lib/server/_security.ts`):**
+     - Criado o helper seguro `safeFetchWithRedirects(initialUrl, options, maxRedirects = 5)`.
+     - Utiliza `redirect: 'manual'` e revalida obrigatoriamente `isLocalOrPrivateUrl(nextUrl)` em cada hop de redirecionamento (HTTP 301, 302, 303, 307, 308).
+     - Se o servidor de origem retornar redirect apontando para IMDS ou IP privado, o fluxo é imediatamente abortado com exceção `SSRF Blocked`, retornando HTTP 403.
+     - Substituídos os `fetch` vulneráveis em `api/fetch-url.ts` e `api/download.ts` pelo `safeFetchWithRedirects`.
+  3. **Isolamento de Origem Definitivo no Canvas SEC-01 (`src/components/canvas-prototype-card.tsx`):**
+     - Eliminado o fallback de `Blob` URL (que herda a mesma origem do Synap e permitia leitura de `localStorage`/cookies por protótipos de tela).
+     - O botão de abrir em nova aba (`handleOpenNewTab`) abre uma janela `about:blank` e injeta dinamicamente via DOM um `<iframe sandbox="allow-scripts allow-forms allow-modals">` com `srcdoc={sanitizedHtml}`.
+     - Sem a diretiva `allow-same-origin`, o navegador atribui ao iframe a origem opaca `null` em todos os navegadores (Chromium, Firefox, Safari), impedindo permanentemente o acesso ao storage ou cookies da aplicação hospedeira.
+  4. **Suíte TDD de Segurança (`src/lib/security-ssrf.test.ts`):**
+     - Criados 10 cenários de testes abrangendo metadados de nuvem, loopbacks, RFC 1918, CGNAT, IPv6 ULA/Link-Local, multicast, wildcard DNS, bypasses decimais/hex e simulação com mock de ataque SSRF via HTTP 302 redirect.
+- **Evidências de Verificação:**
+  - `npm test`: **179/179 testes unitários passando em 38 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 172.4 kB) gerados com sucesso.
+  - `graphify update .`: grafo sincronizado com 14.877 nós, 16.821 arestas e 1.005 comunidades.
+  - Code Review formal: **Ready to merge: Yes** (0 Critical, 0 Important, 0 Minor).
