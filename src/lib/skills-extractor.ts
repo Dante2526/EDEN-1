@@ -27,6 +27,7 @@ export function extractUsedSkills(
     const activeNames = activeSkills.map((s) => s.name);
     for (const core of [
       'Code Review & Segurança',
+      'Auditoria de Segurança (Cloudflare)',
       'Systematic Debugging',
       'Test-Driven Development (TDD)',
       'Conventional Commits',

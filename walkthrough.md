@@ -2178,3 +2178,22 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso em 2.60s.
   - Code Review formal: Aprovado com incorporação de todas as recomendações de plurais e idempotência.
 
+## 126. Skill Cloudflare Security Audit (Antigravity & Éden)
+- **Solicitação do Usuário:** Integrar a harness oficial de auditoria de segurança da Cloudflare (`cloudflare/security-audit-skill`) tanto no **Antigravity** quanto no **Éden**.
+- **Implementações Realizadas:**
+  1. **Skill Global no Antigravity (`~/.gemini/config/skills/security-audit/SKILL.md`):**
+     - Criada a skill com frontmatter e metodologia de 6 fases da equipe de segurança da Cloudflare: reconhecimento de fronteiras de confiança, caça por cobertura, análise de taint (Source → Sink), validação adversarial (eliminação estrita de falsos positivos), elaboração de PoC e relatório estruturado de mitigação.
+     - Suporte a classes de ataque prioritárias: Injeção (SQLi/Command), SSRF com bypass de metadados de nuvem, quebra de autorização/IDOR, vazamento de segredos/chaves e injeção de prompt em LLMs.
+  2. **Skill Built-in no Éden com Toggle (`src/lib/storage.ts`):**
+     - Registrada a skill `cloudflare-security-audit` (*"Auditoria de Segurança (Cloudflare)"*) com `enabled: true`, ícone `'shield'` (ShieldCheck em azul celeste `text-sky-400`) e diretrizes de auditoria adversarial.
+     - Auto-migração transparente via `missingBuiltins` em `loadSkills()`, persistindo no IndexedDB para novos usuários e usuários existentes.
+  3. **Diretriz no System Prompt & Transparência (`src/App.tsx`, `src/lib/skills-extractor.ts`):**
+     - Injetada a Regra 13 no System Prompt do Éden para auditoria autônoma de repositórios conectados via GitHub e código colado no chat.
+     - Registrado `'Auditoria de Segurança (Cloudflare)'` na lista de fallback de extração de habilidades.
+  4. **Suíte de Testes Unitários TDD (`src/lib/security-audit.test.ts`):**
+     - 4 testes cobrindo o registro em `BUILTIN_SKILLS`, validação das diretrizes oficiais Cloudflare, extração explícita de tags no chat e fallback automático.
+- **Evidências de Verificação:**
+  - `npm test`: **167/167 testes unitários passando em 37 suítes** (100% verde).
+  - `tsc --noEmit`: **0 erros**.
+  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso.
+  - Code Review formal: Aprovado sem ressalvas (Assessment: Ready to merge? Yes).
