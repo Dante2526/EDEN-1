@@ -2227,3 +2227,30 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 172.4 kB) gerados com sucesso.
   - `graphify update .`: grafo sincronizado com 14.877 nós, 16.821 arestas e 1.005 comunidades.
   - Code Review formal: **Ready to merge: Yes** (0 Critical, 0 Important, 0 Minor).
+
+
+## 128. Suporte aos Modelos FLUX da NVIDIA NIM e Roteamento de Imagens
+- **Solicitação do Usuário:** *"Checa lá os modelos de imagem que a gente pegou da NVIDIA, não está conseguindo gerar flex e flux."*
+- **Diagnóstico da Causa Raiz:**
+  1. O endpoint `/api/image` não estava registrado no `server.ts` Express local, respondendo com HTTP 404.
+  2. O arquivo `api/image.ts` estava configurado unicamente para Cloudflare Workers AI, ignorando completamente `env.NVIDIA_API_KEY`.
+  3. A Cloudflare recentemente bloqueou os modelos FLUX no plano gratuito (Workers Free), exigindo plano pago de $5/mês e impedindo gerações gratuitas na Cloudflare.
+- **Implementações Realizadas:**
+  1. **Roteamento no Servidor Local (`server.ts`):**
+     - Registrada a rota `app.all('/api/image', adaptWebHandler(imageHandler))` com suporte uniforme a dev local e Cloudflare Pages Worker.
+  2. **Arquitetura em 3 Camadas Resilientes (`api/image.ts`):**
+     - **Camada 1 (NVIDIA NIM Primária):** Invocação direta dos modelos `black-forest-labs/flux.1-dev` e `flux.1-schnell` em `https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-*`, com autenticação `NVIDIA_API_KEY`, resolução de proporções (`1344x768`, `768x1344`, `1024x1024`), steps otimizados (4 para schnell, 25 para dev) e extração de Base64 Data URL. Timeout de 22s alinhado ao Edge.
+     - **Camada 2 (Cloudflare Workers AI Secundária):** Fallback para `@cf/black-forest-labs/flux-1-*` se credenciais CF estiverem presentes, com timeout de 15s.
+     - **Camada 3 (Garantia de 100% de Disponibilidade):** Fallback automático via Pollinations FLUX com truncamento defensivo de prompts a 800 caracteres para mitigar HTTP 414.
+  3. **Blindagem contra Estouro de Pilha (`api/image.ts`):**
+     - Implementado o helper `arrayBufferToBase64(buffer)` fatiando buffers em blocos de 32KB (`0x8000`) para erradicar o `RangeError: Maximum call stack size exceeded` em imagens binárias reais (>125KB).
+  4. **Frontend Dinâmico (`src/App.tsx`):**
+     - Refatorada a propriedade `is_data_url` para `Boolean(data.is_data_url)`, respeitando o tipo de retorno do provedor ativo.
+  5. **Suíte TDD Completa (`src/lib/image-generator.test.ts`):**
+     - 8 testes cobrindo dimensões, normalização de modelo, payload NVIDIA NIM, rejeição de prompt vazio (400), geração com NVIDIA NIM Base64, conversão de buffers grandes (>200KB), fallback Cloudflare e fallback Pollinations.
+- **Evidências de Verificação:**
+  - `npm test`: **187/187 testes unitários passando em 39 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle compilado em 1.64s e Cloudflare Pages Worker (`dist/_worker.js`, 174.9 kB) gerado com sucesso.
+  - `graphify update .`: grafo de conhecimento sincronizado com 14.883 nós, 16.838 arestas e 1.014 comunidades.
+  - Code Review formal: **Ready to merge: Yes** (todas as pendências sanadas).

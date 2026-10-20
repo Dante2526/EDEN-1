@@ -2541,8 +2541,7 @@ function AppContent() {
           result: JSON.stringify({
             success: true,
             url: data.url,
-            is_data_url: true,
-            markdown: data.markdown,
+            is_data_url: Boolean(data.is_data_url),
             model: data.model,
             size: data.size,
             aspect_ratio: data.aspect_ratio,

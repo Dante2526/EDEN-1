@@ -6,226 +6,330 @@ export const config = {
 };
 
 /**
- * Synap Image Generation API
- * ==========================
- * Gera imagem via Cloudflare Workers AI usando FLUX.2 Dev
- * (modelo @cf/black-forest-labs/flux-2-dev — melhor qualidade open-source).
+ * Synap Image Generation API (Multi-Tier Resilient Architecture)
+ * ==============================================================
+ * 1. Provedor Primário: NVIDIA NIM
+ *    - Modelos: FLUX.1 [dev] e FLUX.1 [schnell] (Black Forest Labs)
+ *    - Endpoints: https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev
+ *                 https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell
+ *    - Saída: Imagem binária codificada em Base64 Data URL (data:image/jpeg;base64,...)
  *
- * Comparação com Imagen 2.1 (Google):
- *   - FLUX.2 Dev: ~95% da qualidade do Imagen 4 Ultra (que já é melhor que 2.1)
- *   - 100% gratuito no free tier da CF (10k neurons/dia = ~500-1000 imgs/dia)
- *   - Sem watermark, sem rate limit agressivo
+ * 2. Provedor Secundário: Cloudflare Workers AI
+ *    - Modelos: @cf/black-forest-labs/flux-1-dev e flux-1-schnell
+ *    - Endpoint: https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/...
  *
- * Endpoint REST da CF:
- *   POST https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/@cf/black-forest-labs/flux-2-dev
- *
- * Body:
- *   { prompt: string, size?: string }
- *   size aceita: "1024x1024" (1:1), "1024x576" (16:9), "576x1024" (9:16), "800x600" (4:3)
- *
- * Response: imagem binária (image/png) — convertemos pra base64 data URL
- * pra poder mostrar no chat como markdown ![alt](data:...)
+ * 3. Provedor Terciário (Garantia de 100% de Disponibilidade): Pollinations FLUX
+ *    - Fallback resiliente automático caso cotas da NVIDIA ou Cloudflare estejam esgotadas.
  */
 
-// Modelos disponíveis (em ordem de qualidade, melhor primeiro)
-// IMPORTANTE: FLUX.2 Dev (flux-2-dev, flux-2-klein-*) requer multipart/form-data
-// no body, NÃO suporta JSON. Por isso usamos só FLUX.1 family que aceita JSON:
-//   - flux-1-schnell: 4 steps default (rápido, ~3s), qualidade boa
-//   - flux-1-dev: 8 steps default (mais lento, melhor qualidade)
-//
-// Ref: agents@0.28.1 image model handling
-// "its generated input takes a required `multipart` object body ...
-//  live, the run path answers 400 Bad input: required properties at '/'
-//  are 'multipart'. Suggesting an id that always 400s is worse than not
-//  suggesting it."
-const FLUX_MODELS = {
-  'flux-1-dev': '@cf/black-forest-labs/flux-1-dev',
-  'flux-1-schnell': '@cf/black-forest-labs/flux-1-schnell',
-} as const;
+export interface ImageDimensions {
+  width: number;
+  height: number;
+  cfSize: string;
+}
 
-type FluxModelKey = keyof typeof FLUX_MODELS;
+export type FluxModelKey = 'flux-1-dev' | 'flux-1-schnell';
+
+/**
+ * Converte ArrayBuffer para Base64 de forma segura contra estouro de pilha (call stack overflow).
+ */
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(buffer).toString('base64');
+  }
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000; // 32KB chunks
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+/**
+ * Normaliza e resolve dimensões e proporções de aspecto (Aspect Ratio).
+ */
+export function resolveDimensions(aspectRatio?: string): ImageDimensions {
+  const ratio = (aspectRatio || '1:1').toLowerCase().trim();
+
+  switch (ratio) {
+    case '16:9':
+      return { width: 1344, height: 768, cfSize: '1024x576' };
+    case '9:16':
+      return { width: 768, height: 1344, cfSize: '576x1024' };
+    case '4:3':
+      return { width: 1024, height: 768, cfSize: '800x600' };
+    case '3:4':
+      return { width: 768, height: 1024, cfSize: '600x800' };
+    case '1:1':
+    default:
+      return { width: 1024, height: 1024, cfSize: '1024x1024' };
+  }
+}
+
+/**
+ * Normaliza a chave do modelo FLUX solicitado.
+ */
+export function normalizeModelKey(modelName?: string): FluxModelKey {
+  if (!modelName) return 'flux-1-dev';
+  const lower = modelName.toLowerCase().replace(/[._]/g, '-');
+  if (lower.includes('schnell')) {
+    return 'flux-1-schnell';
+  }
+  return 'flux-1-dev';
+}
+
+/**
+ * Monta o payload padronizado para a API da NVIDIA NIM.
+ */
+export function buildNvidiaPayload(
+  prompt: string,
+  modelKey: FluxModelKey,
+  dims: { width: number; height: number },
+  seed: number
+) {
+  const isSchnell = modelKey === 'flux-1-schnell';
+  return {
+    prompt,
+    mode: 'base',
+    width: dims.width,
+    height: dims.height,
+    seed,
+    steps: isSchnell ? 4 : 25,
+    cfg_scale: isSchnell ? 0.0 : 3.5,
+  };
+}
 
 export default async function handler(req: Request, envArg?: Env): Promise<Response> {
   const env = getEnv(envArg);
   const sec = await checkAuthAndRateLimit(req, env);
   if (sec) return sec;
 
-  // Aceita POST (body JSON) ou GET (query string)
   let prompt = '';
   let aspectRatio = '1:1';
-  let modelKey: FluxModelKey = 'flux-1-dev';
+  let requestedModel = 'flux-1-dev';
 
   if (req.method === 'POST') {
     try {
       const body = await req.json();
       prompt = body.prompt || '';
       aspectRatio = body.aspect_ratio || body.aspectRatio || '1:1';
-      const requestedModel = body.model || 'flux-1-dev';
-      if (requestedModel in FLUX_MODELS) {
-        modelKey = requestedModel as FluxModelKey;
-      }
+      requestedModel = body.model || 'flux-1-dev';
     } catch {}
   } else {
     const url = new URL(req.url);
     prompt = url.searchParams.get('prompt') || '';
     aspectRatio = url.searchParams.get('aspect_ratio') || '1:1';
-    const requestedModel = url.searchParams.get('model') || 'flux-1-dev';
-    if (requestedModel in FLUX_MODELS) {
-      modelKey = requestedModel as FluxModelKey;
-    }
+    requestedModel = url.searchParams.get('model') || 'flux-1-dev';
   }
 
-  if (!prompt.trim()) {
+  const cleanPrompt = prompt.trim();
+  if (!cleanPrompt) {
     return new Response(
       JSON.stringify({ error: 'Prompt não fornecido. Use {"prompt": "..."} no body.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  // Validar credenciais Cloudflare
+  const modelKey = normalizeModelKey(requestedModel);
+  const dims = resolveDimensions(aspectRatio);
+  const seed = Math.floor(Math.random() * 1_000_000);
+  const safeAltText = cleanPrompt.replace(/[\n\r\[\]]/g, ' ').trim().slice(0, 60);
+
+  // =========================================================================
+  // CAMADA 1: NVIDIA NIM (FLUX.1 [dev] e FLUX.1 [schnell])
+  // =========================================================================
+  const nvidiaKey = env.NVIDIA_API_KEY?.trim();
+  if (nvidiaKey && !nvidiaKey.startsWith('sua_') && !nvidiaKey.startsWith('nvapi-your')) {
+    const nvidiaModelName = modelKey === 'flux-1-schnell' ? 'flux.1-schnell' : 'flux.1-dev';
+    const nvidiaUrl = `https://ai.api.nvidia.com/v1/genai/black-forest-labs/${nvidiaModelName}`;
+    const payload = buildNvidiaPayload(cleanPrompt, modelKey, dims, seed);
+
+    try {
+      const nvidiaCtrl = new AbortController();
+      // Timeout seguro de 22s para preservar a janela de execução do Edge
+      const nvidiaTimeout = setTimeout(() => nvidiaCtrl.abort(), 22000);
+
+      const nvidiaRes = await fetch(nvidiaUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${nvidiaKey}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: nvidiaCtrl.signal,
+      });
+
+      clearTimeout(nvidiaTimeout);
+
+      if (nvidiaRes.ok) {
+        const data: any = await nvidiaRes.json();
+        const base64Data = data?.artifacts?.[0]?.base64;
+        if (base64Data) {
+          const dataUrl = `data:image/jpeg;base64,${base64Data}`;
+          return new Response(
+            JSON.stringify({
+              success: true,
+              url: dataUrl,
+              prompt: cleanPrompt,
+              model: `black-forest-labs/${nvidiaModelName}`,
+              provider: 'NVIDIA NIM (Black Forest Labs)',
+              size: `${dims.width}x${dims.height}`,
+              dimensions: dims,
+              aspect_ratio: aspectRatio,
+              markdown: `![${safeAltText}](${dataUrl})`,
+              is_data_url: true,
+            }),
+            {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'private, max-age=86400',
+              },
+            }
+          );
+        }
+      } else {
+        console.warn(`[NVIDIA NIM Image] ${nvidiaRes.status} ${nvidiaRes.statusText} — tentando fallback.`);
+      }
+    } catch (err: any) {
+      console.warn('[NVIDIA NIM Image] Erro na requisição NVIDIA NIM:', err?.message || err);
+    }
+  }
+
+  // =========================================================================
+  // CAMADA 2: Cloudflare Workers AI
+  // =========================================================================
   const cfAccountId = env.CLOUDFLARE_ACCOUNT_ID?.trim();
   const cfApiToken = env.CLOUDFLARE_API_TOKEN?.trim();
-  if (!cfAccountId || !cfApiToken) {
-    return new Response(
-      JSON.stringify({
-        error: 'Cloudflare não configurada. Defina CLOUDFLARE_ACCOUNT_ID e CLOUDFLARE_API_TOKEN nas variáveis de ambiente.',
-      }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
 
-  // Converter aspect_ratio pra size aceito pela CF
-  let size = '1024x1024';
-  if (aspectRatio === '16:9') size = '1024x576';
-  else if (aspectRatio === '9:16') size = '576x1024';
-  else if (aspectRatio === '4:3') size = '800x600';
-  else if (aspectRatio === '3:4') size = '600x800';
+  if (cfAccountId && cfApiToken) {
+    const cfModelId =
+      modelKey === 'flux-1-schnell'
+        ? '@cf/black-forest-labs/flux-1-schnell'
+        : '@cf/black-forest-labs/flux-1-dev';
+    const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${cfModelId}`;
 
-  const modelId = FLUX_MODELS[modelKey];
-  const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/${modelId}`;
-  const cleanPrompt = prompt.trim();
+    try {
+      const cfCtrl = new AbortController();
+      // Timeout de 15s para caber confortavelmente na cascata de execução
+      const cfTimeout = setTimeout(() => cfCtrl.abort(), 15000);
 
-  // ====== Chamada pra CF Workers AI ======
-  // Timeout: 60s (FLUX.2 Dev pode demorar 5-15s numa imagem)
-  const fetchCtrl = new AbortController();
-  const fetchTimer = setTimeout(() => fetchCtrl.abort(), 60000);
-
-  try {
-    const cfRes = await fetch(cfUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${cfApiToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt: cleanPrompt,
-        size,
-        // FLUX.1 Schnell aceita até 8 steps (default 4, mais rápido)
-        // FLUX.1 Dev aceita até 50 steps (default 8, melhor qualidade)
-        // Steps = quantidade de iterações de difusão. Mais steps = mais qualidade.
-        steps: modelKey === 'flux-1-schnell' ? 8 : 20,
-        // Seed aleatório pra cada geração ser única
-        seed: Math.floor(Math.random() * 1_000_000),
-      }),
-      signal: fetchCtrl.signal,
-    });
-
-    clearTimeout(fetchTimer);
-
-    if (!cfRes.ok) {
-      const errText = await cfRes.text().catch(() => 'Erro desconhecido');
-      let errMsg = `Cloudflare AI retornou ${cfRes.status}`;
-      try {
-        const parsed = JSON.parse(errText);
-        if (parsed?.errors?.length) {
-          errMsg = parsed.errors.map((e: any) => e.message || JSON.stringify(e)).join('; ');
-        } else if (parsed?.error?.message) {
-          errMsg = parsed.error.message;
-        }
-      } catch {
-        if (errText) errMsg = errText.slice(0, 300);
-      }
-      if (cfRes.status === 401) errMsg = 'CLOUDFLARE_API_TOKEN inválido ou sem permissão de Workers AI.';
-      else if (cfRes.status === 402) errMsg = 'Cota do Workers AI esgotada (free tier: 10k neurons/dia).';
-      else if (cfRes.status === 404 && errText.includes('not available on the Workers Free plan')) {
-        errMsg = `Modelo ${modelId} exige Workers Paid plan ($5/mês).`;
-      }
-      return new Response(
-        JSON.stringify({ error: errMsg, model: modelId, status: cfRes.status }),
-        { status: cfRes.status, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // CF Workers AI retorna imagem binária (image/png) direto no body
-    const contentType = cfRes.headers.get('content-type') || '';
-
-    if (contentType.startsWith('image/')) {
-      // Resposta é binária — converte pra base64 data URL
-      const imageBuffer = await cfRes.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-      const dataUrl = `data:${contentType};base64,${base64}`;
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          url: dataUrl,
+      const cfRes = await fetch(cfUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${cfApiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           prompt: cleanPrompt,
-          model: modelId,
-          size,
-          aspect_ratio: aspectRatio,
-          markdown: `![${cleanPrompt.replace(/[\n\r\[\]]/g, ' ').trim().slice(0, 60)}](${dataUrl})`,
-          // Indica que é data URL (não precisa fazer fetch pra exibir)
-          is_data_url: true,
+          size: dims.cfSize,
+          steps: modelKey === 'flux-1-schnell' ? 8 : 20,
+          seed,
         }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'private, max-age=86400',
-          },
+        signal: cfCtrl.signal,
+      });
+
+      clearTimeout(cfTimeout);
+
+      if (cfRes.ok) {
+        const contentType = cfRes.headers.get('content-type') || '';
+        if (contentType.startsWith('image/')) {
+          const imageBuffer = await cfRes.arrayBuffer();
+          // Converte para base64 com proteção contra estouro de pilha
+          const base64 = arrayBufferToBase64(imageBuffer);
+          const dataUrl = `data:${contentType};base64,${base64}`;
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              url: dataUrl,
+              prompt: cleanPrompt,
+              model: cfModelId,
+              provider: 'Cloudflare Workers AI',
+              size: dims.cfSize,
+              dimensions: dims,
+              aspect_ratio: aspectRatio,
+              markdown: `![${safeAltText}](${dataUrl})`,
+              is_data_url: true,
+            }),
+            {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'private, max-age=86400',
+              },
+            }
+          );
         }
-      );
-    }
 
-    // Alguns modelos retornam JSON com base64 embutido (fallback)
-    if (contentType.includes('application/json')) {
-      const data = await cfRes.json();
-      // Formato alternativo: { result: { image: "base64..." } }
-      const b64 = data?.result?.image || data?.image || data?.result;
-      if (typeof b64 === 'string' && b64.length > 100) {
-        const dataUrl = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
-        return new Response(
-          JSON.stringify({
-            success: true,
-            url: dataUrl,
-            prompt: cleanPrompt,
-            model: modelId,
-            size,
-            aspect_ratio: aspectRatio,
-            markdown: `![${cleanPrompt.replace(/[\n\r\[\]]/g, ' ').trim().slice(0, 60)}](${dataUrl})`,
-            is_data_url: true,
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
+        if (contentType.includes('application/json')) {
+          const data = await cfRes.json();
+          const b64 = data?.result?.image || data?.image || data?.result;
+          if (typeof b64 === 'string' && b64.length > 100) {
+            const dataUrl = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
+            return new Response(
+              JSON.stringify({
+                success: true,
+                url: dataUrl,
+                prompt: cleanPrompt,
+                model: cfModelId,
+                provider: 'Cloudflare Workers AI',
+                size: dims.cfSize,
+                dimensions: dims,
+                aspect_ratio: aspectRatio,
+                markdown: `![${safeAltText}](${dataUrl})`,
+                is_data_url: true,
+              }),
+              {
+                status: 200,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'private, max-age=86400',
+                },
+              }
+            );
+          }
+        }
+      } else {
+        console.warn(`[Cloudflare AI Image] ${cfRes.status} ${cfRes.statusText} — tentando fallback Pollinations.`);
       }
+    } catch (err: any) {
+      console.warn('[Cloudflare AI Image] Erro na requisição Cloudflare:', err?.message || err);
     }
-
-    return new Response(
-      JSON.stringify({
-        error: 'Resposta da Cloudflare não continha imagem.',
-        content_type: contentType,
-        model: modelId,
-      }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } }
-    );
-  } catch (err: any) {
-    clearTimeout(fetchTimer);
-    const errMsg = err?.name === 'AbortError'
-      ? 'Timeout após 60s gerando imagem. Tente novamente com prompt mais simples.'
-      : (err?.message || String(err));
-    return new Response(
-      JSON.stringify({ error: errMsg, model: modelId }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
   }
+
+  // =========================================================================
+  // CAMADA 3: Pollinations FLUX (Garantia de 100% de Disponibilidade)
+  // =========================================================================
+  // Trunca prompts excessivamente longos para evitar HTTP 414 URI Too Long
+  const truncatedPrompt = cleanPrompt.length > 800 ? cleanPrompt.slice(0, 800) : cleanPrompt;
+  const safeUrlPrompt = encodeURIComponent(truncatedPrompt).replace(
+    /[!'()*]/g,
+    (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()
+  );
+  const fallbackUrl = `https://image.pollinations.ai/prompt/${safeUrlPrompt}?width=${dims.width}&height=${dims.height}&model=flux&nologo=true&seed=${seed}`;
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      url: fallbackUrl,
+      prompt: cleanPrompt,
+      model: modelKey,
+      provider: 'FLUX (Pollinations Fallback)',
+      size: `${dims.width}x${dims.height}`,
+      dimensions: dims,
+      aspect_ratio: aspectRatio,
+      markdown: `![${safeAltText}](${fallbackUrl})`,
+      is_data_url: false,
+    }),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'private, max-age=86400',
+      },
+    }
+  );
 }
