@@ -21,20 +21,45 @@ export function extractUsedSkills(
     });
   }
 
+  // Heurística contextual para relatórios analíticos de segurança mesmo sem alteração de arquivos
+  if (detected.size === 0 && activeSkills.some((s) => s.id === 'cloudflare-security-audit')) {
+    const isSecurityAuditContent =
+      /\b(vulnerabilidade|vulnerabilidades|cwe-\d+|owasp|prova de conceito|poc|auditoria de seguran[cç]a|metodologia cloudflare|taint analysis)\b/i.test(
+        text
+      );
+    if (isSecurityAuditContent) {
+      detected.add('Auditoria de Segurança (Cloudflare)');
+    }
+  }
+
   // Se a IA realizou modificações de arquivos mas não emitiu a tag explicitamente,
   // associa as habilidades ativas pertinentes como garantia de transparência
   if (detected.size === 0 && hasFileModifications && activeSkills.length > 0) {
     const activeNames = activeSkills.map((s) => s.name);
-    for (const core of [
-      'Code Review & Segurança',
-      'Auditoria de Segurança (Cloudflare)',
-      'Systematic Debugging',
-      'Test-Driven Development (TDD)',
-      'Conventional Commits',
-      'Claude Design (UI Sênior)',
-      'HyperFrames (Vídeo em Código)',
-      'Mobile-First Design & UX',
-    ]) {
+    const mentionsSecurity = /\b(vulnerabilidade|seguran[cç]a|exploit|cwe|owasp)\b/i.test(text);
+    const priorityList = mentionsSecurity
+      ? [
+          'Auditoria de Segurança (Cloudflare)',
+          'Code Review & Segurança',
+          'Systematic Debugging',
+          'Test-Driven Development (TDD)',
+          'Conventional Commits',
+          'Claude Design (UI Sênior)',
+          'HyperFrames (Vídeo em Código)',
+          'Mobile-First Design & UX',
+        ]
+      : [
+          'Code Review & Segurança',
+          'Auditoria de Segurança (Cloudflare)',
+          'Systematic Debugging',
+          'Test-Driven Development (TDD)',
+          'Conventional Commits',
+          'Claude Design (UI Sênior)',
+          'HyperFrames (Vídeo em Código)',
+          'Mobile-First Design & UX',
+        ];
+
+    for (const core of priorityList) {
       if (activeNames.includes(core)) {
         detected.add(core);
         break;

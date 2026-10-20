@@ -2187,13 +2187,13 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   2. **Skill Built-in no Éden com Toggle (`src/lib/storage.ts`):**
      - Registrada a skill `cloudflare-security-audit` (*"Auditoria de Segurança (Cloudflare)"*) com `enabled: true`, ícone `'shield'` (ShieldCheck em azul celeste `text-sky-400`) e diretrizes de auditoria adversarial.
      - Auto-migração transparente via `missingBuiltins` em `loadSkills()`, persistindo no IndexedDB para novos usuários e usuários existentes.
-  3. **Diretriz no System Prompt & Transparência (`src/App.tsx`, `src/lib/skills-extractor.ts`):**
+  3. **Diretriz no System Prompt & Transparência Contextual (`src/App.tsx`, `src/lib/skills-extractor.ts`):**
      - Injetada a Regra 13 no System Prompt do Éden para auditoria autônoma de repositórios conectados via GitHub e código colado no chat.
-     - Registrado `'Auditoria de Segurança (Cloudflare)'` na lista de fallback de extração de habilidades.
+     - Heurística contextual inteligente em `skills-extractor.ts`: atribui a habilidade em relatórios analíticos de segurança mesmo sem alterações de código (detectando termos como `vulnerabilidade`, `CWE`, `PoC`, `OWASP`) e prioriza a auditoria da Cloudflare sobre revisões genéricas.
   4. **Suíte de Testes Unitários TDD (`src/lib/security-audit.test.ts`):**
-     - 4 testes cobrindo o registro em `BUILTIN_SKILLS`, validação das diretrizes oficiais Cloudflare, extração explícita de tags no chat e fallback automático.
+     - 6 testes cobrindo registro em `BUILTIN_SKILLS`, validação das diretrizes oficiais Cloudflare, extração de tags explícitas, fallback automático, relatórios analíticos sem arquivos e precedência de segurança.
 - **Evidências de Verificação:**
-  - `npm test`: **167/167 testes unitários passando em 37 suítes** (100% verde).
+  - `npm test`: **169/169 testes unitários passando em 37 suítes** (100% verde).
   - `tsc --noEmit`: **0 erros**.
-  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso.
-  - Code Review formal: Aprovado sem ressalvas (Assessment: Ready to merge? Yes).
+  - `npm run build`: bundle e Cloudflare Pages Worker (`dist/_worker.js`, 170.1 kB) gerados com sucesso em 2.44s.
+  - Code Review formal: Aprovado com incorporação de todas as recomendações de precedência e relatórios analíticos.

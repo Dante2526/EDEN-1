@@ -66,4 +66,64 @@ describe('Cloudflare Security Audit Skill (Metodologia Adversarial Oficial)', ()
     const detected = extractUsedSkills('Corrigi a sanitização de parâmetros na rota de login.', activeSkills, true);
     assert.ok(detected.includes('Auditoria de Segurança (Cloudflare)'));
   });
+
+  it('deve associar a habilidade em relatório analítico de segurança mesmo sem alteração de arquivos', () => {
+    const activeSkills: Skill[] = [
+      {
+        id: 'cloudflare-security-audit',
+        name: 'Auditoria de Segurança (Cloudflare)',
+        description: 'Auditoria adversarial',
+        icon: 'shield',
+        enabled: true,
+        isBuiltin: true,
+        systemPrompt: '',
+      },
+      {
+        id: 'code-review',
+        name: 'Code Review & Segurança',
+        description: 'Review geral',
+        icon: 'shield',
+        enabled: true,
+        isBuiltin: true,
+        systemPrompt: '',
+      },
+    ];
+
+    const analysisReport =
+      '### Relatório de Auditoria\n' +
+      'Identificamos uma potencial vulnerabilidade classificada como CWE-89 (SQL Injection) com PoC demonstrativa no endpoint de busca.';
+
+    const detected = extractUsedSkills(analysisReport, activeSkills, false);
+    assert.ok(
+      detected.includes('Auditoria de Segurança (Cloudflare)'),
+      'Deve atribuir a skill em relatórios analíticos de segurança'
+    );
+  });
+
+  it('deve priorizar Auditoria Cloudflare sobre Code Review genérico quando o contexto tratar de vulnerabilidades', () => {
+    const activeSkills: Skill[] = [
+      {
+        id: 'code-review',
+        name: 'Code Review & Segurança',
+        description: 'Review geral',
+        icon: 'shield',
+        enabled: true,
+        isBuiltin: true,
+        systemPrompt: '',
+      },
+      {
+        id: 'cloudflare-security-audit',
+        name: 'Auditoria de Segurança (Cloudflare)',
+        description: 'Auditoria adversarial',
+        icon: 'shield',
+        enabled: true,
+        isBuiltin: true,
+        systemPrompt: '',
+      },
+    ];
+
+    const commitAction = 'Corrigi vulnerabilidade de injeção no backend prevenindo exploits.';
+    const detected = extractUsedSkills(commitAction, activeSkills, true);
+    assert.equal(detected[0], 'Auditoria de Segurança (Cloudflare)');
+  });
 });
