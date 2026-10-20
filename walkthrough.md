@@ -2254,3 +2254,33 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado em 1.64s e Cloudflare Pages Worker (`dist/_worker.js`, 174.9 kB) gerado com sucesso.
   - `graphify update .`: grafo de conhecimento sincronizado com 14.883 nós, 16.838 arestas e 1.014 comunidades.
   - Code Review formal: **Ready to merge: Yes** (todas as pendências sanadas).
+
+
+## 129. Renderização do Card de Imagem no Chat e Mitigação de Inflação de Tokens
+- **Solicitação do Usuário:** *"KDE A IMAGEM?"* (com captura de tela comprovando a execução com sucesso da ferramenta `generate_image`, porém sem exibição visual da imagem gerada no chat e com o contador de tokens atingindo 110.675 tokens / 86% da janela de contexto).
+- **Diagnóstico da Causa Raiz:**
+  1. O componente `ChatMessage` classificava `generate_image` / `image_generator` como ferramenta colapsada (`isChipTool: true`), escondendo a execução dentro de um accordion fechado sem nenhuma tag `<img>`.
+  2. O schema da ferramenta instruía a LLM a repetir a URL da imagem no Markdown. Como o Base64 Data URL gerado tem centenas de KB (centenas de milhares de caracteres), nenhuma LLM moderna consegue cuspir esse volume sem estourar o limite de tokens ou alucinar o Base64.
+  3. O Base64 longo no histórico das tool results inflou o contador de contexto da conversa para 110.675 tokens (86% do contexto).
+- **Implementações Realizadas:**
+  1. **Card Visual Interativo em Destaque (`src/components/chat-message.tsx`):**
+     - Removida `generate_image` de `isChipTool` para exibição permanente fora de acordeões.
+     - Header com badges de modelo FLUX.1 (Dev ou Schnell), aspect ratio e provedor.
+     - Botão de abrir imagem em tamanho real (`ExternalLink`) e botão de download com `target="_blank" rel="noopener noreferrer"`.
+     - Área clicável com touch target de 44x44px (`min-h-[44px] min-w-[44px]`), em conformidade com as regras de Mobile-First.
+     - Container da imagem com `aspectRatio` dinâmico para eliminar Cumulative Layout Shift (CLS) e `max-h-[500px] object-contain`.
+     - Rodapé com legenda do prompt utilizado em itálico.
+     - Feedback defensivo com alerta estilizado caso a geração falhe e fallback "Imagem indisponível" se a URL não puder ser lida.
+  2. **Atualização da Instrução da Ferramenta (`src/App.tsx`):**
+     - Notifica a LLM de que a imagem já foi renderizada visualmente em destaque no card interativo e a orienta a fazer apenas um comentário breve e acolhedor, sem repetir Base64 ou URLs no texto.
+  3. **Sanitização de Payload para a API (`src/App.tsx`):**
+     - Ao enviar a lista `toolResultMessages` de volta para a continuação da LLM, o Base64 Data URL volumoso é substituído por um marcador compacto `[data:image/jpeg;base64 (imagem embutida no card do chat)]`.
+  4. **Proteção contra Inchaço de Tokens (`src/lib/context-compactor.ts`):**
+     - Em `estimateConversationTokens`, sanitiza strings Base64 embutidas em mensagens e tool results para não inflar a contagem de tokens de forma irreal.
+     - Em `prepareMessagesForApi`, higieniza preventivamente qualquer Base64 longo para proteger as requisições enviadas ao modelo.
+- **Evidências de Verificação:**
+  - `npm test`: **187/187 testes unitários passando em 39 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle compilado em 1.97s e Cloudflare Pages Worker (`dist/_worker.js`, 174.9 kB) gerado com sucesso.
+  - `graphify update .`: grafo de conhecimento sincronizado com 14.884 nós, 16.839 arestas e 1.012 comunidades.
+  - Code Review formal: **Ready to merge: Yes** (ajustes de touch target, aspect ratio e sanitização defensiva aplicados).

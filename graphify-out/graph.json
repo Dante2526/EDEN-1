@@ -945,8 +945,8 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "lib_server_security_checkauthandratelimit",
-      "community": 26,
-      "community_name": "Document",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "checkauthandratelimit()"
     },
     {
@@ -1319,8 +1319,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "package_dependencies_cheerio",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1006,
+      "community_name": "run_eval.py",
       "norm_label": "cheerio"
     },
     {
@@ -1330,8 +1330,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "cheerio",
-      "community": 51,
-      "community_name": "dependencies",
+      "community": 1006,
+      "community_name": "run_eval.py",
       "norm_label": "cheerio"
     },
     {
@@ -1693,8 +1693,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "package_dependencies_remark_gfm",
-      "community": 1013,
-      "community_name": "remark-gfm",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "remark-gfm"
     },
     {
@@ -1704,8 +1704,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "remark_gfm",
-      "community": 1013,
-      "community_name": "remark-gfm",
+      "community": 51,
+      "community_name": "dependencies",
       "norm_label": "remark-gfm"
     },
     {
@@ -4432,8 +4432,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "runtimeerror",
-      "community": 1008,
-      "community_name": "RuntimeError",
+      "community": 5,
+      "community_name": "fetch_volunteers.py",
       "norm_label": "runtimeerror"
     },
     {
@@ -6326,8 +6326,8 @@
       "source_location": "L297",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_docxxmleditor_append_to",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": ".append_to()"
     },
     {
@@ -6381,8 +6381,8 @@
       "source_location": "L635",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_generate_hex_id",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "_generate_hex_id()"
     },
     {
@@ -6436,8 +6436,8 @@
       "source_location": "L752",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_comment",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": ".add_comment()"
     },
     {
@@ -6447,8 +6447,8 @@
       "source_location": "L804",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_reply_to_comment",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": ".reply_to_comment()"
     },
     {
@@ -6568,8 +6568,8 @@
       "source_location": "L1125",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_to_comments_xml",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_to_comments_xml()"
     },
     {
@@ -6579,8 +6579,8 @@
       "source_location": "L1148",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_to_comments_extended_xml",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_to_comments_extended_xml()"
     },
     {
@@ -6590,8 +6590,8 @@
       "source_location": "L1164",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_to_comments_ids_xml",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_to_comments_ids_xml()"
     },
     {
@@ -6601,8 +6601,8 @@
       "source_location": "L1175",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_to_comments_extensible_xml",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_to_comments_extensible_xml()"
     },
     {
@@ -6612,8 +6612,8 @@
       "source_location": "L1190",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_comment_range_start_xml",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._comment_range_start_xml()"
     },
     {
@@ -6623,8 +6623,8 @@
       "source_location": "L1194",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_comment_range_end_xml",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._comment_range_end_xml()"
     },
     {
@@ -6634,8 +6634,8 @@
       "source_location": "L1205",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_comment_ref_run_xml",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._comment_ref_run_xml()"
     },
     {
@@ -6667,8 +6667,8 @@
       "source_location": "L1231",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_author",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "._has_author()"
     },
     {
@@ -6678,8 +6678,8 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_author_to_people",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "._add_author_to_people()"
     },
     {
@@ -6843,8 +6843,8 @@
       "source_location": "L298",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_298",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "append to with automatic attribute injection."
     },
     {
@@ -6898,8 +6898,8 @@
       "source_location": "L636",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_636",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "generate random 8-character hex id for para/durable ids.      values are const"
     },
     {
@@ -6953,8 +6953,8 @@
       "source_location": "L753",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_753",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add a comment spanning from one element to another.          args:"
     },
     {
@@ -6964,8 +6964,8 @@
       "source_location": "L809",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_809",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add a reply to an existing comment.          args:             parent_comment"
     },
     {
@@ -7085,8 +7085,8 @@
       "source_location": "L1128",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1128",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add a single comment to comments.xml."
     },
     {
@@ -7096,8 +7096,8 @@
       "source_location": "L1149",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1149",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add a single comment to commentsextended.xml."
     },
     {
@@ -7107,8 +7107,8 @@
       "source_location": "L1165",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1165",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add a single comment to commentsids.xml."
     },
     {
@@ -7118,8 +7118,8 @@
       "source_location": "L1176",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1176",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add a single comment to commentsextensible.xml."
     },
     {
@@ -7129,8 +7129,8 @@
       "source_location": "L1191",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1191",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "generate xml for comment range start."
     },
     {
@@ -7140,8 +7140,8 @@
       "source_location": "L1195",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1195",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "generate xml for comment range end with reference run.          note: w:rsidr"
     },
     {
@@ -7151,8 +7151,8 @@
       "source_location": "L1206",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1206",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "generate xml for comment reference run.          note: w:rsidr is automaticall"
     },
     {
@@ -7184,8 +7184,8 @@
       "source_location": "L1232",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1232",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "check if an author already exists in people.xml."
     },
     {
@@ -7195,8 +7195,8 @@
       "source_location": "L1239",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1239",
-      "community": 148,
-      "community_name": "dotenv",
+      "community": 60,
+      "community_name": ".__init__",
       "norm_label": "add author to people.xml (called during initialization)."
     },
     {
@@ -19178,8 +19178,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "run_eval.py"
     },
     {
@@ -19189,8 +19189,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_find_project_root",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "find_project_root()"
     },
     {
@@ -19200,8 +19200,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_py_path",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "path"
     },
     {
@@ -19211,8 +19211,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_run_single_query",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "run_single_query()"
     },
     {
@@ -19222,8 +19222,8 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_run_eval",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "run_eval()"
     },
     {
@@ -19233,8 +19233,8 @@
       "source_location": "L259",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_main",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "main()"
     },
     {
@@ -19244,8 +19244,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_rationale_23",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "find the project root by walking up from cwd looking for .glm/.      mimics ho"
     },
     {
@@ -19255,8 +19255,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_rationale_43",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "run a single query and return whether the skill was triggered.      creates a"
     },
     {
@@ -19266,8 +19266,8 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "skills_skill_creator_scripts_run_eval_rationale_195",
-      "community": 1006,
-      "community_name": "run_eval.py",
+      "community": 22,
+      "community_name": "run_loop",
       "norm_label": "run the full eval set and return results."
     },
     {
@@ -24447,8 +24447,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_components_chat_message_chatmessageprops",
-      "community": 50,
-      "community_name": "settings-modal.tsx",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "chatmessageprops"
     },
     {
@@ -24546,8 +24546,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_claude_logo",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claude-logo.tsx"
     },
     {
@@ -24557,8 +24557,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogoprops",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogoprops"
     },
     {
@@ -24568,8 +24568,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogo",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "edenbonsailogo()"
     },
     {
@@ -24579,8 +24579,8 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_components_claude_logo_claudelogoprops",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "claudelogoprops"
     },
     {
@@ -24865,8 +24865,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_eden_logo",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "eden-logo.tsx"
     },
     {
@@ -25547,8 +25547,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_settings_modal",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "settings-modal.tsx"
     },
     {
@@ -25558,8 +25558,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodalprops",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "settingsmodalprops"
     },
     {
@@ -25569,8 +25569,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_components_settings_modal_settingsmodal",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "settingsmodal()"
     },
     {
@@ -25679,8 +25679,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_speak_button",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "speak-button.tsx"
     },
     {
@@ -25690,8 +25690,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_speak_button_speakbuttonprops",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "speakbuttonprops"
     },
     {
@@ -25701,8 +25701,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_components_speak_button_speakbutton",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "speakbutton()"
     },
     {
@@ -26457,7 +26457,7 @@
       "label": "shouldCompact()",
       "file_type": "code",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L37",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "src_lib_context_compactor_shouldcompact",
       "community": 55,
@@ -26468,7 +26468,7 @@
       "label": "buildCompactionPrompt()",
       "file_type": "code",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L72",
+      "source_location": "L85",
       "_origin": "ast",
       "id": "src_lib_context_compactor_buildcompactionprompt",
       "community": 55,
@@ -26479,7 +26479,7 @@
       "label": "compactConversation()",
       "file_type": "code",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L99",
+      "source_location": "L112",
       "_origin": "ast",
       "id": "src_lib_context_compactor_compactconversation",
       "community": 55,
@@ -26490,7 +26490,7 @@
       "label": "prepareMessagesForApi()",
       "file_type": "code",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L172",
+      "source_location": "L185",
       "_origin": "ast",
       "id": "src_lib_context_compactor_preparemessagesforapi",
       "community": 55,
@@ -27197,8 +27197,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_github_setgithubpat",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "setgithubpat()"
     },
     {
@@ -27208,8 +27208,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_github_removegithubpat",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "removegithubpat()"
     },
     {
@@ -27241,8 +27241,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_github_getclientauthheaders",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "getclientauthheaders()"
     },
     {
@@ -27263,8 +27263,8 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "src_lib_github_verifygithubpat",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "verifygithubpat()"
     },
     {
@@ -29122,8 +29122,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_remote_gate_test",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "remote-gate.test.ts"
     },
     {
@@ -29133,8 +29133,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_remote_gate",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "remote-gate.ts"
     },
     {
@@ -29144,8 +29144,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_remote_gate_remotedeployprovider",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "remotedeployprovider"
     },
     {
@@ -29155,8 +29155,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_remote_gate_remoteactionstatus",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "remoteactionstatus"
     },
     {
@@ -29166,8 +29166,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_remote_gate_pendingremoteaction",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "pendingremoteaction"
     },
     {
@@ -29177,8 +29177,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_remote_gate_isremotecommandrequiringapproval",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "isremotecommandrequiringapproval()"
     },
     {
@@ -29188,8 +29188,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_remote_gate_buildpendingremoteaction",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "buildpendingremoteaction()"
     },
     {
@@ -29199,8 +29199,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_remote_gate_parsedplaywrightcommand",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "parsedplaywrightcommand"
     },
     {
@@ -29210,8 +29210,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_remote_gate_parseplaywrightcommand",
-      "community": 1007,
-      "community_name": "remote-gate.ts",
+      "community": 2,
+      "community_name": "App.tsx",
       "norm_label": "parseplaywrightcommand()"
     },
     {
@@ -29485,8 +29485,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_speech",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "speech.ts"
     },
     {
@@ -29496,8 +29496,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_speech_neuralvoice",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "neuralvoice"
     },
     {
@@ -29507,8 +29507,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_lib_speech_neural_voices",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "neural_voices"
     },
     {
@@ -29518,8 +29518,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_speech_cleantextforspeech",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "cleantextforspeech()"
     },
     {
@@ -29529,8 +29529,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "src_lib_speech_stopcurrentspeech",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "stopcurrentspeech()"
     },
     {
@@ -29540,8 +29540,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_lib_speech_playneuralspeech",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "playneuralspeech()"
     },
     {
@@ -29551,8 +29551,8 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "src_lib_speech_cachedvoices",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "cachedvoices"
     },
     {
@@ -29562,8 +29562,8 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "src_lib_speech_getbestportuguesevoice",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "getbestportuguesevoice()"
     },
     {
@@ -29573,8 +29573,8 @@
       "source_location": "L228",
       "_origin": "ast",
       "id": "src_lib_speech_fallbacktobrowserspeech",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "fallbacktobrowserspeech()"
     },
     {
@@ -29672,8 +29672,8 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "src_lib_storage_loadsettings",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "loadsettings()"
     },
     {
@@ -29694,8 +29694,8 @@
       "source_location": "L309",
       "_origin": "ast",
       "id": "src_lib_storage_exportconversationstojson",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "exportconversationstojson()"
     },
     {
@@ -29947,8 +29947,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_studio_config",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "studio-config.ts"
     },
     {
@@ -29958,8 +29958,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_studio_config_default_studio_config",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "default_studio_config"
     },
     {
@@ -29969,8 +29969,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_studio_config_loadstudioconfig",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "loadstudioconfig()"
     },
     {
@@ -29980,8 +29980,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_studio_config_savestudioconfig",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "savestudioconfig()"
     },
     {
@@ -30442,8 +30442,8 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "src_lib_types_appsettings",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 55,
+      "community_name": "GlobalErrorBoundary",
       "norm_label": "appsettings"
     },
     {
@@ -30640,8 +30640,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_utils_generatetitlefrommessage",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "generatetitlefrommessage()"
     },
     {
@@ -31179,8 +31179,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_studio_studio_engine_studioruntimecontext",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "studioruntimecontext"
     },
     {
@@ -31322,8 +31322,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_studio_studio_panel_props",
-      "community": 55,
-      "community_name": "GlobalErrorBoundary",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "props"
     },
     {
@@ -31421,8 +31421,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_studio_studio_types_studioagent",
-      "community": 47,
-      "community_name": "._setup_tracking",
+      "community": 43,
+      "community_name": "add_toc_placeholders.py",
       "norm_label": "studioagent"
     },
     {
@@ -163866,6 +163866,17 @@
       "norm_label": "127. hardening adversarial de seguranca: sec-01 e sec-02 (cloudflare methodology)"
     },
     {
+      "label": "128. Suporte aos Modelos FLUX da NVIDIA NIM e Roteamento de Imagens",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L2232",
+      "_origin": "ast",
+      "id": "walkthrough_128_suporte_aos_modelos_flux_da_nvidia_nim_e_roteamento_de_imagens",
+      "community": 58,
+      "community_name": "._validate_single_file_xsd",
+      "norm_label": "128. suporte aos modelos flux da nvidia nim e roteamento de imagens"
+    },
+    {
       "label": "executeTerminalCommand",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
@@ -209815,7 +209826,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4203",
+      "source_location": "L4205",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209827,7 +209838,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4535",
+      "source_location": "L4550",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209839,7 +209850,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4559",
+      "source_location": "L4574",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209911,7 +209922,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4579",
+      "source_location": "L4594",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209947,7 +209958,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4624",
+      "source_location": "L4639",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209959,7 +209970,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3781",
+      "source_location": "L3783",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209971,7 +209982,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4623",
+      "source_location": "L4638",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -209995,7 +210006,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2581",
+      "source_location": "L2583",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210007,7 +210018,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4888",
+      "source_location": "L4903",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210019,7 +210030,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3026",
+      "source_location": "L3028",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210031,7 +210042,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3014",
+      "source_location": "L3016",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210043,7 +210054,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3015",
+      "source_location": "L3017",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210055,7 +210066,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3134",
+      "source_location": "L3136",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210067,7 +210078,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2690",
+      "source_location": "L2692",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210079,7 +210090,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2706",
+      "source_location": "L2708",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210091,7 +210102,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3149",
+      "source_location": "L3151",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210103,7 +210114,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3397",
+      "source_location": "L3399",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210115,7 +210126,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3425",
+      "source_location": "L3427",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210139,7 +210150,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2858",
+      "source_location": "L2860",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210163,7 +210174,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3760",
+      "source_location": "L3762",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210175,7 +210186,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2797",
+      "source_location": "L2799",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210187,7 +210198,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2902",
+      "source_location": "L2904",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210211,7 +210222,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3653",
+      "source_location": "L3655",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210223,7 +210234,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3545",
+      "source_location": "L3547",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210247,7 +210258,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3741",
+      "source_location": "L3743",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210259,7 +210270,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4345",
+      "source_location": "L4347",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210271,7 +210282,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3701",
+      "source_location": "L3703",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210283,7 +210294,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3535",
+      "source_location": "L3537",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210319,7 +210330,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3555",
+      "source_location": "L3557",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210355,7 +210366,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2560",
+      "source_location": "L2562",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210367,7 +210378,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2561",
+      "source_location": "L2563",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210391,7 +210402,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2667",
+      "source_location": "L2669",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210403,7 +210414,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4261",
+      "source_location": "L4263",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210415,7 +210426,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3745",
+      "source_location": "L3747",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210427,7 +210438,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3702",
+      "source_location": "L3704",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210451,7 +210462,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3646",
+      "source_location": "L3648",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210619,7 +210630,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L2818",
+      "source_location": "L2820",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210631,7 +210642,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3711",
+      "source_location": "L3713",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210643,7 +210654,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L4221",
+      "source_location": "L4223",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210715,7 +210726,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3583",
+      "source_location": "L3585",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210727,7 +210738,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3778",
+      "source_location": "L3780",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -210739,7 +210750,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L3614",
+      "source_location": "L3616",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_appcontent",
@@ -216823,7 +216834,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L72",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_context_compactor",
@@ -216834,7 +216845,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L99",
+      "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_context_compactor",
@@ -216856,7 +216867,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L172",
+      "source_location": "L185",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_context_compactor",
@@ -216867,7 +216878,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L37",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_context_compactor",
@@ -216927,7 +216938,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L61",
+      "source_location": "L74",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_context_compactor_shouldcompact",
@@ -216939,7 +216950,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/context-compactor.ts",
-      "source_location": "L112",
+      "source_location": "L125",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_context_compactor_compactconversation",
@@ -351076,6 +351087,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "walkthrough.md",
+      "source_location": "L2232",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_walkthrough_revis\u00e3o_e_hardening_arquitetura_e_infraestrutura",
+      "target": "walkthrough_128_suporte_aos_modelos_flux_da_nvidia_nim_e_roteamento_de_imagens",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
       "source_location": "L86",
       "weight": 1.0,
       "_origin": "ast",
@@ -352152,5 +352174,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "cc4388149bd13de0779ab54e79ac1bcf55e8b4f3"
+  "built_at_commit": "c9b9af7c615bc71f08eefc4bf85c43257d26f237"
 }

@@ -15,12 +15,25 @@ export function estimateConversationTokens(conversation: Conversation): number {
   if (!conversation.messages) return 0;
   let totalChars = 0;
   for (const m of conversation.messages) {
-    if (m.content) totalChars += m.content.length;
+    if (m.content) {
+      if (m.content.includes('data:image/') && m.content.length > 500) {
+        const sanitized = m.content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[base64-image]');
+        totalChars += sanitized.length;
+      } else {
+        totalChars += m.content.length;
+      }
+    }
     if (m.reasoning) totalChars += m.reasoning.length;
     if (m.toolCalls) {
       for (const tc of m.toolCalls) {
         if (tc.arguments) totalChars += tc.arguments.length;
-        if (tc.result) totalChars += tc.result.length;
+        if (tc.result) {
+          if (tc.result.includes('data:image/') && tc.result.length > 500) {
+            totalChars += 200;
+          } else {
+            totalChars += tc.result.length;
+          }
+        }
       }
     }
   }
@@ -190,6 +203,9 @@ export function prepareMessagesForApi(
 
   const formatted = effectiveMessages.map((m) => {
     let content = m.content || '';
+    if (content.includes('data:image/') && content.length > 500) {
+      content = content.replace(/data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=]+/g, '[data:image/jpeg;base64 (imagem embutida)]');
+    }
     if (m.documents && m.documents.length > 0) {
       const docsBlock = m.documents
         .map((d) => `[Arquivo anexado: ${d.name}]\n\`\`\`\n${d.content}\n\`\`\``)

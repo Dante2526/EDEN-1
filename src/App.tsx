@@ -2546,7 +2546,9 @@ function AppContent() {
             size: data.size,
             aspect_ratio: data.aspect_ratio,
             // Importante: instrução pra IA saber que pode embutir a imagem
-            hint: 'Imagem gerada com sucesso. Para exibi-la na resposta, escreva o markdown exatamente como está no campo "markdown" acima. NÃO modifique o data URL.',
+            prompt,
+            provider: data.provider,
+            hint: 'A imagem foi gerada com sucesso e já está sendo renderizada visualmente em destaque no card interativo da mensagem para o usuário. Faça um comentário breve e acolhedor sobre a imagem gerada e sugira variações. NÃO precisa repetir URLs ou dados em Base64 no texto da resposta.',
           }),
         };
       } catch (err: any) {
@@ -4393,9 +4395,22 @@ function AppContent() {
               currentBatchRefactor = execution.batchRefactor;
             }
 
+            let contentForApi = result;
+            if (tc.name === 'generate_image' || tc.name === 'image_generator') {
+              try {
+                const parsed = JSON.parse(result);
+                if ((parsed.is_data_url || parsed.url?.startsWith('data:')) && parsed.url && parsed.url.length > 200) {
+                  contentForApi = JSON.stringify({
+                    ...parsed,
+                    url: '[data:image/jpeg;base64 (imagem embutida no card do chat)]',
+                  });
+                }
+              } catch {}
+            }
+
             toolResultMessages.push({
               role: 'tool',
-              content: result,
+              content: contentForApi,
               tool_call_id: tc.id,
             });
           }

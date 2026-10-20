@@ -534,6 +534,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   if (tc.name === 'run_terminal_command' || tc.name === 'terminal') return false;
                   if (tc.name === 'run_python') return false;
                   if (tc.name === 'generate_document') return false;
+                  if (tc.name === 'generate_image' || tc.name === 'image_generator') return false;
                   if (tc.name === 'save_memory' || tc.name === 'forget_memory') return false;
                   if (tc.name === 'dispatch_subagent') return false;
                   if (tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph') return false;
@@ -562,10 +563,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   const isThisSubagent = tc.name === 'dispatch_subagent';
                   const isThisGraph = tc.name === 'query_code_graph' || tc.name === 'query_architecture_graph';
                   const isThisCanvas = tc.name === 'render_canvas_prototype';
-                  const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph || isThisCanvas
+                  const isThisImage = tc.name === 'generate_image' || tc.name === 'image_generator';
+                  const orbState = isThisWebSearch || isThisFetchUrl || isThisMemory || isThisSubagent || isThisGraph || isThisCanvas || isThisImage
                     ? 'weaving'
                     : 'composing';
-                  const orbLabel = isThisCanvas
+                  const orbLabel = isThisImage
+                    ? 'Gerando imagem com FLUX…'
+                    : isThisCanvas
                     ? 'Prototipando no Canvas…'
                     : isThisGraph
                     ? 'Mapeando arquitetura…'
@@ -580,7 +584,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Juntando as fontes…'
                     : 'Executando…';
-                  const actionTitle = isThisCanvas
+                  const actionTitle = isThisImage
+                    ? 'Geração de Imagem (FLUX.1)'
+                    : isThisCanvas
                     ? 'Canvas Prototyping (Figma / v0)'
                     : isThisGraph
                     ? 'Mapeando Arquitetura do Projeto'
@@ -597,7 +603,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                     : isThisWebSearch
                     ? 'Pesquisando na Internet'
                     : 'Executando';
-                  const actionBadge = isThisCanvas
+                  const actionBadge = isThisImage
+                    ? 'NVIDIA NIM / FLUX'
+                    : isThisCanvas
                     ? 'Tailwind Sandbox'
                     : isThisGraph
                     ? 'Graphify (GraphRAG)'
@@ -932,6 +940,113 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                           </span>
                         ) : null}
                       </div>
+                    </div>
+                  );
+                }
+
+                if (tc.name === 'generate_image' || tc.name === 'image_generator') {
+                  let parsedResult: any = null;
+                  try {
+                    parsedResult = JSON.parse(tc.result || '{}');
+                  } catch {}
+
+                  const imageUrl: string = parsedResult?.url || '';
+                  const prompt: string = parsedResult?.prompt || parsedArgs?.prompt || 'Imagem gerada';
+                  const modelName: string = parsedResult?.model || parsedArgs?.model || 'FLUX.1 [dev]';
+                  const provider: string = parsedResult?.provider || 'FLUX Engine';
+                  const aspectRatio: string = parsedResult?.aspect_ratio || parsedArgs?.aspect_ratio || '1:1';
+                  const hasError = tc.status === 'error' || Boolean(parsedResult?.error);
+                  const errorMessage = parsedResult?.error || 'Falha ao gerar imagem';
+
+                  if (hasError) {
+                    return (
+                      <div
+                        key={tc.id}
+                        className="rounded-2xl p-3.5 my-2.5 bg-rose-950/20 border border-rose-900/40 text-rose-300 flex items-center gap-3 w-full"
+                      >
+                        <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-semibold">Falha na Geração de Imagem</span>
+                          <span className="text-[11px] text-rose-300/80 font-mono mt-0.5 truncate">{errorMessage}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={tc.id}
+                      className="rounded-2xl overflow-hidden my-3 bg-[color:var(--c-bg-201e1a)] border border-amber-500/25 shadow-xl flex flex-col w-full max-w-2xl transition-all"
+                    >
+                      <div className="flex items-center justify-between px-3.5 py-2.5 bg-[color:var(--c-bg-181714)] border-b border-[color:var(--c-bg-322e27)] gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
+                            <Sparkles className="w-4 h-4" />
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
+                            <span className="text-xs font-semibold text-[color:var(--c-fg-f3efe6)] truncate">
+                              FLUX.1 {modelName.includes('schnell') ? 'Schnell' : 'Dev'}
+                            </span>
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                              {aspectRatio}
+                            </span>
+                            <span className="text-[9px] font-mono text-[color:var(--c-fg-a39d93)] truncate hidden sm:inline">
+                              {provider}
+                            </span>
+                          </div>
+                        </div>
+
+                        {imageUrl && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <a
+                              href={imageUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="min-h-[44px] min-w-[44px] p-2 rounded-lg bg-[color:var(--c-bg-27241f)] hover:bg-[color:var(--c-bg-322e27)] text-[color:var(--c-fg-a39d93)] hover:text-white transition cursor-pointer flex items-center justify-center"
+                              title="Abrir imagem em tamanho real"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                            <a
+                              href={imageUrl}
+                              download="imagem-flux.jpg"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="min-h-[44px] flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#ff6b35] to-[#ea580c] hover:from-[#ff7a47] hover:to-[#f97316] text-white text-xs font-medium transition shadow-xs cursor-pointer select-none"
+                              title="Baixar imagem gerada"
+                            >
+                              <Download className="w-4 h-4" />
+                              <span className="hidden sm:inline">Baixar</span>
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {imageUrl ? (
+                        <div
+                          className="relative group bg-black/40 flex items-center justify-center overflow-hidden max-h-[500px]"
+                          style={{ aspectRatio: aspectRatio.includes(':') ? aspectRatio.replace(':', '/') : '1/1' }}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={prompt}
+                            loading="lazy"
+                            className="w-full h-full object-contain select-none"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-8 flex items-center justify-center text-xs text-[color:var(--c-fg-a39d93)] font-mono">
+                          Imagem indisponível
+                        </div>
+                      )}
+
+                      {prompt && (
+                        <div className="px-3.5 py-2 bg-[color:var(--c-bg-181714)]/60 border-t border-[color:var(--c-bg-2d2a23)]">
+                          <p className="text-[11px] text-[color:var(--c-fg-a39d93)] italic line-clamp-2">
+                            "{prompt}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 }

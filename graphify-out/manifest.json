@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792498199.5341523,
-    "ast_hash": "788c92b732af1c90f33927afb929ae38",
+    "mtime": 1792500162.112307,
+    "ast_hash": "b979dc5d3b0e0f18b963867546213d45",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
-    "mtime": 1792421164.4320934,
-    "ast_hash": "16b83a0a0dd026a58644953fc9b6a637",
+    "mtime": 1792500151.7848349,
+    "ast_hash": "5ca284ee8378d2d6369e5688327d841c",
     "semantic_hash": ""
   },
   "src/components/chat-sidebar.tsx": {
@@ -1190,8 +1190,8 @@
     "semantic_hash": "242959bb5772ffa7d7424721ca2193bb"
   },
   "src/lib/context-compactor.ts": {
-    "mtime": 1792377968.159304,
-    "ast_hash": "98dc634318657e3a9081f1c2ec6143f5",
+    "mtime": 1792500207.0921788,
+    "ast_hash": "e3dec731f4780b09823d7c44bcb182af",
     "semantic_hash": ""
   },
   "src/lib/deployment-service.test.ts": {
@@ -5515,8 +5515,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792496584.5306332,
-    "ast_hash": "697f8d440f9a70cc44b0f50473b9f5e3",
+    "mtime": 1792498413.2716465,
+    "ast_hash": "283ab7292db4ca02ace3d082d5b6ae06",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {

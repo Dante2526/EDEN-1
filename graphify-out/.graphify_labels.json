@@ -1006,11 +1006,9 @@
   "1004": "voice-button.tsx",
   "1005": "search.ts",
   "1006": "run_eval.py",
-  "1007": "remote-gate.ts",
   "1008": "RuntimeError",
   "1009": "cheerio",
   "1010": "motion",
   "1011": "canvas-prototyping.md",
-  "1012": "_best_font_for_char",
-  "1013": "remark-gfm"
+  "1012": "_best_font_for_char"
 }
