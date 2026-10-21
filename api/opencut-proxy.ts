@@ -168,6 +168,22 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       }
     );
 
+    // Reescreve URLs DENTRO de scripts inline (Next.js usa self.__next_f.push([1,"...","/_next/static/..."])
+    // pra registrar referências de módulos. Essas URLs viram import() em runtime e NÃO passam
+    // pelo monkey-patch de fetch(). Tem que reescrever no backend.
+    //
+    // Match: "/_next/..." ou '/_next/...' dentro de strings em scripts
+    html = html.replace(
+      /(["'])((?:\/_next\/|\/icons\/|\/favicon[^"']*|\/manifest\.json|\/browserconfig\.xml|\/open-graph\/)[^"']*)\1/g,
+      (match, quote, path) => `${quote}/api/opencut-proxy${path}${quote}`
+    );
+
+    // Também reescreve URLs escapadas em JSON (\/_next\/... é comum em JSON dentro de scripts)
+    html = html.replace(
+      /\\\/(_next\\\/|icons\\\/|favicon|manifest\.json|browserconfig\.xml|open-graph\\\/)/g,
+      '\\/api\\/opencut-proxy\\/$1'
+    );
+
     // Atualiza Content-Length (já que modificamos o HTML)
     delete responseHeaders['content-length'];
     responseHeaders['content-type'] = 'text/html; charset=utf-8';
