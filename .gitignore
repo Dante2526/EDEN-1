@@ -15,6 +15,11 @@ coverage/
 .mf/
 .cache/
 
+# Vercel (NÃO usamos mais — migraramos pra Cloudflare Pages)
+# Mantemos .vercel/ ignorado caso rode `vercel link` por engano
+.vercel/
+vercel.json
+
 # Editor / OS
 .vscode/
 .idea/
@@ -24,6 +29,9 @@ Thumbs.db
 
 # Tool results temporários
 tool-results/
+
+# Screenshots enviados pelo usuário (NÃO subir pro repo)
+upload/
 
 # Cópias locais / backups / experimentos (NÃO subir pro repo)
 synap-fix/
