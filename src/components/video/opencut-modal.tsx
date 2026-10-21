@@ -324,6 +324,12 @@ export const OpenCutModal: React.FC<OpenCutModalProps> = ({
               title="OpenCut Video Studio"
               className="w-full h-full border-0"
               allow="autoplay; camera; microphone; clipboard-write; fullscreen; web-share; display-capture; cross-origin-isolated"
+              // SANDBOX: bloqueia 100% qualquer tentativa do iframe de fazer
+              // frame-busting (window.top.location = ...) que recarregaria o Éden
+              // e voltaria pra tela de chat. SEM allow-top-navigation propositalmente.
+              // Permite: scripts (React), same-origin (proxy próprio), forms (inputs),
+              // popups (auth OAuth), modals, downloads (exportar vídeo).
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
               onLoad={() => setIsLoading(false)}
               onError={() => {
                 setIsLoading(false);

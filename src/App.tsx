@@ -992,14 +992,49 @@ function AppContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
+  // openCutState é persistido em sessionStorage pra sobreviver a remounts
+  // do AppContent (ex: GlobalErrorBoundary capturando erro do iframe proxy).
+  // Sem isso, modal pisca e volta pra tela de chat sozinho.
+  const OPENCUT_SESSION_KEY = 'synap_opencut_open';
   const [openCutState, setOpenCutState] = useState<{
     isOpen: boolean;
     projectTitle?: string;
     aspectRatio?: VideoAspectRatio;
     scriptDescription?: string;
-  }>({
-    isOpen: false,
+  }>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem(OPENCUT_SESSION_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object' && parsed.isOpen) {
+            return {
+              isOpen: true,
+              projectTitle: parsed.projectTitle,
+              aspectRatio: parsed.aspectRatio,
+              scriptDescription: parsed.scriptDescription,
+            };
+          }
+        }
+      } catch {}
+    }
+    return { isOpen: false };
   });
+
+  // Wrapper seguro: sempre salva no sessionStorage ao abrir, limpa ao fechar
+  const updateOpenCutState = (updater: any) => {
+    setOpenCutState((prev: any) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      try {
+        if (next && next.isOpen) {
+          sessionStorage.setItem(OPENCUT_SESSION_KEY, JSON.stringify(next));
+        } else {
+          sessionStorage.removeItem(OPENCUT_SESSION_KEY);
+        }
+      } catch {}
+      return next;
+    });
+  };
   const [isStreaming, setIsStreaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
@@ -2669,7 +2704,7 @@ function AppContent() {
         const aspectRatio = (args.aspect_ratio || args.aspectRatio || '9:16') as VideoAspectRatio;
         const description = args.description || '';
 
-        setOpenCutState({
+        updateOpenCutState({
           isOpen: true,
           projectTitle: title,
           aspectRatio,
@@ -5392,7 +5427,7 @@ function AppContent() {
           onToggleTheme={handleToggleTheme}
           onOpenGraph={() => handleOpenGraph()}
           onOpenScraperRecipes={() => setIsRecipeModalOpen(true)}
-          onOpenVideoEditor={() => setOpenCutState({ isOpen: true, projectTitle: 'Projeto Éden', aspectRatio: '9:16' })}
+          onOpenVideoEditor={() => updateOpenCutState({ isOpen: true, projectTitle: 'Projeto Éden', aspectRatio: '9:16' })}
         />
 
         {/* Global Error Banner */}
@@ -5579,7 +5614,7 @@ function AppContent() {
                       onInpaintImage={handleInpaintImage}
                       onDeleteMessage={handleDeleteMessage}
                       onOpenVideoEditor={(params) =>
-                        setOpenCutState({
+                        updateOpenCutState({
                           isOpen: true,
                           projectTitle: params?.title || 'Projeto OpenCut',
                           aspectRatio: params?.aspectRatio || '9:16',
@@ -5708,7 +5743,7 @@ function AppContent() {
       {/* OpenCut Video Studio Modal (Mobile & PC) */}
       <OpenCutModal
         isOpen={openCutState.isOpen}
-        onClose={() => setOpenCutState((prev) => ({ ...prev, isOpen: false }))}
+        onClose={() => updateOpenCutState((prev: any) => ({ ...prev, isOpen: false }))}
         projectTitle={openCutState.projectTitle}
         initialAspectRatio={openCutState.aspectRatio}
         scriptDescription={openCutState.scriptDescription}
