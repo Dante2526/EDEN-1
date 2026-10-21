@@ -48,15 +48,21 @@ export const OpenCutModal: React.FC<OpenCutModalProps> = ({
 
   if (!isOpen) return null;
 
-  const openCutUrl = buildOpenCutUrl({
-    projectTitle,
-    aspectRatio,
-  });
-
+  // URL traduzida PT-BR (agora é o padrão — usa proxy próprio do Éden)
   const translatedUrl = buildOpenCutTranslatedUrl({
     projectTitle,
     aspectRatio,
   });
+
+  // URL original em inglês (alternativa caso usuário prefira)
+  const originalUrl = buildOpenCutUrl({
+    projectTitle,
+    aspectRatio,
+    language: 'en',
+  });
+
+  // Iframe usa traduzido por padrão
+  const openCutUrl = translatedUrl;
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -65,7 +71,13 @@ export const OpenCutModal: React.FC<OpenCutModalProps> = ({
   };
 
   const handleOpenExternal = () => {
-    window.open(openCutUrl, '_blank', 'noopener,noreferrer');
+    // Botão "Nova Aba" abre versão traduzida PT-BR em nova aba
+    window.open(translatedUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenOriginal = () => {
+    // Alternativa: abrir original em inglês
+    window.open(originalUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenTranslated = () => {
@@ -265,11 +277,11 @@ export const OpenCutModal: React.FC<OpenCutModalProps> = ({
                   className="min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-semibold text-white shadow-lg cursor-pointer flex items-center gap-2"
                 >
                   <span>🇧🇷</span>
-                  <span>Abrir Traduzido (PT-BR)</span>
+                  <span>Abrir Traduzido (PT-BR) em Nova Aba</span>
                 </button>
                 <button
                   type="button"
-                  onClick={handleOpenExternal}
+                  onClick={handleOpenOriginal}
                   className="min-h-[44px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white shadow-lg cursor-pointer flex items-center gap-2"
                 >
                   <ExternalLink className="w-4 h-4" />

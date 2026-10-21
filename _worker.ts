@@ -23,6 +23,7 @@ import fetchUrlHandler from './api/fetch-url';
 import githubHandler from './api/github';
 import imageHandler from './api/image';
 import inpaintHandler from './api/inpaint';
+import opencutProxyHandler from './api/opencut-proxy';
 import searchHandler from './api/search';
 import statusHandler from './api/status';
 import ttsHandler from './api/tts';
@@ -74,6 +75,11 @@ export default {
       }
       if (path === '/api/deployments' || path === '/api/deployments/') {
         return await deploymentsHandler(request, env);
+      }
+      // OpenCut proxy com tradução PT-BR injetada — aceita subpaths
+      // (/api/opencut-proxy/projects, /api/opencut-proxy/_next/..., etc)
+      if (path === '/api/opencut-proxy' || path.startsWith('/api/opencut-proxy/')) {
+        return await opencutProxyHandler(request, env);
       }
       if (path === '/api/browser' || path === '/api/browser/') {
         return await browserHandler(request, env);

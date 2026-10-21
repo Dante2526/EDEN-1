@@ -1,7 +1,14 @@
 import { OpenCutTimeline, OpenCutTrack, OpenCutClip, VideoAspectRatio, OpenCutLanguage } from './types';
 
+// URL base do OpenCut (original em inglês)
 export const OPENCUT_BASE_URL = 'https://opencut.app/projects';
-export const OPENCUT_TRANSLATED_BASE_URL = 'https://opencut-app.translate.goog/projects';
+
+// URL do proxy traduzido PT-BR (roda dentro do Éden, mesmo origin, sem 429 do Google)
+// Esse proxy faz fetch do opencut.app, injeta script com dicionário PT-BR, e serve.
+// Resolve 2 problemas do proxy do Google Tradutor:
+//   1. Rate limit 429 (Google bloqueia após poucos acessos)
+//   2. Apps React não traduzem (só HTML estático é traduzido)
+export const OPENCUT_TRANSLATED_BASE_URL = '/api/opencut-proxy/projects';
 
 export interface OpenCutLaunchOptions {
   projectTitle?: string;
@@ -51,10 +58,20 @@ export function validateOpenCutTimeline(timeline: Partial<OpenCutTimeline>): { v
 
 /**
  * Monta a URL de acesso ao OpenCut Web Editor com parâmetros seguros.
- * Suporta modo traduzido automático em Português do Brasil (PT-BR) via proxy oficial do Google Tradutor.
+ *
+ * Modo 'pt' (padrão desde que migramos do Google Tradutor proxy):
+ *   - Usa /api/opencut-proxy/projects (proxy próprio com dicionário PT-BR)
+ *   - Mesmo origin do Éden → sem problema de same-origin policy
+ *   - Sem 429 do Google Tradutor
+ *   - Traduz textos dinâmicos do React via MutationObserver
+ *
+ * Modo 'en' (original):
+ *   - Usa https://opencut.app/projects direto
+ *   - Textos ficam em inglês
  */
 export function buildOpenCutUrl(options?: OpenCutLaunchOptions): string {
-  const language = options?.language ?? 'en';
+  // Default agora é 'pt' (proxy traduzido). Antes era 'en'.
+  const language = options?.language ?? 'pt';
   const baseUrl = language === 'pt' ? OPENCUT_TRANSLATED_BASE_URL : OPENCUT_BASE_URL;
 
   const params = new URLSearchParams();
@@ -68,19 +85,13 @@ export function buildOpenCutUrl(options?: OpenCutLaunchOptions): string {
     params.set('mcp', options.remoteMcpUrl.trim());
   }
 
-  if (language === 'pt') {
-    params.set('_x_tr_sl', 'en');
-    params.set('_x_tr_tl', 'pt');
-    params.set('_x_tr_hl', 'pt-BR');
-    params.set('_x_tr_pto', 'wapp');
-  }
-
   const queryString = params.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 }
 
 /**
  * Monta a URL do OpenCut 100% traduzida em Português do Brasil (PT-BR)
+ * Usa o proxy próprio do Éden (não depende mais do Google Tradutor).
  */
 export function buildOpenCutTranslatedUrl(options?: Omit<OpenCutLaunchOptions, 'language'>): string {
   return buildOpenCutUrl({ ...options, language: 'pt' });
