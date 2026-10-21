@@ -354,6 +354,110 @@ export function buildOpenCutInjectorScript(): string {
   const DICTIONARY = ${dictionaryJson};
   const DO_NOT_TRANSLATE = new Set(${doNotTranslateJson});
 
+  // ============================================================================
+  // INTERCEPTAÇÃO DE URLs EM RUNTIME
+  // ============================================================================
+  // O HTML inicial vem com URLs reescritas (/api/opencut-proxy/_next/...), mas
+  // quando o React carrega, ele busca chunks adicionais usando paths absolutos
+  // direto do seu bundle JS (/_next/static/...). Esses requests falham porque
+  // o Worker do Éden não sabe que /_next/ é do OpenCut.
+  //
+  // Solução: monkey-patch em fetch(), XMLHttpRequest, e criação de <script>/<link>
+  // pra reescrever URLs /_next/, /icons/, /favicon, /manifest.json em runtime.
+  // ============================================================================
+  const PROXY_PREFIX = '/api/opencut-proxy';
+  const OPENCUT_INTERNAL_PATHS = ['/_next/', '/icons/', '/favicon', '/manifest.json', '/browserconfig.xml', '/open-graph/', '/_rsc/'];
+
+  function shouldRewrite(url) {
+    if (!url) return false;
+    // Só reescreve URLs relativas (começam com /) ou URLs do próprio opencut.app
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url.includes('opencut.app') || url.startsWith(window.location.origin + PROXY_PREFIX);
+    }
+    if (url.startsWith('//')) return false; // protocol-relative
+    if (url.startsWith('data:') || url.startsWith('blob:')) return false;
+    // Verifica se começa com algum path interno do OpenCut
+    return OPENCUT_INTERNAL_PATHS.some(p => url.startsWith(p));
+  }
+
+  function rewriteUrl(url) {
+    if (!url || !shouldRewrite(url)) return url;
+    // Se é URL completa do opencut.app, extrai o path
+    if (url.startsWith('http')) {
+      try {
+        const u = new URL(url);
+        return PROXY_PREFIX + u.pathname + u.search;
+      } catch { return url; }
+    }
+    // Se já tem o prefix, não reescreve de novo
+    if (url.startsWith(PROXY_PREFIX)) return url;
+    // Adiciona prefixo
+    return PROXY_PREFIX + url;
+  }
+
+  // Monkey-patch em fetch()
+  const originalFetch = window.fetch;
+  window.fetch = function(input, init) {
+    if (typeof input === 'string') {
+      input = rewriteUrl(input);
+    } else if (input instanceof Request) {
+      const newUrl = rewriteUrl(input.url);
+      if (newUrl !== input.url) {
+        input = new Request(newUrl, input);
+      }
+    }
+    return originalFetch.call(this, input, init);
+  };
+
+  // Monkey-patch em XMLHttpRequest.open()
+  const originalXhrOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+    if (typeof url === 'string') {
+      url = rewriteUrl(url);
+    }
+    return originalXhrOpen.call(this, method, url, ...rest);
+  };
+
+  // Monkey-patch em document.createElement pra reescrever src/href de script/link/img
+  const originalCreateElement = document.createElement.bind(document);
+  document.createElement = function(tagName) {
+    const el = originalCreateElement(tagName);
+    if (typeof tagName === 'string') {
+      const lower = tagName.toLowerCase();
+      if (lower === 'script' || lower === 'link' || lower === 'img' || lower === 'source' || lower === 'audio' || lower === 'video') {
+        // Interceptar setAttribute
+        const originalSetAttribute = el.setAttribute.bind(el);
+        el.setAttribute = function(name, value) {
+          if ((name === 'src' || name === 'href') && typeof value === 'string') {
+            value = rewriteUrl(value);
+          }
+          return originalSetAttribute(name, value);
+        };
+        // Interceptar assignments diretos a .src e .href
+        try {
+          const proto = Object.getPrototypeOf(el);
+          const srcDesc = Object.getOwnPropertyDescriptor(proto, 'src');
+          const hrefDesc = Object.getOwnPropertyDescriptor(proto, 'href');
+          if (srcDesc && srcDesc.set) {
+            Object.defineProperty(el, 'src', {
+              get: srcDesc.get,
+              set: function(v) { srcDesc.set.call(this, rewriteUrl(v)); },
+              configurable: true,
+            });
+          }
+          if (hrefDesc && hrefDesc.set && lower === 'link') {
+            Object.defineProperty(el, 'href', {
+              get: hrefDesc.get,
+              set: function(v) { hrefDesc.set.call(this, rewriteUrl(v)); },
+              configurable: true,
+            });
+          }
+        } catch (e) {}
+      }
+    }
+    return el;
+  };
+
   // Pré-compila lista de chaves longas primeiro (pra "New project" casar antes de "New")
   const sortedKeys = Object.keys(DICTIONARY).sort((a, b) => b.length - a.length);
 
