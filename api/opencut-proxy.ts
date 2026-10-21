@@ -1,6 +1,6 @@
 import { Env, getEnv } from '../lib/server/env';
 import { checkAuthAndRateLimit } from '../lib/server/_security';
-import { buildOpenCutInjectorScript } from '../src/lib/opencut-i18n-dictionary';
+import { buildOpenCutInjectorScript } from '../lib/server/opencut-i18n';
 
 export const config = {
   runtime: 'edge',

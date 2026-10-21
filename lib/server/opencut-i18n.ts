@@ -30,6 +30,68 @@ export const OPENCUT_I18N_DICTIONARY: Record<string, string> = {
   'Dismiss': 'Dispensar',
   'Notifications alt+T': 'Notificações alt+T',
 
+  // ====== Home — textos longos e específicos da tela inicial ======
+  'Search...': 'Buscar...',
+  'Search projects...': 'Buscar projetos...',
+  'Search projects': 'Buscar projetos',
+  'Sort by': 'Ordenar por',
+  'Recently modified': 'Modificados recentemente',
+  'Recently created': 'Criados recentemente',
+  'Name': 'Nome',
+  'Date created': 'Data de criação',
+  'Date modified': 'Data de modificação',
+  'Project name': 'Nome do projeto',
+  'Start creating your first project. Import media, edit, and export your videos. All privately.': 'Comece a criar seu primeiro projeto. Importe mídia, edite e exporte seus vídeos. Tudo com privacidade.',
+  'Start creating your first project.': 'Comece a criar seu primeiro projeto.',
+  'Import media, edit, and export your videos. All privately.': 'Importe mídia, edite e exporte seus vídeos. Tudo com privacidade.',
+  'Masks, graph editor for curves, volume & speed controls, preview zoom, canvas backgrounds, and stickers.': 'Máscaras, editor de gráficos para curvas, controles de volume e velocidade, zoom de pré-visualização, planos de fundo de canvas e adesivos.',
+  'What\'s new': 'Novidades',
+  'What\'s new?': 'Novidades',
+  'Changelog': 'Novidades',
+  'New features': 'Novos recursos',
+  'New in': 'Novo em',
+  'Get started': 'Começar',
+  'Learn more': 'Saiba mais',
+  'Got it': 'Entendi',
+  'Got it!': 'Entendi!',
+  'View all': 'Ver tudo',
+  'View all updates': 'Ver todas as atualizações',
+  'View changelog': 'Ver novidades',
+  'Close changelog': 'Fechar novidades',
+  'v0.3.0': 'v0.3.0', // mantém versão
+
+  // ====== Home — Ações de projeto ======
+  'Open': 'Abrir',
+  'Open project': 'Abrir projeto',
+  'Edit': 'Editar',
+  'Edit project': 'Editar projeto',
+  'Rename project': 'Renomear projeto',
+  'Delete project': 'Excluir projeto',
+  'Duplicate project': 'Duplicar projeto',
+  'Share project': 'Compartilhar projeto',
+  'Move to trash': 'Mover para a lixeira',
+  'Restore': 'Restaurar',
+  'Restore project': 'Restaurar projeto',
+  'Delete permanently': 'Excluir permanentemente',
+  'Are you sure?': 'Tem certeza?',
+  'Are you sure you want to delete this project?': 'Tem certeza que deseja excluir este projeto?',
+  'This action cannot be undone.': 'Esta ação não pode ser desfeita.',
+  'This will permanently delete this project.': 'Isso excluirá permanentemente este projeto.',
+  'Yes, delete it': 'Sim, excluir',
+  'No, cancel': 'Não, cancelar',
+  'Confirm delete': 'Confirmar exclusão',
+
+  // ====== Home — Empty states ======
+  'No projects found': 'Nenhum projeto encontrado',
+  'No projects': 'Nenhum projeto',
+  'No results': 'Nenhum resultado',
+  'No results found': 'Nenhum resultado encontrado',
+  'Try adjusting your search': 'Tente ajustar sua busca',
+  'Try a different search term': 'Tente um termo de busca diferente',
+  'Create one now': 'Crie um agora',
+  'Create one': 'Crie um',
+  'Get started by creating your first project.': 'Comece criando seu primeiro projeto.',
+
   // ====== Editor — Menu superior ======
   'Export': 'Exportar',
   'Dark': 'Escuro',
@@ -185,7 +247,6 @@ export const OPENCUT_I18N_DICTIONARY: Record<string, string> = {
 
   // ====== Editor — Welcome / Onboarding ======
   'Welcome to OpenCut Beta! 🎉': 'Bem-vindo ao OpenCut Beta! 🎉',
-  'Get started': 'Começar',
   'Skip': 'Pular',
   'Previous': 'Anterior',
   'Finish': 'Concluir',
@@ -229,7 +290,6 @@ export const OPENCUT_I18N_DICTIONARY: Record<string, string> = {
   'Report a bug': 'Relatar um bug',
   'Keyboard shortcuts': 'Atalhos do teclado',
   'Version': 'Versão',
-  'Changelog': 'Novidades',
 
   // ====== Textos curtos / unitários ======
   's': 's', // segundos
@@ -294,32 +354,58 @@ export function buildOpenCutInjectorScript(): string {
   const DICTIONARY = ${dictionaryJson};
   const DO_NOT_TRANSLATE = new Set(${doNotTranslateJson});
 
-  // Pré-compila regex com chaves longas primeiro (pra "New project" casar antes de "New")
+  // Pré-compila lista de chaves longas primeiro (pra "New project" casar antes de "New")
   const sortedKeys = Object.keys(DICTIONARY).sort((a, b) => b.length - a.length);
+
+  // Normaliza whitespace: colapsa múltiplos espaços em 1, trim
+  function normalize(s) {
+    return (s || '').replace(/\\s+/g, ' ').trim();
+  }
+
+  // Mapa lowercased -> key original, pra lookup case-insensitive rápido
+  const lowerKeyMap = {};
+  for (const k of Object.keys(DICTIONARY)) {
+    lowerKeyMap[k.toLowerCase()] = k;
+  }
+
+  function lookupTranslation(text) {
+    if (!text) return null;
+    const normalized = normalize(text);
+    if (!normalized || DO_NOT_TRANSLATE.has(normalized)) return null;
+    // Match exato
+    if (DICTIONARY[normalized]) return DICTIONARY[normalized];
+    // Match case-insensitive
+    const lower = normalized.toLowerCase();
+    if (lowerKeyMap[lower]) return DICTIONARY[lowerKeyMap[lower]];
+    return null;
+  }
 
   function translateElement(el) {
     if (!el || el.nodeType !== 1) return;
     if (el.hasAttribute && el.hasAttribute('data-i18n-translated')) return;
 
-    // Traduz textContent (só se for texto direto, sem children)
-    if (el.children.length === 0 && el.textContent) {
-      const original = el.textContent.trim();
-      if (original && !DO_NOT_TRANSLATE.has(original)) {
-        // Tenta match exato primeiro
-        if (DICTIONARY[original]) {
-          el.textContent = DICTIONARY[original];
-          el.setAttribute('data-i18n-translated', '1');
-          return;
+    // Traduz textContent (só se for texto direto, sem children visíveis)
+    // Permite SVG/PATH filhos (que não têm texto visível)
+    const hasTextChildren = el.children.length === 0 ||
+      Array.from(el.children).every(c => c.tagName === 'SVG' || c.tagName === 'PATH' || c.tagName === 'CIRCLE' || c.tagName === 'RECT' || c.tagName === 'POLYGON' || c.tagName === 'SPAN' && c.children.length === 0);
+
+    if (hasTextChildren && el.textContent != null) {
+      const original = el.textContent;
+      const translation = lookupTranslation(original);
+      if (translation) {
+        // Preserva SVG/icons mas troca só o texto
+        // Estratégia simples: salva SVGs, troca textContent, restaura SVGs
+        const svgs = el.querySelectorAll('svg, path, circle, rect, polygon');
+        const svgClones = Array.from(svgs).map(s => s.cloneNode(true));
+        el.textContent = translation;
+        // Re-adiciona SVGs no final (não ideal mas funciona pra botões com ícone + texto)
+        // Nota: se o elemento era só texto, isso não afeta nada
+        if (svgClones.length > 0) {
+          // Não re-adiciona — a maioria dos casos é botão com ícone separado
+          // Se precisar re-adicionar, o React vai re-renderizar ao atualizar estado
         }
-        // Tenta match case-insensitive (mas mantém tradução)
-        const lower = original.toLowerCase();
-        for (const key of sortedKeys) {
-          if (key.toLowerCase() === lower) {
-            el.textContent = DICTIONARY[key];
-            el.setAttribute('data-i18n-translated', '1');
-            return;
-          }
-        }
+        el.setAttribute('data-i18n-translated', '1');
+        return;
       }
     }
 
@@ -327,49 +413,58 @@ export function buildOpenCutInjectorScript(): string {
     const attrsToTranslate = ['title', 'aria-label', 'placeholder'];
     for (const attr of attrsToTranslate) {
       const val = el.getAttribute(attr);
-      if (val && !DO_NOT_TRANSLATE.has(val) && DICTIONARY[val]) {
-        el.setAttribute(attr, DICTIONARY[val]);
+      if (val) {
+        const translation = lookupTranslation(val);
+        if (translation) {
+          el.setAttribute(attr, translation);
+        }
       }
     }
   }
 
   function scanAll(root) {
     if (!root || !root.querySelectorAll) return;
-    // Traduz o próprio root
     translateElement(root);
-    // Traduz todos os descendentes
-    const elements = root.querySelectorAll('*');
-    elements.forEach(translateElement);
+    try {
+      const elements = root.querySelectorAll('*');
+      elements.forEach(translateElement);
+    } catch (e) {}
   }
 
-  // Primeiro scan depois que a página carrega
   function initialScan() {
-    scanAll(document.body);
+    if (document.body) {
+      scanAll(document.body);
+    }
   }
 
   // MutationObserver: detecta novos elementos sendo adicionados pelo React
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'childList') {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) {
-            translateElement(node);
-            if (node.querySelectorAll) {
-              node.querySelectorAll('*').forEach(translateElement);
+  let observer = null;
+  function startObserver() {
+    if (!document.body) {
+      // Body ainda não existe, tenta de novo em 50ms
+      setTimeout(startObserver, 50);
+      return;
+    }
+    observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) {
+              translateElement(node);
+              if (node.querySelectorAll) {
+                try {
+                  node.querySelectorAll('*').forEach(translateElement);
+                } catch (e) {}
+              }
             }
+          });
+        } else if (mutation.type === 'characterData') {
+          if (mutation.target.parentElement) {
+            translateElement(mutation.target.parentElement);
           }
-        });
-      } else if (mutation.type === 'characterData') {
-        // Texto mudou em um text node
-        if (mutation.target.parentElement) {
-          translateElement(mutation.target.parentElement);
         }
       }
-    }
-  });
-
-  // Inicia observer
-  function startObserver() {
+    });
     observer.observe(document.body, {
       childList: true,
       subtree: true,
@@ -377,9 +472,9 @@ export function buildOpenCutInjectorScript(): string {
     });
   }
 
-  // Traduz periódicamente nos primeiros 10s (pra pegar tudo que React pinta aos poucos)
+  // Traduz periódicamente nos primeiros 15s (pra pegar tudo que React pinta aos poucos)
   let scanCount = 0;
-  const maxScans = 20;
+  const maxScans = 30; // 30 scans x 500ms = 15s
   const periodicScan = setInterval(() => {
     scanAll(document.body);
     scanCount++;
