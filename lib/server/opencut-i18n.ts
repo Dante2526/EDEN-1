@@ -488,26 +488,32 @@ export function buildOpenCutInjectorScript(): string {
     if (!el || el.nodeType !== 1) return;
     if (el.hasAttribute && el.hasAttribute('data-i18n-translated')) return;
 
-    // Traduz textContent (só se for texto direto, sem children visíveis)
-    // Permite SVG/PATH filhos (que não têm texto visível)
-    const hasTextChildren = el.children.length === 0 ||
-      Array.from(el.children).every(c => c.tagName === 'SVG' || c.tagName === 'PATH' || c.tagName === 'CIRCLE' || c.tagName === 'RECT' || c.tagName === 'POLYGON' || c.tagName === 'SPAN' && c.children.length === 0);
+    // Traduz textContent — permite elementos com filhos SVG/PATH/ÍCONES
+    // (botões do OpenCut têm <svg> + texto "Create your first project")
+    const ALLOWED_CHILD_TAGS = new Set(['SVG', 'PATH', 'CIRCLE', 'RECT', 'POLYGON', 'LINE', 'POLYLINE', 'DEFS', 'G', 'USE', 'SYMBOL']);
+    const allChildrenAreIcons = el.children.length === 0 ||
+      Array.from(el.children).every(c => ALLOWED_CHILD_TAGS.has(c.tagName));
 
-    if (hasTextChildren && el.textContent != null) {
+    if (allChildrenAreIcons && el.textContent != null) {
       const original = el.textContent;
       const translation = lookupTranslation(original);
       if (translation) {
-        // Preserva SVG/icons mas troca só o texto
-        // Estratégia simples: salva SVGs, troca textContent, restaura SVGs
-        const svgs = el.querySelectorAll('svg, path, circle, rect, polygon');
-        const svgClones = Array.from(svgs).map(s => s.cloneNode(true));
-        el.textContent = translation;
-        // Re-adiciona SVGs no final (não ideal mas funciona pra botões com ícone + texto)
-        // Nota: se o elemento era só texto, isso não afeta nada
-        if (svgClones.length > 0) {
-          // Não re-adiciona — a maioria dos casos é botão com ícone separado
-          // Se precisar re-adicionar, o React vai re-renderizar ao atualizar estado
+        // Estratégia: preserva SVGs existentes, troca só text nodes
+        // Salva SVGs atuais
+        const iconElements = Array.from(el.children).filter(c => ALLOWED_CHILD_TAGS.has(c.tagName));
+        const iconClones = iconElements.map(s => s.cloneNode(true));
+
+        // Remove todos os filhos
+        while (el.firstChild) el.removeChild(el.firstChild);
+
+        // Re-adiciona ícones (na mesma posição: início)
+        for (const clone of iconClones) {
+          el.appendChild(clone);
         }
+
+        // Adiciona text node com tradução
+        el.appendChild(document.createTextNode(translation));
+
         el.setAttribute('data-i18n-translated', '1');
         return;
       }

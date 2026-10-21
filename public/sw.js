@@ -1,4 +1,4 @@
-const CACHE_NAME = 'synap-shell-v3';
+const CACHE_NAME = 'synap-shell-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
