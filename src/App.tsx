@@ -121,6 +121,20 @@ import {
 } from './lib/preview-devtools';
 import { BrowserRecipeModal } from './components/browser-recipe-modal';
 import { OpenCutModal } from './components/video/opencut-modal';
+import { ImageEditorModal } from './components/image-editor/image-editor-modal';
+import {
+  ImageProject,
+  ImageLayer_T,
+  BackgroundLayer,
+  TextLayer,
+  ShapeLayer,
+  StickerLayer,
+  createBackgroundLayer,
+  createTextLayer,
+  createShapeLayer,
+  createStickerLayer,
+  createEmptyProject,
+} from './lib/image-layers';
 import { buildOpenCutUrl, formatOpenCutToolResult } from './lib/opencut-integration';
 import {
   loadSavedRecipes,
@@ -712,6 +726,99 @@ const IMAGE_GEN_TOOL = {
 };
 
 // ============================================================================
+// IMAGE WITH LAYERS TOOL — Gera imagem em camadas editáveis (Opção 3)
+// ============================================================================
+// Igual ao generate_image mas retorna um projeto (JSON) com múltiplas camadas.
+// O usuário pode abrir o editor e manipular cada elemento individualmente.
+// ============================================================================
+const IMAGE_WITH_LAYERS_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'generate_image_with_layers',
+    description:
+      'Gera imagem COM CAMADAS EDITÁVEIS. Cada elemento (fundo, texto, sticker, shape) ' +
+      'vira um layer separado que o usuário pode mover, redimensionar, trocar cor, etc. ' +
+      'Use quando o usuário quiser personalizar a imagem depois (ex: "cria um flyer com título editável", ' +
+      '"faz um poster com texto que eu possa mudar"). ' +
+      'O fundo é gerado por IA (FLUX.1 Dev). Os layers de texto/shape/sticker são vetoriais editáveis.',
+    parameters: {
+      type: 'object',
+      properties: {
+        background_prompt: {
+          type: 'string',
+          description: 'Prompt em inglês pra gerar o fundo via FLUX.1 Dev. Ex: "tropical beach at sunset, palm trees, golden hour, photorealistic".',
+        },
+        aspect_ratio: {
+          type: 'string',
+          description: 'Proporção: "1:1" (padrão), "16:9", "9:16", "4:3", "3:4".',
+          enum: ['1:1', '16:9', '9:16', '4:3', '3:4'],
+        },
+        title: {
+          type: 'string',
+          description: 'Título do projeto (ex: "Flyer Verão 2026").',
+        },
+        text_layers: {
+          type: 'array',
+          description: 'Lista de camadas de texto editáveis. Cada uma vira um elemento clicável no editor.',
+          items: {
+            type: 'object',
+            properties: {
+              text: { type: 'string', description: 'Conteúdo do texto' },
+              font_size: { type: 'number', description: 'Tamanho da fonte (default: 48)' },
+              color: { type: 'string', description: 'Cor em hex (ex: "#ffffff")' },
+              font_family: { type: 'string', description: 'Fonte (default: "Inter, sans-serif"). Outras: "Impact, sans-serif", "Georgia, serif", "Courier New, monospace", "Comic Sans MS, cursive".' },
+              bold: { type: 'boolean', description: 'Negrito (default: false)' },
+              italic: { type: 'boolean', description: 'Itálico (default: false)' },
+              position: {
+                type: 'string',
+                enum: ['top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right'],
+                description: 'Posição aproximada no canvas (default: center)',
+              },
+            },
+            required: ['text'],
+          },
+        },
+        sticker_layers: {
+          type: 'array',
+          description: 'Lista de stickers (emojis) pra colocar na imagem.',
+          items: {
+            type: 'object',
+            properties: {
+              emoji: { type: 'string', description: 'Emoji (ex: "🌟", "❤️", "🔥")' },
+              font_size: { type: 'number', description: 'Tamanho (default: 120)' },
+              position: {
+                type: 'string',
+                enum: ['top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right'],
+              },
+            },
+            required: ['emoji'],
+          },
+        },
+        shape_layers: {
+          type: 'array',
+          description: 'Lista de formas geométricas (retângulo, círculo, triângulo).',
+          items: {
+            type: 'object',
+            properties: {
+              shape: { type: 'string', enum: ['rect', 'circle', 'triangle'] },
+              color: { type: 'string', description: 'Cor em hex (ex: "#ff6b6b")' },
+              width: { type: 'number', description: 'Largura em px (default: 200)' },
+              height: { type: 'number', description: 'Altura em px (default: 200)' },
+              position: {
+                type: 'string',
+                enum: ['top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right'],
+              },
+            },
+            required: ['shape'],
+          },
+        },
+      },
+      required: ['background_prompt'],
+    },
+  },
+};
+
+// ============================================================================
 const INPAINT_IMAGE_TOOL = {
   type: 'function' as const,
   function: {
@@ -951,8 +1058,8 @@ const CANVAS_PROTOTYPE_TOOL = {
   },
 };
 
-const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, OPEN_VIDEO_EDITOR_TOOL, REMOTE_DEPLOY_TOOL];
-const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, INPAINT_IMAGE_TOOL, OPEN_VIDEO_EDITOR_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
+const DEFAULT_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, IMAGE_WITH_LAYERS_TOOL, INPAINT_IMAGE_TOOL, OPEN_VIDEO_EDITOR_TOOL, REMOTE_DEPLOY_TOOL];
+const ALL_CHAT_TOOLS = [WEB_SEARCH_TOOL, FETCH_URL_TOOL, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, DEVTOOLS_INSPECT_TOOL, LIST_BROWSER_RECIPES_TOOL, RUN_BROWSER_RECIPE_TOOL, PYTHON_TOOL, DOCUMENT_GEN_TOOL, MEMORY_SAVE_TOOL, MEMORY_FORGET_TOOL, TERMINAL_TOOL, SEARCH_GITHUB_REPOS_TOOL, READ_GITHUB_FILE_TOOL, CREATE_PROJECT_TOOL, UPDATE_PROJECT_FILES_TOOL, OPEN_PROJECT_TOOL, DISPATCH_SUBAGENT_TOOL, QUERY_CODE_GRAPH_TOOL, QUERY_ARCHITECTURE_GRAPH_TOOL, IMAGE_GEN_TOOL, IMAGE_WITH_LAYERS_TOOL, INPAINT_IMAGE_TOOL, OPEN_VIDEO_EDITOR_TOOL, REMOTE_DEPLOY_TOOL, ...GITHUB_TOOLS];
 
 export default function App() {
   return (
@@ -1035,6 +1142,20 @@ function AppContent() {
       return next;
     });
   };
+
+  // ====== IMAGE EDITOR STATE (camadas editáveis) ======
+  const [imageEditorState, setImageEditorState] = useState<{
+    isOpen: boolean;
+    project?: ImageProject;
+  }>({ isOpen: false });
+
+  const updateImageEditorState = (updater: any) => {
+    setImageEditorState((prev: any) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      return next;
+    });
+  };
+
   const [isStreaming, setIsStreaming] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
@@ -2659,6 +2780,116 @@ function AppContent() {
         };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || 'Falha ao gerar imagem via FLUX.2 Dev' }) };
+      }
+    }
+
+    if (name === 'generate_image_with_layers') {
+      try {
+        const bgPrompt = args.background_prompt || args.prompt || '';
+        const aspectRatio = args.aspect_ratio || args.aspectRatio || '1:1';
+        const title = args.title || 'Projeto com Camadas';
+        const textLayers: any[] = args.text_layers || [];
+        const stickerLayers: any[] = args.sticker_layers || [];
+        const shapeLayers: any[] = args.shape_layers || [];
+
+        if (!bgPrompt.trim()) {
+          return { result: JSON.stringify({ error: 'background_prompt é obrigatório' }) };
+        }
+
+        // 1. Gera fundo via /api/image (FLUX.1 Dev)
+        const imgRes = await fetch('/api/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': import.meta.env.VITE_API_SECRET || '' },
+          body: JSON.stringify({ prompt: bgPrompt, aspect_ratio: aspectRatio, model: 'flux-1-dev' }),
+        });
+        const imgData = await imgRes.json();
+        if (!imgRes.ok || !imgData.success) {
+          return { result: JSON.stringify({ error: imgData.error || 'Falha ao gerar fundo' }) };
+        }
+
+        // 2. Calcula dimensões do projeto baseado no aspect ratio
+        let projWidth = 1024, projHeight = 1024;
+        if (aspectRatio === '16:9') { projWidth = 1024; projHeight = 576; }
+        else if (aspectRatio === '9:16') { projWidth = 576; projHeight = 1024; }
+        else if (aspectRatio === '4:3') { projWidth = 800; projHeight = 600; }
+        else if (aspectRatio === '3:4') { projWidth = 600; projHeight = 800; }
+
+        // 3. Cria projeto com camadas
+        const project: ImageProject = createEmptyProject(projWidth, projHeight, '#ffffff');
+        project.title = title;
+
+        // Layer de fundo
+        const bgLayer = createBackgroundLayer(imgData.url, bgPrompt, projWidth, projHeight);
+        project.layers.push(bgLayer);
+
+        // Helper: converte posição pra coordenadas
+        const positionToXY = (pos: string, w: number, h: number) => {
+          const margin = 50;
+          switch (pos) {
+            case 'top-left': return { x: margin, y: margin };
+            case 'top-center': return { x: w / 2 - 100, y: margin };
+            case 'top-right': return { x: w - 300, y: margin };
+            case 'bottom-left': return { x: margin, y: h - 100 };
+            case 'bottom-center': return { x: w / 2 - 100, y: h - 100 };
+            case 'bottom-right': return { x: w - 300, y: h - 100 };
+            case 'center':
+            default: return { x: w / 2 - 100, y: h / 2 - 24 };
+          }
+        };
+
+        // Layers de texto
+        for (const tl of textLayers) {
+          const { x, y } = positionToXY(tl.position || 'center', projWidth, projHeight);
+          project.layers.push(createTextLayer(tl.text, {
+            x, y,
+            fontSize: tl.font_size || 48,
+            fill: tl.color || '#000000',
+            fontFamily: tl.font_family || 'Inter, sans-serif',
+            fontWeight: tl.bold ? 'bold' : 'normal',
+            fontStyle: tl.italic ? 'italic' : 'normal',
+            name: `Texto: ${tl.text.slice(0, 30)}`,
+          }));
+        }
+
+        // Layers de sticker
+        for (const sl of stickerLayers) {
+          const { x, y } = positionToXY(sl.position || 'center', projWidth, projHeight);
+          project.layers.push(createStickerLayer(sl.emoji, {
+            x, y,
+            fontSize: sl.font_size || 120,
+            name: `Sticker: ${sl.emoji}`,
+          }));
+        }
+
+        // Layers de shape
+        for (const sl of shapeLayers) {
+          const { x, y } = positionToXY(sl.position || 'center', projWidth, projHeight);
+          project.layers.push(createShapeLayer(sl.shape, {
+            x, y,
+            width: sl.width || 200,
+            height: sl.height || 200,
+            fill: sl.color || '#ff6b6b',
+            name: `Shape: ${sl.shape}`,
+          }));
+        }
+
+        // 4. Abre editor automaticamente
+        updateImageEditorState({ isOpen: true, project });
+
+        // 5. Retorna info pra IA
+        return {
+          result: JSON.stringify({
+            success: true,
+            project_id: project.id,
+            title: project.title,
+            layer_count: project.layers.length,
+            layers: project.layers.map((l) => ({ type: l.type, name: l.name })),
+            background_url: imgData.url,
+            hint: 'Imagem com camadas criada e editor aberto automaticamente. O usuário pode editar cada elemento individualmente. Faça um comentário breve sobre o que foi criado.',
+          }),
+        };
+      } catch (err: any) {
+        return { result: JSON.stringify({ error: err?.message || 'Falha ao criar imagem com camadas' }) };
       }
     }
 
@@ -4574,7 +4805,7 @@ function AppContent() {
             }
 
             let contentForApi = result;
-            if (tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image') {
+            if (tc.name === 'generate_image' || tc.name === 'image_generator' || tc.name === 'inpaint_image' || tc.name === 'generate_image_with_layers') {
               try {
                 const parsed = JSON.parse(result);
                 if ((parsed.is_data_url || parsed.url?.startsWith('data:')) && parsed.url && parsed.url.length > 200) {
@@ -5747,6 +5978,32 @@ function AppContent() {
         projectTitle={openCutState.projectTitle}
         initialAspectRatio={openCutState.aspectRatio}
         scriptDescription={openCutState.scriptDescription}
+      />
+
+      {/* Image Editor Modal (camadas editáveis com Fabric.js) */}
+      <ImageEditorModal
+        isOpen={imageEditorState.isOpen}
+        onClose={() => updateImageEditorState({ isOpen: false })}
+        initialProject={imageEditorState.project}
+        onExport={(dataUrl, project) => {
+          // TODO: adicionar imagem exportada no chat como nova mensagem
+          console.log('[ImageEditor] Export:', dataUrl.slice(0, 50), project.title);
+        }}
+        onRegenerateBackground={async (prompt, currentImage) => {
+          // Reusa /api/image pra gerar novo fundo
+          try {
+            const res = await fetch('/api/image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-api-key': import.meta.env.VITE_API_SECRET || '' },
+              body: JSON.stringify({ prompt, aspect_ratio: '1:1', model: 'flux-1-dev' }),
+            });
+            const data = await res.json();
+            if (data.success) return data.url;
+            return '';
+          } catch {
+            return '';
+          }
+        }}
       />
     </div>
   );
