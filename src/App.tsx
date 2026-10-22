@@ -5843,6 +5843,19 @@ function AppContent() {
                       onApproveCanvasPrototype={handleApproveCanvasPrototype}
                       onRequestCanvasPrototypeChanges={handleRequestCanvasPrototypeChanges}
                       onInpaintImage={handleInpaintImage}
+                      onEditLayers={(imageUrl, prompt, aspectRatio) => {
+                        // Cria projeto com a imagem existente como background
+                        let projWidth = 1024, projHeight = 1024;
+                        if (aspectRatio === '16:9') { projWidth = 1024; projHeight = 576; }
+                        else if (aspectRatio === '9:16') { projWidth = 576; projHeight = 1024; }
+                        else if (aspectRatio === '4:3') { projWidth = 800; projHeight = 600; }
+                        else if (aspectRatio === '3:4') { projWidth = 600; projHeight = 800; }
+
+                        const proj = createEmptyProject(projWidth, projHeight, '#ffffff');
+                        proj.title = prompt ? `Editar: ${prompt.slice(0, 30)}` : 'Editar Imagem';
+                        proj.layers.push(createBackgroundLayer(imageUrl, prompt, projWidth, projHeight));
+                        updateImageEditorState({ isOpen: true, project: proj });
+                      }}
                       onDeleteMessage={handleDeleteMessage}
                       onOpenVideoEditor={(params) =>
                         updateOpenCutState({

@@ -57,6 +57,7 @@ interface ChatMessageProps {
   onRequestCanvasPrototypeChanges?: (prototype: CanvasPrototype) => void;
   onInpaintImage?: (params: { image: string; mask: string; prompt: string; aspectRatio?: string }) => Promise<void>;
   onOpenVideoEditor?: (params?: { title?: string; aspectRatio?: VideoAspectRatio; description?: string }) => void;
+  onEditLayers?: (imageUrl: string, prompt?: string, aspectRatio?: string) => void;
   onDeleteMessage?: (messageId: string) => void;
 }
 
@@ -219,6 +220,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   onRequestCanvasPrototypeChanges,
   onInpaintImage,
   onOpenVideoEditor,
+  onEditLayers,
   onDeleteMessage,
 }) => {
   const isUser = message.role === 'user';
@@ -1055,6 +1057,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                               >
                                 <Paintbrush className="w-3.5 h-3.5" />
                                 <span className="hidden sm:inline">Pincelar</span>
+                              </button>
+                            )}
+                            {onEditLayers && (
+                              <button
+                                type="button"
+                                onClick={() => onEditLayers(imageUrl, prompt, aspectRatio)}
+                                className="min-h-[44px] min-w-[44px] flex items-center justify-center gap-1.5 px-2.5 sm:px-3 rounded-lg bg-[color:var(--c-bg-27241f)] hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 text-xs font-medium transition cursor-pointer select-none"
+                                title="Editar Camadas — mover, redimensionar, adicionar texto e shapes"
+                              >
+                                <Layers className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Camadas</span>
                               </button>
                             )}
                             <a
