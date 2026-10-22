@@ -173,13 +173,12 @@ describe('Motor de Geração de Imagens FLUX (NVIDIA NIM & Fallbacks)', () => {
     }
   });
 
-  it('deve acionar fallback resiliente do Pollinations FLUX truncando prompts longos para evitar HTTP 414', async () => {
-    const veryLongPrompt = 'a'.repeat(1200);
+  it('deve retornar erro 502 quando NVIDIA e Cloudflare falham (sem fallback Pollinations)', async () => {
     const req = new Request('http://localhost:3000/api/image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: veryLongPrompt,
+        prompt: 'test prompt',
         aspect_ratio: '1:1',
       }),
     });
@@ -187,14 +186,9 @@ describe('Motor de Geração de Imagens FLUX (NVIDIA NIM & Fallbacks)', () => {
     const env = { NVIDIA_API_KEY: undefined, CLOUDFLARE_API_TOKEN: undefined };
     const res = await imageHandler(req, env);
 
-    assert.equal(res.status, 200);
+    assert.equal(res.status, 502);
     const data = await res.json();
-
-    assert.equal(data.success, true);
-    assert.equal(data.provider, 'FLUX (Pollinations Fallback)');
-    assert.equal(data.is_data_url, false);
-    // Verifica que o prompt na URL foi truncado em até 800 caracteres
-    const urlPromptPart = data.url.split('/prompt/')[1].split('?')[0];
-    assert.ok(decodeURIComponent(urlPromptPart).length <= 800);
+    assert.equal(data.success, false);
+    assert.ok(data.error.includes('Não foi possível gerar a imagem'));
   });
 });

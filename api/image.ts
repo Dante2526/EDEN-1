@@ -18,8 +18,7 @@ export const config = {
  *    - Modelos: @cf/black-forest-labs/flux-1-dev e flux-1-schnell
  *    - Endpoint: https://api.cloudflare.com/client/v4/accounts/{id}/ai/run/...
  *
- * 3. Provedor Terciário (Garantia de 100% de Disponibilidade): Pollinations FLUX
- *    - Fallback resiliente automático caso cotas da NVIDIA ou Cloudflare estejam esgotadas.
+ * Se ambos falharem, retorna erro (sem fallback externo de terceiros).
  */
 
 export interface ImageDimensions {
@@ -293,7 +292,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           }
         }
       } else {
-        console.warn(`[Cloudflare AI Image] ${cfRes.status} ${cfRes.statusText} — tentando fallback Pollinations.`);
+        console.warn(`[Cloudflare AI Image] ${cfRes.status} ${cfRes.statusText}`);
       }
     } catch (err: any) {
       console.warn('[Cloudflare AI Image] Erro na requisição Cloudflare:', err?.message || err);
@@ -301,35 +300,21 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   }
 
   // =========================================================================
-  // CAMADA 3: Pollinations FLUX (Garantia de 100% de Disponibilidade)
+  // SEM FALLBACK EXTERNO — retorna erro se NVIDIA e CF falharem
   // =========================================================================
-  // Trunca prompts excessivamente longos para evitar HTTP 414 URI Too Long
-  const truncatedPrompt = cleanPrompt.length > 800 ? cleanPrompt.slice(0, 800) : cleanPrompt;
-  const safeUrlPrompt = encodeURIComponent(truncatedPrompt).replace(
-    /[!'()*]/g,
-    (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()
-  );
-  const fallbackUrl = `https://image.pollinations.ai/prompt/${safeUrlPrompt}?width=${dims.width}&height=${dims.height}&model=flux&nologo=true&seed=${seed}`;
-
   return new Response(
     JSON.stringify({
-      success: true,
-      url: fallbackUrl,
+      success: false,
+      error:
+        'Não foi possível gerar a imagem. Tanto NVIDIA NIM quanto Cloudflare Workers AI falharam. ' +
+        'Possíveis causas: cota esgotada, variáveis de ambiente ausentes, ou serviço temporariamente indisponível. ' +
+        'Tente novamente em alguns segundos.',
       prompt: cleanPrompt,
       model: modelKey,
-      provider: 'FLUX (Pollinations Fallback)',
-      size: `${dims.width}x${dims.height}`,
-      dimensions: dims,
-      aspect_ratio: aspectRatio,
-      markdown: `![${safeAltText}](${fallbackUrl})`,
-      is_data_url: false,
     }),
     {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'private, max-age=86400',
-      },
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
     }
   );
 }
