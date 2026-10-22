@@ -212,8 +212,8 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
 
     try {
       const cfCtrl = new AbortController();
-      // Timeout de 15s para caber confortavelmente na cascata de execução
-      const cfTimeout = setTimeout(() => cfCtrl.abort(), 15000);
+      // Timeout de 45s — FLUX.1 Dev com 20 steps pode demorar até 30s
+      const cfTimeout = setTimeout(() => cfCtrl.abort(), 45000);
 
       const cfRes = await fetch(cfUrl, {
         method: 'POST',
@@ -224,7 +224,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
         body: JSON.stringify({
           prompt: cleanPrompt,
           size: dims.cfSize,
-          steps: modelKey === 'flux-1-schnell' ? 8 : 20,
+          steps: modelKey === 'flux-1-schnell' ? 4 : 8,
           seed,
         }),
         signal: cfCtrl.signal,
@@ -236,7 +236,6 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
         const contentType = cfRes.headers.get('content-type') || '';
         if (contentType.startsWith('image/')) {
           const imageBuffer = await cfRes.arrayBuffer();
-          // Converte para base64 com proteção contra estouro de pilha
           const base64 = arrayBufferToBase64(imageBuffer);
           const dataUrl = `data:${contentType};base64,${base64}`;
 
@@ -265,7 +264,8 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
 
         if (contentType.includes('application/json')) {
           const data = await cfRes.json();
-          const b64 = data?.result?.image || data?.image || data?.result;
+          // CF Workers AI pode retornar { success: true, result: { image: "base64..." } }
+          const b64 = data?.result?.image || data?.image || (typeof data?.result === 'string' ? data.result : null);
           if (typeof b64 === 'string' && b64.length > 100) {
             const dataUrl = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
             return new Response(
@@ -292,10 +292,13 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           }
         }
       } else {
-        console.warn(`[Cloudflare AI Image] ${cfRes.status} ${cfRes.statusText}`);
+        // Log do erro da CF pra debugar
+        const errBody = await cfRes.text().catch(() => '');
+        console.warn(`[Cloudflare AI Image] ${cfRes.status} ${cfRes.statusText} — body: ${errBody.slice(0, 300)}`);
       }
     } catch (err: any) {
-      console.warn('[Cloudflare AI Image] Erro na requisição Cloudflare:', err?.message || err);
+      const isTimeout = err?.name === 'AbortError';
+      console.warn(`[Cloudflare AI Image] ${isTimeout ? 'Timeout (45s)' : 'Erro'}:`, err?.message || err);
     }
   }
 
