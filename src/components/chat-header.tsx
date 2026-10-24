@@ -96,7 +96,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           <PanelLeft className="w-5 h-5" />
         </button>
 
-
         {onOpenVideoEditor && (
           <button
             type="button"
@@ -110,34 +109,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           </button>
         )}
 
-        {activeRepo && (
-          <div className="hidden xl:flex items-center gap-1.5 p-1 px-2.5 rounded-xl bg-[color:var(--c-bg-23211d)] border border-[color:var(--c-bg-3e3b33)] text-xs font-mono min-w-0 shadow-xs ml-1">
-            <button
-              type="button"
-              onClick={onOpenSourceControl}
-              title={`Repositório exclusivo deste chat: ${activeRepo.fullName} (${activeRepo.branch}). Clique para abrir Source Control.`}
-              className="flex items-center gap-1.5 text-[color:var(--c-fg-f3efe6)] hover:text-[color:var(--c-fg-d97757)] transition truncate cursor-pointer"
-            >
-              <FolderGit2 className="w-3.5 h-3.5 text-[color:var(--c-fg-d97757)] shrink-0" />
-              <span className="truncate max-w-[120px] sm:max-w-[170px] font-medium">
-                {activeRepo.fullName}
-              </span>
-              <span className="text-[color:var(--c-fg-8c867a)]">·</span>
-              <span className="text-[color:var(--c-fg-c4bfb6)] truncate max-w-[70px]">{activeRepo.branch}</span>
-            </button>
-
-            {pendingChangesCount > 0 && (
-              <button
-                type="button"
-                onClick={onOpenSourceControl}
-                title={`${pendingChangesCount} alteração(ões) pendente(s) no Source Control`}
-                className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-[#d97757]/20 text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40 hover:bg-[#d97757]/30 transition cursor-pointer"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#d97757] animate-pulse" />
-                <span>●{pendingChangesCount}</span>
-              </button>
-            )}
-          </div>
+        {/* Cloudflare Pages Deployment Status Badge (lado superior esquerdo) */}
+        {deployment && (
+          <DeploymentStatusBadge
+            deployment={deployment}
+            isLoading={isLoadingDeployment}
+            onClick={onOpenDeploymentLogs}
+            className="ml-2"
+          />
         )}
       </div>
 
@@ -257,8 +236,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           </button>
         )}
 
-
-
         {onToggleTerminal && (
           <button
             type="button"
@@ -280,19 +257,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
             />
           </button>
         )}
-
       </div>
-
-      {/* Cloudflare Pages Deployment Status Badge (lado esquerdo superior) */}
-      {deployment && (
-        <div className="absolute left-16 sm:left-20 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
-          <DeploymentStatusBadge
-            deployment={deployment}
-            isLoading={isLoadingDeployment}
-            onClick={onOpenDeploymentLogs}
-          />
-        </div>
-      )}
     </header>
   );
 });
