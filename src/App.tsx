@@ -56,6 +56,7 @@ import { SettingsModal } from './components/settings-modal';
 import { ClaudeLogo } from './components/claude-logo';
 import { PendingChangesProvider, usePendingChanges } from './lib/pending-changes';
 import { ProjectProvider, useProjects } from './lib/project-context';
+import { getCachedRepoFile, setCachedRepoFile, getCachedRepoFileMap } from './lib/project-storage';
 import { DiffViewer } from './components/source-control/diff-viewer';
 import { fetchFileContent, fetchRepoContents, searchCode, decodeGitHubFileContent } from './lib/github';
 import { TerminalPanel, TerminalEntry } from './components/terminal-panel';
@@ -3435,6 +3436,9 @@ function AppContent() {
         }
         const currentContent = typeof matched === 'string' ? matched : matched.content;
         const patchRes = applyFilePatches(currentContent, patches);
+      if (patchRes.success && (currentRepo as any)?.fullName) {
+        setCachedRepoFile((currentRepo as any).fullName, (currentRepo as any).branch, path, patchRes.content);
+      }
         if (!patchRes.success) {
           return { result: JSON.stringify({ error: patchRes.error }) };
         }
@@ -3553,7 +3557,10 @@ function AppContent() {
       }
 
       let currentContent = effective.content;
-      let originalContent = effective.originalContent;
+      let originalContent = effective.originalContent ?? getCachedRepoFile(currentRepo.fullName, currentRepo.branch, path) ?? (activeProject && activeProject.sourceRepoFullName?.toLowerCase() === currentRepo.fullName.toLowerCase() ? activeProject.files?.[normalizeRepoPath(path)]?.content : undefined);
+      if (currentContent === undefined && originalContent !== undefined) {
+        currentContent = originalContent;
+      }
 
       if (effective.status === 'unchanged' || currentContent === undefined) {
         try {
@@ -3575,6 +3582,9 @@ function AppContent() {
       }
 
       const patchRes = applyFilePatches(currentContent, patches);
+      if (patchRes.success && (currentRepo as any)?.fullName) {
+        setCachedRepoFile((currentRepo as any).fullName, (currentRepo as any).branch, path, patchRes.content);
+      }
       if (!patchRes.success) {
         return {
           result: JSON.stringify({ error: patchRes.error }),
@@ -3630,7 +3640,7 @@ function AppContent() {
       }
 
       const effective = resolveEffectiveFileContent(path, liveChangesRef.current, currentRepo.fullName);
-      let originalContent: string | undefined = effective.originalContent;
+      let originalContent: string | undefined = effective.originalContent ?? getCachedRepoFile(currentRepo.fullName, currentRepo.branch, path);
 
       // Try fetching original file content if modifying or deleting and not already cached in pending changes
       if ((type === 'modified' || type === 'deleted') && originalContent === undefined && effective.status === 'unchanged') {
@@ -3647,6 +3657,9 @@ function AppContent() {
         }
       }
 
+      if ((args as any)?.type !== 'deleted' && (args as any)?.path && typeof (args as any)?.content === 'string') {
+        setCachedRepoFile(currentRepo.fullName, currentRepo.branch, (args as any).path, (args as any).content || '');
+      }
       const savedChange = await addChange({
         path,
         repo: currentRepo.fullName,
@@ -3708,7 +3721,7 @@ function AppContent() {
         if (!item.path) continue;
         const itemType = (item.type as ChangeType) || 'modified';
         const effective = resolveEffectiveFileContent(item.path, liveChangesRef.current, currentRepo.fullName);
-        let originalContent: string | undefined = effective.originalContent;
+        let originalContent: string | undefined = effective.originalContent ?? getCachedRepoFile(currentRepo.fullName, currentRepo.branch, item.path);
 
         if ((itemType === 'modified' || itemType === 'deleted') && originalContent === undefined && effective.status === 'unchanged') {
           try {
@@ -3724,6 +3737,9 @@ function AppContent() {
           }
         }
 
+        if (itemType !== 'deleted' && item.path) {
+          setCachedRepoFile(currentRepo.fullName, currentRepo.branch, item.path, item.content || '');
+        }
         const savedChange = await addChange({
           path: item.path,
           repo: currentRepo.fullName,
@@ -3790,6 +3806,14 @@ function AppContent() {
           return { result: effective.content };
         }
 
+        const cachedFromDb =
+          getCachedRepoFile(currentRepo.fullName, args.branch || currentRepo.branch, args.path) ??
+          (activeProject && activeProject.sourceRepoFullName?.toLowerCase() === currentRepo.fullName.toLowerCase()
+            ? activeProject.files?.[normalizeRepoPath(args.path)]?.content
+            : undefined);
+        if (cachedFromDb !== undefined) {
+          return { result: cachedFromDb };
+        }
         const fileContent = await fetchFileContent(
           null,
           currentRepo.owner,
@@ -3797,6 +3821,7 @@ function AppContent() {
           args.path,
           args.branch || currentRepo.branch
         );
+        setCachedRepoFile(currentRepo.fullName, args.branch || currentRepo.branch, args.path, fileContent);
         return { result: fileContent };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || `Erro ao ler arquivo ${args.path}` }) };
@@ -3805,6 +3830,25 @@ function AppContent() {
 
     if (name === 'list_files') {
       try {
+        const cachedMap = getCachedRepoFileMap(currentRepo.fullName, args.branch || currentRepo.branch);
+        if (cachedMap && Object.keys(cachedMap).length > 0) {
+          const targetDir = normalizeRepoPath(args.path || '');
+          const prefix = targetDir ? `${targetDir}/` : '';
+          const seen = new Map<string, { name: string; path: string; type: string }>();
+          for (const filePath of Object.keys(cachedMap)) {
+            if (!prefix || filePath.startsWith(prefix)) {
+              const rest = prefix ? filePath.slice(prefix.length) : filePath;
+              if (!rest) continue;
+              const parts = rest.split('/');
+              const itemName = parts[0];
+              const itemPath = prefix ? `${targetDir}/${itemName}` : itemName;
+              if (!seen.has(itemPath)) {
+                seen.set(itemPath, { name: itemName, path: itemPath, type: parts.length > 1 ? 'dir' : 'file' });
+              }
+            }
+          }
+          if (seen.size > 0) return { result: JSON.stringify(Array.from(seen.values())) };
+        }
         const contents = await fetchRepoContents(
           null,
           currentRepo.owner,
@@ -3833,6 +3877,27 @@ function AppContent() {
             source: 'pending_change',
           }));
 
+        const cachedMap = getCachedRepoFileMap(currentRepo.fullName, currentRepo.branch);
+        if (cachedMap && Object.keys(cachedMap).length >= 5) {
+          const deletedPaths = new Set(
+            (liveChangesRef.current || [])
+              .filter((c) => (!c.repo || c.repo === currentRepo.fullName) && c.type === 'deleted')
+              .map((c) => normalizeRepoPath(c.path))
+          );
+          const seenLocalPaths = new Set(localMatches.map((m) => normalizeRepoPath(m.path)));
+          const fastResults: Array<{ path: string; source: string; snippets?: string[] }> = [...localMatches];
+          for (const [filePath, fileContent] of Object.entries(cachedMap)) {
+            const normFile = normalizeRepoPath(filePath);
+            if (deletedPaths.has(normFile) || seenLocalPaths.has(normFile)) continue;
+            if (args.path && !filePath.startsWith(normalizeRepoPath(args.path))) continue;
+            if (args.extension && !filePath.endsWith(`.${args.extension.replace(/^\./, '')}`)) continue;
+            if (filePath.toLowerCase().includes(queryLower) || (typeof fileContent === 'string' && fileContent.toLowerCase().includes(queryLower))) {
+              const snippets = (fileContent || '').split('\n').filter((l) => l.toLowerCase().includes(queryLower)).slice(0, 3).map((l) => l.trim().slice(0, 160));
+              fastResults.push({ path: filePath, source: 'database_cache', snippets: snippets.length ? snippets : undefined });
+            }
+          }
+          return { result: JSON.stringify(fastResults) };
+        }
         const remoteItems = await searchCode(
           null,
           args.query,
@@ -4083,8 +4148,8 @@ function AppContent() {
             graphRagSummary
           : `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_code_graph, query_architecture_graph, patch_file, edit_file e batch_edit_files APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
             `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
-            `REGRA OBRIGATÓRIA DE GRAFO (GRAPH-FIRST ARCHITECTURE - USO COMPULSÓRIO):\n` +
-            `Antes de propor qualquer alteração de código (patch_file, edit_file ou batch_edit_files) ou leitura profunda de múltiplos arquivos, você DEVE OBRIGATORIAMENTE consultar o grafo de arquitetura do projeto via ferramenta query_code_graph (ou query_architecture_graph) passando o caminho do arquivo no parâmetro focus_file ou termo no query. Analise quem importa o arquivo, quem depende dele e quais são os impactos antes de alterar.\n` +
+            `VELOCIDADE MÁXIMA DE IDE (EXECUÇÃO DIRETA): O mapa de arquivos e dependências do Grafo de Conhecimento já está injetado abaixo no seu contexto! Para alterações pontuais (ex: mover um botão de lugar, trocar texto, ajustar classe CSS), NÃO gaste rodadas extras chamando query_code_graph ou list_files se o arquivo já estiver visível — chame \`read_file\` e em seguida \`patch_file\` imediatamente!\n` +
+            `USE query_code_graph APENAS SE NECESSÁRIO: O grafo de arquitetura já está extraído em memória. Consulte \`query_code_graph\` apenas para refatorações multi-arquivo ou quando não souber qual arquivo importa um módulo; para edições diretas de UI/botões/textos, vá direto ao \`read_file\` e \`patch_file\`.\n` +
             `IMPORTANTE SOBRE O GRAPHIFY: No ambiente web do Éden, o grafo de conhecimento JÁ ESTÁ EXTRAÍDO E CARREGADO EM MEMÓRIA automaticamente. NUNCA tente rodar comandos de terminal como "graphify extract" ou "graphify update", e NUNCA escreva para o usuário que vai extrair o grafo em segundo plano — basta chamar diretamente a ferramenta query_code_graph.\n` +
             `REGRA SUPREMA DE EXECUÇÃO (ZERO PREÂMBULO): NUNCA anuncie ou prometa em texto puro que vai listar, buscar, ler, conferir ou alterar arquivos (ex: "Vou listar os arquivos...", "Preciso conferir o config:", "Agora deixa eu resolver...", "Vou aplicar tudo de uma vez:"). Se precisa consultar ou conferir um arquivo, chame list_files, read_file, search_code ou query_code_graph DIRETAMENTE via tool_call na mesma resposta! Se precisa criar, alterar ou remover código, chame patch_file ou edit_file DIRETAMENTE via tool_call na mesma resposta!\n` +
             `ECONOMIA DE TOKENS (GRAPHRAG & PATCH CIRÚRGICO): Use o mapa de dependências abaixo (e a ferramenta \`query_code_graph\`) para saber exatamente qual arquivo importa ou é usado por qual ANTES de chamar \`read_file\`. NUNCA saia lendo todos os arquivos do repositório às cegas.\n` +

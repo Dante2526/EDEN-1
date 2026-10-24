@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { selectContextualTools, selectContextualSkills } from './smart-prefill';
-import type { Skill } from './types';
+import { selectContextualTools, selectContextualSkills } from './smart-prefill.js';
+import type { Skill } from './types.js';
 
 const MOCK_TOOLS = [
   { type: 'function', function: { name: 'read_file' } },
@@ -25,6 +25,13 @@ const MOCK_TOOLS = [
   { type: 'function', function: { name: 'forget_memory' } },
   { type: 'function', function: { name: 'run_terminal_command' } },
   { type: 'function', function: { name: 'dispatch_subagent' } },
+  { type: 'function', function: { name: 'generate_image' } },
+  { type: 'function', function: { name: 'generate_image_with_layers' } },
+  { type: 'function', function: { name: 'inpaint_image' } },
+  { type: 'function', function: { name: 'open_video_editor' } },
+  { type: 'function', function: { name: 'control_browser' } },
+  { type: 'function', function: { name: 'list_browser_recipes' } },
+  { type: 'function', function: { name: 'run_browser_recipe' } },
 ];
 
 const MOCK_SKILLS: Skill[] = [
@@ -42,7 +49,7 @@ const MOCK_SKILLS: Skill[] = [
 describe('smart-prefill (Poda Inteligente de Tools e Skills para Redução de TTFT)', () => {
   it('remove tools duplicadas e pesadas desnecessárias quando em repositório GitHub ativo', () => {
     const selected = selectContextualTools(MOCK_TOOLS, {
-      userText: 'Altere o título do componente Maintenance.tsx para branco sólido',
+      userText: 'Mude o botão de deploy da direita para a superior esquerda no Header',
       hasActiveRepo: true,
       hasActiveProject: false,
     });
@@ -54,7 +61,7 @@ describe('smart-prefill (Poda Inteligente de Tools e Skills para Redução de TT
     assert.equal(names.includes('edit_file'), true);
     assert.equal(names.includes('query_code_graph'), true);
 
-    // Remove duplicatas e ferramentas irrelevantes ao prompt
+    // Remove duplicatas e ferramentas irrelevantes ao prompt (mídia, browser recipes, office, python)
     assert.equal(names.includes('query_architecture_graph'), false);
     assert.equal(names.includes('read_github_file'), false);
     assert.equal(names.includes('search_github_repos'), false);
@@ -63,6 +70,12 @@ describe('smart-prefill (Poda Inteligente de Tools e Skills para Redução de TT
     assert.equal(names.includes('open_project'), false);
     assert.equal(names.includes('generate_document'), false);
     assert.equal(names.includes('run_python'), false);
+    assert.equal(names.includes('generate_image'), false);
+    assert.equal(names.includes('generate_image_with_layers'), false);
+    assert.equal(names.includes('inpaint_image'), false);
+    assert.equal(names.includes('open_video_editor'), false);
+    assert.equal(names.includes('list_browser_recipes'), false);
+    assert.equal(names.includes('run_browser_recipe'), false);
   });
 
   it('preserva generate_document e run_python quando o usuário solicita explicitamente', () => {

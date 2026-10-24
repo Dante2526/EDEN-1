@@ -5,8 +5,8 @@
     "semantic_hash": "3d4d49bc058571e3328ba2ba19d30c06"
   },
   "_worker.ts": {
-    "mtime": 1792847652.6477525,
-    "ast_hash": "542156def24c449b103472fe3f309843",
+    "mtime": 1792851140.303957,
+    "ast_hash": "041bfe08050607543cc5a62902e53548",
     "semantic_hash": ""
   },
   "api/chat-test.ts": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "lib/server/env.ts": {
-    "mtime": 1792407001.8919585,
-    "ast_hash": "3fa31f2d03c6705daa8ec8f65cd105b6",
+    "mtime": 1792851098.2129965,
+    "ast_hash": "eec3915b525ed1117fa7574c76b2eb17",
     "semantic_hash": ""
   },
   "metadata.json": {
@@ -130,8 +130,8 @@
     "semantic_hash": "6759c4f9078319aaf1038a4b6af0f9ce"
   },
   "server.ts": {
-    "mtime": 1792501143.858351,
-    "ast_hash": "5ac4565a09baf14394dcd19061d91871",
+    "mtime": 1792852106.9834595,
+    "ast_hash": "360f6d469d32b2e1798818561ea8eeb5",
     "semantic_hash": ""
   },
   "skills/ASR/scripts/asr.ts": {
@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792848856.8759873,
-    "ast_hash": "2f9e1a9cfe62b53971a5ff3c9051c931",
+    "mtime": 1792852106.9889963,
+    "ast_hash": "3a7e2b3f9a39bf881214688b86926bb1",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -1330,14 +1330,14 @@
     "semantic_hash": ""
   },
   "src/lib/project-context.tsx": {
-    "mtime": 1792284383.269385,
-    "ast_hash": "b863eedf751c3d33dbcf5fb2db6374f4",
+    "mtime": 1792852106.9859958,
+    "ast_hash": "09a4287140359f8915c49599bd77ffba",
     "semantic_hash": ""
   },
   "src/lib/project-storage.ts": {
-    "mtime": 1792161818.1592798,
-    "ast_hash": "58f4a1fdb778e5ff8ab96670e0b14064",
-    "semantic_hash": "58f4a1fdb778e5ff8ab96670e0b14064"
+    "mtime": 1792851204.232904,
+    "ast_hash": "577202eb69a2899c6e587df909e48310",
+    "semantic_hash": ""
   },
   "src/lib/pyodide-client.test.ts": {
     "mtime": 1792030703.5431721,
@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792847653.0137498,
-    "ast_hash": "1d8d3a497a334e89b8e81c85bf825ed2",
+    "mtime": 1792849157.1462643,
+    "ast_hash": "209be566e3b73dba53ef7fad11e692cd",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -5795,13 +5795,13 @@
     "semantic_hash": ""
   },
   "src/lib/smart-prefill.test.ts": {
-    "mtime": 1792847652.871469,
-    "ast_hash": "74cbe348c51f34f017168e9cac06764a",
+    "mtime": 1792851295.4929714,
+    "ast_hash": "f8abc655586316fcf21869368858df89",
     "semantic_hash": ""
   },
   "src/lib/smart-prefill.ts": {
-    "mtime": 1792847652.872476,
-    "ast_hash": "00bc302a85b2c7700a62ed0fbcac1d8e",
+    "mtime": 1792851324.344608,
+    "ast_hash": "6b9c7c9103fa7f582b5720ca807c3e7d",
     "semantic_hash": ""
   },
   "src/lib/media-probe.test.ts": {
@@ -6032,6 +6032,21 @@
   "public/hyperframe-video.html": {
     "mtime": 1792848836.482528,
     "ast_hash": "baa96eb8ee101260f5d4785353ef1197",
+    "semantic_hash": ""
+  },
+  "api/db-projects.ts": {
+    "mtime": 1792851078.6775417,
+    "ast_hash": "56d410dfd88bbb62fa2573b7a2cdd0b6",
+    "semantic_hash": ""
+  },
+  "src/lib/project-storage.test.ts": {
+    "mtime": 1792851153.8950331,
+    "ast_hash": "a9681b503726b0eb719ae036570c9135",
+    "semantic_hash": ""
+  },
+  "supabase/schema.sql": {
+    "mtime": 1792851043.6220856,
+    "ast_hash": "deb3a970ed3de91e595941a2ac47d00c",
     "semantic_hash": ""
   }
 }

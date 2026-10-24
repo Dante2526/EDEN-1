@@ -1,4 +1,4 @@
-import type { Skill } from './types';
+import type { Skill } from './types.js';
 
 export interface SmartToolSelectionContext {
   userText: string;
@@ -27,7 +27,16 @@ const CLOUDFLARE_INTENT_REGEX =
   /\b(?:cloudflare|worker|_worker|_routes|wrangler|pages|edge|serverless|api\/|endpoint|backend|kv|d1|r2)\b/i;
 
 const REMOTE_DEPLOY_INTENT_REGEX =
-  /\b(?:deploy|vps|servidor|ssh|scp|sftp|paramiko|webhook|production|produ[çc][ãa]o|workflow|actions|subir\s+no\s+ar)\b/i;
+  /\b(?:vps|servidor\s+remoto|ssh|scp|sftp|paramiko|webhook|workflow_dispatch|github\s+actions|subir\s+na\s+vps)\b/i;
+
+const IMAGE_MEDIA_INTENT_REGEX =
+  /\b(?:imagem|imagens|foto|fotos|ilustra[çc][ãa]o|desenhe|gere\s+uma\s+imagem|flux|inpaint|pincel|m[aá]scara|camadas?\s+edit[aá]veis|flyer|poster|banner|logo|arte)\b/i;
+
+const VIDEO_STUDIO_INTENT_REGEX =
+  /\b(?:opencut|capcut|editor\s+de\s+v[ií]deo|cortar\s+v[ií]deo|reels|tiktok|shorts|roteiro\s+de\s+v[ií]deo|v[ií]deo|anima[çc][ãa]o|hyperframe)\b/i;
+
+const BROWSER_RECIPE_INTENT_REGEX =
+  /\b(?:receita|rob[ôo]|maxun|autom[aá]tico|navegador|browser|playwright|puppeteer|scrape|scraping|extrair\s+dados|acessar\s+site|abrir\s+site)\b/i;
 
 /**
  * Filtra dinamicamente as ferramentas enviadas à API da NVIDIA NIM para reduzir
@@ -41,6 +50,9 @@ export function selectContextualTools<T extends { function?: { name?: string } }
   const wantsDoc = DOC_INTENT_REGEX.test(text);
   const wantsPython = PYTHON_INTENT_REGEX.test(text);
   const wantsSandpack = SANDPACK_INTENT_REGEX.test(text);
+  const wantsImage = IMAGE_MEDIA_INTENT_REGEX.test(text);
+  const wantsVideo = VIDEO_STUDIO_INTENT_REGEX.test(text);
+  const wantsBrowserRecipe = BROWSER_RECIPE_INTENT_REGEX.test(text);
 
   const hasQueryCodeGraph = tools.some((t) => t.function?.name === 'query_code_graph');
 
@@ -79,9 +91,26 @@ export function selectContextualTools<T extends { function?: { name?: string } }
       return false;
     }
 
-    // 6. Envio/Deploy Remoto (request_remote_deploy) só é injetado se houver intenção de deploy/vps/ssh
+    // 6. Envio/Deploy Remoto (request_remote_deploy) só é injetado se houver intenção de vps/ssh/webhook
     if (name === 'request_remote_deploy' && !REMOTE_DEPLOY_INTENT_REGEX.test(text)) {
       return false;
+    }
+
+    // 7. Quando editando código em repositório ativo, omite ferramentas pesadas de geração de imagem/vídeo/robôs
+    // caso o prompt seja uma tarefa de código/UI sem menção a mídia ou scraping
+    if (ctx.hasActiveRepo || ctx.hasActiveProject) {
+      if (
+        (name === 'generate_image' || name === 'generate_image_with_layers' || name === 'inpaint_image') &&
+        !wantsImage
+      ) {
+        return false;
+      }
+      if (name === 'open_video_editor' && !wantsVideo) {
+        return false;
+      }
+      if ((name === 'list_browser_recipes' || name === 'run_browser_recipe') && !wantsBrowserRecipe) {
+        return false;
+      }
     }
 
     return true;

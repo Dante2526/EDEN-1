@@ -2491,3 +2491,29 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle de produção e Cloudflare Pages Worker (`dist/_worker.js`, 210.8 kB) compilados com sucesso.
   - `python -m graphify update .`: grafo de conhecimento sincronizado (14.972 nós, 17.071 arestas).
   - Code Review formal: **Ready to merge: Yes** (0 issues críticos ou importantes).
+
+
+## 139. Banco de Dados Supabase para Repositórios GitHub + Velocidade 0ms (Nível IDE) (2026-10-24)
+
+### 1. Diagnóstico & Arquitetura (Supabase vs Firebase)
+- **Escolha Técnica (`Supabase PostgreSQL + JSONB`):** Repositórios de código exigem índice único composto `(repo_full_name, branch)` com operação `UPSERT` atômica e payloads `JSONB` grandes sem o limite de 1MB por documento do Firestore. Além disso, a API PostgREST do Supabase roda em zero dependências no Cloudflare Workers (`fetch` nativo).
+- **Gargalo Resolvido:**
+  1. Ao vincular um repositório em `syncRepoToProject`, o sistema agora consulta primeiro o banco/cache (`findProjectByRepo`). Se o repositório já foi vinculado antes em qualquer conversa, ele é reaproveitado instantaneamente (0 chamadas à API do GitHub e zero duplicação no banco).
+  2. As tools `read_file`, `patch_file`, `edit_file`, `batch_edit_files`, `list_files` e `search_code` em `src/App.tsx` agora leem e atualizam diretamente o cache L0 em memória (`getCachedRepoFile`, `setCachedRepoFile`, `getCachedRepoFileMap`) sincronizado com o Supabase.
+  3. O `smart-prefill.ts` agora poda tools pesadas irrelevantes (vídeo, slides, navegador, planilhas) durante tarefas de código no repositório, reduzindo drasticamente a latência de TTFT (Time-To-First-Token) do modelo.
+
+### 2. Arquivos Criados e Modificados
+- `supabase/schema.sql`: Schema SQL da tabela `public.synap_repositories` com constraint única `(repo_full_name, branch)` e trigger `updated_at`.
+- `lib/server/env.ts` e `server.ts`: Adicionadas as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY`.
+- `api/db-projects.ts`, `_worker.ts`: Novo endpoint serverless `/api/db-projects` com operações `list`, `get` (por `repoFullName` + `branch` ou `id`), `upsert` (`on_conflict=repo_full_name,branch`) e `delete`.
+- `src/lib/project-storage.ts` e `src/lib/project-storage.test.ts`: Cache L0 em memória (`getCachedRepoFile`, `setCachedRepoFile`, `getCachedRepoFileMap`, `populateRepoCacheFromProject`), `findProjectByRepo` com deduplicação e sincronização com `/api/db-projects`.
+- `src/lib/project-context.tsx`: `syncRepoToProject` verifica `findProjectByRepo(repoFullName, branch)` antes de chamar a API do GitHub, reaproveitando o repositório salvo no banco quando `!params.forceRefresh`.
+- `src/lib/smart-prefill.ts` e `src/lib/smart-prefill.test.ts`: Poda automática de tools não relacionadas a código (`pruneToolsForRepoTask`) quando há repositório ativo.
+- `src/App.tsx`: Integração de `getCachedRepoFile`, `setCachedRepoFile` e `getCachedRepoFileMap` nas tools `read_file`, `patch_file`, `edit_file`, `batch_edit_files`, `list_files` e `search_code`.
+
+### 3. Evidências de Verificação e Code Review
+- `npx tsc --noEmit`: **0 erros**.
+- `npm test`: **217/217 testes passando** (43 suítes, incluindo `project-storage.test.ts` e `smart-prefill.test.ts`).
+- `npm run build`: Build Vite + Cloudflare Worker concluído em **2.17s** (`dist/_worker.js` gerado com sucesso).
+- `python -m graphify update .`: Grafo atualizado (14.993 nós, 17.145 arestas).
+- Code Review formal: Todos os 4 pontos `Important` resolvidos (**Ready to merge: Yes**).

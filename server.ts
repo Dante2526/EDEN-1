@@ -16,6 +16,7 @@ import deploymentsHandler from './api/deployments';
 import browserHandler from './api/browser';
 import imageHandler from './api/image';
 import inpaintHandler from './api/inpaint';
+import dbProjectsHandler from './api/db-projects';
 import { Env } from './lib/server/env';
 
 dotenv.config({ path: '.env.local' });
@@ -88,6 +89,9 @@ function adaptWebHandler(handler: (req: Request, env?: Env) => Promise<Response>
         UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
         KV_REST_API_URL: process.env.KV_REST_API_URL,
         KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
       };
       const webRes = await handler(webReq, env);
 
@@ -143,6 +147,7 @@ app.all('/api/deployments', adaptWebHandler(deploymentsHandler));
 app.all('/api/browser', adaptWebHandler(browserHandler));
 app.all('/api/image', adaptWebHandler(imageHandler));
 app.all('/api/inpaint', adaptWebHandler(inpaintHandler));
+app.all('/api/db-projects', adaptWebHandler(dbProjectsHandler));
 
 // Fallback explícito para rotas de API inexistentes (evita retornar HTML do SPA)
 app.all('/api/*', (req, res) => {

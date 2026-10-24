@@ -8,6 +8,8 @@ import {
   getCachedActiveProject,
   setCachedActiveProject,
   getCachedProjectIndex,
+  findProjectByRepo,
+  populateRepoCacheFromProject,
 } from './project-storage';
 import { normalizeRepoPath } from './file-patcher';
 
@@ -69,7 +71,8 @@ interface ProjectContextType {
     repo: string;
     branch: string;
     conversationId?: string;
-  }) => Promise<{ ok: boolean; reason?: string; project?: SynapProject }>;
+    forceRefresh?: boolean;
+  }) => Promise<{ ok: boolean; reason?: string; project?: SynapProject; reusedFromDb?: boolean }>;
 }
 
 const ProjectContext = createContext<ProjectContextType | null>(null);
@@ -276,6 +279,16 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const syncRepoToProject = useCallback<ProjectContextType['syncRepoToProject']>(
     async (params) => {
       try {
+        // 0. REAPROVEITAMENTO DO BANCO DE DADOS (Supabase / Cache Unificado):
+        if (!params.forceRefresh) {
+          const existingInDb = await findProjectByRepo(params.repoFullName, params.branch);
+          if (existingInDb && Object.keys(existingInDb.files || {}).length > 0) {
+            populateRepoCacheFromProject(existingInDb);
+            setActiveProject(existingInDb);
+            await refreshIndex();
+            return { ok: true, project: existingInDb, reusedFromDb: true };
+          }
+        }
         // Importa dinamicamente pra evitar circular dep
         const { callGitHubApi } = await import('./github');
 
