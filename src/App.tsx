@@ -21,6 +21,7 @@ import {
   WebSourceItem,
   CanvasPrototype,
   VideoAspectRatio,
+  ActivePromptMode,
 } from './lib/types';
 import {
   loadConversations,
@@ -1600,6 +1601,9 @@ function AppContent() {
     }
   }, []);
 
+  const [activePromptMode, setActivePromptMode] = useState<ActivePromptMode>(null);
+  const activePromptModeRef = useRef<ActivePromptMode>(null);
+  activePromptModeRef.current = activePromptMode;
   const [isPlanMode, setIsPlanMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(PLAN_MODE_STORAGE_KEY) === 'true';
@@ -4107,7 +4111,8 @@ function AppContent() {
     text: string,
     images: string[] = [],
     documents: AttachedDocument[] = [],
-    overridePlanMode?: boolean
+    overridePlanMode?: boolean,
+    overridePromptMode?: ActivePromptMode
   ) => {
     if (!text && images.length === 0 && documents.length === 0 && selectedPreviewElements.length === 0) return;
     setErrorMessage(null);
@@ -4128,11 +4133,15 @@ function AppContent() {
         ? false
         : isPlanMode;
 
+    const hasRecentImages = images.length > 0 || Boolean(
+      (activeConversation?.messages || []).slice(-8).some((m) => m.role === 'user' && m.images && m.images.length > 0)
+    );
+
     const routeDecision = resolveSmartModelRoute({
       selectedModel,
       selectedEffort: reasoningEffort,
       prompt: text,
-      hasImages: images.length > 0,
+      hasImages: hasRecentImages,
       isPlanMode: activePlan,
       healthMap: modelHealthMap,
     });
@@ -4337,14 +4346,39 @@ function AppContent() {
         '7. Controle Autônomo de Navegador (Playwright / Browser-Use): Você tem a ferramenta `control_browser` para navegar e interagir autonomamente com páginas da web em um navegador real. Você pode abrir URLs (navigate), clicar em botões e links (click), preencher campos e pesquisar (type), rolar a tela (scroll) e capturar screenshots. Ao receber os elementos interativos numerados da página (ex: [1] <button>, [2] <input>), use os seletores fornecidos para prosseguir autonomamente passo a passo até atingir o objetivo solicitado pelo usuário.\n' +
         '8. Chrome DevTools Integrado (get_preview_devtools_logs): Você pode inspecionar o console e a rede do Live Preview em tempo real para diagnosticar exceções de runtime, erros de renderização React, falhas de CSS/Tailwind ou endpoints com erro (404, 500). Use sempre que o usuário relatar que a página está em branco, não renderizou ou deu erro.\n' +
         '9. Robôs de Navegação e Scraping Salvos (list_browser_recipes e run_browser_recipe): O usuário pode criar robôs visuais de automação no Éden (estilo Maxun). Use `list_browser_recipes` para descobrir quais robôs estão gravados e `run_browser_recipe` para disparar extrações de dados completas de forma confiável e obter os dados estruturados de volta no chat.\n' +
-        '10. Canvas Prototyping (render_canvas_prototype): Quando a skill de prototipagem visual estiver ativa e a solicitação envolver criar uma tela nova, página, modal, drawer, dashboard ou redesign de interface, você DEVE gerar PRIMEIRO o protótipo visual interativo via `render_canvas_prototype` (ou tag `<eden_canvas title="..." viewport="mobile|desktop">...html...</eden_canvas>`) com HTML e Tailwind CSS. Não altere arquivos do projeto antes que o usuário aprove o protótipo visual no Canvas.\n' +
+        '10. Canvas Prototyping (render_canvas_prototype): O Canvas deve ser gerado quando o usuário solicitar criar uma tela nova do zero (seja em projeto novo ou existente), redesign completo, protótipo ou quando o modo Prototipar estiver ativo no menu (+). É TERMINANTEMENTE PROIBIDO gerar Canvas em pedidos de edição, remoção de elementos, correção de bugs, refatorações ou ajustes pontuais em arquivos de código existentes; nesses casos altere diretamente os arquivos do projeto via edit_file ou patch_file.\n' +
         '11. Padrão Claude Design Obrigatório em Toda Criação Visual: Proibido "AI Slop" (caixas escuras simplórias, botões sem hover/focus, tipografia sem escala). Toda interface gerada no Canvas ou no código DEVE seguir padrões de Product Designer sênior (Stripe/Linear): tipografia refinada (Inter/Geist com tracking-tight nos títulos), superfícies em camadas com fundos translúcidos (`bg-zinc-900/60 backdrop-blur-md`), bordas sutis (`border-white/10`), sombras multicamadas elegantes e microinterações táteis nos botões (`hover:scale-[1.02] active:scale-[0.98]`).\n' +
         '12. HyperFrames (Vídeos em Código com HTML, Tailwind e GSAP 3): Toda animação ou vídeo solicitado pelo usuário é uma composição determinística executável criada com HTML5 semântico, Tailwind CSS e timeline do GSAP 3 (`gsap.timeline()`). Apresente o vídeo/animação diretamente no Canvas interativo (`render_canvas_prototype` ou tag `<eden_canvas title="Vídeo: ..." viewport="mobile|desktop">`). NUNCA coloque `transition: opacity` CSS em elementos `.scene` controlados pelo GSAP, mantenha a Cena 1 visível nos primeiros segundos e use `tl.progress() >= 0.99 ? tl.restart() : tl.play()` no botão Play.\n' +
         '13. Auditoria de Segurança Adversarial (Metodologia Oficial Cloudflare): Quando a skill de segurança estiver ativa ou o usuário solicitar auditoria de código/repositório, elimine falsos positivos desafiando ativamente suas hipóteses. Rastreie fluxos de dados do Source ao Sink (SQLi, SSRF, IDOR, vazamento de segredos, injeção de comandos, prompt injection) e forneça relatórios com PoC (Proof-of-Concept) e correções cirúrgicas de código.';
 
-    const planPrompt = activePlan
-      ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject))
-      : undefined;
+    const currentPromptMode = overridePromptMode !== undefined ? overridePromptMode : activePromptModeRef.current;
+    if (activePromptModeRef.current) {
+      setActivePromptMode(null);
+    }
+
+    let modePrompt: string | undefined = undefined;
+    if (currentPromptMode === 'canvas') {
+      modePrompt =
+        '--- MODO PROTOTIPAGEM NO CANVAS (FIGMA / v0) ATIVADO PELO USUÁRIO ---\n' +
+        'O usuário selecionou explicitamente a função Prototipar no menu de criação (+).\n' +
+        'Você DEVE gerar um protótipo visual interativo no Canvas usando a ferramenta `render_canvas_prototype` (ou tag `<eden_canvas title="..." viewport="mobile|desktop">...html...</eden_canvas>`) com Tailwind CSS e mobile-first.\n' +
+        'Apresente a interface no Canvas e aguarde a aprovação do usuário antes de alterar arquivos de produção.';
+    } else if (currentPromptMode === 'image') {
+      modePrompt =
+        '--- MODO CRIAÇÃO DE IMAGEM ATIVADO PELO USUÁRIO ---\n' +
+        'O usuário selecionou explicitamente a função Criar Imagem no menu de criação (+).\n' +
+        'Gere a imagem solicitada imediatamente utilizando a ferramenta `generate_image`.';
+    } else if (currentPromptMode === 'video') {
+      modePrompt =
+        '--- MODO VÍDEO E ANIMAÇÃO ATIVADO PELO USUÁRIO ---\n' +
+        'O usuário selecionou explicitamente a função Vídeo no menu de criação (+).\n' +
+        'Crie a animação ou vídeo interativo utilizando HyperFrames (HTML + GSAP 3 no Canvas) ou a ferramenta `open_video_editor`.';
+    }
+
+    const planPrompt = [
+      activePlan ? buildMandatoryPlanPrompt(Boolean(chatActiveRepo || activeProject)) : undefined,
+      modePrompt,
+    ].filter(Boolean).join('\n\n') || undefined;
 
     // Injetar habilidades modulares ativas (Skills) filtradas por contexto para acelerar o Prefill
     const activeSkills = selectContextualSkills(skills, {
@@ -6097,7 +6131,7 @@ function AppContent() {
 
         {/* Chat Input Bar */}
         <ChatInput
-          onSendMessage={handleSendMessage}
+          onSendMessage={(content, imgs, docs, pMode) => handleSendMessage(content, imgs, docs, undefined, pMode)}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
           isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'}
@@ -6107,6 +6141,8 @@ function AppContent() {
           onSelectReasoningEffort={handleSelectReasoningEffort}
           isPlanMode={isPlanMode}
           onTogglePlanMode={handleTogglePlanMode}
+          activePromptMode={activePromptMode}
+          onSelectPromptMode={setActivePromptMode}
           isWebSearchActive={isWebSearchMode}
           onToggleWebSearch={handleToggleWebSearchMode}
           conversationTokens={conversationTokens}

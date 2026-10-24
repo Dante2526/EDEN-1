@@ -134,6 +134,8 @@ export interface MessageToolCall {
   result?: string;
 }
 
+export type ActivePromptMode = 'canvas' | 'image' | 'video' | null;
+
 export interface Message {
   id: string;
   role: Role;
@@ -144,6 +146,7 @@ export interface Message {
   reasoning?: string; // conteúdo do thinking (se vier separado ou extraído)
   reasoningEffort?: ReasoningEffort; // 'low' | 'high' | 'max'
   isPlanMode?: boolean;
+  activePromptMode?: ActivePromptMode;
   editedFiles?: MessageEditedFile[]; // arquivos editados pela IA nesta mensagem
   batchRefactor?: {
     summary: string;
@@ -220,6 +223,7 @@ export interface Conversation {
   model: string;
   reasoningEffort: 'low' | 'high' | 'max';
   isPlanMode?: boolean;
+  activePromptMode?: ActivePromptMode;
   isWebSearchMode?: boolean;
   activeRepo?: ActiveRepoState | null;
   contextCompaction?: ContextCompaction;

@@ -256,8 +256,11 @@ export default async function handler(req: Request, envArg?: Env) {
           return { role: 'assistant', content: m.content ?? '', tool_calls: m.tool_calls };
         }
         if (m.role === 'user' && m.images && Array.isArray(m.images) && m.images.length > 0) {
-          if (index === lastUserMsgIndex && isVisionCapable) {
-            // Última mensagem do usuário + modelo vision = manda imagem real
+          // Se o modelo for vision-capable, mantemos imagens recentes do usuário baseando-se em turnos reais do usuário (não em tool calls intermediárias)
+          // Isso resolve o bug crítico onde o usuário manda um print e no turno seguinte diz "Tu viu o print, né?"
+          const userTurnsAfter = messages.slice(index + 1).filter((msg: any) => msg.role === 'user').length;
+          const isRecentUserMsg = userTurnsAfter <= 1;
+          if (isVisionCapable && isRecentUserMsg) {
             return {
               role: 'user',
               content: [
@@ -266,7 +269,7 @@ export default async function handler(req: Request, envArg?: Env) {
               ],
             };
           }
-          // Histórico antigo com imagem, OU última mensagem mas modelo não é vision:
+          // Histórico muito antigo OU modelo não é vision:
           // manda só o texto, sem mencionar que tinha imagem (evita modelo recusar
           // responder dizendo "não tenho olhos").
           return { role: 'user', content: m.content || '' };

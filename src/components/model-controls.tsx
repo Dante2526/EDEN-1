@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Sparkles, X, ChevronDown, ListTodo, Check, Zap, Terminal, RefreshCw } from 'lucide-react';
-import { ConcreteModelId, ModelId, ReasoningEffort } from '../lib/types';
+import { Brain, Sparkles, X, ChevronDown, ListTodo, Check, Zap, Terminal, RefreshCw, Layout, Palette, Video } from 'lucide-react';
+import { ConcreteModelId, ModelId, ReasoningEffort, ActivePromptMode } from '../lib/types';
 import { ModelHealthMap, getShortModelName } from '../lib/smart-model-router';
 
 interface ModelControlsProps {
@@ -10,6 +10,8 @@ interface ModelControlsProps {
   onSelectReasoningEffort: (effort: ReasoningEffort) => void;
   isPlanMode: boolean;
   onTogglePlanMode: () => void;
+  activePromptMode?: ActivePromptMode;
+  onSelectPromptMode?: (mode: ActivePromptMode) => void;
   conversationTokens?: {
     promptTokens: number;
     completionTokens: number;
@@ -30,6 +32,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
   onSelectReasoningEffort,
   isPlanMode,
   onTogglePlanMode,
+  activePromptMode,
+  onSelectPromptMode,
   conversationTokens,
   onOpenTerminal,
   modelHealthMap,
@@ -272,6 +276,50 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
               {isPlanMode ? 'ON' : 'OFF'}
             </span>
           </button>
+
+          {/* Active Special Mode Pill (Canvas, Image, Video) */}
+          {activePromptMode === 'canvas' && (
+            <button
+              type="button"
+              onClick={() => onSelectPromptMode?.(null)}
+              title="Modo Prototipagem no Canvas ATIVO - Clique para desativar"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all text-xs font-medium cursor-pointer bg-cyan-950/40 text-cyan-300 border border-cyan-500/40 shadow-xs animate-in fade-in duration-150"
+            >
+              <Layout className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Canvas</span>
+              <span className="text-[9px] px-1 py-0.2 rounded font-mono uppercase font-bold bg-cyan-500 text-black">
+                ON
+              </span>
+            </button>
+          )}
+          {activePromptMode === 'image' && (
+            <button
+              type="button"
+              onClick={() => onSelectPromptMode?.(null)}
+              title="Modo Criação de Imagem ATIVO - Clique para desativar"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all text-xs font-medium cursor-pointer bg-amber-950/40 text-amber-300 border border-amber-500/40 shadow-xs animate-in fade-in duration-150"
+            >
+              <Palette className="w-3.5 h-3.5 text-amber-400" />
+              <span>Imagem</span>
+              <span className="text-[9px] px-1 py-0.2 rounded font-mono uppercase font-bold bg-amber-500 text-black">
+                ON
+              </span>
+            </button>
+          )}
+          {activePromptMode === 'video' && (
+            <button
+              type="button"
+              onClick={() => onSelectPromptMode?.(null)}
+              title="Modo Vídeo e Animação ATIVO - Clique para desativar"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all text-xs font-medium cursor-pointer bg-rose-950/40 text-rose-300 border border-rose-500/40 shadow-xs animate-in fade-in duration-150"
+            >
+              <Video className="w-3.5 h-3.5 text-rose-400" />
+              <span>Vídeo</span>
+              <span className="text-[9px] px-1 py-0.2 rounded font-mono uppercase font-bold bg-rose-500 text-white">
+                ON
+              </span>
+            </button>
+          )}
 
           {/* Token Usage Tool Pill with embedded progress bar */}
           {(() => {

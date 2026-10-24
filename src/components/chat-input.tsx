@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X, Globe } from 'lucide-react';
+import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X, Globe, Plus, Layout, Palette, Video, ListTodo } from 'lucide-react';
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
-import { ConcreteModelId, ModelId, ReasoningEffort, AttachedDocument, SelectedPreviewElement } from '../lib/types';
+import { ConcreteModelId, ModelId, ReasoningEffort, AttachedDocument, SelectedPreviewElement, ActivePromptMode } from '../lib/types';
 import { ModelHealthMap } from '../lib/smart-model-router';
 import { isVisionModel } from '../lib/models';
 import { fileToBase64, readFileAsText, generateId } from '../lib/utils';
 import { extractImagesFromClipboardData } from '../lib/clipboard-utils';
 
 interface ChatInputProps {
-  onSendMessage: (content: string, images: string[], documents: AttachedDocument[]) => void;
+  onSendMessage: (content: string, images: string[], documents: AttachedDocument[], promptMode?: ActivePromptMode) => void;
   onStopGeneration: () => void;
   isLoading: boolean;
   isFlashModel: boolean;
@@ -40,6 +40,8 @@ interface ChatInputProps {
   isCheckingHealth?: boolean;
   onRefreshHealth?: (force?: boolean) => void;
   lastAutoRoutedModel?: ConcreteModelId | null;
+  activePromptMode?: ActivePromptMode;
+  onSelectPromptMode?: (mode: ActivePromptMode) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = React.memo(({
@@ -68,11 +70,16 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   isCheckingHealth,
   onRefreshHealth,
   lastAutoRoutedModel,
+  activePromptMode,
+  onSelectPromptMode,
 }) => {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [documents, setDocuments] = useState<AttachedDocument[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
+  const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+
+  const plusMenuRef = useRef<HTMLDivElement>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,6 +96,28 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
     }
   }, [content]);
 
+  // Fechar menu de acoes (+) ao clicar fora ou apertar Escape
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(e.target as Node)) {
+        setIsPlusMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsPlusMenuOpen(false);
+      }
+    };
+    if (isPlusMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPlusMenuOpen]);
+
   // Temporary auto-dismiss notification toast
   useEffect(() => {
     if (notification) {
@@ -103,10 +132,12 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
 
     if (!content.trim() && images.length === 0 && documents.length === 0 && selectedElements.length === 0) return;
 
-    onSendMessage(content.trim(), images, documents);
+    const modeToSend = activePromptMode;
+    onSendMessage(content.trim(), images, documents, modeToSend);
     setContent('');
     setImages([]);
     setDocuments([]);
+    onSelectPromptMode?.(null);
     baseContentRef.current = '';
 
     if (textareaRef.current) {
@@ -350,6 +381,57 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         />
 
         <div className="p-3 sm:p-3.5">
+          {/* Active Prompt Mode Chip (Canvas, Image, Video) */}
+          {activePromptMode && (
+            <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+              {activePromptMode === 'canvas' && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-950/40 border border-cyan-500/40 text-cyan-300 shadow-xs animate-in fade-in duration-150">
+                  <Layout className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Prototipar (Canvas)</span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectPromptMode?.(null)}
+                    className="ml-0.5 p-0.5 rounded-full hover:bg-cyan-500/20 text-cyan-300 hover:text-white transition cursor-pointer"
+                    title="Desativar modo Canvas"
+                    aria-label="Desativar modo Canvas"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {activePromptMode === 'image' && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-950/40 border border-amber-500/40 text-amber-300 shadow-xs animate-in fade-in duration-150">
+                  <Palette className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Criar Imagem</span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectPromptMode?.(null)}
+                    className="ml-0.5 p-0.5 rounded-full hover:bg-amber-500/20 text-amber-300 hover:text-white transition cursor-pointer"
+                    title="Desativar modo Imagem"
+                    aria-label="Desativar modo Imagem"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {activePromptMode === 'video' && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-950/40 border border-rose-500/40 text-rose-300 shadow-xs animate-in fade-in duration-150">
+                  <Video className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Vídeo & Animação</span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectPromptMode?.(null)}
+                    className="ml-0.5 p-0.5 rounded-full hover:bg-rose-500/20 text-rose-300 hover:text-white transition cursor-pointer"
+                    title="Desativar modo Vídeo"
+                    aria-label="Desativar modo Vídeo"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Main Textarea with Direct Screenshot Paste */}
           <textarea
             ref={textareaRef}
@@ -363,6 +445,12 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
                 ? `Instrua a IA sobre o que alterar no(s) ${selectedElements.length} componente(s) selecionado(s)...`
                 : isWebSearchActive
                 ? 'Pesquisar na web ao vivo ou fazer uma pergunta...'
+                : activePromptMode === 'canvas'
+                ? 'Descreva a tela nova ou interface que deseja prototipar no Canvas...'
+                : activePromptMode === 'image'
+                ? 'Descreva a imagem que deseja gerar com IA...'
+                : activePromptMode === 'video'
+                ? 'Descreva o roteiro ou animação de vídeo...'
                 : isPlanMode
                 ? 'Escreva uma mensagem para criar um Plano Estruturado...'
                 : 'Escreva uma mensagem...'
@@ -372,26 +460,163 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
 
           {/* Claude Bottom Toolbar */}
           <div className="flex items-center justify-between gap-2 mt-2 pt-1">
-            {/* Left Tools: Attachment & Live Web Search */}
-            <div className="flex items-center gap-1">
+            {/* Left Tools: Gemini-style Plus Menu & Live Web Search */}
+            <div className="flex items-center gap-1 relative" ref={plusMenuRef}>
               <button
                 type="button"
-                onClick={() => {
-                  if (!isLoading) {
-                    fileInputRef.current?.click();
-                  }
-                }}
+                onClick={() => !isLoading && setIsPlusMenuOpen((prev) => !prev)}
                 disabled={isLoading}
-                aria-label="Anexar arquivos ou imagens"
-                title="Anexar imagens, documentos, PDFs ou código (ou use Ctrl+V para colar um print)"
-                className={`p-1.5 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+                aria-expanded={isPlusMenuOpen}
+                aria-haspopup="menu"
+                aria-label="Ações e Modos de Criação"
+                title="Ações e Ferramentas (Anexar, Canvas, Imagem, Vídeo, Plano)"
+                className={`p-1.5 rounded-lg transition-all flex items-center justify-center cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 ${
                   isLoading
                     ? 'text-[color:var(--c-fg-5a554d)] cursor-not-allowed opacity-40'
+                    : isPlusMenuOpen
+                    ? 'bg-[#d97757]/20 text-[#d97757] rotate-45'
                     : 'text-[color:var(--c-fg-a39d93)] hover:text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-302d27)]'
                 }`}
               >
-                <Paperclip className="w-4 h-4" />
+                <Plus className="w-4 h-4 transition-transform duration-200" />
               </button>
+
+              {/* Menu Popover Estilo Gemini */}
+              {isPlusMenuOpen && (
+                <div
+                  className="absolute bottom-full left-0 mb-2 w-60 sm:w-64 p-1.5 rounded-2xl bg-[color:var(--c-bg-201e1a)]/95 backdrop-blur-xl border border-[color:var(--c-bg-322e27)]/90 shadow-[0_12px_36px_rgba(0,0,0,0.45),0_0_1px_rgba(255,255,255,0.1)] z-50 animate-in fade-in zoom-in-95 duration-150"
+                  role="menu"
+                >
+                  <div className="px-2 py-1 text-[10px] font-semibold tracking-wider text-[color:var(--c-fg-8c867a)] uppercase">
+                    Ações & Criação
+                  </div>
+
+                  {/* 1. Anexar Arquivo ou Foto */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      fileInputRef.current?.click();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-medium text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2f2c26)] transition cursor-pointer min-h-[44px] sm:min-h-0"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-[color:var(--c-bg-2f2c26)] border border-[color:var(--c-bg-3e3a33)] flex items-center justify-center text-[color:var(--c-fg-c4bfb6)] shrink-0">
+                      <Paperclip className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span>Anexar Arquivo ou Foto</span>
+                      <span className="text-[10px] text-[color:var(--c-fg-8c867a)] font-normal">Fotos, PDFs ou código</span>
+                    </div>
+                  </button>
+
+                  {/* 2. Prototipar (Canvas) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onSelectPromptMode?.(activePromptMode === 'canvas' ? null : 'canvas');
+                      textareaRef.current?.focus();
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-medium transition cursor-pointer min-h-[44px] sm:min-h-0 ${
+                      activePromptMode === 'canvas'
+                        ? 'bg-cyan-950/50 text-cyan-300 border border-cyan-500/30'
+                        : 'text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2f2c26)]'
+                    }`}
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                      <Layout className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <span>Prototipar (Canvas)</span>
+                        {activePromptMode === 'canvas' && <span className="text-[9px] px-1 bg-cyan-500/20 text-cyan-300 rounded font-mono">ON</span>}
+                      </div>
+                      <span className="text-[10px] text-[color:var(--c-fg-8c867a)] font-normal">Desenhar nova tela antes do código</span>
+                    </div>
+                  </button>
+
+                  {/* 3. Criar Imagem */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onSelectPromptMode?.(activePromptMode === 'image' ? null : 'image');
+                      textareaRef.current?.focus();
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-medium transition cursor-pointer min-h-[44px] sm:min-h-0 ${
+                      activePromptMode === 'image'
+                        ? 'bg-amber-950/50 text-amber-300 border border-amber-500/30'
+                        : 'text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2f2c26)]'
+                    }`}
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-amber-950/60 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                      <Palette className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <span>Criar Imagem</span>
+                        {activePromptMode === 'image' && <span className="text-[9px] px-1 bg-amber-500/20 text-amber-300 rounded font-mono">ON</span>}
+                      </div>
+                      <span className="text-[10px] text-[color:var(--c-fg-8c867a)] font-normal">Gerar foto ou arte com FLUX</span>
+                    </div>
+                  </button>
+
+                  {/* 4. Vídeo */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlusMenuOpen(false);
+                      onSelectPromptMode?.(activePromptMode === 'video' ? null : 'video');
+                      textareaRef.current?.focus();
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-medium transition cursor-pointer min-h-[44px] sm:min-h-0 ${
+                      activePromptMode === 'video'
+                        ? 'bg-rose-950/50 text-rose-300 border border-rose-500/30'
+                        : 'text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2f2c26)]'
+                    }`}
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-rose-950/60 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                      <Video className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <span>Vídeo & Animação</span>
+                        {activePromptMode === 'video' && <span className="text-[9px] px-1 bg-rose-500/20 text-rose-300 rounded font-mono">ON</span>}
+                      </div>
+                      <span className="text-[10px] text-[color:var(--c-fg-8c867a)] font-normal">HyperFrames (GSAP) ou OpenCut</span>
+                    </div>
+                  </button>
+
+                  {/* 5. Modo Plano */}
+                  {onTogglePlanMode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsPlusMenuOpen(false);
+                        onTogglePlanMode();
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-medium transition cursor-pointer min-h-[44px] sm:min-h-0 ${
+                        isPlanMode
+                          ? 'bg-[#d97757]/20 text-[#a34423] dark:text-[color:var(--c-fg-f09a7d)] border border-[#d97757]/40'
+                          : 'text-[color:var(--c-fg-f3efe6)] hover:bg-[color:var(--c-bg-2f2c26)]'
+                      }`}
+                    >
+                      <div className="w-6 h-6 rounded-lg bg-[color:var(--c-bg-2f2c26)] border border-[color:var(--c-bg-3e3a33)] flex items-center justify-center text-[#d97757] shrink-0">
+                        <ListTodo className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5">
+                          <span>Modo Plano</span>
+                          <span className={`text-[9px] px-1 rounded font-mono ${isPlanMode ? 'bg-[#d97757] text-white' : 'bg-zinc-700/40 text-zinc-400'}`}>
+                            {isPlanMode ? 'ON' : 'OFF'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-[color:var(--c-fg-8c867a)] font-normal">Planejar antes de codificar</span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Botão Web ao Vivo (Perplexity Style) */}
               {onToggleWebSearch && (
@@ -501,6 +726,8 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         onSelectReasoningEffort={onSelectReasoningEffort}
         isPlanMode={isPlanMode}
         onTogglePlanMode={onTogglePlanMode}
+        activePromptMode={activePromptMode}
+        onSelectPromptMode={onSelectPromptMode}
         conversationTokens={conversationTokens}
         onOpenTerminal={onOpenTerminal}
         modelHealthMap={modelHealthMap}

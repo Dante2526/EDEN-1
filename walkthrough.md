@@ -2702,3 +2702,42 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - `npm run build`: Compilação em 5.13s (`dist/_worker.js` 222.3 kB).
 - `python -m graphify update .`: Grafo atualizado (15.048 nós, 17.268 arestas).
 - `wrangler pages deploy`: Publicado em produção em `https://eden-ia.pages.dev` (deploy `7fae5e05`).
+
+## 147. Botão `+` Estilo Google Gemini, Modos Ativos, Calibração de Canvas e Remoção de Cards no Studio (2026-10-24)
+
+### 1. Diagnóstico do Incidente na Aba do Edge
+1. **Disparo Indevido de Canvas Prototype:**
+   - A regra compulsória de prototipagem em `canvas-prototyping` forçava a geração de protótipo HTML isolado (`<eden_canvas>`) mesmo para edições ou remoções pontuais em código existente.
+   - Ao citar a aba Studio e anexar um print, a IA deduziu incorretamente que deveria criar uma tela de chat/studio do zero no Canvas.
+2. **Amnésia Visual e Travamento no Turno 2:**
+   - No segundo turno, o filtro de imagens em `api/chat.ts` descartou a imagem da mensagem anterior porque 13 chamadas de ferramentas inflaram os índices das mensagens.
+   - O Smart Model Router trocou para modelo sem visão ao notar `images.length === 0` no turno corrente.
+   - A IA ficou "cega", sem enxergar as opções apontadas pelo usuário, entrou em loop explorando arquivos no escuro e estourou os limites.
+3. **Cards Estáticos no Studio:**
+   - Os 4 cartões de tarefas no Studio (`Refatorar função`, `Adicionar nova feature`, `Corrigir bugs & erros`, `Escrever testes unitários`) eram estáticos e poluíam a visualização inicial.
+
+### 2. Implementações Realizadas
+1. **Botão `+` Estilo Gemini com Menu Popover (`src/components/chat-input.tsx`):**
+   - Substituído o ícone fixo de clipe (`Paperclip`) pelo botão `+` (`Plus`) com rotação animada de 45° quando aberto.
+   - Menu com 5 ações direcionadas: *Anexar Arquivo/Foto*, *Prototipar (Canvas)*, *Criar Imagem*, *Vídeo & Animação*, *Modo Plano*.
+   - Áreas de toque Mobile-First ($\ge 44\times 44\text{px}$) e conformidade de acessibilidade (`aria-haspopup="menu"`, `aria-expanded`).
+   - Chip visual do modo ativo posicionado acima do textarea com botão de fechar (`X`) em 1 toque e placeholder contextual adaptativo.
+2. **Status Pills no Cabeçalho (`src/components/model-controls.tsx`):**
+   - Pills reativas para *Canvas*, *Imagem* e *Vídeo* com indicador visual `ON` e toggle rápido para desativar.
+3. **Orquestração e Smart Router com Memória Visual (`src/App.tsx` & `src/lib/smart-model-router.ts`):**
+   - Resolução de stale closure no envio: passagem do `modeToSend` direto via parâmetro com fallback seguro para ref.
+   - Smart Model Router enriquecido com `hasRecentImages`: preserva modelos multimodais de visão se houver imagem recente no histórico da conversa (últimos 8 turnos).
+4. **Calibração das Regras de Prototipagem (`src/lib/storage.ts`):**
+   - Diretrizes de `canvas-prototyping` refinadas: o Canvas agora é reservado para telas novas do zero ou quando o modo Prototipar estiver expressamente ativo. Edições, remoções e ajustes em telas existentes são feitos diretamente no código do repositório.
+   - Migração automática via `loadSkills` sincronizando as novas diretrizes no IndexedDB.
+5. **Remoção dos Cards Estáticos no Studio (`src/studio/studio-panel.tsx`):**
+   - Removido o grid `{/* Sugestões de tarefas */}` com os 4 cards estáticos.
+6. **Retenção Robusta de Imagens no Backend (`api/chat.ts`):**
+   - Cálculo baseado em turnos de usuário reais (`userTurnsAfter <= 1`), imune à quantidade de chamadas intermediárias de ferramentas.
+
+### 3. Verificação & Deploy
+- `npx tsc -p tsconfig.app.json --noEmit`: **0 erros**.
+- `npm test`: **237/237 testes passando** (47 suítes).
+- `npm run build`: Compilação em 2.95s (`dist/_worker.js` 222.4 kB).
+- `python -m graphify update .`: Grafo atualizado (15.053 nós, 17.278 arestas, 1.023 comunidades).
+- Deploy em produção: Publicado com sucesso no Cloudflare Pages (`https://d935c02b.eden-ia.pages.dev` / `https://eden-ia.pages.dev`).

@@ -6,11 +6,8 @@ import {
   AlertTriangle,
   Lightbulb,
   ShieldAlert,
-  FileCode,
-  ListTree,
-  Loader2,
-  Sparkles,
-  Brain,
+      Loader2,
+    Brain,
   Search,
   Zap,
   ArrowRight,
@@ -608,48 +605,6 @@ export const StudioPanel: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Sugestões de tarefas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
-              {[
-                {
-                  title: 'Refatorar função',
-                  desc: 'Quebrar módulos grandes em funções modulares, puras e tipadas.',
-                  icon: FileCode,
-                },
-                {
-                  title: 'Adicionar nova feature',
-                  desc: 'Construir funcionalidade criando arquivos e integrando aos componentes.',
-                  icon: Sparkles,
-                },
-                {
-                  title: 'Corrigir bugs & erros',
-                  desc: 'Rastrear fluxo e tratar exceções e comportamentos inesperados.',
-                  icon: AlertTriangle,
-                },
-                {
-                  title: 'Escrever testes unitários',
-                  desc: 'Criar cobertura de testes automatizados para os arquivos principais.',
-                  icon: ListTree,
-                },
-              ].map((s, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    setTask(s.desc);
-                    textareaRef.current?.focus();
-                  }}
-                  disabled={!activeRepo}
-                  className="text-left p-4 rounded-xl border border-[color:var(--c-bg-2d2b26)] bg-[color:var(--c-bg-181714)] hover:bg-[color:var(--c-bg-1f1d18)] hover:border-[color:var(--c-bg-3b3831)] transition-all disabled:opacity-40 disabled:cursor-not-allowed group cursor-pointer"
-                >
-                  <s.icon className="w-5 h-5 text-[color:var(--c-fg-d97757)] mb-2 group-hover:scale-110 transition-transform" />
-                  <div className="text-sm font-medium text-[color:var(--c-fg-f3efe6)]">{s.title}</div>
-                  <div className="text-xs text-[color:var(--c-fg-8c867a)] mt-1 line-clamp-2 leading-relaxed">
-                    {s.desc}
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
         ) : (
           // ============ TIMELINE DE CARDS CONVERSACIONAIS ============

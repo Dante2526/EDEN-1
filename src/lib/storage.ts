@@ -153,11 +153,12 @@ export const BUILTIN_SKILLS: Skill[] = [
     enabled: true,
     isBuiltin: true,
     systemPrompt:
-      'Você possui a habilidade mandatória de Prototipagem Visual no Canvas (`render_canvas_prototype`):\n' +
-      '1. REGRA ABSOLUTA DE PROTOTIPAGEM ANTES DO CÓDIGO: Sempre que o usuário solicitar uma tela nova, página, modal, drawer, dashboard ou redesign de interface, você DEVE gerar PRIMEIRO um protótipo visual interativo via ferramenta `render_canvas_prototype` (ou tag `<eden_canvas title="..." viewport="mobile|desktop">...html...</eden_canvas>`) antes de alterar qualquer arquivo de código com `patch_file` ou `edit_file`.\n' +
-      '2. Economia de Tokens e Validação: Não gere centenas de linhas de código de produção no escuro. Apresente a tela pronta no Canvas com botões clicáveis, cards e estilo Tailwind para o usuário testar e aprovar visualmente.\n' +
-      '3. Padrão Mobile-First: O HTML do protótipo DEVE ser projetado para telas móveis (360px a 430px) com alternador opcional para desktop, alvos de toque ergonômicos (mínimo 44px) e zero overflow horizontal.\n' +
-      '4. Aguarde Aprovação: Após exibir o protótipo no Canvas, pare a execução do turno e aguarde o usuário clicar em "Aprovar e Gerar Código" ou solicitar ajustes visuais.',
+      'Você possui a habilidade de Prototipagem Visual no Canvas (`render_canvas_prototype`):\n' +
+      '1. QUANDO USAR O CANVAS: O Canvas deve ser gerado quando o usuário solicitar a criação de uma TELA NOVA do zero (seja em projeto novo ou existente), redesign completo, protótipo ou quando a função Canvas estiver ativada no menu (+).\n' +
+      '2. QUANDO NÃO USAR O CANVAS (PROIBIDO): É TERMINANTEMENTE PROIBIDO gerar Canvas ou protótipos quando o usuário estiver solicitando alterações, edições de arquivos, remoções de elementos, correções de bugs, refatorações ou ajustes pontuais em código/telas já existentes. Nesses casos, altere diretamente os arquivos do repositório via `edit_file` ou `patch_file` sem abrir Canvas.\n' +
+      '3. Economia de Tokens e Validação: Em telas novas, apresente a tela pronta no Canvas com botões clicáveis, cards e estilo Tailwind para o usuário testar e aprovar visualmente antes do código.\n' +
+      '4. Padrão Mobile-First: O HTML do protótipo DEVE ser projetado para telas móveis (360px a 430px) com alternador opcional para desktop, alvos de toque ergonômicos (mínimo 44px) e zero overflow horizontal.\n' +
+      '5. Aguarde Aprovação: Após exibir o protótipo no Canvas, pare a execução do turno e aguarde o usuário clicar em "Aprovar e Gerar Código" ou solicitar ajustes visuais.',
   },
   {
     id: 'claude-design',
@@ -347,12 +348,18 @@ export async function loadSkills(): Promise<Skill[]> {
       return BUILTIN_SKILLS;
     }
 
-    // Auto-migração: substitui a antiga skill vercel-edge pela nova cloudflare-pages preservando o estado enabled do usuário
+    // Auto-migração: atualiza prompts e substitui skills legadas
     const migrated = data.map((s) => {
       if (s.id === 'vercel-edge') {
         const cfSkill = BUILTIN_SKILLS.find((b) => b.id === 'cloudflare-pages');
         if (cfSkill) {
           return { ...cfSkill, enabled: s.enabled };
+        }
+      }
+      if (s.id === 'canvas-prototyping') {
+        const builtin = BUILTIN_SKILLS.find((b) => b.id === 'canvas-prototyping');
+        if (builtin) {
+          return { ...s, systemPrompt: builtin.systemPrompt, description: builtin.description };
         }
       }
       return s;
