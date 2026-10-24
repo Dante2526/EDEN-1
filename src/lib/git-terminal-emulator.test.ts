@@ -116,3 +116,38 @@ test('Pipe Unix básico: comando1 | grep <termo>', async () => {
   assert.ok(pipeRes.stdout.includes('segunda linha com chave secreta'));
   assert.ok(!pipeRes.stdout.includes('primeira linha'));
 });
+
+test('Comando base64 (-d/--decode e encode) via pipe e arquivo', async () => {
+  const encoded = Buffer.from('Olá Éden Vídeo', 'utf-8').toString('base64');
+  const decodeRes = await executeTerminalCommand(`echo "${encoded}" | base64 -d`, createMockContext());
+  assert.equal(decodeRes.exitCode, 0);
+  assert.equal(decodeRes.stdout, 'Olá Éden Vídeo');
+
+  const encodeRes = await executeTerminalCommand('echo "Synap" | base64', createMockContext());
+  assert.equal(encodeRes.exitCode, 0);
+  assert.equal(encodeRes.stdout, Buffer.from('Synap', 'utf-8').toString('base64'));
+});
+
+test('Comando find - busca de arquivos por padrão -name em /tmp e alterações locais', async () => {
+  clearVirtualTmpFiles();
+  setVirtualTmpFile('/tmp/App_decoded.tsx', 'export default function App() {}');
+  const ctx: TerminalEmulatorContext = {
+    ...createMockContext(),
+    changes: [
+      {
+        id: '1',
+        path: 'src/components/chat-header.tsx',
+        repo: 'user/eden',
+        branch: 'main',
+        type: 'modified',
+        newContent: '',
+        createdAt: Date.now(),
+        staged: false,
+      },
+    ],
+  };
+
+  const findRes = await executeTerminalCommand('find / -name "chat-header.tsx"', ctx);
+  assert.equal(findRes.exitCode, 0);
+  assert.ok(findRes.stdout.includes('src/components/chat-header.tsx'));
+});

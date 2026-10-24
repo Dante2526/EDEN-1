@@ -57,7 +57,7 @@ import { ClaudeLogo } from './components/claude-logo';
 import { PendingChangesProvider, usePendingChanges } from './lib/pending-changes';
 import { ProjectProvider, useProjects } from './lib/project-context';
 import { DiffViewer } from './components/source-control/diff-viewer';
-import { fetchFileContent, fetchRepoContents, searchCode } from './lib/github';
+import { fetchFileContent, fetchRepoContents, searchCode, decodeGitHubFileContent } from './lib/github';
 import { TerminalPanel, TerminalEntry } from './components/terminal-panel';
 import { executeEmulatedCommand } from './lib/git-terminal-emulator';
 import { buildPendingRemoteAction, isRemoteCommandRequiringApproval } from './lib/remote-gate';
@@ -3186,7 +3186,7 @@ function AppContent() {
         if (!res.ok) throw new Error(`Erro ao ler arquivo (${res.status})`);
         const data = await res.json();
         if (data.content && data.encoding === 'base64') {
-          const decoded = atob(data.content.replace(/\n/g, ''));
+          const decoded = decodeGitHubFileContent(data.content, data.encoding);
           return { result: decoded };
         }
         return { result: JSON.stringify(data) };

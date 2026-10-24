@@ -2,7 +2,7 @@
 import { ActiveRepoState, Skill, McpServer, PendingChange } from '../lib/types';
 import { StudioAgent, StudioStep, StudioReview } from './studio-types';
 import { generateId } from '../lib/utils';
-import { getClientAuthHeaders, searchCode } from '../lib/github';
+import { getClientAuthHeaders, searchCode, decodeGitHubFileContent } from '../lib/github';
 import { isToolCapableModel } from '../lib/models';
 import { extractTextToolCalls } from '../lib/text-tool-parser';
 import { convertMcpToolsToOpenAi, executeMcpToolCall } from '../lib/mcp-client';
@@ -329,7 +329,7 @@ async function executeTool(
       return { ok: false, content: '', error: `Erro: arquivo ${rawPath} não encontrado` };
     }
     const data = await res.json();
-    const fetchedContent = data.content || '';
+    const fetchedContent = decodeGitHubFileContent(data.content || '', data.encoding);
     fileStateCache?.set(normPath, {
       content: fetchedContent,
       originalContent: fetchedContent,

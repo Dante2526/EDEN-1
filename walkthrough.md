@@ -2449,3 +2449,23 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: bundle compilado em 2.10s e Cloudflare Pages Worker (`dist/_worker.js`, 186.8 kB) gerado com sucesso.
   - `python -m graphify update .`: grafo de conhecimento sincronizado com 15.056 nós, 17.083 arestas e 1.016 comunidades.
   - Code Review formal aprovado (recomendações ergonômicas de mobile aplicadas integralmente).
+
+## 137. Correção de Leitura Base64 dos Agentes (GitHub API / Terminal) e Botão de Vídeo no Canto Superior Esquerdo
+- **Solicitação do Usuário:** Diagnosticar por que o agente do Éden falhou ao tentar ler o próprio repositório e mover o botão de Vídeo do canto superior direito para o canto superior esquerdo do cabeçalho.
+- **Diagnóstico da Causa Raiz:**
+  1. **Retorno de Base64 Cru em `fetchFileContent` (`src/lib/github.ts`) e no Studio (`src/studio/studio-engine.ts`):** A rota `/api/github?action=file` retorna o JSON nativo da API do GitHub (`{ content: "<base64>", encoding: "base64" }`). `fetchFileContent` retornava `res.content` sem decodificar para UTF-8, fazendo com que `read_file`, `patch_file`, `cat` e `grep` recebessem Base64 bruto em vez de código legível.
+  2. **Ausência de `base64` e `find` no Emulador de Terminal (`src/lib/git-terminal-emulator.ts`):** Quando a IA tentava decodificar o Base64 com `base64 -d` ou localizar arquivos com `find`, recebia `exit 127: comando não encontrado`.
+  3. **Posicionamento do Botão de Vídeo (`src/components/chat-header.tsx`):** O botão `Vídeo` (`onOpenVideoEditor`) estava renderizado na seção direita do cabeçalho em vez da seção esquerda.
+- **Implementações Realizadas:**
+  1. **Decodificador UTF-8 Universal (`src/lib/github.ts`, `src/studio/studio-engine.ts`, `src/App.tsx`):**
+     - Criada e exportada a função `decodeGitHubFileContent(content, encoding)` usando `TextDecoder('utf-8')`, decodificando tanto payloads com `encoding: 'base64'` explícito quanto blocos Base64 multilinhas da API do GitHub.
+     - Integrada em `fetchFileContent`, no cache de arquivos do Studio (`readCurrentFileWithCache`) e na ferramenta `read_github_file`.
+  2. **Comandos `base64` (`-d`/`--decode`) e `find` (`-name`/`-iname`) no Terminal (`src/lib/git-terminal-emulator.ts`):**
+     - Suporte completo a decodificação e codificação Base64 via pipe (`stdin`) ou caminho de arquivo.
+     - Suporte a `find` pesquisando em `/tmp`, alterações locais do Source Control e árvore recursiva do repositório GitHub ativo.
+  3. **Botão de Vídeo no Canto Superior Esquerdo (`src/components/chat-header.tsx`):**
+     - Movido o botão `onOpenVideoEditor` (`Vídeo`) da seção direita para a seção esquerda do cabeçalho com área de toque Mobile-First (`min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0`).
+- **Evidências de Verificação:**
+  - `npm test`: **213/213 testes unitários passando em 42 suítes** (incluindo `src/lib/github.test.ts` e `src/lib/git-terminal-emulator.test.ts`).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle de produção e Cloudflare Pages Worker (`dist/_worker.js`) compilados com sucesso.

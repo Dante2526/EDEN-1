@@ -7,6 +7,7 @@ import {
   createRepoBranch,
   searchCode,
   callGitHubApi,
+  decodeGitHubFileContent,
   GitHubUser,
 } from './github';
 import {
@@ -566,6 +567,107 @@ async function executeSingleCommand(
           return makeResult('', `grep erro: ${err.message}`, 1);
         }
       }
+    }
+
+    if (command === 'base64') {
+      const isDecode = Boolean(flags['d'] || flags['D'] || flags['decode']);
+      let inputText = stdin ?? '';
+
+      if (!inputText && args[0] && args[0] !== '-') {
+        const rawPath = args[0];
+        const resolved = resolvePath(context.cwd, rawPath);
+        if (resolved.startsWith('/tmp/') || rawPath.startsWith('/tmp/') || rawPath.startsWith('tmp/')) {
+          const tmpContent = getVirtualTmpFile(rawPath) ?? getVirtualTmpFile(resolved);
+          if (tmpContent === undefined) {
+            return makeResult('', `base64: ${rawPath}: Arquivo não encontrado`, 1);
+          }
+          inputText = tmpContent;
+        } else if (owner && repo) {
+          const filePath = resolved.replace(/^\//, '');
+          const localMatch = context.changes.find((c) => c.path === filePath);
+          if (localMatch) {
+            inputText = localMatch.newContent;
+          } else {
+            try {
+              inputText = await fetchFileContent(null, owner, repo, filePath, branch);
+            } catch {
+              return makeResult('', `base64: ${filePath}: Arquivo não encontrado`, 1);
+            }
+          }
+        }
+      }
+
+      if (isDecode) {
+        return makeResult(decodeGitHubFileContent(inputText.trim(), 'base64'));
+      }
+
+      const bytes = new TextEncoder().encode(inputText);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const encoded = globalThis.btoa
+        ? globalThis.btoa(binary)
+        : Buffer.from(inputText, 'utf-8').toString('base64');
+      return makeResult(encoded);
+    }
+
+    if (command === 'find') {
+      const rawTokens = trimmed.split(/\s+/);
+      let namePattern = '';
+      for (let i = 1; i < rawTokens.length; i++) {
+        if ((rawTokens[i] === '-name' || rawTokens[i] === '-iname') && i + 1 < rawTokens.length) {
+          namePattern = cleanTokenQuotes(rawTokens[i + 1]);
+          break;
+        }
+      }
+      if (!namePattern && args.length > 1) {
+        namePattern = args[args.length - 1];
+      }
+
+      const allPaths = new Set<string>();
+      for (const tmpPath of listVirtualTmpFiles()) {
+        allPaths.add(tmpPath);
+      }
+      for (const ch of context.changes) {
+        if (ch.type !== 'deleted') {
+          allPaths.add(ch.path);
+        }
+      }
+      if (owner && repo) {
+        try {
+          const treeData = await callGitHubApi<{ tree?: Array<{ path: string; type: string }> }>('files', {
+            owner,
+            repo,
+            branch,
+          });
+          if (Array.isArray(treeData?.tree)) {
+            for (const item of treeData.tree) {
+              if (item.path) allPaths.add(item.path);
+            }
+          }
+        } catch {
+          // Ignora falha de rede ao listar árvore remota
+        }
+      }
+
+      const regexStr = namePattern
+        ? '^' +
+          namePattern
+            .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+            .replace(/\*/g, '.*')
+            .replace(/\?/g, '.') +
+          '$'
+        : '.*';
+      const matcher = new RegExp(regexStr, 'i');
+
+      const matched = Array.from(allPaths).filter((p) => {
+        if (!namePattern) return true;
+        const baseName = p.split('/').pop() || p;
+        return matcher.test(baseName) || p.toLowerCase().includes(namePattern.replace(/\*/g, '').toLowerCase());
+      });
+
+      return makeResult(matched.join('\n'));
     }
 
     if (command === 'curl') {

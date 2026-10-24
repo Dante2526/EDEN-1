@@ -135,6 +135,40 @@ export async function fetchRepoContents(
   });
 }
 
+export function decodeGitHubFileContent(content: string, encoding?: string): string {
+  if (!content || typeof content !== 'string') return '';
+  if (encoding && encoding.toLowerCase() !== 'base64') {
+    return content;
+  }
+
+  const isExplicitBase64 = encoding?.toLowerCase() === 'base64';
+  const cleaned = content.replace(/[\r\n]+/g, '').trim();
+
+  if (!isExplicitBase64) {
+    const looksLikeBase64 =
+      !content.includes(' ') &&
+      cleaned.length >= 16 &&
+      cleaned.length % 4 === 0 &&
+      /^[A-Za-z0-9+/]+={0,2}$/.test(cleaned);
+    if (!looksLikeBase64) {
+      return content;
+    }
+  }
+
+  try {
+    const binary = globalThis.atob
+      ? globalThis.atob(cleaned)
+      : Buffer.from(cleaned, 'base64').toString('binary');
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder('utf-8', { fatal: !isExplicitBase64 }).decode(bytes);
+  } catch {
+    return content;
+  }
+}
+
 export async function fetchFileContent(
   _unused?: any,
   owner?: string,
@@ -145,8 +179,8 @@ export async function fetchFileContent(
   if (!owner || !repo || !path) throw new Error('Parâmetros inválidos');
   const params: Record<string, string> = { owner, repo, path };
   if (branch) params.branch = branch;
-  const res = await callGitHubApi<{ content: string }>('file', params);
-  return res.content;
+  const res = await callGitHubApi<{ content: string; encoding?: string }>('file', params);
+  return decodeGitHubFileContent(res.content || '', res.encoding);
 }
 
 export async function searchCode(
