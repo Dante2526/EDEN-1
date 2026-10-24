@@ -201,3 +201,102 @@ export function resolveEffectiveFileContent(
 
   return { status: 'unchanged' };
 }
+
+
+/**
+ * Fatia um texto por linhas especificadas (1-based index) e formata com números de linha,
+ * permitindo que o modelo de IA inspecione apenas trechos cirúrgicos de arquivos grandes.
+ */
+export function sliceFileLines(content: string, startLine?: number, endLine?: number): string {
+  if (!content || (startLine === undefined && endLine === undefined)) {
+    return content;
+  }
+
+  const lines = content.split(/\r?\n/);
+  const total = lines.length;
+
+  let rawStart = startLine !== undefined ? Math.max(1, Math.min(startLine, total)) : 1;
+  let rawEnd = endLine !== undefined ? Math.max(1, Math.min(endLine, total)) : total;
+
+  const start = Math.min(rawStart, rawEnd);
+  const end = Math.max(rawStart, rawEnd);
+
+  const slice = lines.slice(start - 1, end);
+  const padWidth = String(end).length;
+
+  const numberedLines = slice.map((line, idx) => {
+    const lineNum = String(start + idx).padStart(padWidth, ' ');
+    return `${lineNum} | ${line}`;
+  });
+
+  return `[Linhas ${start}-${end} de ${total}]
+${numberedLines.join('\n')}`;
+}
+
+/**
+ * Valida a integridade sintática de delimitadores ({}, [], ()) em arquivos de código
+ * (TypeScript, JavaScript, JSON, CSS) ignorando strings e comentários.
+ * Impede que edições acidentais salvem arquivos corrompidos no Source Control.
+ */
+import ts from 'typescript';
+
+/**
+ * Valida a integridade sintática do código utilizando o compilador TypeScript oficial.
+ * Detecta erros de fechamento de delimitadores ({}, [], ()), tags JSX, ou blocos quebrados
+ * com precisão absoluta, sem falsos positivos em regexes, templates literals ou comentários.
+ */
+export function validateCodeIntegrity(
+  content: string,
+  filePath: string
+): { valid: boolean; error?: string } {
+  if (!content || !filePath) return { valid: true };
+
+  const ext = (filePath.split('.').pop() || '').toLowerCase();
+  const isTsx = ext === 'tsx';
+  const isJsx = ext === 'jsx';
+  const isTs = ext === 'ts';
+  const isJs = ext === 'js';
+
+  if (!isTsx && !isJsx && !isTs && !isJs) {
+    if (ext === 'json') {
+      try {
+        JSON.parse(content);
+        return { valid: true };
+      } catch (err: any) {
+        return { valid: false, error: err?.message || 'JSON inválido' };
+      }
+    }
+    return { valid: true };
+  }
+
+  try {
+    const kind = isTsx
+      ? ts.ScriptKind.TSX
+      : isJsx
+        ? ts.ScriptKind.JSX
+        : isTs
+          ? ts.ScriptKind.TS
+          : ts.ScriptKind.JS;
+
+    const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, kind);
+    const diags = (sourceFile as any).parseDiagnostics || [];
+
+    if (diags.length > 0) {
+      const firstDiag = diags[0];
+      const pos = sourceFile.getLineAndCharacterOfPosition(firstDiag.start || 0);
+      const msg =
+        typeof firstDiag.messageText === 'string'
+          ? firstDiag.messageText
+          : firstDiag.messageText?.messageText || 'Erro de sintaxe';
+      return {
+        valid: false,
+        error: `${msg} (linha ${pos.line + 1}, coluna ${pos.character + 1})`,
+      };
+    }
+  } catch {
+    // Em caso de exceção no parser, não bloqueia
+    return { valid: true };
+  }
+
+  return { valid: true };
+}

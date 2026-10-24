@@ -95,6 +95,8 @@ import {
   normalizePatchArgs,
   resolveEffectiveFileContent,
   normalizeRepoPath,
+  sliceFileLines,
+  validateCodeIntegrity,
 } from './lib/file-patcher';
 import {
   filterToolsForPlanMode,
@@ -237,6 +239,8 @@ const GITHUB_TOOLS = [
         type: 'object',
         properties: {
           path: { type: 'string', description: 'Caminho relativo do arquivo (ex: src/App.tsx)' },
+          start_line: { type: 'number', description: 'Linha inicial opcional (1-based index) para leitura cirúrgica' },
+          end_line: { type: 'number', description: 'Linha final opcional (1-based index)' },
           branch: { type: 'string', description: 'Branch opcional (padrão: branch ativa)' },
         },
         required: ['path'],
@@ -3436,11 +3440,19 @@ function AppContent() {
         }
         const currentContent = typeof matched === 'string' ? matched : matched.content;
         const patchRes = applyFilePatches(currentContent, patches);
-      if (patchRes.success && (currentRepo as any)?.fullName) {
-        setCachedRepoFile((currentRepo as any).fullName, (currentRepo as any).branch, path, patchRes.content);
-      }
         if (!patchRes.success) {
           return { result: JSON.stringify({ error: patchRes.error }) };
+        }
+        const syntaxCheck = validateCodeIntegrity(patchRes.content, path);
+        if (!syntaxCheck.valid) {
+          return {
+            result: JSON.stringify({
+              error: `[Validador de Integridade]: O patch gerou erro de sintaxe em '${path}': ${syntaxCheck.error}. Corrija o fechamento de delimitadores antes de salvar.`,
+            }),
+          };
+        }
+        if (patchRes.success && (currentRepo as any)?.fullName) {
+          setCachedRepoFile((currentRepo as any).fullName, (currentRepo as any).branch, path, patchRes.content);
         }
         await updateProjectFiles([
           {
@@ -3486,7 +3498,8 @@ function AppContent() {
         const matched = filesMap[cleanPath] || filesMap['/' + cleanPath] || filesMap['./' + cleanPath];
         if (matched) {
           const content = typeof matched === 'string' ? matched : matched.content;
-          return { result: content };
+          const sliced = sliceFileLines(content, args.start_line, args.end_line);
+          return { result: sliced };
         }
         return { result: JSON.stringify({ error: `Arquivo '${args.path}' não encontrado no projeto ativo.` }) };
       }
@@ -3582,13 +3595,23 @@ function AppContent() {
       }
 
       const patchRes = applyFilePatches(currentContent, patches);
-      if (patchRes.success && (currentRepo as any)?.fullName) {
-        setCachedRepoFile((currentRepo as any).fullName, (currentRepo as any).branch, path, patchRes.content);
-      }
       if (!patchRes.success) {
         return {
           result: JSON.stringify({ error: patchRes.error }),
         };
+      }
+
+      const syntaxCheck = validateCodeIntegrity(patchRes.content, path);
+      if (!syntaxCheck.valid) {
+        return {
+          result: JSON.stringify({
+            error: `[Validador de Integridade]: O patch gerou erro de sintaxe em '${path}': ${syntaxCheck.error}. Corrija o fechamento de delimitadores antes de salvar.`,
+          }),
+        };
+      }
+
+      if (patchRes.success && (currentRepo as any)?.fullName) {
+        setCachedRepoFile((currentRepo as any).fullName, (currentRepo as any).branch, path, patchRes.content);
       }
 
       const savedChange = await addChange({
@@ -3654,6 +3677,17 @@ function AppContent() {
           );
         } catch {
           // New file or unable to read original
+        }
+      }
+
+      if (type !== 'deleted') {
+        const syntaxCheck = validateCodeIntegrity(content || '', path);
+        if (!syntaxCheck.valid) {
+          return {
+            result: JSON.stringify({
+              error: `[Validador de Integridade]: A edição gerou erro de sintaxe em '${path}': ${syntaxCheck.error}. Corrija o fechamento de delimitadores antes de salvar.`,
+            }),
+          };
         }
       }
 
@@ -3803,7 +3837,7 @@ function AppContent() {
           };
         }
         if (effective.status === 'modified' && effective.content !== undefined) {
-          return { result: effective.content };
+          return { result: sliceFileLines(effective.content, args.start_line, args.end_line) };
         }
 
         const cachedFromDb =
@@ -3812,7 +3846,7 @@ function AppContent() {
             ? activeProject.files?.[normalizeRepoPath(args.path)]?.content
             : undefined);
         if (cachedFromDb !== undefined) {
-          return { result: cachedFromDb };
+          return { result: sliceFileLines(cachedFromDb, args.start_line, args.end_line) };
         }
         const fileContent = await fetchFileContent(
           null,
@@ -3822,7 +3856,7 @@ function AppContent() {
           args.branch || currentRepo.branch
         );
         setCachedRepoFile(currentRepo.fullName, args.branch || currentRepo.branch, args.path, fileContent);
-        return { result: fileContent };
+        return { result: sliceFileLines(fileContent, args.start_line, args.end_line) };
       } catch (err: any) {
         return { result: JSON.stringify({ error: err?.message || `Erro ao ler arquivo ${args.path}` }) };
       }
@@ -3892,7 +3926,7 @@ function AppContent() {
             if (args.path && !filePath.startsWith(normalizeRepoPath(args.path))) continue;
             if (args.extension && !filePath.endsWith(`.${args.extension.replace(/^\./, '')}`)) continue;
             if (filePath.toLowerCase().includes(queryLower) || (typeof fileContent === 'string' && fileContent.toLowerCase().includes(queryLower))) {
-              const snippets = (fileContent || '').split('\n').filter((l) => l.toLowerCase().includes(queryLower)).slice(0, 3).map((l) => l.trim().slice(0, 160));
+              const snippets = (fileContent || '').split('\n').map((l, idx) => ({ line: idx + 1, text: l })).filter((item) => item.text.toLowerCase().includes(queryLower)).slice(0, 4).map((item) => `L${item.line}: ${item.text.trim().slice(0, 150)}`);
               fastResults.push({ path: filePath, source: 'database_cache', snippets: snippets.length ? snippets : undefined });
             }
           }

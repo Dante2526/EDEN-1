@@ -5,8 +5,8 @@
     "semantic_hash": "3d4d49bc058571e3328ba2ba19d30c06"
   },
   "_worker.ts": {
-    "mtime": 1792851140.303957,
-    "ast_hash": "041bfe08050607543cc5a62902e53548",
+    "mtime": 1792852248.8306837,
+    "ast_hash": "275fcc0a3658a08d7987d7c2cbff74cf",
     "semantic_hash": ""
   },
   "api/chat-test.ts": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "lib/server/env.ts": {
-    "mtime": 1792851098.2129965,
-    "ast_hash": "eec3915b525ed1117fa7574c76b2eb17",
+    "mtime": 1792852249.1276753,
+    "ast_hash": "ad12a8dc0bd657b78a031993e5f6fbbf",
     "semantic_hash": ""
   },
   "metadata.json": {
@@ -130,8 +130,8 @@
     "semantic_hash": "6759c4f9078319aaf1038a4b6af0f9ce"
   },
   "server.ts": {
-    "mtime": 1792852106.9834595,
-    "ast_hash": "360f6d469d32b2e1798818561ea8eeb5",
+    "mtime": 1792852249.12919,
+    "ast_hash": "7ce8baa82f1b464b77f95dcefd4cde5a",
     "semantic_hash": ""
   },
   "skills/ASR/scripts/asr.ts": {
@@ -975,13 +975,13 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792852106.9889963,
-    "ast_hash": "3a7e2b3f9a39bf881214688b86926bb1",
+    "mtime": 1792860938.3087335,
+    "ast_hash": "45f757e4684039e0922bca32f50accb7",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
-    "mtime": 1792847653.0061166,
-    "ast_hash": "6680613db7c7af6dc15c796cf8370a62",
+    "mtime": 1792852248.48675,
+    "ast_hash": "22d0b0c2b5279cd62bc50701efa913d4",
     "semantic_hash": ""
   },
   "src/components/chat-input.tsx": {
@@ -1330,13 +1330,13 @@
     "semantic_hash": ""
   },
   "src/lib/project-context.tsx": {
-    "mtime": 1792852106.9859958,
-    "ast_hash": "09a4287140359f8915c49599bd77ffba",
+    "mtime": 1792852249.132706,
+    "ast_hash": "2a7fd7485ab1443496db61c9c429688d",
     "semantic_hash": ""
   },
   "src/lib/project-storage.ts": {
-    "mtime": 1792851204.232904,
-    "ast_hash": "577202eb69a2899c6e587df909e48310",
+    "mtime": 1792852249.1352093,
+    "ast_hash": "ecb6cd7efe88cef837ff1722a05e50eb",
     "semantic_hash": ""
   },
   "src/lib/pyodide-client.test.ts": {
@@ -1500,13 +1500,13 @@
     "semantic_hash": "7e7b89c38885693c88bd39782169d6c9"
   },
   "src/lib/file-patcher.test.ts": {
-    "mtime": 1792847652.8319373,
-    "ast_hash": "fa4dbf9de685f497d70323659bb0b69e",
+    "mtime": 1792860960.312927,
+    "ast_hash": "55e41b7a7b89d5aa7b584bdc8f823c16",
     "semantic_hash": ""
   },
   "src/lib/file-patcher.ts": {
-    "mtime": 1792847652.8329368,
-    "ast_hash": "aada13a89d7b066aca402a6b4b321827",
+    "mtime": 1792861029.5555382,
+    "ast_hash": "a0158e2659040435c2eed6227bef4dea",
     "semantic_hash": ""
   },
   ".agents/rules/graphify.md": {
@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792849157.1462643,
-    "ast_hash": "209be566e3b73dba53ef7fad11e692cd",
+    "mtime": 1792852249.1407213,
+    "ast_hash": "da17932662d6cf4efe5bd6cf703e5a70",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -5795,13 +5795,13 @@
     "semantic_hash": ""
   },
   "src/lib/smart-prefill.test.ts": {
-    "mtime": 1792851295.4929714,
-    "ast_hash": "f8abc655586316fcf21869368858df89",
+    "mtime": 1792852249.1362188,
+    "ast_hash": "c7a4268f42a5e255899b1c3fcd49c50d",
     "semantic_hash": ""
   },
   "src/lib/smart-prefill.ts": {
-    "mtime": 1792851324.344608,
-    "ast_hash": "6b9c7c9103fa7f582b5720ca807c3e7d",
+    "mtime": 1792852249.1372166,
+    "ast_hash": "a5dc7ee02590d547141c3a3bcdab6bdf",
     "semantic_hash": ""
   },
   "src/lib/media-probe.test.ts": {
@@ -5855,8 +5855,8 @@
     "semantic_hash": ""
   },
   "api/browser.ts": {
-    "mtime": 1792847652.6488461,
-    "ast_hash": "1ac1ce97ce243d8a3f2a685d933fa4d1",
+    "mtime": 1792852248.3902264,
+    "ast_hash": "92da817c17422e8f0a5d5b899d72bb3c",
     "semantic_hash": ""
   },
   "src/lib/browser-agent-engine.test.ts": {
@@ -6035,18 +6035,23 @@
     "semantic_hash": ""
   },
   "api/db-projects.ts": {
-    "mtime": 1792851078.6775417,
-    "ast_hash": "56d410dfd88bbb62fa2573b7a2cdd0b6",
+    "mtime": 1792852248.835845,
+    "ast_hash": "e53386ec301128469e3875938191db94",
     "semantic_hash": ""
   },
   "src/lib/project-storage.test.ts": {
-    "mtime": 1792851153.8950331,
-    "ast_hash": "a9681b503726b0eb719ae036570c9135",
+    "mtime": 1792852249.133704,
+    "ast_hash": "19724bdcee128f4673a5f973dc07199c",
     "semantic_hash": ""
   },
   "supabase/schema.sql": {
-    "mtime": 1792851043.6220856,
-    "ast_hash": "deb3a970ed3de91e595941a2ac47d00c",
+    "mtime": 1792852249.1382184,
+    "ast_hash": "f40bb2b43d801d533ca6bf2bf67555fa",
+    "semantic_hash": ""
+  },
+  ".agents/rules/protect-flow-finance.md": {
+    "mtime": 1792853250.177922,
+    "ast_hash": "2d9c38be7503283c10a81e5b086819f7",
     "semantic_hash": ""
   }
 }

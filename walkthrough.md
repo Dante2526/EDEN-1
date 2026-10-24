@@ -2517,3 +2517,28 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - `npm run build`: Build Vite + Cloudflare Worker concluído em **2.17s** (`dist/_worker.js` gerado com sucesso).
 - `python -m graphify update .`: Grafo atualizado (14.993 nós, 17.145 arestas).
 - Code Review formal: Todos os 4 pontos `Important` resolvidos (**Ready to merge: Yes**).
+
+
+## 140. Superpoderes de IDE para o Agente do Éden: Leitura Cirúrgica + Validador Sintático (2026-10-24)
+
+### 1. Diagnóstico do Gargalo
+- Ao receber tarefas como "mova o botão de vídeo para o canto esquerdo", agentes anteriores demoravam minutos ou falhavam porque:
+  1. O arquivo `src/App.tsx` possui mais de 6.000 linhas; baixar o arquivo inteiro estouraria o contexto da IA e gerava latências altíssimas de TTFT.
+  2. O `search_code` não retornava o número exato da linha do arquivo, forçando a IA a "chutar" o contexto ao redor.
+  3. Ao mover blocos, erros manuais de fechamento de tags JSX ou chaves `{}` salvavam código corrompido no Source Control local.
+
+### 2. Implementação das Novas Capacidades
+- **`sliceFileLines` ([src/lib/file-patcher.ts](file:///c:/Users/nayla/.antigravity/Synap/src/lib/file-patcher.ts)):**
+  - Adicionado suporte a `start_line` e `end_line` na tool `read_file`.
+  - Retorna o trecho fatiado com cabeçalho `[Linhas X-Y de Z]` e linhas numeradas com padding fixo (`165 | <button ...>`). Inverte e ajusta automaticamente limites (clamp seguro).
+- **`search_code` com Números de Linha ([src/App.tsx](file:///c:/Users/nayla/.antigravity/Synap/src/App.tsx)):**
+  - Os snippets retornados pela busca rápida no cache agora trazem a linha exata correspondente (`L165: <button ...>`).
+- **`validateCodeIntegrity` ([src/lib/file-patcher.ts](file:///c:/Users/nayla/.antigravity/Synap/src/lib/file-patcher.ts)):**
+  - Validador sintático via TypeScript Compiler API que analisa se o arquivo `.ts`, `.tsx`, `.js`, `.jsx` ou `.json` gerado pelo patch possui erros de sintaxe ou delimitadores desbalanceados (`{}`, `[]`, `()`, tags JSX).
+  - Integrado em `patch_file` e `edit_file` antes de atualizar o cache em memória e o Source Control. Se a alteração quebrar a sintaxe, a tool retorna o erro cirúrgico com linha e coluna para a IA corrigir imediatamente.
+
+### 3. Verificação & Deploy
+- `npx tsc --noEmit`: **0 erros**.
+- `npm test`: **225/225 testes unitários passando** (45 suítes).
+- `npm run build`: Build Vite + Cloudflare Worker gerado em 6.97s.
+- `wrangler pages deploy`: Deploy concluído com sucesso em produção (`https://c66ed078.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).
