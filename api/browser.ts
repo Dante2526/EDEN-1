@@ -12,7 +12,7 @@ export const config = {
 };
 
 function extractCleanText(html: string, maxChars = 1500): string {
-  const clean = html
+  let clean = html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<nav[\s\S]*?<\/nav>/gi, '')
@@ -26,13 +26,17 @@ function extractCleanText(html: string, maxChars = 1500): string {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   return clean.length > maxChars ? clean.slice(0, maxChars) + '...' : clean;
 }
 
-export default async function handler(req: Request, envArg?: Env): Promise<Response> {
+export default async function handler(
+  req: Request,
+  envArg?: Env
+): Promise<Response> {
   const authErr = await checkAuthAndRateLimit(req, envArg);
   if (authErr) return authErr;
 
@@ -56,13 +60,13 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       });
     }
 
-    const resolvedApiKey = apiKey || env.BROWSERLESS_API_KEY || '';
-    const customEndpoint = browserEndpoint || env.BROWSER_ENDPOINT || '';
+    const resolvedApiKey = apiKey ?? env.BROWSERLESS_API_KEY ?? '';
+    const customEndpoint = browserEndpoint ?? env.BROWSER_ENDPOINT ?? '';
 
-    // Se tiver chave Browserless ou endpoint personalizado
+    // Se tiver chave customizada ou endpoint, chama o Browserless diretamente
     if (resolvedApiKey || customEndpoint) {
-      const endpoint = customEndpoint || `https://chrome.browserless.io/function?token=${resolvedApiKey}`;
-      const code = body.code || buildPuppeteerFunctionScript(body);
+      const endpoint = customEndpoint ?? `https://chrome.browserless.io/function?token=${resolvedApiKey}`;
+      const code = body.code ?? buildPuppeteerFunctionScript(body);
 
       try {
         const browserRes = await fetch(endpoint, {
@@ -74,16 +78,16 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
 
         if (browserRes.ok) {
           const data = (await browserRes.json()) as any;
-          const html = data.html || '';
+          const html = data.html ?? '';
           const interactiveElements = parseInteractiveElementsFromHtml(html);
           const extractedText = extractCleanText(html);
 
           const result: BrowserActionResult = {
             success: data.success ?? true,
-            currentUrl: data.currentUrl || url || '',
-            title: data.title || '',
+            currentUrl: data.currentUrl ?? url ?? '',
+            title: data.title ?? '',
             action: action,
-            actionDescription: data.actionDescription || `${action} executado com sucesso`,
+            actionDescription: data.actionDescription ?? `${action} executado com sucesso`,
             screenshotBase64: data.screenshotBase64,
             interactiveElements,
             extractedText,
@@ -99,23 +103,23 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           });
         }
       } catch (err: any) {
-        console.warn('[BrowserAPI] Falha no endpoint Browserless, caindo para fallback:', err?.message);
+        console.warn('[Browser API] Falha no endpoint Browserless, caindo para fallback:', err?.message);
       }
     }
 
-    // Modo Fallback Edge / Headless sem chave (Jina Reader Chromium Render)
-    const targetUrl = url?.trim() || '';
+    // Modo Fallback: Edge / Headless sem chave (Jina Reader Chromium Render)
+    const targetUrl = url?.trim() ?? '';
     if (!targetUrl) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Nenhuma URL informada. Use action: "navigate" com o parâmetro "url" para abrir uma página.',
+          error: 'Nenhuma URL informada. Use action: "navigate" com o parâmetro "url" para abrir um endereço.',
           action,
           actionDescription: 'Aguardando URL de navegação',
           currentUrl: 'about:blank',
-          title: 'Navegador Autônomo',
+          title: 'Navegador Automático',
           interactiveElements: [],
-          extractedText: 'Nenhuma página aberta. Forneça uma URL para navegar.',
+          extractedText: 'Nenhuma página aberta ainda. Forneça uma URL para navegar.',
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
@@ -131,7 +135,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       signal: AbortSignal.timeout(15000),
     });
 
-    const html = jinaRes.ok ? await jinaRes.text() : `<html><body><p>Navegado para ${targetUrl}</p></body></html>`;
+    const html = jinaRes.ok ? await jinaRes.text() : `<html><body><p>Navegação para ${targetUrl}</p></body></html>`;
     const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const title = titleMatch ? titleMatch[1].trim() : targetUrl;
     const interactiveElements = parseInteractiveElementsFromHtml(html);
@@ -139,12 +143,12 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
 
     const actionDesc =
       action === 'navigate'
-        ? `Navegou para ${targetUrl}`
+        ? `Navegue para ${targetUrl}`
         : action === 'click'
-        ? `Clicou no elemento ${selector || 'solicitado'}`
+        ? `Clique no elemento ${selector ?? 'solicitado'}`
         : action === 'type'
-        ? `Digitou "${text || ''}" em ${selector || 'campo'}`
-        : `Ação ${action} processada com sucesso`;
+        ? `Digite "${text ?? ''}" em ${selector ?? 'campo'}`
+        : `${action} processado com sucesso`;
 
     const result: BrowserActionResult = {
       success: true,
@@ -155,7 +159,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       interactiveElements,
       extractedText,
       networkErrors: !jinaRes.ok
-        ? [{ url: targetUrl, status: jinaRes.status, statusText: jinaRes.statusText || 'Erro HTTP' }]
+        ? [{ url: targetUrl, status: jinaRes.status, statusText: jinaRes.statusText ?? 'Erro HTTP' }]
         : undefined,
     };
 
@@ -167,9 +171,9 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     return new Response(
       JSON.stringify({
         success: false,
-        error: err?.message || 'Falha ao processar ação no navegador',
+        error: err?.message ?? 'Falha ao processar navegador',
         action: 'navigate',
-        actionDescription: 'Erro de execução',
+        actionDescription: 'Erro ao executar',
         currentUrl: '',
         title: '',
         interactiveElements: [],

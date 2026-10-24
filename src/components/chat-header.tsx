@@ -281,15 +281,18 @@ export const ChatHeader: React.FC<ChatHeaderProps> = React.memo(({
           </button>
         )}
 
-        {/* Cloudflare Pages Deployment Status Badge (lado direito superior) */}
-        {deployment && (
+      </div>
+
+      {/* Cloudflare Pages Deployment Status Badge (lado esquerdo superior) */}
+      {deployment && (
+        <div className="absolute left-16 sm:left-20 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
           <DeploymentStatusBadge
             deployment={deployment}
             isLoading={isLoadingDeployment}
             onClick={onOpenDeploymentLogs}
           />
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 });
