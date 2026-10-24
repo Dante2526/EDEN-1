@@ -36,6 +36,14 @@ import {
   saveKnowledgeFacts,
 } from './lib/storage';
 import { formatKnowledgePrompt, createKnowledgeFact } from './lib/knowledge-base';
+import {
+  detectHarnessNeed,
+  proposeHarnessCandidate,
+  probeHarnessCandidate,
+  composeHarness,
+  formatComposedHarnessForPrompt,
+  ComposedHarness,
+} from './lib/harness2-engine';
 import { generateId, generateTitleFromMessage, formatFileSize } from './lib/utils';
 import { ChatHeader } from './components/chat-header';
 import { useDeploymentMonitor } from './lib/deployment-service';
@@ -1470,6 +1478,41 @@ function AppContent() {
 
   // Knowledge Base & Persistent Memory state
   const [knowledgeFacts, setKnowledgeFacts] = useState<KnowledgeFact[]>([]);
+  const toolFailuresRef = useRef<Record<string, number>>({});
+  const [composedHarnessList, setComposedHarnessList] = useState<ComposedHarness[]>(() => {
+    try {
+      const stored = localStorage.getItem('synap_harness2_composed') || localStorage.getItem('eden_harness2_composed');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const triggerHarnessCycle = useCallback((toolName: string, errorMsg: string, taskDesc?: string) => {
+    try {
+      toolFailuresRef.current[toolName] = (toolFailuresRef.current[toolName] || 0) + 1;
+      const consecutiveFailures = toolFailuresRef.current[toolName];
+      const failCtx = { toolName, errorMessage: errorMsg, consecutiveFailures, taskDescription: taskDesc };
+
+      if (detectHarnessNeed(failCtx)) {
+        const candidate = proposeHarnessCandidate(failCtx);
+        const probe = probeHarnessCandidate(candidate, failCtx);
+        if (probe.passed) {
+          const composed = composeHarness(candidate);
+          setComposedHarnessList((prev) => {
+            const updated = [...prev.filter((c) => c.candidate.id !== composed.candidate.id), composed].slice(-6);
+            try {
+              localStorage.setItem('synap_harness2_composed', JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+          console.info(`[Harness²] Auto-evolução composta (${toolName}):`, composed.candidate.title);
+        }
+      }
+    } catch (err) {
+      console.warn('[Harness²] Erro silencioso no ciclo:', err);
+    }
+  }, []);
 
   // Theme state (dark / light mode)
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
@@ -4267,7 +4310,7 @@ function AppContent() {
       : undefined;
 
     // Injetar Base de Conhecimento persistente (Memória de longo prazo)
-    const memoriesPrompt = formatKnowledgePrompt(knowledgeFacts);
+    const memoriesPrompt = formatKnowledgePrompt(knowledgeFacts) + formatComposedHarnessForPrompt(composedHarnessList);
 
     const convForPayload: Conversation = currentConv
       ? { ...currentConv, messages: [...currentConv.messages, userMessage] }
@@ -4884,6 +4927,20 @@ function AppContent() {
                   debugInfoRef.current.toolCallsExecuted++;
                 }
               }
+
+              // Interceptar erros lógicos retornados no JSON da ferramenta (ex: [Validador de Integridade] ou patch falhou)
+              let logicalError = '';
+              if (typeof result === 'string') {
+                try {
+                  const parsed = JSON.parse(result);
+                  if (parsed.error) logicalError = String(parsed.error);
+                } catch {}
+              }
+              if (logicalError) {
+                triggerHarnessCycle(tc.name, logicalError, userMessage.content);
+              } else {
+                toolFailuresRef.current[tc.name] = 0;
+              }
             } catch (toolErr: any) {
               result = JSON.stringify({ error: toolErr?.message || 'Falha ao executar ferramenta.' });
               const callEntry = allToolCalls.find((x) => x.id === tc.id);
@@ -4891,6 +4948,7 @@ function AppContent() {
                 callEntry.status = 'error';
                 callEntry.result = result;
               }
+              triggerHarnessCycle(tc.name, toolErr?.message || 'Falha ao executar ferramenta.', userMessage.content);
             }
 
             if (editedFile) {

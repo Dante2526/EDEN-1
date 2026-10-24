@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792860938.3087335,
-    "ast_hash": "45f757e4684039e0922bca32f50accb7",
+    "mtime": 1792862095.5270011,
+    "ast_hash": "ae92c772ee8455ad74285801c804c50d",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792852249.1407213,
-    "ast_hash": "da17932662d6cf4efe5bd6cf703e5a70",
+    "mtime": 1792862171.1374123,
+    "ast_hash": "761f806250eab2e4724245c407b278bf",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6052,6 +6052,16 @@
   ".agents/rules/protect-flow-finance.md": {
     "mtime": 1792853250.177922,
     "ast_hash": "2d9c38be7503283c10a81e5b086819f7",
+    "semantic_hash": ""
+  },
+  "src/lib/harness2-engine.test.ts": {
+    "mtime": 1792861656.0283701,
+    "ast_hash": "7d2ead8682a24a3b94dba7e091e242df",
+    "semantic_hash": ""
+  },
+  "src/lib/harness2-engine.ts": {
+    "mtime": 1792862034.2189753,
+    "ast_hash": "2299c30e6dfeafa2af56df527df4d7b9",
     "semantic_hash": ""
   }
 }

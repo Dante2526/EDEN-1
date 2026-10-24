@@ -2542,3 +2542,31 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - `npm test`: **225/225 testes unitários passando** (45 suítes).
 - `npm run build`: Build Vite + Cloudflare Worker gerado em 6.97s.
 - `wrangler pages deploy`: Deploy concluído com sucesso em produção (`https://c66ed078.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).
+
+
+## 141. PoC do Harness² (Google Research / arXiv:2610.14224): Auto-Evolução Recursiva de Prompts e Ferramentas (2026-10-24)
+
+### 1. Contexto e Motivação
+- Publicado pelo Google Cloud AI Research em outubro de 2026, o paper **Harness² (Recursive Agent Harnessing for an Open World - arXiv:2610.14224)** demonstra que o desempenho de agentes autônomos não depende unicamente dos pesos do modelo base, mas do seu "harness" de execução (prompts, regras de sistema, memórias e composição de ferramentas).
+- O framework estabelece dois níveis de recursão:
+  1. **Recursão de Tarefa (Ciclo Propose–Probe–Compose):** Quando uma ferramenta falha repetidamente ou quebra sintaxe/delimitadores, o agente analisa a falha, propõe uma adaptação no harness, valida-a em sandbox/probe e compõe o aprendizado em tempo real.
+  2. **Recursão de Harness (Memória Persistente de Aprendizado):** Os aprendizados são consolidados e preservados entre turnos e conversas, acelerando a resolução de tarefas futuras sem necessidade de retreinar o modelo de linguagem.
+
+### 2. Implementação no Éden
+- **Motor `harness2-engine.ts` ([src/lib/harness2-engine.ts](file:///c:/Users/nayla/.antigravity/Synap/src/lib/harness2-engine.ts)):**
+  - `detectHarnessNeed(context)`: Detecta reincidência de erros ou falhas críticas de sintaxe/delimitadores.
+  - `proposeHarnessCandidate(context)`: Gera candidatos com IDs determinísticos (garantindo deduplicação semântica precisa por ferramenta e tipo).
+  - `probeHarnessCandidate(candidate, context)`: Validação de segurança e integridade do candidato antes da composição.
+  - `composeHarness(candidate)`: Empacota a regra com timestamp de auditoria e persistência ativada.
+  - `formatComposedHarnessForPrompt(composedList)`: Injeta de forma compacta os aprendizados ativos no prompt da IA (`[Harness² Auto-Evolução: Aprendizados Ativos]`) com teto anti-bloat (`.slice(-4)`).
+- **Integração no Loop de Execução ([src/App.tsx](file:///c:/Users/nayla/.antigravity/Synap/src/App.tsx)):**
+  - Rastreamento real de falhas consecutivas (`toolFailuresRef.current[toolName]`) com reset a zero em execuções bem-sucedidas.
+  - Interceptação dupla: acionado tanto em exceções não tratadas no `catch` quanto em erros lógicos retornados no JSON da ferramenta (ex.: `[Validador de Integridade]`).
+  - Persistência com fallback em `localStorage` (`synap_harness2_composed` e `eden_harness2_composed`).
+
+### 3. Evidências de Verificação & Code Review
+- `npx tsc --noEmit`: **0 erros**.
+- `npm test`: **230/230 testes unitários passando** (46 suítes, 100% verde).
+- `npm run build`: Bundle de produção e Cloudflare Pages Worker (`dist/_worker.js`, 218.2 kB) gerados com sucesso em 3.34s.
+- Code Review formal: Apontamentos de desconexão de gatilho, deduplicação e tracking de falhas corrigidos integralmente.
+- Deploy em produção: Publicado com sucesso no Cloudflare Pages (`https://12c2d7ef.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).
