@@ -11,7 +11,7 @@
 
 name = "synap"
 compatibility_date = "2026-10-01"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "streams_enable_constructors"]
 
 # Pages: o diretório de saída do Vite é `dist/`.
 # O _worker.ts na raiz vira o entrypoint do Worker que intercepta /api/*.
