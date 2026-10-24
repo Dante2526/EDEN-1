@@ -1,16 +1,16 @@
-# Graph Report - Synap  (2026-10-20)
+# Graph Report - Synap  (2026-10-24)
 
 ## Corpus Check
-- 1047 files · ~1,951,760 words
+- 1049 files · ~1,673,052 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 15056 nodes · 17083 edges · 1016 communities (908 shown, 108 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 125 edges (avg confidence: 0.63)
+- 14972 nodes · 17071 edges · 1015 communities (905 shown, 110 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 126 edges (avg confidence: 0.63)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f954729e`
+- Built from commit: `a6662039`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1012,19 +1012,18 @@
 - _best_font_for_char
 - Éden - Frontend, Componentes e Telas
 - Éden - Backend, Servidor e Rotas Edge
-- context-compactor.ts
 
 ## God Nodes (most connected - your core abstractions)
-1. `Walkthrough: Revisão e Hardening (Arquitetura e Infraestrutura)` - 137 edges
-2. `AppContent()` - 84 edges
-3. `Éden - Arquitetura, Motores e Tipos` - 62 edges
-4. `Éden - Frontend, Componentes e Telas` - 44 edges
-5. `main()` - 39 edges
-6. `Document` - 36 edges
-7. `_request()` - 31 edges
-8. `checkAuthAndRateLimit()` - 29 edges
-9. `_track_cost()` - 29 edges
-10. `DeckStage` - 29 edges
+1. `Walkthrough: Revisão e Hardening (Arquitetura e Infraestrutura)` - 139 edges
+2. `AppContent()` - 91 edges
+3. `main()` - 39 edges
+4. `Document` - 36 edges
+5. `checkAuthAndRateLimit()` - 31 edges
+6. `_request()` - 31 edges
+7. `_track_cost()` - 29 edges
+8. `DeckStage` - 29 edges
+9. `getEnv()` - 26 edges
+10. `BaseSchemaValidator` - 25 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `PreviewDevTools()` --indirect_call--> `log()`  [INFERRED]
@@ -1035,25 +1034,25 @@
   api/browser.ts → lib/server/env.ts
 - `handler()` --calls--> `checkAuthAndRateLimit()`  [EXTRACTED]
   api/browser.ts → lib/server/_security.ts
-- `handler()` --calls--> `checkAuthAndRateLimit()`  [EXTRACTED]
-  api/chat-test.ts → lib/server/_security.ts
+- `handler()` --calls--> `getEnv()`  [EXTRACTED]
+  api/chat.ts → lib/server/env.ts
 
 ## Import Cycles
 - 1-file cycle: `skills/get-fortune-analysis/lunar_python.py -> skills/get-fortune-analysis/lunar_python.py`
 
-## Communities (1016 total, 108 thin omitted)
+## Communities (1015 total, 110 thin omitted)
 
 ### Community 0 - "_security.ts"
-Cohesion: 0.13
-Nodes (24): config, handler(), config, extractErrorSnippet(), handler(), normalizeCloudflareStatus(), NormalizedDeploymentStatus, config (+16 more)
+Cohesion: 0.11
+Nodes (32): config, handler(), config, extractErrorSnippet(), handler(), normalizeCloudflareStatus(), NormalizedDeploymentStatus, config (+24 more)
 
 ### Community 1 - "aminer_client.py"
 Cohesion: 0.07
 Nodes (80): build_parser(), get_cost_summary(), main(), org_detail(), org_disambiguate(), org_disambiguate_pro(), org_paper_relation(), org_patent_relation() (+72 more)
 
 ### Community 2 - "App.tsx"
-Cohesion: 0.03
-Nodes (90): ALL_CHAT_TOOLS, AppContent(), BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL (+82 more)
+Cohesion: 0.04
+Nodes (84): ALL_CHAT_TOOLS, AppContent(), BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL (+76 more)
 
 ### Community 3 - "QuizMasteryService"
 Cohesion: 0.11
@@ -1073,15 +1072,15 @@ Nodes (57): check_conversion(), check_docx(), check_pdf(), check_run_hint_style(
 
 ### Community 7 - "github.ts"
 Cohesion: 0.06
-Nodes (63): CreateRepoModal(), CreateRepoModalProps, FileExplorer(), FileExplorerProps, RepoListProps, DiffViewer(), DiffViewerProps, ReactDiffViewer (+55 more)
+Nodes (55): react, react, ChatImage(), SwipeableConversationItem(), CreateRepoModal(), CreateRepoModalProps, FileExplorer(), RepoList() (+47 more)
 
 ### Community 8 - "design_system.py"
 Cohesion: 0.06
 Nodes (42): BM25, detect_domain(), _load_csv(), Lowercase, split, remove punctuation, filter short words, Build BM25 index from documents, Score all documents against query, Load CSV and return list of dicts, Core search function using BM25 (+34 more)
 
 ### Community 9 - "preview-html.ts"
-Cohesion: 0.13
-Nodes (32): PreviewDevTools(), PreviewDevToolsProps, buildTranspiledHtmlSync(), LocalPreview(), createConsoleLogItem(), createNetworkRequestItem(), DevToolsEvent, DevToolsEventData (+24 more)
+Cohesion: 0.09
+Nodes (42): PreviewDevTools(), PreviewDevToolsProps, buildTranspiledHtmlSync(), LocalPreview(), LocalPreviewProps, ProjectWorkspace(), ProjectWorkspaceProps, StackBlitzPreviewProps (+34 more)
 
 ### Community 10 - "html2pptx1.js"
 Cohesion: 0.09
@@ -1093,14 +1092,14 @@ Nodes (10): config, extractCleanText(), handler(), BrowserActionParams, BrowserA
 
 ### Community 12 - ".error"
 Cohesion: 0.09
-Nodes (44): convert_blueprint(), convert_html(), extract_image(), extract_table(), extract_text(), form_fill(), form_info(), form_render() (+36 more)
+Nodes (42): convert_blueprint(), convert_html(), extract_image(), extract_table(), extract_text(), form_fill(), form_render(), _load_json_arg() (+34 more)
 
 ### Community 13 - "pdf_qa.py"
 Cohesion: 0.10
 Nodes (37): check_blank_pages(), check_body_page_numbers(), check_colors(), check_content_fill_ratio(), check_cover_bleed(), check_font_embedding(), check_formula_overflow(), check_helvetica_in_cjk() (+29 more)
 
 ### Community 14 - "types.ts"
-Cohesion: 0.34
+Cohesion: 0.31
 Nodes (13): BrowserRecipeModal(), BrowserRecipeModalProps, BrowserRecipe, BrowserRecipeAction, BrowserRecipeActionType, compileRecipeToPuppeteerScript(), createBrowserRecipe(), createRecipeAction() (+5 more)
 
 ### Community 15 - "compilerOptions"
@@ -1129,7 +1128,7 @@ Nodes (27): HTMLParser, _best_generic(), check_html(), check_pdf(), check_tex(),
 
 ### Community 21 - "graphify-engine.ts"
 Cohesion: 0.13
-Nodes (24): ColorPalette, getNodePalette(), GraphModal(), Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode(), Node3D (+16 more)
+Nodes (25): ColorPalette, getNodePalette(), GraphModal(), GraphModalProps, Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode() (+17 more)
 
 ### Community 22 - "run_loop"
 Cohesion: 0.11
@@ -1144,8 +1143,8 @@ Cohesion: 0.14
 Nodes (26): check_blank_pages(), check_cover_overflow(), check_font_fallback(), check_heading_levels(), check_image_aspect_ratio(), check_image_overflow(), check_line_spacing(), check_shading_type() (+18 more)
 
 ### Community 26 - "Document"
-Cohesion: 0.15
-Nodes (19): CloudflareThinkSplitter, config, handler(), maxTokensFor(), modelFallbackCache, RFC-1918, ALLOWED_MODELS, checkAuthAndRateLimit() (+11 more)
+Cohesion: 0.14
+Nodes (18): CloudflareThinkSplitter, config, handler(), maxTokensFor(), modelFallbackCache, RFC-1918, ALLOWED_MODELS, checkRateLimit() (+10 more)
 
 ### Community 27 - "aminer_api.py"
 Cohesion: 0.20
@@ -1157,7 +1156,7 @@ Nodes (27): llm, podcast, tts, z-ai, dependencies, z-ai-web-dev-sdk, description
 
 ### Community 29 - "run_pipeline"
 Cohesion: 0.06
-Nodes (42): ChatInput, ChatInputProps, CompactionMarker(), CompactionMarkerProps, ExtensionsPanel(), ExtensionsPanelProps, FileAttachmentPreviews(), FileAttachmentPreviewsProps (+34 more)
+Nodes (49): ChatMessageProps, ChatSidebar, ChatSidebarProps, ProjectsPanel, SwipeableConversationItemProps, CompactionMarker(), CompactionMarkerProps, DarkModeToggle() (+41 more)
 
 ### Community 30 - "compilerOptions"
 Cohesion: 0.07
@@ -1169,7 +1168,7 @@ Nodes (15): range, _create_line_tracking_parser(), Recursively extract all text 
 
 ### Community 32 - "DocxXMLEditor"
 Cohesion: 0.08
-Nodes (17): DocxXMLEditor, Initialize with required RSID and optional author.          Args:, Add RSID and optionally enable track revisions and update fields in settings.xml, Get the next available change ID by checking all tracked change elements., Ensure w16du namespace is declared on the root element., Ensure w16cex namespace is declared on the root element., Ensure w14 namespace is declared on the root element., Inject RSID, author, and date attributes into DOM nodes where applicable. (+9 more)
+Nodes (16): DocxXMLEditor, Add RSID and optionally enable track revisions and update fields in settings.xml, Get the next available change ID by checking all tracked change elements., Ensure w16du namespace is declared on the root element., Ensure w16cex namespace is declared on the root element., Ensure w14 namespace is declared on the root element., Inject RSID, author, and date attributes into DOM nodes where applicable., Replace node with automatic attribute injection. (+8 more)
 
 ### Community 33 - "subagent-runner.ts"
 Cohesion: 0.16
@@ -1200,16 +1199,20 @@ Cohesion: 0.06
 Nodes (34): align_header(), apply_chart_colors(), apply_pie_colors(), border_header(), copy_style(), create_bar_chart(), create_line_chart(), create_pie_chart() (+26 more)
 
 ### Community 40 - "deployment-service.ts"
-Cohesion: 0.16
-Nodes (17): ChatHeader, ChatHeaderProps, DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal(), DeploymentLogModalProps, DeploymentStatusBadge(), DeploymentStatusBadgeProps (+9 more)
+Cohesion: 0.14
+Nodes (20): ChatHeader, ChatHeaderProps, DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal(), DeploymentLogModalProps, DeploymentStatusBadge(), DeploymentStatusBadgeProps (+12 more)
 
 ### Community 41 - "BaseSchemaValidator"
 Cohesion: 0.08
 Nodes (17): BaseSchemaValidator, Run all validation checks and return True if all pass., Validate that all XML files are well-formed., Base validator with common validation logic for document files., Validate that namespace prefixes in Ignorable attributes are declared., Validate that specific IDs are unique according to OOXML requirements., Validate that all .rels files properly reference files and that all files are re, Validate that all r:id attributes in XML files reference existing IDs         i (+9 more)
 
+### Community 42 - "chat-message.tsx"
+Cohesion: 0.14
+Nodes (23): COMMON_EMOJIS, FONTS, ImageEditorModal(), ImageEditorModalProps, downloadDataUrl(), exportCanvasToPng(), BackgroundLayer, BaseLayer (+15 more)
+
 ### Community 43 - "add_toc_placeholders.py"
-Cohesion: 0.08
-Nodes (45): GraphModalProps, applyFilePatches(), countOccurrences(), EffectiveFileResolution, normalizePatchArgs(), normalizeRepoPath(), PatchBlock, PatchResult (+37 more)
+Cohesion: 0.10
+Nodes (40): applyFilePatches(), countOccurrences(), EffectiveFileResolution, normalizePatchArgs(), normalizeRepoPath(), PatchBlock, PatchResult, resolveEffectiveFileContent() (+32 more)
 
 ### Community 44 - "generate.ts"
 Cohesion: 0.16
@@ -1224,8 +1227,8 @@ Cohesion: 0.15
 Nodes (19): _Palette, apply_palette(), detect_style(), get_palette(), _infer_from_scene(), list_available(), _make_palette(), _match_style_keywords() (+11 more)
 
 ### Community 47 - "._setup_tracking"
-Cohesion: 0.09
-Nodes (21): Document, _generate_hex_id(), Add a single comment to comments.xml., Add a single comment to commentsExtended.xml., Add a single comment to commentsIds.xml., Add a single comment to commentsExtensible.xml., Generate XML for comment range start., Generate XML for comment range end with reference run.          Note: w:rsidR (+13 more)
+Cohesion: 0.07
+Nodes (27): Document, _generate_hex_id(), Add people.xml relationship to document.xml.rels if not already present., Add a single comment to comments.xml., Add a single comment to commentsExtended.xml., Add a single comment to commentsIds.xml., Add a single comment to commentsExtensible.xml., Generate XML for comment range start. (+19 more)
 
 ### Community 48 - "convert_latex"
 Cohesion: 0.12
@@ -1236,12 +1239,12 @@ Cohesion: 0.18
 Nodes (15): main(), main(), build_extraction_prompt(), _parse_docx(), parse_file(), _parse_pdf(), _parse_ppt(), _parse_pptx() (+7 more)
 
 ### Community 50 - "settings-modal.tsx"
-Cohesion: 0.10
-Nodes (33): CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatMessage, ChatMessageProps, CodeBlock(), CodeBlockProps, OpenCutModal(), OpenCutModalProps (+25 more)
+Cohesion: 0.09
+Nodes (34): CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatMessage, ClaudeLogoProps, EdenBonsaiLogo(), EdenBonsaiLogoProps, CodeBlock(), CodeBlockProps (+26 more)
 
 ### Community 51 - "dependencies"
 Cohesion: 0.06
-Nodes (33): @andresaya/edge-tts, clsx, @codesandbox/sandpack-react, docx, exceljs, express, jspdf, jspdf-autotable (+25 more)
+Nodes (33): @andresaya/edge-tts, cheerio, clsx, @codesandbox/sandpack-react, cross-env, docx, dotenv, exceljs (+25 more)
 
 ### Community 52 - "compilerOptions"
 Cohesion: 0.12
@@ -1256,8 +1259,8 @@ Cohesion: 0.20
 Nodes (8): PPTXSchemaValidator, Check if a value has the general structure of a UUID., Validate that sldLayoutId elements in slide masters reference valid slide layout, Validator for PowerPoint presentation XML files against XSD schemas., Validate that each slide has exactly one slideLayout reference., Validate that each notesSlide file is referenced by only one slide., Run all validation checks and return True if all pass., Validate that ID attributes that look like UUIDs contain only hex values.
 
 ### Community 55 - "GlobalErrorBoundary"
-Cohesion: 0.07
-Nodes (26): react, react, ChatImage(), ChatSidebar, ChatSidebarProps, ProjectsPanel, SwipeableConversationItem(), DarkModeToggle() (+18 more)
+Cohesion: 0.15
+Nodes (9): ErrorBoundaryProps, ErrorBoundaryState, GlobalErrorBoundary, DiffViewer(), DiffViewerProps, ReactDiffViewer, isDynamicChunkError(), lazyWithRetry() (+1 more)
 
 ### Community 56 - "compilerOptions"
 Cohesion: 0.12
@@ -1269,15 +1272,15 @@ Nodes (7): Generate detailed word-level differences using git word diff., Valida
 
 ### Community 58 - "._validate_single_file_xsd"
 Cohesion: 0.01
-Nodes (137): 100. Inicialização e Mapeamento Completo com Graphify, 101. Upgrades de Elite dos Agentes Éden: `patch_file`, Memória Contínua e Superpoderes Multi-Agente, 102. Modo Plano Obrigatório (Hard-Gate de Escrita + Botão Aprovar e Executar Plano), 103. Auditoria Arquitetural e Correção de 5 Bugs Críticos e Médios, 104. Correção do Travamento Infinito em "Pensando…" e Auto-Continuação Inteligente, 105. Aceleração de Conexão e Redução de Time-To-First-Token (TTFT) com a NVIDIA NIM, 106. Higienização do Live Preview (Import Map e Exclusão de Testes/Linters), 107. Superpoderes de Scraping, `curl`, `ffprobe` e Ponte de Rede Python no Éden (+129 more)
+Nodes (139): 100. Inicialização e Mapeamento Completo com Graphify, 101. Upgrades de Elite dos Agentes Éden: `patch_file`, Memória Contínua e Superpoderes Multi-Agente, 102. Modo Plano Obrigatório (Hard-Gate de Escrita + Botão Aprovar e Executar Plano), 103. Auditoria Arquitetural e Correção de 5 Bugs Críticos e Médios, 104. Correção do Travamento Infinito em "Pensando…" e Auto-Continuação Inteligente, 105. Aceleração de Conexão e Redução de Time-To-First-Token (TTFT) com a NVIDIA NIM, 106. Higienização do Live Preview (Import Map e Exclusão de Testes/Linters), 107. Superpoderes de Scraping, `curl`, `ffprobe` e Ponte de Rede Python no Éden (+131 more)
 
 ### Community 59 - "migrate-theme.mjs"
 Cohesion: 0.20
 Nodes (14): BG, dark, FG, hexToRgb(), hslToHex(), light, lightValue(), names (+6 more)
 
 ### Community 60 - ".__init__"
-Cohesion: 0.13
-Nodes (11): _condense_xml(), _generate_rsid(), _pack_document(), Check if an author already exists in people.xml., Add author to people.xml (called during initialization)., Strip unnecessary whitespace from XML, preserving text content., Generate random 8-character hex RSID., Initialize with path to unpacked Word document directory.         Automatically (+3 more)
+Cohesion: 0.15
+Nodes (10): _condense_xml(), _generate_rsid(), _pack_document(), Initialize with required RSID and optional author.          Args:, Strip unnecessary whitespace from XML, preserving text content., Generate random 8-character hex RSID., Initialize with path to unpacked Word document directory.         Automatically, Pack an unpacked directory back into a .docx file. (+2 more)
 
 ### Community 61 - "StreamingSpeechQueue"
 Cohesion: 0.25
@@ -1392,8 +1395,8 @@ Cohesion: 0.36
 Nodes (8): categorize_story(), extract_experiences(), load_resume_text(), main(), Path, 简易抽取：找形如 "公司 | 岗位 | 时间" 或 "项目名 | ..." 的行作为锚点，     然后取该行后面、下一个锚点之前的内容作为经历内容。, 根据 bullet 关键词，判断这个故事最适合回答哪一类行为题。, render()
 
 ### Community 90 - "_gather_fields"
-Cohesion: 0.14
-Nodes (13): _best_font_for_char(), _classify_field(), _current_value(), _extra_props(), font_fallback(), _gather_fields(), _has_glyph(), Walk the AcroForm field tree iteratively and return a flat list. (+5 more)
+Cohesion: 0.22
+Nodes (9): _classify_field(), _current_value(), _extra_props(), form_info(), _gather_fields(), Walk the AcroForm field tree iteratively and return a flat list., Return structured JSON describing every form field (pikepdf + check_fillable)., Map a PDF field type token to a human label. (+1 more)
 
 ### Community 91 - "copy-cf-artifacts.mjs"
 Cohesion: 0.29
@@ -1520,8 +1523,8 @@ Cohesion: 0.04
 Nodes (47): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Layout Principles, 6. Depth & Elevation, 7. Do's and Don'ts, 8. Responsive Behavior (+39 more)
 
 ### Community 124 - "vercel.json"
-Cohesion: 0.40
-Nodes (4): buildCommand, headers, outputDirectory, rewrites
+Cohesion: 0.27
+Nodes (11): SpeakButton(), SpeakButtonProps, cachedVoices, cleanTextForSpeech(), fallbackToBrowserSpeech(), getBestPortugueseVoice(), NEURAL_VOICES, NeuralVoice (+3 more)
 
 ### Community 125 - "magazine-bg-webgl.js"
 Cohesion: 0.83
@@ -1584,8 +1587,8 @@ Cohesion: 0.05
 Nodes (43): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Layout Principles, 6. Depth & Elevation, 7. Do's and Don'ts, 8. Responsive Behavior (+35 more)
 
 ### Community 153 - "run_pipeline"
-Cohesion: 0.25
-Nodes (4): Add people.xml relationship to document.xml.rels if not already present., Check if a relationship with given target exists., Set up comment infrastructure in unpacked directory.          Args:, Create people.xml if it doesn't exist.
+Cohesion: 0.29
+Nodes (8): buildHeadlessRenderUrl(), buildPendingRemoteAction(), isRemoteCommandRequiringApproval(), ParsedPlaywrightCommand, parsePlaywrightCommand(), PendingRemoteAction, RemoteActionStatus, RemoteDeployProvider
 
 ### Community 154 - "pptxgenjs"
 Cohesion: 0.05
@@ -3356,8 +3359,8 @@ Cohesion: 0.22
 Nodes (8): Analysis Tools, API Overview, Best Practices for Zhipu AI Stock Research (One-Shot Success Guide), Core Capabilities, Finance Skill, Market Data Retrieval, Market Intelligence, Zhipu AI - Hong Kong IPO Information
 
 ### Community 615 - "run_eval.py"
-Cohesion: 0.23
-Nodes (18): COBALT_INSTANCES, CobaltResponse, config, handler(), tryCobaltInstance(), isLocalOrPrivateUrl(), safeFetchWithRedirects(), detectMediaPlatform() (+10 more)
+Cohesion: 0.27
+Nodes (16): COBALT_INSTANCES, CobaltResponse, config, handler(), tryCobaltInstance(), detectMediaPlatform(), ExtractedMediaItem, ExtractedMediaResult (+8 more)
 
 ### Community 616 - "生成志愿填报报告"
 Cohesion: 0.22
@@ -3744,8 +3747,8 @@ Cohesion: 0.29
 Nodes (6): 转行 / 跨界叙事关键词, 通用关键词库（跨行业）, 通用硬技能, 通用职业资质, 通用软技能（任何岗位都吃香）, 量化结果通用模板
 
 ### Community 712 - "Data Analysis Patterns for Market Research"
-Cohesion: 0.50
-Nodes (4): Financial Analysis Patterns, Key Financial Metrics, Revenue Projection Model, Scenario Analysis Template
+Cohesion: 0.29
+Nodes (6): Data Analysis Patterns for Market Research, Financial Analysis Patterns, Key Financial Metrics, PESTLE Analysis, Revenue Projection Model, Scenario Analysis Template
 
 ### Community 713 - "Growth Rate Calculation"
 Cohesion: 0.29
@@ -3826,6 +3829,10 @@ Nodes (5): Global Constraints, Plano de Implementação: Blindagem de Execução
 ### Community 732 - "🚀 Como Rodar"
 Cohesion: 0.33
 Nodes (6): 1. Instalar dependências, 2. Configurar variáveis de ambiente, 3. Iniciar o servidor, 4. Acessar no navegador, 🚀 Como Rodar, Onde obter as chaves gratuitas:
+
+### Community 733 - "remote-gate.ts"
+Cohesion: 0.33
+Nodes (6): _best_font_for_char(), font_fallback(), _has_glyph(), Check whether *font_name* has a real glyph outline for *code*., Return the best registered font for a single character *code*., Wrap characters that *base_font* cannot render with ``<font>`` tags.      Pres
 
 ### Community 734 - "image.ts"
 Cohesion: 0.40
@@ -4057,7 +4064,7 @@ Nodes (5): 2.1 Core Iron Rule: Content Must Fill the Page, 2.2 Anti-Top-Heavy, 2
 
 ### Community 791 - "A0.3 - Z-Index Layer Management"
 Cohesion: 0.14
-Nodes (20): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), CODEC_MAP, CONTAINER_BOXES (+12 more)
+Nodes (21): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), isLocalOrPrivateUrl(), safeFetchWithRedirects() (+13 more)
 
 ### Community 792 - "Template 01: HUD Data Terminal - Ultra-Thick Vertical Anchor Line"
 Cohesion: 0.40
@@ -4416,8 +4423,8 @@ Cohesion: 0.50
 Nodes (3): Compliance note (discussion materials), External-distribution gate, Required disclosure blocks
 
 ### Community 882 - "Research Sources"
-Cohesion: 0.29
-Nodes (6): Data Analysis Patterns for Market Research, Data Validation, PESTLE Analysis, Primary Research, Research Sources, Secondary Research
+Cohesion: 0.50
+Nodes (4): Data Validation, Primary Research, Research Sources, Secondary Research
 
 ### Community 883 - "Chapter 3: Industry Drivers & Trends Visuals"
 Cohesion: 0.50
@@ -4567,10 +4574,6 @@ Nodes (3): CTR Optimization Patterns, Elements That Decrease CTR, Elements That 
 Cohesion: 0.47
 Nodes (4): Any, Path, read_json(), write_json()
 
-### Community 1004 - "voice-button.tsx"
-Cohesion: 0.35
-Nodes (9): VoiceButton(), VoiceButtonProps, ActiveRecording, getSupportedAudioMimeType(), isBrowserSpeechRecognitionSupported(), isMediaRecorderSupported(), sendAudioToTranscribe(), startAudioRecording() (+1 more)
-
 ### Community 1005 - "search.ts"
 Cohesion: 0.36
 Nodes (9): config, enrichResultsWithContent(), extractTextFromHtml(), handler(), searchBing(), searchDuckDuckGoApi(), searchDuckDuckGoPost(), SearchResult (+1 more)
@@ -4583,45 +4586,29 @@ Nodes (4): load_json(), main(), merge(), Path
 Cohesion: 0.24
 Nodes (15): config, handler(), ImageInpaintModal(), ImageInpaintModalProps, base64ToUint8Array(), buildInpaintCloudflarePayload(), buildInpaintNvidiaPayload(), extractRawBase64() (+7 more)
 
-### Community 1009 - "Éden - Arquitetura, Motores e Tipos"
-Cohesion: 0.03
-Nodes (62): 📄 Arquivo: `package.json`, 📄 Arquivo: `_routes.json`, 📄 Arquivo: `src/lib/agentic-patterns.ts`, 📄 Arquivo: `src/lib/audio-transcriber.ts`, 📄 Arquivo: `src/lib/auth.ts`, 📄 Arquivo: `src/lib/browser-agent-engine.ts`, 📄 Arquivo: `src/lib/browser-recipe-engine.ts`, 📄 Arquivo: `src/lib/canvas-prototype.ts` (+54 more)
-
 ### Community 1012 - "_best_font_for_char"
-Cohesion: 0.11
-Nodes (25): ClaudeLogoProps, EdenBonsaiLogo(), EdenBonsaiLogoProps, SettingsModal(), SettingsModalProps, SpeakButton(), SpeakButtonProps, removeGitHubPat() (+17 more)
-
-### Community 1013 - "Éden - Frontend, Componentes e Telas"
-Cohesion: 0.04
-Nodes (44): 📄 Arquivo: `src/App.tsx`, 📄 Arquivo: `src/components/browser-recipe-modal.tsx`, 📄 Arquivo: `src/components/canvas-prototype-card.tsx`, 📄 Arquivo: `src/components/chat-header.tsx`, 📄 Arquivo: `src/components/chat-input.tsx`, 📄 Arquivo: `src/components/chat-message.tsx`, 📄 Arquivo: `src/components/chat-sidebar.tsx`, 📄 Arquivo: `src/components/claude-logo.tsx` (+36 more)
-
-### Community 1014 - "Éden - Backend, Servidor e Rotas Edge"
-Cohesion: 0.10
-Nodes (19): 📄 Arquivo: `api/browser.ts`, 📄 Arquivo: `api/chat-test.ts`, 📄 Arquivo: `api/chat.ts`, 📄 Arquivo: `api/deployments.ts`, 📄 Arquivo: `api/download.ts`, 📄 Arquivo: `api/fetch-url.ts`, 📄 Arquivo: `api/github.ts`, 📄 Arquivo: `api/image.ts` (+11 more)
-
-### Community 1015 - "context-compactor.ts"
-Cohesion: 0.36
-Nodes (9): SwipeableConversationItemProps, buildCompactionPrompt(), compactConversation(), estimateConversationTokens(), prepareMessagesForApi(), shouldCompact(), createMockMessage(), runTests() (+1 more)
+Cohesion: 0.07
+Nodes (42): ChatInput, ChatInputProps, FileAttachmentPreviews(), FileAttachmentPreviewsProps, ModelControls(), ModelControlsProps, SettingsModal(), SettingsModalProps (+34 more)
 
 ## Knowledge Gaps
-- **9697 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+9692 more)
+- **9584 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+9579 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **108 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **110 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `dependencies` to `vite`, `package.json`, `thinking-orbs`, `@stackblitz/sdk`, `document-generator.ts`, `chat-message.tsx`, `cheerio`, `motion`, `GlobalErrorBoundary`, `remote-gate.ts`, `cheerio`, `react-diff-viewer-continued`?**
+- **Why does `AppContent()` connect `App.tsx` to `subagent-runner.ts`, `project-context.tsx`, `video.ts`, `github.ts`, `deployment-service.ts`, `document-generator.ts`, `chat-message.tsx`, `studio-panel.tsx`, `add_toc_placeholders.py`, `preview-html.ts`, `types.ts`, `settings-modal.tsx`, `_best_font_for_char`, `graphify-engine.ts`, `DeckStage`, `run_pipeline`, `vercel.json`, `run_pipeline`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `react` connect `GlobalErrorBoundary` to `App.tsx`, `dependencies`, `github.ts`?**
+- **Why does `dependencies` connect `dependencies` to `vite`, `package.json`, `thinking-orbs`, `@stackblitz/sdk`, `github.ts`, `document-generator.ts`, `voice-button.tsx`, `cheerio`, `Éden - Arquitetura, Motores e Tipos`, `motion`, `Éden - Frontend, Componentes e Telas`, `Éden - Backend, Servidor e Rotas Edge`, `cheerio`, `react-diff-viewer-continued`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `PreviewDevTools()` connect `preview-html.ts` to `index.ts`?**
+- **Why does `react` connect `github.ts` to `App.tsx`, `dependencies`, `GlobalErrorBoundary`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Are the 2 inferred relationships involving `AppContent()` (e.g. with `query()` and `getInitialTheme()`) actually correct?**
-  _`AppContent()` has 2 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 3 inferred relationships involving `AppContent()` (e.g. with `.prev()` and `query()`) actually correct?**
+  _`AppContent()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 28 inferred relationships involving `main()` (e.g. with `org_detail()` and `org_disambiguate()`) actually correct?**
   _`main()` has 28 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 7 inferred relationships involving `Document` (e.g. with `_extract_headings_from_docx()` and `XMLEditor`) actually correct?**
+  _`Document` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `config`, `config`, `config` to the rest of the system?**
-  _9697 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `_security.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.13174603174603175 - nodes in this community are weakly interconnected._
+  _9584 weakly-connected nodes found - possible documentation gaps or missing edges._

@@ -2469,3 +2469,25 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm test`: **213/213 testes unitários passando em 42 suítes** (incluindo `src/lib/github.test.ts` e `src/lib/git-terminal-emulator.test.ts`).
   - `npx tsc --noEmit`: **0 erros de compilação**.
   - `npm run build`: bundle de produção e Cloudflare Pages Worker (`dist/_worker.js`) compilados com sucesso.
+
+
+## 138. Correção do Bug de Reprodução (Botão Play Travado) nos Vídeos HyperFrames / Canvas
+- **Solicitação do Usuário:** *"Eu creio que tem um bug porque, tanto no celular quanto no PC, eu pedia para ele gerar e, muitas das vezes, ficava pronto na prototipagem, eu ia dar play e não reproduzia. Depois de algumas reclamações, demorou muito tempo para o play ir funcionar, então tem algum bug aí. Dá para investigar, por gentileza?"*
+- **Diagnóstico da Causa Raiz:**
+  1. **Bloqueio de CSP na CDN Cloudflare (`_headers`):** Os modelos de IA frequentemente geram vídeos HyperFrames importando o GSAP de `https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js`. O arquivo `_headers` liberava apenas `cdn.jsdelivr.net` e `unpkg.com` em `script-src`, bloqueando `cdnjs.cloudflare.com` no iframe `srcdoc` e causando `ReferenceError: gsap is not defined`.
+  2. **Detecção Frágil de GSAP em `sanitizePrototypeHtml` (`src/lib/canvas-prototype.ts`):** A função checava `!html.includes('gsap')` para decidir se injetava o script CDN do GSAP no `<head>`. Como qualquer vídeo HyperFrames contém `gsap.timeline()` no `<script>` inline, `html.includes('gsap')` retornava sempre `true` e impedia a injeção do CDN quando a IA omitia a tag `<script src="...">`.
+  3. **Conflito de `transition: opacity` CSS com GSAP + `tl.play()` no Fim da Timeline (`public/hyperframe-video.html`):** A classe `.scene` possuía `transition: opacity 0.6s ease`, disputando o controle de opacidade frame a frame com o GSAP, a Cena 1 apagava no instante `0`, e o clique em Play executava apenas `tl.play()` (que não reinicia timelines em `progress() === 1`).
+- **Implementações Realizadas:**
+  1. **Liberação de `https://cdnjs.cloudflare.com` no CSP (`_headers`):**
+     - Adicionado `https://cdnjs.cloudflare.com` às diretivas `script-src` e `style-src`.
+  2. **Injeção Confiável de GSAP e Auto-Healer Runtime (`src/lib/canvas-prototype.ts` & `src/lib/canvas-prototype.test.ts`):**
+     - Substituído `!html.includes('gsap')` pela regex `!/<script[^>]+src=["'][^"']*gsap/i.test(html)`.
+     - Injetado o `data-eden-hyperframes-helper` que intercepta `gsap.timeline` (`window.__edenTimeline`), remove `transition` CSS conflitante nos elementos `.scene` ao clicar em Play/Replay, executa `tl.restart()` automaticamente quando `tl.progress() >= 0.99` e reabilita o botão Play no `onComplete`.
+  3. **Correção de `public/hyperframe-video.html` e Skill `hyperframes` (`src/lib/storage.ts` & `src/App.tsx`):**
+     - Removida a `transition: opacity` conflitante, preservada a Cena 1 visível por 3.5s, aplicados touch targets Mobile-First (`min-h-[44px]`) e atualizadas as diretrizes da skill `hyperframes`.
+- **Evidências de Verificação:**
+  - `npm test`: **215/215 testes unitários passando em 42 suítes** (100% verde).
+  - `npx tsc --noEmit`: **0 erros de compilação**.
+  - `npm run build`: bundle de produção e Cloudflare Pages Worker (`dist/_worker.js`, 210.8 kB) compilados com sucesso.
+  - `python -m graphify update .`: grafo de conhecimento sincronizado (14.972 nós, 17.071 arestas).
+  - Code Review formal: **Ready to merge: Yes** (0 issues críticos ou importantes).

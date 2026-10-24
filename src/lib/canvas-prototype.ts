@@ -19,7 +19,8 @@ export function isCanvasPrototypingIntent(prompt: string): boolean {
 
 /**
  * Higieniza e prepara o código HTML do protótipo garantindo HTML5 válido,
- * meta viewport para responsividade mobile-first e script do Tailwind CSS CDN.
+ * meta viewport para responsividade mobile-first, script do Tailwind CSS CDN,
+ * GSAP 3 e o HyperFrames Runtime Helper (auto-healer do botão Play e CSS transitions).
  */
 export function sanitizePrototypeHtml(rawHtml: string): string {
   if (!rawHtml || typeof rawHtml !== 'string') {
@@ -33,6 +34,57 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
 
   const isFullDoc = /<!doctype\s+html>/i.test(html) || /<html[\s>]/i.test(html);
   const gsapScript = '<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>';
+  const hasExternalGsapScript = /<script[^>]+src=["'][^"']*gsap/i.test(html);
+
+  const hyperframesRuntimeHelper = `<script data-eden-hyperframes-helper="true">
+    (function() {
+      function initEdenHyperframesHelper() {
+        if (!window.gsap || window.__edenGsapPatched) return;
+        window.__edenGsapPatched = true;
+        var origTimeline = window.gsap.timeline.bind(window.gsap);
+        window.gsap.timeline = function(vars) {
+          var tl = origTimeline(vars);
+          window.__edenTimeline = tl;
+          var origOnComplete = tl.eventCallback('onComplete');
+          tl.eventCallback('onComplete', function() {
+            if (typeof origOnComplete === 'function') origOnComplete.apply(this, arguments);
+            var playBtns = document.querySelectorAll('#btn-play, #play-btn, #playBtn, [data-action="play"]');
+            playBtns.forEach(function(b) {
+              b.disabled = false;
+              b.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+          });
+          return tl;
+        };
+      }
+      initEdenHyperframesHelper();
+      document.addEventListener('DOMContentLoaded', initEdenHyperframesHelper);
+
+      // Remove conflito de CSS transition em elementos .scene controlados por GSAP e garante restart() no fim da timeline
+      document.addEventListener('click', function(e) {
+        var target = e.target && e.target.closest ? e.target.closest('button, [role="button"]') : null;
+        if (!target) return;
+        var id = (target.id || '').toLowerCase();
+        var text = (target.textContent || '').toLowerCase();
+        var isPlayBtn = id.includes('play') && !id.includes('replay') || (!id.includes('replay') && (text.includes('play') || text.includes('reproduzir') || text.includes('iniciar')));
+        var isReplayBtn = id.includes('replay') || text.includes('replay') || text.includes('reiniciar');
+
+        if ((isPlayBtn || isReplayBtn) && window.__edenTimeline) {
+          document.querySelectorAll('.scene, [id^="scene"]').forEach(function(el) {
+            el.style.transition = 'none';
+          });
+          var tl = window.__edenTimeline;
+          if (isReplayBtn) {
+            tl.restart();
+          } else if (tl.progress() >= 0.99) {
+            tl.restart();
+          } else if (tl.paused()) {
+            tl.play();
+          }
+        }
+      }, true);
+    })();
+  </script>`;
 
   const scrollbarAndFontStyles = `
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,8 +118,8 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
   if (isFullDoc) {
     // Garante que o Tailwind, GSAP, viewport, fontes e scrollbar estejam presentes no head
     if (!html.includes('cdn.tailwindcss.com')) {
-      const injectGsap = !html.includes('gsap') ? `${gsapScript}\n  ` : '';
-      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>\n  ${injectGsap}${scrollbarAndFontStyles}`;
+      const injectGsap = !hasExternalGsapScript ? `${gsapScript}\n  ` : '';
+      const headInjection = `<meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <script src="https://cdn.tailwindcss.com"></script>\n  ${injectGsap}${hyperframesRuntimeHelper}\n  ${scrollbarAndFontStyles}`;
       if (/<head[\s>]/i.test(html)) {
         html = html.replace(/<head[\s>]/i, `<head>\n  ${headInjection}`);
       } else if (/<html[\s>]/i.test(html)) {
@@ -76,12 +128,20 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
         html = `<head>\n  ${headInjection}\n</head>\n${html}`;
       }
     } else {
-      // Injeta GSAP caso ainda não esteja presente
-      if (!html.includes('gsap')) {
+      // Injeta GSAP caso ainda não exista tag <script src="...gsap...">
+      if (!hasExternalGsapScript) {
         if (/<head[\s>]/i.test(html)) {
           html = html.replace(/<head[\s>]/i, `<head>\n  ${gsapScript}`);
         } else if (/<html[\s>]/i.test(html)) {
           html = html.replace(/<html[\s>]/i, `<html>\n<head>\n  ${gsapScript}\n</head>`);
+        }
+      }
+      // Injeta o HyperFrames Runtime Helper logo após o script do GSAP ou no final do head
+      if (!html.includes('data-eden-hyperframes-helper')) {
+        if (/<\/head>/i.test(html)) {
+          html = html.replace(/<\/head>/i, `  ${hyperframesRuntimeHelper}\n</head>`);
+        } else if (/<head[\s>]/i.test(html)) {
+          html = html.replace(/<head[\s>]/i, `<head>\n  ${hyperframesRuntimeHelper}`);
         }
       }
       // Injeta os estilos de scrollbar e fonte no head existente se ainda não tiver
@@ -104,6 +164,7 @@ export function sanitizePrototypeHtml(rawHtml: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   ${gsapScript}
+  ${hyperframesRuntimeHelper}
   <script>
     tailwind.config = {
       darkMode: 'class',

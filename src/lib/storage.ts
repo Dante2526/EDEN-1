@@ -204,7 +204,7 @@ export const BUILTIN_SKILLS: Skill[] = [
       '   - Crie teasers, cards de produto animados, apresentações cinemáticas, stories dinâmicos e vinhetas interativas.\n' +
       '4. EXECUÇÃO NO CANVAS INTERATIVO:\n' +
       '   - Apresente o vídeo/animação no Canvas usando a ferramenta `render_canvas_prototype` ou a tag `<eden_canvas title="Vídeo: ..." viewport="mobile|desktop">`.\n' +
-      '   - O sandbox do Canvas já inclui Tailwind CSS e GSAP 3 (`window.gsap`).\n' +
+      '   - O sandbox do Canvas já inclui Tailwind CSS e GSAP 3 (`window.gsap`) via `https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js`. PROIBIDO usar `transition: opacity` CSS nas classes `.scene` animadas por GSAP; mantenha a Cena 1 visível nos primeiros segundos e use `tl.progress() >= 0.99 ? tl.restart() : tl.play()` no botão Play.\n' +
       '   - Sempre que útil, inclua controles táteis de reprodução: Play/Pause, Replay e barra de progresso temporal para permitir ao usuário inspecionar o vídeo com facilidade.',
   },
   {

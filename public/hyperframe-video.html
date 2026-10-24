@@ -6,7 +6,7 @@
   <title>HyperFrame - Vídeo em Código</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- GSAP obrigatório para a timeline -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -15,7 +15,6 @@
       inset: 0;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.6s ease;
     }
     .scene.active {
       opacity: 1;
@@ -31,31 +30,31 @@
     <!-- Cena 1: Intro -->
     <div id="scene-intro" class="scene bg-gradient-to-br from-zinc-900 to-black active">
       <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-        <h1 class="text-5xl sm:text-7xl font-extrabold tracking-tighter text-white mb-4 drop-shadow-lg">LinkHub</h1>
-        <p class="text-xl sm:text-2xl text-zinc-300 tracking-wide max-w-md leading-relaxed">
+        <h1 class="text-4xl sm:text-7xl font-extrabold tracking-tighter text-white mb-4 drop-shadow-lg">LinkHub</h1>
+        <p class="text-base sm:text-2xl text-zinc-300 tracking-wide max-w-md leading-relaxed">
           Vídeos determinísticos criados com HTML, Tailwind e GSAP 3.
         </p>
       </div>
     </div>
 
     <!-- Cena 2: Features -->
-    <div id="scene-features" class="scene bg-zinc-900/80 backdrop-blur-sm border-white/5">
-      <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-indigo-400 mb-6">Por que HyperFrames?</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl w-full">
-          <div class="p-4 bg-zinc-800/50 border border-white/10 rounded-xl">
-            <div class="text-2xl mb-2">🎯</div>
-            <h3 class="font-semibold text-white">Timeline determinística</h3>
+    <div id="scene-features" class="scene bg-zinc-900/90 backdrop-blur-sm border-white/5">
+      <div class="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 text-center">
+        <h2 class="text-2xl sm:text-4xl font-bold tracking-tight text-indigo-400 mb-4 sm:mb-6">Por que HyperFrames?</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-3xl w-full">
+          <div class="p-3 sm:p-4 bg-zinc-800/50 border border-white/10 rounded-xl">
+            <div class="text-xl sm:text-2xl mb-1 sm:mb-2">🎯</div>
+            <h3 class="font-semibold text-white text-sm sm:text-base">Timeline determinística</h3>
             <p class="text-xs text-zinc-400 mt-1">Controle preciso de cada quadro.</p>
           </div>
-          <div class="p-4 bg-zinc-800/50 border border-white/10 rounded-xl">
-            <div class="text-2xl mb-2">📱</div>
-            <h3 class="font-semibold text-white">Mobile-First</h3>
+          <div class="p-3 sm:p-4 bg-zinc-800/50 border border-white/10 rounded-xl">
+            <div class="text-xl sm:text-2xl mb-1 sm:mb-2">📱</div>
+            <h3 class="font-semibold text-white text-sm sm:text-base">Mobile-First</h3>
             <p class="text-xs text-zinc-400 mt-1">Funciona em 360px a 430px.</p>
           </div>
-          <div class="p-4 bg-zinc-800/50 border border-white/10 rounded-xl">
-            <div class="text-2xl mb-2">⚡</div>
-            <h3 class="font-semibold text-white">Sem render externo</h3>
+          <div class="p-3 sm:p-4 bg-zinc-800/50 border border-white/10 rounded-xl">
+            <div class="text-xl sm:text-2xl mb-1 sm:mb-2">⚡</div>
+            <h3 class="font-semibold text-white text-sm sm:text-base">Sem render externo</h3>
             <p class="text-xs text-zinc-400 mt-1">Executa direto no navegador.</p>
           </div>
         </div>
@@ -63,11 +62,11 @@
     </div>
 
     <!-- Cena 3: CTA -->
-    <div id="scene-cta" class="scene bg-indigo-900/20 border-indigo-500/20">
+    <div id="scene-cta" class="scene bg-indigo-900/30 border-indigo-500/20">
       <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-        <h2 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">Pronto para criar?</h2>
-        <p class="text-zinc-300 mb-8 max-w-md">Comece agora com o assistente Éden.</p>
-        <button id="btn-cta" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-[1.05] shadow-lg shadow-indigo-500/25">
+        <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-white mb-4">Pronto para criar?</h2>
+        <p class="text-zinc-300 mb-6 sm:mb-8 max-w-md text-sm sm:text-base">Comece agora com o assistente Éden.</p>
+        <button id="btn-cta" class="min-h-[44px] px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-[1.05] shadow-lg shadow-indigo-500/25">
           Criar Meu Vídeo
         </button>
       </div>
@@ -75,15 +74,15 @@
 
   </div>
 
-  <!-- Controles de reprodução -->
-  <div class="mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center w-full">
-    <button id="btn-play" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+  <!-- Controles de reprodução Mobile-First (touch targets >= 44x44px) -->
+  <div class="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4 items-center justify-center w-full">
+    <button id="btn-play" class="min-h-[44px] min-w-[110px] px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
       ▶ Play
     </button>
-    <button id="btn-pause" class="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] border border-zinc-600">
+    <button id="btn-pause" class="min-h-[44px] min-w-[110px] px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] border border-zinc-600 flex items-center justify-center gap-2">
       ⏸ Pause
     </button>
-    <button id="btn-replay" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] shadow-lg shadow-indigo-500/20 flex items-center gap-2">
+    <button id="btn-replay" class="min-h-[44px] min-w-[110px] px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
       🔄 Replay
     </button>
   </div>
@@ -91,45 +90,55 @@
   <!-- Barra de progresso -->
   <div class="mt-4 w-full max-w-4xl">
     <div class="flex justify-between text-xs text-zinc-400 mb-1">
-      <span>0:00</span>
-      <span id="duration">0:00</span>
+      <span id="current-time">0:00</span>
+      <span id="duration">0:12</span>
     </div>
-    <input type="range" id="progress" min="0" max="100" value="0" class="w-full accent-emerald-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer">
+    <input type="range" id="progress" min="0" max="100" value="0" class="w-full accent-emerald-500 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer">
   </div>
 
   <script>
-    // ✅ CORREÇÃO PRINCIPAL: timeline iniciada PAUSADA
-    const tl = gsap.timeline({ paused: true, repeat: -1, yoyo: true });
+    const tl = gsap.timeline({
+      paused: true,
+      onComplete: () => {
+        btnPlay.disabled = false;
+        btnPlay.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    });
 
-    // Cena 1 → Cena 2
-    tl.to("#scene-intro", { opacity: 0, duration: 0.8, ease: "power2.inOut" }, 0)
-      .to("#scene-features", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0)
-      .from("#scene-features h2", { y: 30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 0.2)
-      .from("#scene-features .grid > *", { y: 20, opacity: 0, stagger: 0.15, duration: 0.5, ease: "power2.out" }, 0.4)
+    // Cena 1: Entrada animada (0s a 3.5s)
+    tl.fromTo("#scene-intro h1", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }, 0)
+      .fromTo("#scene-intro p", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power2.out" }, 0.25)
 
-    // Cena 2 → Cena 3
-    .to("#scene-features", { opacity: 0, duration: 0.8, ease: "power2.inOut" }, 6)
-      .to("#scene-cta", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 6)
-      .from("#scene-cta h2", { y: 30, opacity: 0, duration: 0.6, ease: "back.out(1.7)" }, 6.2)
-      .from("#scene-cta p", { y: 20, opacity: 0, duration: 0.5 }, 6.4)
-      .from("#scene-cta #btn-cta", { y: 20, opacity: 0, duration: 0.5 }, 6.6)
+      // Transição Cena 1 → Cena 2 (3.5s)
+      .to("#scene-intro", { opacity: 0, duration: 0.6, ease: "power2.inOut" }, 3.5)
+      .to("#scene-features", { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 3.5)
+      .fromTo("#scene-features h2", { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" }, 3.8)
+      .fromTo("#scene-features .grid > *", { y: 20, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.15, duration: 0.45, ease: "power2.out" }, 4.0)
 
-    // Loop de volta para Cena 1
-    .to("#scene-cta", { opacity: 0, duration: 0.8, ease: "power2.inOut" }, 12)
-      .to("#scene-intro", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 12)
+      // Transição Cena 2 → Cena 3 (8.0s)
+      .to("#scene-features", { opacity: 0, duration: 0.6, ease: "power2.inOut" }, 8.0)
+      .to("#scene-cta", { opacity: 1, duration: 0.6, ease: "power2.inOut" }, 8.0)
+      .fromTo("#scene-cta h2", { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" }, 8.3)
+      .fromTo("#scene-cta p", { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45 }, 8.5)
+      .fromTo("#scene-cta #btn-cta", { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.7)" }, 8.7)
+      .to({}, { duration: 2.8 });
 
-    // ✅ Controles vinculados corretamente à instância tl
     const btnPlay = document.getElementById('btn-play');
     const btnPause = document.getElementById('btn-pause');
     const btnReplay = document.getElementById('btn-replay');
     const progress = document.getElementById('progress');
+    const currentTimeSpan = document.getElementById('current-time');
     const durationSpan = document.getElementById('duration');
 
     const totalDuration = tl.duration();
-    durationSpan.textContent = `0:${totalDuration.toFixed(0)}`;
+    durationSpan.textContent = `0:${String(Math.round(totalDuration)).padStart(2, '0')}`;
 
     btnPlay.addEventListener('click', () => {
-      tl.play();
+      if (tl.progress() >= 0.99) {
+        tl.restart();
+      } else {
+        tl.play();
+      }
       btnPlay.disabled = true;
       btnPlay.classList.add('opacity-50', 'cursor-not-allowed');
     });
@@ -142,19 +151,22 @@
 
     btnReplay.addEventListener('click', () => {
       tl.restart();
+      btnPlay.disabled = true;
+      btnPlay.classList.add('opacity-50', 'cursor-not-allowed');
+    });
+
+    gsap.ticker.add(() => {
+      const progressPct = Math.round(tl.progress() * 100);
+      progress.value = String(progressPct);
+      const currentSec = Math.floor(tl.time());
+      currentTimeSpan.textContent = `0:${String(currentSec).padStart(2, '0')}`;
+    });
+
+    progress.addEventListener('input', (e) => {
+      tl.pause();
+      tl.progress(parseInt(e.target.value, 10) / 100);
       btnPlay.disabled = false;
       btnPlay.classList.remove('opacity-50', 'cursor-not-allowed');
-    });
-
-    // Atualiza barra de progresso em tempo real
-    gsap.ticker.add(() => {
-      const progressPct = (tl.progress() * 100).toFixed(0);
-      progress.value = progressPct;
-    });
-
-    // Permite pular no vídeo arrastando a barra
-    progress.addEventListener('input', (e) => {
-      tl.progress(parseInt(e.target.value) / 100);
     });
   </script>
 </body>

@@ -124,4 +124,20 @@ O que achou da disposição dos botões?`;
     const occurrences = (output.match(/gsap\.min\.js/g) || []).length;
     assert.equal(occurrences, 1, 'Deve manter exatamente 1 script do GSAP sem duplicar');
   });
+
+  it('deve injetar CDN do GSAP mesmo quando o código inline já menciona gsap.timeline() sem tag script externa', () => {
+    const docWithInlineGsapOnly = `<!DOCTYPE html><html><head><title>Teaser</title><script src="https://cdn.tailwindcss.com"></script></head><body><div id="scene-1">Cena</div><button id="btn-play">Play</button><script>const tl = gsap.timeline({ paused: true }); tl.to('#scene-1', { opacity: 1 });</script></body></html>`;
+    const output = sanitizePrototypeHtml(docWithInlineGsapOnly);
+    assert.ok(
+      /<script[^>]+src=["'][^"']*gsap\.min\.js["']/i.test(output),
+      'Deve injetar a tag <script src="...gsap.min.js"> mesmo havendo gsap.timeline() no script inline'
+    );
+  });
+
+  it('deve injetar o runtime helper de estabilização HyperFrames (auto-healer do botão Play e CSS transitions)', () => {
+    const rawHtml = '<div class="scene"><button id="btn-play">▶ Play</button></div><script>const tl = gsap.timeline({ paused: true });</script>';
+    const output = sanitizePrototypeHtml(rawHtml);
+    assert.ok(output.includes('data-eden-hyperframes-helper'), 'Deve injetar o script data-eden-hyperframes-helper');
+    assert.ok(output.includes('__edenTimeline'), 'Deve registrar a timeline global __edenTimeline para auto-healing do Play');
+  });
 });
