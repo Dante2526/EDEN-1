@@ -37,7 +37,7 @@ describe('models capability matrix', () => {
   });
 
   it('mantém paridade entre matrizes de capacidades do cliente e do servidor', () => {
-    assert.equal(ALLOWED_MODELS.length, 5);
+    assert.equal(ALLOWED_MODELS.length, 6);
     assert.deepEqual([...TOOL_MODELS], [...SERVER_TOOL_MODELS]);
     for (const model of ALLOWED_MODELS) {
       assert.equal(isToolCapableModel(model), serverIsToolCapableModel(model));

@@ -162,7 +162,7 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
   const renderLayers = useCallback(async () => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
-    canvas.getObjects().forEach((obj) => canvas.remove(obj));
+    canvas.getObjects().forEach((obj: any) => canvas.remove(obj));
     layerObjectsMapRef.current.clear();
 
     for (const layer of project.layers) {

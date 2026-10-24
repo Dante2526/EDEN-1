@@ -267,7 +267,7 @@ export function isLocalOrPrivateUrl(urlStr: string): boolean {
     }
 
     // IPv6 Loopback, Link-Local (fe80::/10), Site-Local (fec0::/10), ULA (fc00::/7) e IPv4-Mapped
-    const ipv6LocalRegex = /^(::1|0:0:0:0:0:0:0:1|::|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:)/i;
+    const ipv6LocalRegex = /^(::1|0:0:0:0:0:0:0:1|::|f[cd][0-9a-f]{2}:|fe[89abc][0-9a-f]{1,2}:|::ffff:)/i;
     if (ipv6LocalRegex.test(hostname)) {
       return true;
     }
