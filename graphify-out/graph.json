@@ -197,8 +197,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "api_db_projects",
-      "community": 598,
-      "community_name": "db-projects.ts",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "db-projects.ts"
     },
     {
@@ -208,8 +208,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "api_db_projects_config",
-      "community": 598,
-      "community_name": "db-projects.ts",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "config"
     },
     {
@@ -219,8 +219,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "api_db_projects_supabasereporow",
-      "community": 598,
-      "community_name": "db-projects.ts",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "supabasereporow"
     },
     {
@@ -230,8 +230,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "api_db_projects_getsupabasecredentials",
-      "community": 598,
-      "community_name": "db-projects.ts",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "getsupabasecredentials()"
     },
     {
@@ -241,8 +241,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "api_db_projects_rowtosynapproject",
-      "community": 598,
-      "community_name": "db-projects.ts",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "rowtosynapproject()"
     },
     {
@@ -252,8 +252,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "api_db_projects_rowtoindexitem",
-      "community": 598,
-      "community_name": "db-projects.ts",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "rowtoindexitem()"
     },
     {
@@ -263,8 +263,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "api_db_projects_handler",
-      "community": 598,
-      "community_name": "db-projects.ts",
+      "community": 0,
+      "community_name": "_security.ts",
       "norm_label": "handler()"
     },
     {
@@ -725,8 +725,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "api_opencut_proxy",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "opencut-proxy.ts"
     },
     {
@@ -736,8 +736,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "api_opencut_proxy_config",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "config"
     },
     {
@@ -747,8 +747,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "api_opencut_proxy_client_headers_to_forward",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "client_headers_to_forward"
     },
     {
@@ -758,8 +758,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "api_opencut_proxy_server_headers_to_forward",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "server_headers_to_forward"
     },
     {
@@ -1176,8 +1176,8 @@
       "source_location": "L234",
       "_origin": "ast",
       "id": "lib_server_security_islocalorprivateurl",
-      "community": 791,
-      "community_name": "A0.3 - Z-Index Layer Management",
+      "community": 615,
+      "community_name": "run_eval.py",
       "norm_label": "islocalorprivateurl()"
     },
     {
@@ -1187,8 +1187,8 @@
       "source_location": "L325",
       "_origin": "ast",
       "id": "lib_server_security_safefetchwithredirects",
-      "community": 791,
-      "community_name": "A0.3 - Z-Index Layer Management",
+      "community": 615,
+      "community_name": "run_eval.py",
       "norm_label": "safefetchwithredirects()"
     },
     {
@@ -1242,8 +1242,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_server_opencut_i18n",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "opencut-i18n.ts"
     },
     {
@@ -1253,8 +1253,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "lib_server_opencut_i18n_opencut_i18n_dictionary",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "opencut_i18n_dictionary"
     },
     {
@@ -1264,8 +1264,8 @@
       "source_location": "L308",
       "_origin": "ast",
       "id": "lib_server_opencut_i18n_opencut_do_not_translate",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "opencut_do_not_translate"
     },
     {
@@ -1275,8 +1275,8 @@
       "source_location": "L343",
       "_origin": "ast",
       "id": "lib_server_opencut_i18n_buildopencutinjectorscript",
-      "community": 0,
-      "community_name": "_security.ts",
+      "community": 1018,
+      "community_name": "opencut-proxy.ts",
       "norm_label": "buildopencutinjectorscript()"
     },
     {
@@ -4300,8 +4300,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_constants",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "constants.py"
     },
     {
@@ -4575,8 +4575,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "rec5_api.py"
     },
     {
@@ -4586,8 +4586,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_clean_text",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "_clean_text()"
     },
     {
@@ -4597,8 +4597,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_py_any",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "any"
     },
     {
@@ -4608,8 +4608,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_resolve_token",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "resolve_token()"
     },
     {
@@ -4619,8 +4619,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_resolve_rec5_url",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "resolve_rec5_url()"
     },
     {
@@ -4630,8 +4630,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_build_api_request",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "build_api_request()"
     },
     {
@@ -4641,8 +4641,8 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_normalize_rec5_paper",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "normalize_rec5_paper()"
     },
     {
@@ -4652,8 +4652,8 @@
       "source_location": "L143",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_call_rec5_api",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "call_rec5_api()"
     },
     {
@@ -4663,8 +4663,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "skills_aminer_daily_paper_scripts_rec5_api_rationale_69",
-      "community": 110,
-      "community_name": "run_pipeline",
+      "community": 598,
+      "community_name": "db-projects.ts",
       "norm_label": "normalize raw rec5 paper dict to the in-skill record shape (markdown display / j"
     },
     {
@@ -4740,8 +4740,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "runtimeerror",
-      "community": 5,
-      "community_name": "fetch_volunteers.py",
+      "community": 1006,
+      "community_name": "load_json",
       "norm_label": "runtimeerror"
     },
     {
@@ -6095,8 +6095,8 @@
       "source_location": "L606",
       "_origin": "ast",
       "id": "skills_design_design_templates_ppt_html_ppt_zhangzara_pin_and_paper_assets_deck_stage_deckstage_index",
-      "community": 24,
-      "community_name": "DeckStage",
+      "community": 14,
+      "community_name": "types.ts",
       "norm_label": ".index()"
     },
     {
@@ -6975,8 +6975,8 @@
       "source_location": "L1231",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_has_author",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._has_author()"
     },
     {
@@ -6986,8 +6986,8 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_document_add_author_to_people",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "._add_author_to_people()"
     },
     {
@@ -7492,8 +7492,8 @@
       "source_location": "L1232",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1232",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "check if an author already exists in people.xml."
     },
     {
@@ -7503,8 +7503,8 @@
       "source_location": "L1239",
       "_origin": "ast",
       "id": "skills_docx_scripts_document_rationale_1239",
-      "community": 60,
-      "community_name": ".__init__",
+      "community": 47,
+      "community_name": "._setup_tracking",
       "norm_label": "add author to people.xml (called during initialization)."
     },
     {
@@ -22607,8 +22607,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "skills_video_generation_scripts_video",
-      "community": 102,
-      "community_name": "video.ts",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": "video.ts"
     },
     {
@@ -22618,8 +22618,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "skills_video_generation_scripts_video_create",
-      "community": 102,
-      "community_name": "video.ts",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": "create()"
     },
     {
@@ -22629,8 +22629,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "skills_video_generation_scripts_video_createfromimage",
-      "community": 102,
-      "community_name": "video.ts",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": "createfromimage()"
     },
     {
@@ -22640,8 +22640,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "skills_video_generation_scripts_video_query",
-      "community": 102,
-      "community_name": "video.ts",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": "query()"
     },
     {
@@ -22651,8 +22651,8 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "skills_video_generation_scripts_video_main",
-      "community": 102,
-      "community_name": "video.ts",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": "main()"
     },
     {
@@ -22662,8 +22662,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "skills_video_generation_scripts_video_displayresult",
-      "community": 102,
-      "community_name": "video.ts",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": "displayresult()"
     },
     {
@@ -22673,8 +22673,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "skills_video_generation_scripts_video_rationale_33",
-      "community": 102,
-      "community_name": "video.ts",
+      "community": 24,
+      "community_name": "DeckStage",
       "norm_label": "important: using base64-encoded image data is strongly recommended over urls"
     },
     {
@@ -24832,8 +24832,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_chat_sidebar",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "chat-sidebar.tsx"
     },
     {
@@ -24843,8 +24843,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_projectspanel",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "projectspanel"
     },
     {
@@ -24854,8 +24854,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_swipeableconversationitemprops",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "swipeableconversationitemprops"
     },
     {
@@ -24865,8 +24865,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_swipeableconversationitem",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "swipeableconversationitem()"
     },
     {
@@ -24876,8 +24876,8 @@
       "source_location": "L312",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_chatsidebarprops",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "chatsidebarprops"
     },
     {
@@ -24887,8 +24887,8 @@
       "source_location": "L351",
       "_origin": "ast",
       "id": "src_components_chat_sidebar_chatsidebar",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "chatsidebar"
     },
     {
@@ -24898,8 +24898,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_claude_logo",
-      "community": 40,
-      "community_name": "deployment-service.ts",
+      "community": 124,
+      "community_name": "vercel.json",
       "norm_label": "claude-logo.tsx"
     },
     {
@@ -24909,8 +24909,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogoprops",
-      "community": 40,
-      "community_name": "deployment-service.ts",
+      "community": 124,
+      "community_name": "vercel.json",
       "norm_label": "edenbonsailogoprops"
     },
     {
@@ -24920,8 +24920,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_components_claude_logo_edenbonsailogo",
-      "community": 40,
-      "community_name": "deployment-service.ts",
+      "community": 124,
+      "community_name": "vercel.json",
       "norm_label": "edenbonsailogo()"
     },
     {
@@ -24931,8 +24931,8 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "src_components_claude_logo_claudelogoprops",
-      "community": 40,
-      "community_name": "deployment-service.ts",
+      "community": 124,
+      "community_name": "vercel.json",
       "norm_label": "claudelogoprops"
     },
     {
@@ -25008,8 +25008,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_dark_mode_toggle",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "dark-mode-toggle.tsx"
     },
     {
@@ -25019,8 +25019,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_dark_mode_toggle_darkmodetoggleprops",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "darkmodetoggleprops"
     },
     {
@@ -25030,8 +25030,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_components_dark_mode_toggle_darkmodetoggle",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "darkmodetoggle()"
     },
     {
@@ -25140,8 +25140,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "downloader-panel.tsx"
     },
     {
@@ -25151,8 +25151,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_pickeritem",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pickeritem"
     },
     {
@@ -25162,8 +25162,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_downloadresult",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "downloadresult"
     },
     {
@@ -25173,8 +25173,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_historyitem",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "historyitem"
     },
     {
@@ -25184,8 +25184,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_platform_icons",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "platform_icons"
     },
     {
@@ -25195,8 +25195,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_supported_platforms",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "supported_platforms"
     },
     {
@@ -25206,8 +25206,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_components_downloader_downloader_panel_downloaderpanel",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "downloaderpanel()"
     },
     {
@@ -25217,8 +25217,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_eden_logo",
-      "community": 40,
-      "community_name": "deployment-service.ts",
+      "community": 124,
+      "community_name": "vercel.json",
       "norm_label": "eden-logo.tsx"
     },
     {
@@ -25327,8 +25327,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_components_github_create_repo_modal_createrepomodal",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "createrepomodal()"
     },
     {
@@ -25371,8 +25371,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_github_repo_list",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "repo-list.tsx"
     },
     {
@@ -25393,8 +25393,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_components_github_repo_list_repolist",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "repolist()"
     },
     {
@@ -25624,8 +25624,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_image_editor_image_editor_modal",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "image-editor-modal.tsx"
     },
     {
@@ -25635,8 +25635,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_components_image_editor_image_editor_modal_imageeditormodalprops",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "imageeditormodalprops"
     },
     {
@@ -25646,8 +25646,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_components_image_editor_image_editor_modal_fonts",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "fonts"
     },
     {
@@ -25657,8 +25657,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_components_image_editor_image_editor_modal_common_emojis",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "common_emojis"
     },
     {
@@ -25668,8 +25668,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_components_image_editor_image_editor_modal_imageeditormodal",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "imageeditormodal()"
     },
     {
@@ -25921,8 +25921,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_pwa_install_button",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pwa-install-button.tsx"
     },
     {
@@ -25932,8 +25932,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_components_pwa_install_button_pwainstallbutton",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pwainstallbutton()"
     },
     {
@@ -26020,8 +26020,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "diff-viewer.tsx"
     },
     {
@@ -26031,8 +26031,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer_reactdiffviewer",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "reactdiffviewer"
     },
     {
@@ -26042,8 +26042,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer_diffviewerprops",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "diffviewerprops"
     },
     {
@@ -26053,8 +26053,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_source_control_diff_viewer_diffviewer",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "diffviewer()"
     },
     {
@@ -26864,7 +26864,7 @@
       "label": "extractImagesFromClipboardData()",
       "file_type": "code",
       "source_file": "src/lib/clipboard-utils.ts",
-      "source_location": "L8",
+      "source_location": "L9",
       "_origin": "ast",
       "id": "src_lib_clipboard_utils_extractimagesfromclipboarddata",
       "community": 33,
@@ -26878,8 +26878,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_context_compactor_test",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "context-compactor.test.ts"
     },
     {
@@ -26889,8 +26889,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_lib_context_compactor_test_createmockmessage",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "createmockmessage()"
     },
     {
@@ -26900,8 +26900,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_lib_context_compactor_test_runtests",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "runtests()"
     },
     {
@@ -26911,8 +26911,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_context_compactor",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "context-compactor.ts"
     },
     {
@@ -26922,8 +26922,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_context_compactor_estimateconversationtokens",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "estimateconversationtokens()"
     },
     {
@@ -26933,8 +26933,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_lib_context_compactor_shouldcompact",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "shouldcompact()"
     },
     {
@@ -26944,8 +26944,8 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "src_lib_context_compactor_buildcompactionprompt",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "buildcompactionprompt()"
     },
     {
@@ -26955,8 +26955,8 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_lib_context_compactor_compactconversation",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "compactconversation()"
     },
     {
@@ -26966,8 +26966,8 @@
       "source_location": "L185",
       "_origin": "ast",
       "id": "src_lib_context_compactor_preparemessagesforapi",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "preparemessagesforapi()"
     },
     {
@@ -27780,8 +27780,8 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "src_lib_github_fetchuserrepos",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 7,
+      "community_name": "github.ts",
       "norm_label": "fetchuserrepos()"
     },
     {
@@ -28165,8 +28165,8 @@
       "source_location": "L311",
       "_origin": "ast",
       "id": "src_lib_graphify_engine_querygraphcontext",
-      "community": 1012,
-      "community_name": "_best_font_for_char",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "querygraphcontext()"
     },
     {
@@ -28352,8 +28352,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_image_export",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "image-export.ts"
     },
     {
@@ -28363,8 +28363,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_lib_image_export_exportcanvastopng",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "exportcanvastopng()"
     },
     {
@@ -28374,8 +28374,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_image_export_exportcanvastojpeg",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "exportcanvastojpeg()"
     },
     {
@@ -28385,8 +28385,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_lib_image_export_exportthumbnail",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "exportthumbnail()"
     },
     {
@@ -28396,8 +28396,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_lib_image_export_downloaddataurl",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "downloaddataurl()"
     },
     {
@@ -28561,8 +28561,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_image_layers",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "image-layers.ts"
     },
     {
@@ -28572,8 +28572,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_image_layers_layertype",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "layertype"
     },
     {
@@ -28583,8 +28583,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_lib_image_layers_shapekind",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "shapekind"
     },
     {
@@ -28594,8 +28594,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_lib_image_layers_baselayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "baselayer"
     },
     {
@@ -28605,8 +28605,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_lib_image_layers_backgroundlayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "backgroundlayer"
     },
     {
@@ -28616,8 +28616,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_lib_image_layers_textlayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "textlayer"
     },
     {
@@ -28627,8 +28627,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_lib_image_layers_shapelayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "shapelayer"
     },
     {
@@ -28638,8 +28638,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_image_layers_stickerlayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "stickerlayer"
     },
     {
@@ -28649,8 +28649,8 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_lib_image_layers_imagelayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "imagelayer"
     },
     {
@@ -28660,8 +28660,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "src_lib_image_layers_imagelayer_t",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "imagelayer_t"
     },
     {
@@ -28671,8 +28671,8 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "src_lib_image_layers_imageproject",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "imageproject"
     },
     {
@@ -28682,8 +28682,8 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "src_lib_image_layers_generatelayerid",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "generatelayerid()"
     },
     {
@@ -28693,8 +28693,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_lib_image_layers_createemptyproject",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "createemptyproject()"
     },
     {
@@ -28704,8 +28704,8 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "src_lib_image_layers_createbackgroundlayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "createbackgroundlayer()"
     },
     {
@@ -28715,8 +28715,8 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "src_lib_image_layers_createtextlayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "createtextlayer()"
     },
     {
@@ -28726,8 +28726,8 @@
       "source_location": "L192",
       "_origin": "ast",
       "id": "src_lib_image_layers_createshapelayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "createshapelayer()"
     },
     {
@@ -28737,8 +28737,8 @@
       "source_location": "L219",
       "_origin": "ast",
       "id": "src_lib_image_layers_createstickerlayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "createstickerlayer()"
     },
     {
@@ -28748,8 +28748,8 @@
       "source_location": "L244",
       "_origin": "ast",
       "id": "src_lib_image_layers_createimagelayer",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "createimagelayer()"
     },
     {
@@ -28759,8 +28759,8 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "src_lib_image_layers_serializeproject",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "serializeproject()"
     },
     {
@@ -28770,8 +28770,8 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "src_lib_image_layers_deserializeproject",
-      "community": 2,
-      "community_name": "App.tsx",
+      "community": 102,
+      "community_name": "video.ts",
       "norm_label": "deserializeproject()"
     },
     {
@@ -29364,8 +29364,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_pending_changes",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pending-changes.tsx"
     },
     {
@@ -29375,8 +29375,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_pending_changes_loadpendingchangesfromdb",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "loadpendingchangesfromdb()"
     },
     {
@@ -29386,8 +29386,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_pending_changes_savependingchangestodb",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "savependingchangestodb()"
     },
     {
@@ -29397,8 +29397,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontexttype",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pendingchangescontexttype"
     },
     {
@@ -29408,8 +29408,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangescontext",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pendingchangescontext"
     },
     {
@@ -29419,8 +29419,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_pending_changes_pendingchangesprovider",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pendingchangesprovider()"
     },
     {
@@ -29683,8 +29683,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_test",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "preview-element-locator.test.ts"
     },
     {
@@ -29694,8 +29694,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "preview-element-locator.ts"
     },
     {
@@ -29705,8 +29705,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_elementsourcelocation",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "elementsourcelocation"
     },
     {
@@ -29716,8 +29716,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_normalizepath",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "normalizepath()"
     },
     {
@@ -29727,8 +29727,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_locateelementinprojectfiles",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "locateelementinprojectfiles()"
     },
     {
@@ -29738,8 +29738,8 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "src_lib_preview_element_locator_formatelementinspectorprompt",
-      "community": 29,
-      "community_name": "run_pipeline",
+      "community": 9,
+      "community_name": "preview-html.ts",
       "norm_label": "formatelementinspectorprompt()"
     },
     {
@@ -30409,8 +30409,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_remote_gate_test",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "remote-gate.test.ts"
     },
     {
@@ -30420,8 +30420,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_remote_gate",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "remote-gate.ts"
     },
     {
@@ -30431,8 +30431,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_remote_gate_remotedeployprovider",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "remotedeployprovider"
     },
     {
@@ -30442,8 +30442,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_remote_gate_remoteactionstatus",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "remoteactionstatus"
     },
     {
@@ -30453,8 +30453,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_lib_remote_gate_pendingremoteaction",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "pendingremoteaction"
     },
     {
@@ -30464,8 +30464,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_remote_gate_isremotecommandrequiringapproval",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "isremotecommandrequiringapproval()"
     },
     {
@@ -30475,8 +30475,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_lib_remote_gate_buildpendingremoteaction",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "buildpendingremoteaction()"
     },
     {
@@ -30486,8 +30486,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_lib_remote_gate_parsedplaywrightcommand",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "parsedplaywrightcommand"
     },
     {
@@ -30497,8 +30497,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_remote_gate_parseplaywrightcommand",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "parseplaywrightcommand()"
     },
     {
@@ -30508,8 +30508,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "src_lib_remote_gate_buildheadlessrenderurl",
-      "community": 153,
-      "community_name": "remote-gate.ts",
+      "community": 791,
+      "community_name": "A0.3 - Z-Index Layer Management",
       "norm_label": "buildheadlessrenderurl()"
     },
     {
@@ -30530,8 +30530,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_security_ssrf_test",
-      "community": 791,
-      "community_name": "A0.3 - Z-Index Layer Management",
+      "community": 615,
+      "community_name": "run_eval.py",
       "norm_label": "security-ssrf.test.ts"
     },
     {
@@ -31696,8 +31696,8 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_lib_types_changetype",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "changetype"
     },
     {
@@ -31707,8 +31707,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_lib_types_pendingchange",
-      "community": 7,
-      "community_name": "github.ts",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "pendingchange"
     },
     {
@@ -31784,8 +31784,8 @@
       "source_location": "L137",
       "_origin": "ast",
       "id": "src_lib_types_message",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 50,
+      "community_name": "settings-modal.tsx",
       "norm_label": "message"
     },
     {
@@ -31828,8 +31828,8 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "src_lib_types_conversation",
-      "community": 124,
-      "community_name": "vercel.json",
+      "community": 153,
+      "community_name": "remote-gate.ts",
       "norm_label": "conversation"
     },
     {
@@ -31916,8 +31916,8 @@
       "source_location": "L272",
       "_origin": "ast",
       "id": "src_lib_types_mcpserver",
-      "community": 1012,
-      "community_name": "_best_font_for_char",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "mcpserver"
     },
     {
@@ -32048,8 +32048,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_usepwainstall",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "usepwainstall.ts"
     },
     {
@@ -32059,8 +32059,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_lib_usepwainstall_beforeinstallpromptevent",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "beforeinstallpromptevent"
     },
     {
@@ -32070,8 +32070,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_usepwainstall_usepwainstall",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "usepwainstall()"
     },
     {
@@ -32081,8 +32081,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_utils",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 1012,
+      "community_name": "_best_font_for_char",
       "norm_label": "utils.ts"
     },
     {
@@ -32092,8 +32092,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_lib_utils_cn",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 1012,
+      "community_name": "_best_font_for_char",
       "norm_label": "cn()"
     },
     {
@@ -32114,8 +32114,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_utils_formatdate",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 29,
+      "community_name": "run_pipeline",
       "norm_label": "formatdate()"
     },
     {
@@ -32125,8 +32125,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_lib_utils_generatetitlefrommessage",
-      "community": 43,
-      "community_name": "add_toc_placeholders.py",
+      "community": 1012,
+      "community_name": "_best_font_for_char",
       "norm_label": "generatetitlefrommessage()"
     },
     {
@@ -32664,8 +32664,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_studio_studio_engine_studioruntimecontext",
-      "community": 1012,
-      "community_name": "_best_font_for_char",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "studioruntimecontext"
     },
     {
@@ -32807,8 +32807,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "src_studio_studio_panel_props",
-      "community": 1012,
-      "community_name": "_best_font_for_char",
+      "community": 21,
+      "community_name": "graphify-engine.ts",
       "norm_label": "props"
     },
     {
@@ -165615,6 +165615,72 @@
       "norm_label": "3. evidencias de verificacao & deploy"
     },
     {
+      "label": "143. Adi\u00e7\u00e3o de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L2617",
+      "_origin": "ast",
+      "id": "walkthrough_143_adi\u00e7\u00e3o_de_4_novos_modelos_nvidia_nim_de_alta_performance_2026_10_24",
+      "community": 1021,
+      "community_name": "143. Adi\u00e7\u00e3o de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)",
+      "norm_label": "143. adicao de 4 novos modelos nvidia nim de alta performance (2026-10-24)"
+    },
+    {
+      "label": "1. Diagn\u00f3stico do Cat\u00e1logo NVIDIA NIM",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L2619",
+      "_origin": "ast",
+      "id": "walkthrough_1_diagn\u00f3stico_do_cat\u00e1logo_nvidia_nim",
+      "community": 1021,
+      "community_name": "143. Adi\u00e7\u00e3o de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)",
+      "norm_label": "1. diagnostico do catalogo nvidia nim"
+    },
+    {
+      "label": "2. Implementa\u00e7\u00f5es Realizadas",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L2627",
+      "_origin": "ast",
+      "id": "walkthrough_2_implementa\u00e7\u00f5es_realizadas_2627",
+      "community": 1021,
+      "community_name": "143. Adi\u00e7\u00e3o de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)",
+      "norm_label": "2. implementacoes realizadas"
+    },
+    {
+      "label": "3. Evid\u00eancias de Verifica\u00e7\u00e3o & Deploy",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L2641",
+      "_origin": "ast",
+      "id": "walkthrough_3_evid\u00eancias_de_verifica\u00e7\u00e3o_deploy_2641",
+      "community": 1021,
+      "community_name": "143. Adi\u00e7\u00e3o de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)",
+      "norm_label": "3. evidencias de verificacao & deploy"
+    },
+    {
+      "label": "144. Migra\u00e7\u00e3o do Endere\u00e7o Oficial Cloudflare Pages para `https://eden-ia.pages.dev` (2026-10-24)",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L2650",
+      "_origin": "ast",
+      "id": "walkthrough_144_migra\u00e7\u00e3o_do_endere\u00e7o_oficial_cloudflare_pages_para_https_eden_ia_pages_dev_2026_10_24",
+      "community": 58,
+      "community_name": "._validate_single_file_xsd",
+      "norm_label": "144. migracao do endereco oficial cloudflare pages para `https://eden-ia.pages.dev` (2026-10-24)"
+    },
+    {
+      "label": "145. Integra\u00e7\u00e3o Definitiva de Segredos Cloudflare Pages (`eden-ia`) (2026-10-24)",
+      "file_type": "document",
+      "source_file": "walkthrough.md",
+      "source_location": "L2667",
+      "_origin": "ast",
+      "id": "walkthrough_145_integra\u00e7\u00e3o_definitiva_de_segredos_cloudflare_pages_eden_ia_2026_10_24",
+      "community": 58,
+      "community_name": "._validate_single_file_xsd",
+      "norm_label": "145. integracao definitiva de segredos cloudflare pages (`eden-ia`) (2026-10-24)"
+    },
+    {
       "label": "executeTerminalCommand",
       "file_type": "code",
       "source_file": "src/lib/git-terminal-emulator.ts",
@@ -219927,7 +219993,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/voice-button.tsx",
-      "source_location": "L228",
+      "source_location": "L230",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_voice_button_voicebutton",
@@ -219939,7 +220005,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/voice-button.tsx",
-      "source_location": "L262",
+      "source_location": "L264",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_voice_button_voicebutton",
@@ -220894,7 +220960,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/lib/clipboard-utils.ts",
-      "source_location": "L8",
+      "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_lib_clipboard_utils",
@@ -357666,6 +357732,39 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "walkthrough.md",
+      "source_location": "L2617",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_walkthrough_revis\u00e3o_e_hardening_arquitetura_e_infraestrutura",
+      "target": "walkthrough_143_adi\u00e7\u00e3o_de_4_novos_modelos_nvidia_nim_de_alta_performance_2026_10_24",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
+      "source_location": "L2650",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_walkthrough_revis\u00e3o_e_hardening_arquitetura_e_infraestrutura",
+      "target": "walkthrough_144_migra\u00e7\u00e3o_do_endere\u00e7o_oficial_cloudflare_pages_para_https_eden_ia_pages_dev_2026_10_24",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
+      "source_location": "L2667",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_walkthrough_revis\u00e3o_e_hardening_arquitetura_e_infraestrutura",
+      "target": "walkthrough_145_integra\u00e7\u00e3o_definitiva_de_segredos_cloudflare_pages_eden_ia_2026_10_24",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
       "source_location": "L115",
       "weight": 1.0,
       "_origin": "ast",
@@ -358849,8 +358948,41 @@
       "source": "walkthrough_142_smart_model_router_modo_autom\u00e1tico_monitor_de_sa\u00fade_nvidia_nim_api_models_health_e_modo_turbo_nemotron_enable_thinking_false_2026_10_24",
       "target": "walkthrough_3_evid\u00eancias_de_verifica\u00e7\u00e3o_deploy",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
+      "source_location": "L2619",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_143_adi\u00e7\u00e3o_de_4_novos_modelos_nvidia_nim_de_alta_performance_2026_10_24",
+      "target": "walkthrough_1_diagn\u00f3stico_do_cat\u00e1logo_nvidia_nim",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
+      "source_location": "L2627",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_143_adi\u00e7\u00e3o_de_4_novos_modelos_nvidia_nim_de_alta_performance_2026_10_24",
+      "target": "walkthrough_2_implementa\u00e7\u00f5es_realizadas_2627",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "walkthrough.md",
+      "source_location": "L2641",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "walkthrough_143_adi\u00e7\u00e3o_de_4_novos_modelos_nvidia_nim_de_alta_performance_2026_10_24",
+      "target": "walkthrough_3_evid\u00eancias_de_verifica\u00e7\u00e3o_deploy_2641",
+      "confidence_score": 1.0
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a970caf01ffecee8f0cdebbacb50dc81f50faec1"
+  "built_at_commit": "d2b36ed348ebb7fea2e228abde8b3cb07558a961"
 }

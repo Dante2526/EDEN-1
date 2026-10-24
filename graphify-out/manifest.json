@@ -75,7 +75,7 @@
     "semantic_hash": "cb1c018e9f6ac60181099cb9aed8583f"
   },
   "package.json": {
-    "mtime": 1792847652.7689333,
+    "mtime": 1792867680.3965938,
     "ast_hash": "0e088bddafeaaf0e65b25a11d9e866e4",
     "semantic_hash": ""
   },
@@ -985,8 +985,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-input.tsx": {
-    "mtime": 1792864224.7331824,
-    "ast_hash": "66977c665417007cef95a1200149ec88",
+    "mtime": 1792869020.8611245,
+    "ast_hash": "615edbe6d123940da29dc60d7a886a98",
     "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
@@ -1145,9 +1145,9 @@
     "semantic_hash": "4d6c7766ea6a40fef81ee281c13d9a87"
   },
   "src/components/voice-button.tsx": {
-    "mtime": 1792033199.0460894,
-    "ast_hash": "a68958e6a2062f1993f159765a4fbfc8",
-    "semantic_hash": "a68958e6a2062f1993f159765a4fbfc8"
+    "mtime": 1792868978.8496213,
+    "ast_hash": "33eedae8bbf2f307b211ef60764ab51c",
+    "semantic_hash": ""
   },
   "src/lib/agentic-patterns.test.ts": {
     "mtime": 1792847652.8089023,
@@ -1175,13 +1175,13 @@
     "semantic_hash": "500d3e6c3427353713e34e130e440018"
   },
   "src/lib/clipboard-utils.test.ts": {
-    "mtime": 1792847652.8239539,
-    "ast_hash": "bea63e88a14c0119f084f5634467a0a5",
+    "mtime": 1792868910.144806,
+    "ast_hash": "c03f585d7d794b35e490212ea2199121",
     "semantic_hash": ""
   },
   "src/lib/clipboard-utils.ts": {
-    "mtime": 1792847652.8255723,
-    "ast_hash": "bb2f9934b3b949197f7e2e66facfc83a",
+    "mtime": 1792868902.2103846,
+    "ast_hash": "8761da2b88eeb6d45e8a4fc27e0bb9cf",
     "semantic_hash": ""
   },
   "src/lib/context-compactor.test.ts": {
@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792864224.7412214,
-    "ast_hash": "bd45456666cdee35b909fba82bb48572",
+    "mtime": 1792868611.8581045,
+    "ast_hash": "ed5f71379e7fbe82a26fe8ab0fab7e56",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {

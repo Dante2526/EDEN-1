@@ -33,6 +33,22 @@ describe('Clipboard Utils (Direct Screenshot & Image Paste)', () => {
     assert.match(result[0].name, /^print-\d+-1\.png$/);
   });
 
+  it('deve deduplicar itens idênticos do clipboard com mesmo tamanho e tipo', () => {
+    const dummyBlob = new Blob(['fake-image-bytes'], { type: 'image/png' });
+    const dummyFile1 = new File([dummyBlob], 'image1.png', { type: 'image/png' });
+    const dummyFile2 = new File([dummyBlob], 'image2.png', { type: 'image/png' });
+
+    const mockClipboard = {
+      items: [
+        { kind: 'file', type: 'image/png', getAsFile: () => dummyFile1 },
+        { kind: 'file', type: 'image/png', getAsFile: () => dummyFile2 },
+      ],
+    };
+
+    const result = extractImagesFromClipboardData(mockClipboard);
+    assert.strictEqual(result.length, 1);
+  });
+
   it('deve ignorar itens que não sejam imagens (ex: texto puro)', () => {
     const mockClipboard = {
       items: [

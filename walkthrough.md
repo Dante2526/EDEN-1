@@ -2674,3 +2674,31 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - Endpoint `/api/status` retornando `hasApiKey: true` e `hasGitHubToken: true`.
 - **Status do Novo Endereço Oficial:**
   - `https://eden-ia.pages.dev` totalmente operacional com 10 segredos ativos no ambiente de produção.
+
+
+
+## 146. Correção dos Bugs de Print Duplicado (Ctrl+V) e Ditado por Voz Longo (2026-10-24)
+
+### 1. Diagnóstico dos Problemas
+1. **Prints Triplicados/Duplicados ao Colar:**
+   - Em `chat-input.tsx`, coexistiam dois listeners de `paste`: um direto no wrapper do input (`onPaste={handlePaste}`) e outro no `window` via `useEffect`. Ao colar focado no input, ambos executavam e processavam os mesmos arquivos.
+   - Em `clipboard-utils.ts`, o navegador populava tanto `items` quanto `files` ou formatos alternativos da mesma imagem sem deduplicação.
+   - A notificação flutuante `📸 Print colado com sucesso!` disparava a cada colagem, poluindo o topo do chat.
+2. **Ditado por Voz Cortando Texto em Pausas:**
+   - Em `voice-button.tsx`, `recognition.continuous = false` encerrava o reconhecimento a cada pequena pausa para respirar. Ao reconectar, `finalTextRef.current = ''` zerava o acumulador e substituía o texto digitado anteriormente, fazendo desaparecer partes do ditado.
+
+### 2. Implementações Realizadas
+1. **Deduplicação de Clipboard & Debounce (`src/lib/clipboard-utils.ts` & `src/components/chat-input.tsx`):**
+   - Implementada deduplicação por tamanho e tipo de arquivo (`seenSizesAndTypes`) em `extractImagesFromClipboardData`.
+   - Adicionado debounce de 500ms (`lastPasteTimeRef`) em `chat-input.tsx` para impedir disparos múltiplos do evento de paste.
+   - Removida a notificação flutuante de paste para manter a interface limpa.
+2. **Ditado Contínuo Cumulativo (`src/components/voice-button.tsx`):**
+   - Configurado `recognition.continuous = !continuousModeRef.current` (ou seja, `true` no modo normal de microfone).
+   - Ao disparar `onend` por silêncio natural, o `startListening(preserveText = true)` preserva o texto já falado e acumula as novas frases sem apagar o que veio antes.
+
+### 3. Verificação & Deploy
+- `npx tsc -p tsconfig.app.json --noEmit`: **0 erros**.
+- `npm test`: **237/237 testes passando** (47 suítes).
+- `npm run build`: Compilação em 5.13s (`dist/_worker.js` 222.3 kB).
+- `python -m graphify update .`: Grafo atualizado (15.048 nós, 17.268 arestas).
+- `wrangler pages deploy`: Publicado em produção em `https://eden-ia.pages.dev` (deploy `7fae5e05`).

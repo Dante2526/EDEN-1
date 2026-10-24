@@ -114,9 +114,9 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     if (!SpeechRecognition) return null;
 
     const recognition = new SpeechRecognition();
-    // continuous = false: cada sessão captura UMA frase e para
-    // Isso evita o bug do mobile de reenviar todos os resultados
-    recognition.continuous = false;
+    // No modo walkie-talkie/ditado, continuous=true permite falar parágrafos longos com pausas naturais sem cortar.
+    // No modo de diálogo contínuo (duplex), continuous=false envia frase a frase para resposta rápida.
+    recognition.continuous = !continuousModeRef.current;
     recognition.interimResults = true;
     recognition.lang = 'pt-BR';
     recognition.maxAlternatives = 1;
@@ -190,11 +190,11 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
         }, 20);
         return;
       }
-      // Modo normal: só reinicia se ainda ativo
+      // Modo normal: se o reconhecimento parou por pausa mas o usuário não clicou para desligar, reinicia preservando o texto já falado!
       if (!isManuallyStoppedRef.current && isListeningRef.current) {
         setTimeout(() => {
           if (!isManuallyStoppedRef.current && isListeningRef.current) {
-            startListening();
+            startListening(true);
           }
         }, 20);
         return;
@@ -217,9 +217,11 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({
     }
   };
 
-  const startListening = () => {
+  const startListening = (preserveText = false) => {
     setErrorMessage(null);
-    finalTextRef.current = '';
+    if (!preserveText) {
+      finalTextRef.current = '';
+    }
     isManuallyStoppedRef.current = false;
     disposeRecognition();
 

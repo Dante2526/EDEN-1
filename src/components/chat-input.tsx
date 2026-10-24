@@ -202,16 +202,17 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   };
 
   // Handler para colar prints diretamente via Ctrl+V no input
+  const lastPasteTimeRef = useRef<number>(0);
+
+  // Handler para colar prints diretamente via Ctrl+V no input com debounce anti-duplicata
   const handlePaste = async (e: React.ClipboardEvent) => {
+    const now = Date.now();
+    if (now - lastPasteTimeRef.current < 500) return;
     const pastedImages = extractImagesFromClipboardData(e.clipboardData);
     if (pastedImages.length > 0) {
       e.preventDefault();
+      lastPasteTimeRef.current = now;
       await processFiles(pastedImages);
-      setNotification(
-        pastedImages.length === 1
-          ? '📸 Print colado com sucesso!'
-          : `📸 ${pastedImages.length} prints colados com sucesso!`
-      );
     }
   };
 
@@ -228,15 +229,13 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         return;
       }
 
+      const now = Date.now();
+      if (now - lastPasteTimeRef.current < 500) return;
       const pastedImages = extractImagesFromClipboardData(e.clipboardData);
       if (pastedImages.length > 0) {
         e.preventDefault();
         await processFiles(pastedImages);
-        setNotification(
-          pastedImages.length === 1
-            ? '📸 Print colado com sucesso!'
-            : `📸 ${pastedImages.length} prints colados com sucesso!`
-        );
+        lastPasteTimeRef.current = now;
         textareaRef.current?.focus();
       }
     };
