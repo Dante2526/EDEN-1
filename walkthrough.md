@@ -2661,3 +2661,16 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
      - `nvidia/nemotron-3.5-super-vl-120b-a12b`: **🟢 Online (2.4s)**
   5. Atualizado o script `npm run deploy` para apontar para `eden-ia`.
 - **Novo Endereço de Produção Oficial:** `https://eden-ia.pages.dev` (o antigo `https://synap-8yq.pages.dev` permanece intacto como espelho).
+
+
+
+## 145. Integração Definitiva de Segredos Cloudflare Pages (`eden-ia`) (2026-10-24)
+
+- **Correção e Sincronização dos Segredos:**
+  - `GITHUB_TOKEN`: Novo token Fine-grained (`github_pat_11BR...`) injetado e autenticado com sucesso.
+  - Teste na API do GitHub via `/api/github?action=user`: Usuário autenticado com sucesso (`Dante2526` / `naylanmoreira350@gmail.com`).
+  - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`: Migradas do `.env` e criptografadas no Cloudflare Pages.
+  - `NVIDIA_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`: Criptografadas e ativas.
+  - Endpoint `/api/status` retornando `hasApiKey: true` e `hasGitHubToken: true`.
+- **Status do Novo Endereço Oficial:**
+  - `https://eden-ia.pages.dev` totalmente operacional com 10 segredos ativos no ambiente de produção.
