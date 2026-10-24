@@ -2611,3 +2611,36 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - `python -m graphify update .`: Grafo de conhecimento atualizado (15.038 nós, 17.258 arestas, 1.017 comunidades).
 - Code Review formal (`3dcd8289-1917-4345-adcd-1ca3bef4be09`): **Ready to merge: Yes** (todos os 3 pontos de polimento aplicados).
 - Deploy em Produção: Publicado no Cloudflare Pages (`https://10fb45a6.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).
+
+
+
+## 143. Adição de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)
+
+### 1. Diagnóstico do Catálogo NVIDIA NIM
+- Diante da instabilidade e lentidão dos modelos de terceiros (`glm-5.3`, `glm-5.3-flash`, `google/gemma-4-31b-it`, `deepseek-ai/deepseek-v4.1-flash`) nos servidores da NVIDIA NIM, realizamos uma varredura profunda dos 85 endpoints da API integrada.
+- Como solicitado pelo usuário, **todos os modelos anteriores foram mantidos intactos** e foram adicionados **4 novos modelos equivalentes ou superiores**, testados ao vivo com suporte a Function Calling (ferramentas de edição e prototipagem do Éden), streaming SSE e baixa latência:
+  1. `nvidia/nemotron-3.5-lightning-30b-a3b` (~270ms): Modelo oficial NVIDIA 30B MoE, ultra veloz para código e UI.
+  2. `minimaxai/minimax-m3.1-flash` (~330ms): Modelo multimodal de alto raciocínio prático e tool use.
+  3. `google/diffusiongemma-26b-a4b-it` (~529ms): Modelo Google DeepMind 26B com respostas concisas e precisas.
+  4. `openai/gpt-oss-20b` (~264ms primeiro token): Modelo open-weights com aderência estrita a schemas JSON.
+
+### 2. Implementações Realizadas
+1. **Segurança e Backend (`lib/server/_security.ts`, `src/lib/models.ts` & `src/lib/types.ts`):**
+   - Registrados os 4 novos modelos em `ALLOWED_MODELS`, `TOOL_MODELS` e no tipo `ConcreteModelId`.
+   - Garantida paridade entre cliente e servidor em `src/lib/models.test.ts`.
+2. **Otimização de Raciocínio em `api/chat.ts`:**
+   - Injetado `p.chat_template_kwargs = { enable_thinking: selectedEffort !== 'low' }` para o Nemotron Lightning e MiniMax Flash, assegurando velocidade de ~200-300ms quando no modo rápido (`low`).
+   - Adicionado `CloudflareThinkSplitter` para isolar tags de pensamento e preservar o delta limpo no chat.
+3. **Smart Model Router (`src/lib/smart-model-router.ts`):**
+   - Incluídos os novos modelos na lista prioritária de execução prática rápida (`fast_practical`).
+   - Adicionados nomes amigáveis em `getShortModelName`.
+4. **Interface Mobile-First no Seletor (`src/components/model-controls.tsx`):**
+   - Novos cards com badges dedicados (`NVIDIA ⚡ 30B`, `MiniMax ⚡`, `Google × 26B`, `OpenAI × 20B`).
+   - Tags de saúde da NVIDIA exibindo status e latência em tempo real para cada um.
+
+### 3. Evidências de Verificação & Deploy
+- `npx tsc --noEmit`: **0 erros**.
+- `npm test`: **236/236 testes passando** (47 suítes, 100% verde).
+- `npm run build`: Compilado com sucesso em 3.62s (`dist/_worker.js`, 222.3 kB).
+- `python -m graphify update .`: Grafo atualizado (15.042 nós, 17.262 arestas).
+- `wrangler pages deploy`: Publicado em produção (`https://1ed4ea2a.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).

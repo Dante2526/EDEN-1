@@ -168,6 +168,10 @@ export function resolveSmartModelRoute(input: SmartRouteInput): SmartRouteDecisi
 
   // Default: 'fast_practical' (alterações de botões, UI, correções práticas, leitura/edição ágil)
   const fastCandidates: ConcreteModelId[] = [
+    'nvidia/nemotron-3.5-lightning-30b-a3b',
+    'minimaxai/minimax-m3.1-flash',
+    'google/diffusiongemma-26b-a4b-it',
+    'openai/gpt-oss-20b',
     'z-ai/glm-5.3-flash',
     'deepseek-ai/deepseek-v4.1-flash',
     'nvidia/nemotron-3.5-super-vl-120b-a12b',
@@ -208,6 +212,14 @@ export function getShortModelName(modelId: string): string {
       return 'DeepSeek V4.1';
     case 'nvidia/nemotron-3.5-super-vl-120b-a12b':
       return 'Nemotron VL 120B';
+    case 'nvidia/nemotron-3.5-lightning-30b-a3b':
+      return 'Nemotron Lightning 30B';
+    case 'minimaxai/minimax-m3.1-flash':
+      return 'MiniMax Flash';
+    case 'google/diffusiongemma-26b-a4b-it':
+      return 'DiffusionGemma 26B';
+    case 'openai/gpt-oss-20b':
+      return 'GPT-OSS 20B';
     case 'nvidia/nemotron-3-ultra-550b-a55b':
       return 'Nemotron 3 Ultra';
     default:

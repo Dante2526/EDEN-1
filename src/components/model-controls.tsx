@@ -72,6 +72,30 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       badge: 'NVIDIA ⚡ 550B',
     },
     {
+      id: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+      title: 'Nemotron 3.5 Lightning 30B',
+      subtitle: 'NVIDIA 30B MoE — Ultrarrápido (~270ms), ágil em código, UI e ferramentas',
+      badge: 'NVIDIA ⚡ 30B',
+    },
+    {
+      id: 'minimaxai/minimax-m3.1-flash',
+      title: 'MiniMax M3.1 Flash',
+      subtitle: 'MiniMax Flash — Alta velocidade (~330ms) e raciocínio prático de ponta',
+      badge: 'MiniMax ⚡',
+    },
+    {
+      id: 'google/diffusiongemma-26b-a4b-it',
+      title: 'DiffusionGemma 26B',
+      subtitle: 'Google DeepMind 26B — Resposta direta (~520ms) e lógica apurada',
+      badge: 'Google × 26B',
+    },
+    {
+      id: 'openai/gpt-oss-20b',
+      title: 'OpenAI GPT-OSS 20B',
+      subtitle: 'OpenAI Open-Weights 20B — Precisão em código, schemas JSON e ferramentas',
+      badge: 'OpenAI × 20B',
+    },
+    {
       id: 'z-ai/glm-5.3-flash',
       title: 'GLM-5.3 Flash',
       subtitle: 'Rápido + Suporte multimodal a visão e fotos',
@@ -194,7 +218,15 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                           ? 'Nemotron VL'
                           : selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
                             ? 'Nemotron 3 Ultra'
-                            : 'Automático ⚡'}
+                            : selectedModel === 'nvidia/nemotron-3.5-lightning-30b-a3b'
+                              ? 'Nemotron Lightning'
+                              : selectedModel === 'minimaxai/minimax-m3.1-flash'
+                                ? 'MiniMax Flash'
+                                : selectedModel === 'google/diffusiongemma-26b-a4b-it'
+                                  ? 'DiffusionGemma'
+                                  : selectedModel === 'openai/gpt-oss-20b'
+                                    ? 'GPT-OSS 20B'
+                                    : 'Automático ⚡'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-zinc-500 dark:text-[color:var(--c-fg-8c867a)] shrink-0" />
           </button>

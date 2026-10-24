@@ -307,7 +307,9 @@ export default async function handler(req: Request, envArg?: Env) {
           p.reasoning_effort = apiEffort;
         } else if (
           selectedModel === 'google/gemma-4-31b-it' ||
-          selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b' ||
+          selectedModel === 'nvidia/nemotron-3.5-lightning-30b-a3b' ||
+          selectedModel === 'minimaxai/minimax-m3.1-flash' ||
+          selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ||
           selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
         ) {
           // Na NVIDIA NIM, a família Nemotron ativa enable_thinking=true por padrão no servidor.
@@ -555,7 +557,11 @@ export default async function handler(req: Request, envArg?: Env) {
           const needsThinkSplitter =
             usingCloudflare ||
             selectedModel === 'google/gemma-4-31b-it' ||
-            selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b';
+            selectedModel === 'nvidia/nemotron-3.5-lightning-30b-a3b' ||
+            selectedModel === 'minimaxai/minimax-m3.1-flash' ||
+            selectedModel === 'openai/gpt-oss-20b' ||
+            selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ||
+            selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b';
           const splitter: CloudflareThinkSplitter | null = needsThinkSplitter ? new CloudflareThinkSplitter() : null;
           // Buffer de linha SSE bruta (para o caso de um chunk cortar no meio de uma linha)
           let sseBuffer = '';

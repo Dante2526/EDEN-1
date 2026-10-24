@@ -5,7 +5,7 @@
     "semantic_hash": "3d4d49bc058571e3328ba2ba19d30c06"
   },
   "_worker.ts": {
-    "mtime": 1792863640.680552,
+    "mtime": 1792864224.641047,
     "ast_hash": "787f4c1f861f9e4f8181d8e854effd56",
     "semantic_hash": ""
   },
@@ -15,8 +15,8 @@
     "semantic_hash": "e8cd1b719ee99cf591757ac77aa697ae"
   },
   "api/chat.ts": {
-    "mtime": 1792863640.6815593,
-    "ast_hash": "add147ab16c9eb42cd466091d8c74d92",
+    "mtime": 1792867115.5026224,
+    "ast_hash": "b7f6d030fbb651b1cba5fd8d3cd295cc",
     "semantic_hash": ""
   },
   "api/deployments.ts": {
@@ -60,8 +60,8 @@
     "semantic_hash": "e31ef8cbee7c9ff75566bfdacafebffa"
   },
   "lib/server/_security.ts": {
-    "mtime": 1792847883.0947862,
-    "ast_hash": "07ea8d9d9be4a60a7fd47edeea4def71",
+    "mtime": 1792867076.9924943,
+    "ast_hash": "8b9df7db86de3c5372c76988a8bac616",
     "semantic_hash": ""
   },
   "lib/server/env.ts": {
@@ -130,7 +130,7 @@
     "semantic_hash": "6759c4f9078319aaf1038a4b6af0f9ce"
   },
   "server.ts": {
-    "mtime": 1792863640.680552,
+    "mtime": 1792864224.7299476,
     "ast_hash": "7ea54adac9f0bca048967bcc0c2e522e",
     "semantic_hash": ""
   },
@@ -975,17 +975,17 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792863930.177603,
-    "ast_hash": "b4f96c0f3c82ddc49d4f6753a68755ce",
+    "mtime": 1792864224.7326434,
+    "ast_hash": "b8dcbadc4fa69a7df4c92ad22b0f5576",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
-    "mtime": 1792852248.48675,
-    "ast_hash": "22d0b0c2b5279cd62bc50701efa913d4",
+    "mtime": 1792864224.4092364,
+    "ast_hash": "73897e387c26700e9349041280db8bfc",
     "semantic_hash": ""
   },
   "src/components/chat-input.tsx": {
-    "mtime": 1792863930.1719184,
+    "mtime": 1792864224.7331824,
     "ast_hash": "66977c665417007cef95a1200149ec88",
     "semantic_hash": ""
   },
@@ -1085,8 +1085,8 @@
     "semantic_hash": "bb673c075a4d7bd8fc517b1f8c38ab7f"
   },
   "src/components/model-controls.tsx": {
-    "mtime": 1792863748.5520535,
-    "ast_hash": "0098f6b3387f8833abc2185734c4832d",
+    "mtime": 1792867163.453996,
+    "ast_hash": "585b4baa7ce44fe684abc562f8f59f5d",
     "semantic_hash": ""
   },
   "src/components/project-workspace/local-preview.tsx": {
@@ -1295,13 +1295,13 @@
     "semantic_hash": "2c96ed7da6b05a93153b3ee7aced9da8"
   },
   "src/lib/models.test.ts": {
-    "mtime": 1792847755.7373712,
-    "ast_hash": "859472b95d85dc14ed891a421377faa6",
+    "mtime": 1792867239.6836746,
+    "ast_hash": "c1754d507fcc092cf048706a1ae6f43d",
     "semantic_hash": ""
   },
   "src/lib/models.ts": {
-    "mtime": 1792847652.850467,
-    "ast_hash": "26a5746b4e2a39a74f06bc5a1009cf25",
+    "mtime": 1792867212.368163,
+    "ast_hash": "2e324b80ec11669ddb4e670c36381e4a",
     "semantic_hash": ""
   },
   "src/lib/pending-changes.tsx": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792863424.0197394,
-    "ast_hash": "368da804084289c94c1f62a5b735b392",
+    "mtime": 1792867096.125825,
+    "ast_hash": "2af236e09239fd9412f2dffe7b294f04",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792862171.1374123,
-    "ast_hash": "761f806250eab2e4724245c407b278bf",
+    "mtime": 1792864224.7412214,
+    "ast_hash": "bd45456666cdee35b909fba82bb48572",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6065,18 +6065,18 @@
     "semantic_hash": ""
   },
   "api/models-health.ts": {
-    "mtime": 1792863526.7304292,
-    "ast_hash": "d4a5b7329fd0085ee02383b0810568f9",
+    "mtime": 1792864224.6421502,
+    "ast_hash": "dffb457ded2b266ae7e1b781c453cf7f",
     "semantic_hash": ""
   },
   "src/lib/smart-model-router.test.ts": {
-    "mtime": 1792863359.311474,
-    "ast_hash": "0b90f37040188d0cdaa4589f2818789a",
+    "mtime": 1792864224.7356977,
+    "ast_hash": "d6376005c8cef266acd6b20d4af6f16e",
     "semantic_hash": ""
   },
   "src/lib/smart-model-router.ts": {
-    "mtime": 1792863466.3087978,
-    "ast_hash": "0e182e621251750a56c8e3e2881f31a7",
+    "mtime": 1792867128.521617,
+    "ast_hash": "7f59f5ea5a54d8d7d513b86337ae604e",
     "semantic_hash": ""
   }
 }
