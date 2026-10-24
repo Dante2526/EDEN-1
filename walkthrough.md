@@ -2644,3 +2644,20 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - `npm run build`: Compilado com sucesso em 3.62s (`dist/_worker.js`, 222.3 kB).
 - `python -m graphify update .`: Grafo atualizado (15.042 nós, 17.262 arestas).
 - `wrangler pages deploy`: Publicado em produção (`https://1ed4ea2a.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).
+
+
+
+## 144. Migração do Endereço Oficial Cloudflare Pages para `https://eden-ia.pages.dev` (2026-10-24)
+
+- **Solicitação do Usuário:** Alterar o endereço na Cloudflare para refletir o nome do projeto (Éden) em vez do legado `synap-8yq.pages.dev`.
+- **Implementação:**
+  1. Criação do novo projeto oficial `eden-ia` no Cloudflare Pages.
+  2. Migração dos secrets autenticados da NVIDIA NIM (`NVIDIA_API_KEY`) e Cloudflare (`CLOUDFLARE_ACCOUNT_ID`).
+  3. Deploy em produção do bundle completo (frontend Vite + Cloudflare Pages Functions Worker).
+  4. Teste em tempo real do endpoint `/api/models-health` em `https://eden-ia.pages.dev`:
+     - `nvidia/nemotron-3.5-lightning-30b-a3b`: **🟢 Online (589ms)**
+     - `minimaxai/minimax-m3.1-flash`: **🟢 Online (621ms)**
+     - `google/diffusiongemma-26b-a4b-it`: **🟢 Online (1.5s)**
+     - `nvidia/nemotron-3.5-super-vl-120b-a12b`: **🟢 Online (2.4s)**
+  5. Atualizado o script `npm run deploy` para apontar para `eden-ia`.
+- **Novo Endereço de Produção Oficial:** `https://eden-ia.pages.dev` (o antigo `https://synap-8yq.pages.dev` permanece intacto como espelho).
