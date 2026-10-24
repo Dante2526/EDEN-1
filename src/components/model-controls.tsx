@@ -39,7 +39,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
     {
       id: 'z-ai/glm-5.3',
       title: 'GLM-5.3',
-      subtitle: 'Raciocínio analítico avançado e raciocínio profundo',
+      subtitle: 'Raciocínio analítico avançado e raciocínio profundo de fundo',
       badge: 'Pensar',
     },
     {
@@ -52,19 +52,25 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       id: 'google/gemma-4-31b-it',
       title: 'Gemma 4 31B',
       subtitle: 'Google DeepMind multimodal (256k contexto, visão e lógica)',
-      badge: 'Google · 31B',
+      badge: 'Google × 31B',
     },
     {
       id: 'deepseek-ai/deepseek-v4.1-flash',
       title: 'DeepSeek V4.1 Flash',
-      subtitle: 'Rápido e eficiente — ótimo custo-benefício',
+      subtitle: 'Rápido e eficiente — tempo custo-benefício',
       badge: 'Flash',
     },
     {
       id: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
       title: 'Nemotron-3.5 Super VL',
       subtitle: 'NVIDIA 120B Super VL — Visão multimodal e raciocínio avançado',
-      badge: 'NVIDIA · VL',
+      badge: 'NVIDIA × VL',
+    },
+    {
+      id: 'nvidia/nemotron-3-ultra-550b-a55b',
+      title: 'Nemotron 3 Ultra',
+      subtitle: 'NVIDIA 550B MoE híbrido (55B ativos) — Raciocínio profundo e ferramentas',
+      badge: 'NVIDIA ⚡',
     },
   ];
 
@@ -96,7 +102,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
 
   return (
     <>
-      {/* ================= CLAUDE.AI BOTTOM PILL TOOLBAR ================= */}
+      {/* ===================== CLAUDE.AI BUTTON PILLS TOOLBAR ===================== */}
       <div className="flex items-center justify-center gap-1.5 mt-2 px-1 text-xs select-none">
         <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
           {/* Model Selector Pill (Claude style) */}
@@ -114,14 +120,16 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
               {selectedModel === 'z-ai/glm-5.3'
                 ? 'GLM-5.3'
                 : selectedModel === 'z-ai/glm-5.3-flash'
-                ? 'GLM Flash'
-                : selectedModel === 'google/gemma-4-31b-it'
-                ? 'Gemma 4 31B'
-                : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
-                ? 'DeepSeek V4.1'
-                : selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
-                ? 'Nemotron VL'
-                : 'GLM-5.3'}
+                  ? 'GLM Flash'
+                  : selectedModel === 'google/gemma-4-31b-it'
+                    ? 'Gemma 4 31B'
+                    : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
+                      ? 'DeepSeek V4.1'
+                      : selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+                        ? 'Nemotron VL'
+                        : selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
+                          ? 'Nemotron 3 Ultra'
+                          : 'GLM-5.3'}
             </span>
             <ChevronDown className="w-3.5 h-3.5 text-zinc-500 dark:text-[color:var(--c-fg-8c867a)]" />
           </button>
@@ -159,18 +167,20 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             <span className={isPlanMode ? 'text-[#a34423] dark:text-[color:var(--c-fg-f3efe6)] font-semibold' : 'text-zinc-800 dark:text-[color:var(--c-fg-f3efe6)] font-medium'}>Plano</span>
             <span
               className={`text-[9px] px-1 py-0.2 rounded font-mono uppercase font-bold ${
-                isPlanMode ? 'bg-[#d97757] text-white' : 'bg-zinc-200/90 dark:bg-[color:var(--c-bg-2f2d28)] text-zinc-700 dark:text-[color:var(--c-fg-8c867a)] border border-zinc-300/70 dark:border-transparent'
+                isPlanMode
+                  ? 'bg-[#d97757] text-white'
+                  : 'bg-zinc-200/90 dark:bg-[color:var(--c-bg-2f2d28)] text-zinc-700 dark:text-[color:var(--c-fg-8c867a)] border border-zinc-300/70 dark:border-transparent'
               }`}
             >
               {isPlanMode ? 'ON' : 'OFF'}
             </span>
           </button>
 
-          {/* Token Usage Tool Pill com barra de progresso embutida */}
+          {/* Token Usage Tool Pill with embedded progress bar */}
           {(() => {
             const activeTokens = conversationTokens?.activeContextTokens || conversationTokens?.totalTokens || 0;
             const totalAccumulated = conversationTokens?.totalTokens || 0;
-            const CONTEXT_LIMIT = selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ? 256000 : 128000; // 256k para Gemma 4 e Nemotron VL, 128k para GLM-5.3
+            const CONTEXT_LIMIT = selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b' ? 256000 : 128000; // 256k para Gemma 4 e Nemotron, 128k para GLM-5.3
             const percent = Math.min(100, (activeTokens / CONTEXT_LIMIT) * 100);
             // Cor conforme % de uso da janela ativa
             const barColor =
@@ -181,7 +191,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             const textColor =
               percent >= 90 ? 'text-red-600 dark:text-red-400 font-semibold' :
               percent >= 75 ? 'text-orange-600 dark:text-orange-400 font-semibold' :
-              percent >= 50 ? 'text-amber-600 dark:text-yellow-400 font-semibold' :
+              percent >= 50 ? 'text-amber-600 dark:text-amber-400 font-semibold' :
               'text-zinc-900 dark:text-[color:var(--c-fg-f3efe6)] font-semibold';
             const pulseClass = percent >= 90 ? 'animate-pulse' : '';
             return (
@@ -201,7 +211,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 <span className={`font-mono font-medium ${textColor} ${pulseClass}`}>
                   {activeTokens.toLocaleString()}
                 </span>
-                {/* Mini barra de progresso — visível no celular e desktop */}
+                {/* Mini barra de progresso — visível só no mobile e desktop */}
                 {activeTokens > 0 && (
                   <div className="flex items-center gap-1 ml-0.5 shrink-0">
                     <div className="w-8 sm:w-12 h-1.5 bg-zinc-200 dark:bg-[color:var(--c-bg-2f2d28)] rounded-full overflow-hidden">
@@ -222,7 +232,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
 
       </div>
 
-      {/* ================= CLAUDE.AI BOTTOM SHEET / MODAL ================= */}
+      {/* ===================== CLAUDE.AI BOTTOM SHEET / MODAL ===================== */}
       {openSheet && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-150">
           {/* Dimmed warm backdrop */}
@@ -240,15 +250,15 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                   {openSheet === 'model'
                     ? 'Modelo'
                     : openSheet === 'reasoning'
-                    ? 'Pensamento Estendido (Reasoning)'
-                    : '⚡ Monitor de Tokens & Contexto'}
+                      ? 'Pensamento Estendido (Reasoning)'
+                      : '🏆 Monitor de Tokens & Contexto'}
                 </h3>
                 <p className="text-xs text-[color:var(--c-fg-9c9588)] mt-0.5">
                   {openSheet === 'model'
                     ? 'Selecione o modelo do Éden'
                     : openSheet === 'reasoning'
-                    ? 'Nível de raciocínio da IA antes de responder'
-                    : 'Estatísticas de consumo de tokens desta conversa'}
+                      ? 'Nível de raciocínio da IA antes de responder'
+                      : 'Estatísticas de consumo de tokens desta conversa'}
                 </p>
               </div>
               <button
@@ -267,11 +277,11 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 <div className="p-3.5 rounded-xl bg-[color:var(--c-bg-1e1c19)] border border-[color:var(--c-bg-312f2a)] space-y-2.5">
                   <div className="flex items-center justify-between text-xs pb-1.5 border-b border-[color:var(--c-bg-2c2924)]">
                     <span className="text-[color:var(--c-fg-a8a296)]">
-                      Contexto Ativo Atual (Janela de{' '}
-                      {selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
-                        ? '256k'
-                        : '128k'}
-                      ):
+                      Contexto Ativo Total {'('}Janela de{' '}{
+                        selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
+                          ? '256k'
+                          : '128k'}
+                      {')'}:
                     </span>
                     <span className="font-mono text-emerald-400 font-semibold">
                       {(conversationTokens?.activeContextTokens || 0).toLocaleString()} tokens
@@ -300,11 +310,11 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[color:var(--c-bg-191714)] border border-[color:var(--c-bg-2d2b25)] text-xs space-y-2 text-[color:var(--c-fg-8c867a)]">
+                <div className="p-3 rounded-xl bg-[color:var(--c-bg-191714)] border border-[color:var(--c-bg-272520)] text-xs space-y-2 text-[color:var(--c-fg-8c867a)]">
                   <div className="flex justify-between items-center">
                     <span>Janela de Contexto Total:</span>
                     <span className="text-[color:var(--c-fg-c4bcaa)] font-mono font-medium">
-                      {selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+                      {selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
                         ? '256.000 tokens'
                         : '128.000 tokens'}
                     </span>
@@ -320,7 +330,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 </div>
 
                 <div className="text-[11px] text-[color:var(--c-fg-8c867a)] bg-[color:var(--c-bg-1a1815)] p-2.5 rounded-lg border border-[color:var(--c-bg-272520)] leading-relaxed">
-                  💡 <strong className="text-[color:var(--c-fg-c4bfb6)]">Dica:</strong> Cada resposta da IA também exibe o selo <span className="text-[color:var(--c-fg-d97757)]">⚡ [número] tokens</span> no rodapé. Clique nele para ver o consumo individual da mensagem.
+                  ⚠️ <strong className="text-[color:var(--c-fg-c4bfb6)]">Dica:</strong> Cada resposta da IA também exige o <span className="text-[color:var(--c-fg-d97757)]">≈ [número] tokens</span> no rodapé. Clique nela para ver o consumo individual de cada mensagem.
                 </div>
 
                 {onOpenTerminal && (

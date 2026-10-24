@@ -17,6 +17,7 @@ export const ALLOWED_MODELS = [
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
+  'nvidia/nemotron-3-ultra-550b-a55b',
 ];
 
 /**
@@ -44,6 +45,7 @@ export const TOOL_MODELS = [
   'google/gemma-4-31b-it',
   'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
+  'nvidia/nemotron-3-ultra-550b-a55b',
 ];
 
 export function isToolCapableModel(model: string): boolean {
@@ -62,8 +64,8 @@ export function getHeader(req: any, name: string): string | null {
 }
 
 export function getClientIp(req: Request | any): string {
-  // No Cloudflare, cf-connecting-ip é o cabeçalho confiável (setado pela própria CF).
-  // Prioriza ele quando presente.
+  // No Cloudflare, cf-connecting-ip é o cabecalho confiável (setado pela propria CF).
+  // Priorize o que estiver presente.
   const cfIp = getHeader(req, 'cf-connecting-ip');
   if (cfIp && cfIp.trim()) return cfIp.trim();
 
@@ -105,8 +107,8 @@ export function timingSafeEqualStrings(a: string, b: string): boolean {
 }
 
 /**
- * Verifica rate limit. Aceita `env` (CF bindings) opcional — se não recebido,
- * cai pra `process.env` (dev local Node/Express).
+ * Verifica rate limit. Aceita `env` (CF bindings) opcional —
+ * se não recebido, cai para `process.env` (dev local Node/Express).
  */
 export async function checkRateLimit(
   req: Request,
@@ -188,7 +190,7 @@ export async function checkRateLimit(
 
 /**
  * Combo: rate limit + auth (header x-api-key). Aceita `env` (CF bindings)
- * opcional. Se não recebido, cai pra `process.env` via `getEnv()`.
+ * opcional. Se não recebido, cai para `process.env` via `getEnv()`.
  */
 export async function checkAuthAndRateLimit(
   req: Request,
@@ -218,7 +220,7 @@ export async function checkAuthAndRateLimit(
 /**
  * Validação rigorosa anti-SSRF: bloqueia requisições a loopbacks (127.0.0.0/8),
  * Link-Local / Cloud Instance Metadata Services (169.254.0.0/16), redes privadas RFC 1918
- * (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), CGNAT (100.64.0.0/10), IPv6 privados/locais
+ * (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16), CGNAT (100.64.0.0/10) e IPv6 privados
  * e representações numéricas puras de IP.
  */
 export function isLocalOrPrivateUrl(urlStr: string): boolean {
@@ -228,7 +230,7 @@ export function isLocalOrPrivateUrl(urlStr: string): boolean {
     const parsed = new URL(urlStr);
     const protocol = parsed.protocol.toLowerCase();
 
-    // Apenas protocolos web públicos permitidos
+    // Apenas protocolos web públicos são permitidos
     if (protocol !== 'http:' && protocol !== 'https:') {
       return true;
     }
@@ -239,7 +241,7 @@ export function isLocalOrPrivateUrl(urlStr: string): boolean {
       hostname = hostname.slice(1, -1);
     }
 
-    // Nomes de domínio locais / internos conhecidos e wildcard DNS
+    // Nomes de domínio locais / internos conhecidos e wildcards DNS
     if (
       hostname === 'localhost' ||
       hostname.endsWith('.localhost') ||
@@ -259,13 +261,13 @@ export function isLocalOrPrivateUrl(urlStr: string): boolean {
       return true;
     }
 
-    // Bloqueia decimais/hex puros que contornam filtros de IP (ex: 2130706433 ou 0x7f000001)
+    // Bloqueia decimais/hex puros que contenham filtragem de IP (ex: 2130706433 ou 0x7f000001)
     if (/^\d+$/.test(hostname) || /^0x[0-9a-f]+$/i.test(hostname)) {
       return true;
     }
 
     // IPv6 Loopback, Link-Local (fe80::/10), Site-Local (fec0::/10), ULA (fc00::/7) e IPv4-Mapped
-    const ipv6LocalRegex = /^(::1|0:0:0:0:0:0:0:1|::|f[cd][0-9a-f]{0,2}:|fe[8-f][0-9a-f]{0,1}:|::ffff:)/i;
+    const ipv6LocalRegex = /^(::1|0:0:0:0:0:0:0:1|::|f[cd][0-9a-f]{2}:|fe[89ab][0-9a-f]:|::ffff:)/i;
     if (ipv6LocalRegex.test(hostname)) {
       return true;
     }
@@ -297,7 +299,7 @@ export function isLocalOrPrivateUrl(urlStr: string): boolean {
       if (o1 === 192 && o2 === 0) return true;
       if (o1 === 198 && (o2 === 18 || o2 === 19)) return true;
 
-      // 224.0.0.0/4 (Multicast Classes D) e 240.0.0.0/4 (Reservadas/Classe E)
+      // 224.0.0.0/4 (Multicast Classes D) e 240.0.0.0/4 (Reservas/Classes E)
       if (o1 >= 224) return true;
     }
 
@@ -308,8 +310,9 @@ export function isLocalOrPrivateUrl(urlStr: string): boolean {
 }
 
 /**
- * Executa fetch HTTP com validação anti-SSRF compulsória em cada hop de redirecionamento (CWE-918).
- * Previne ataques de SSRF via HTTP 301/302/303/307/308 para metadados de nuvem ou redes privadas.
+ * Executa fetch HTTP com validação anti-SSRF e acompanhamento controlado
+ * de redirecionamentos (CWE-918).
+ * Previne ataques via HTTP 301/302/303/307/308 para metadados de nuvem ou redes privadas.
  */
 export async function safeFetchWithRedirects(
   initialUrl: string,
@@ -346,7 +349,7 @@ export async function safeFetchWithRedirects(
       return res;
     }
 
-    // Resolve URL de redirecionamento relativa ou absoluta
+    // Resolve URL de redirecionamento relativo à absoluta
     let nextUrl: string;
     try {
       nextUrl = new URL(location, currentUrl).href;
@@ -354,7 +357,7 @@ export async function safeFetchWithRedirects(
       throw new Error(`SSRF Blocked: URL de redirecionamento inválida (${location})`);
     }
 
-    // Se o método era POST e o status for 303 (ou 301/302), converte para GET nas próximas requisições
+    // Se o método era POST e o status foi 303 (ou 301/302), converte para GET nas próximas requisições
     if (res.status === 303 || ((res.status === 301 || res.status === 302) && options.method === 'POST')) {
       options = {
         ...options,
