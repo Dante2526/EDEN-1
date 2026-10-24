@@ -3,6 +3,7 @@ import { AlertCircle, WifiOff, X, GitBranch, ExternalLink, FileCode, Check, Eye,
 import {
   Conversation,
   Message,
+  ConcreteModelId,
   ModelId,
   ReasoningEffort,
   AppSettings,
@@ -36,6 +37,10 @@ import {
   saveKnowledgeFacts,
 } from './lib/storage';
 import { formatKnowledgePrompt, createKnowledgeFact } from './lib/knowledge-base';
+import {
+  resolveSmartModelRoute,
+  type ModelHealthMap,
+} from './lib/smart-model-router';
 import {
   detectHarnessNeed,
   proposeHarnessCandidate,
@@ -1527,21 +1532,50 @@ function AppContent() {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
       if (
+        saved === 'auto' ||
         saved === 'z-ai/glm-5.3' ||
         saved === 'z-ai/glm-5.3-flash' ||
         saved === 'google/gemma-4-31b-it' ||
         saved === 'deepseek-ai/deepseek-v4.1-flash' ||
-        saved === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+        saved === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ||
+        saved === 'nvidia/nemotron-3-ultra-550b-a55b'
       ) {
         return saved;
       }
       if (saved && saved.startsWith('@cf/')) {
-        localStorage.setItem(MODEL_STORAGE_KEY, 'z-ai/glm-5.3-flash');
-        return 'z-ai/glm-5.3-flash';
+        localStorage.setItem(MODEL_STORAGE_KEY, 'auto');
+        return 'auto';
       }
     }
-    return 'z-ai/glm-5.3'; // Modelo padrão: GLM-5.3 full (mais robusto)
+    return 'auto'; // Padrão: Modo Automático (Smart Router)
   });
+
+  const [modelHealthMap, setModelHealthMap] = useState<ModelHealthMap>({});
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+  const [lastAutoRoutedModel, setLastAutoRoutedModel] = useState<ConcreteModelId | null>(null);
+
+  const refreshModelHealth = useCallback(async (force = false) => {
+    setIsCheckingHealth(true);
+    try {
+      const res = await fetch(`/api/models-health${force ? '?force=true' : ''}`, {
+        headers: { 'x-api-key': import.meta.env.VITE_API_SECRET || '' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.models) {
+          setModelHealthMap(data.models);
+        }
+      }
+    } catch (err) {
+      console.warn('[ModelHealth] Falha ao checar saúde dos modelos:', err);
+    } finally {
+      setIsCheckingHealth(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshModelHealth(false);
+  }, [refreshModelHealth]);
 
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() => {
     if (typeof window !== 'undefined') {
@@ -3279,7 +3313,7 @@ function AppContent() {
           task: args.task,
           context: args.context,
           skillsPrompt: subagentSkillsPrompt,
-          model: selectedModel,
+          model: resolveSmartModelRoute({ selectedModel, selectedEffort: reasoningEffort, prompt: args.task || '', healthMap: modelHealthMap }).targetModel,
           apiKeySecret: import.meta.env.VITE_API_SECRET || '',
           tools: subagentTools,
           onExecuteTool: async (subToolName, subToolArgs) => {
@@ -4094,12 +4128,30 @@ function AppContent() {
         ? false
         : isPlanMode;
 
-    let effectiveModel = selectedModel;
-    if (images.length > 0 && !isVisionModel(selectedModel)) {
-      // Auto-switch pra GLM-5.3 Flash quando usuário anexa imagem em modelo sem visão
-      effectiveModel = 'z-ai/glm-5.3-flash';
-      setSelectedModel('z-ai/glm-5.3-flash');
-      localStorage.setItem(MODEL_STORAGE_KEY, 'z-ai/glm-5.3-flash');
+    const routeDecision = resolveSmartModelRoute({
+      selectedModel,
+      selectedEffort: reasoningEffort,
+      prompt: text,
+      hasImages: images.length > 0,
+      isPlanMode: activePlan,
+      healthMap: modelHealthMap,
+    });
+    let effectiveModel: ConcreteModelId = routeDecision.targetModel;
+    const effectiveEffort: ReasoningEffort = routeDecision.targetEffort;
+
+    if (routeDecision.isAutoRouted) {
+      setLastAutoRoutedModel(effectiveModel);
+      console.info(`[SmartRouter ⚡] ${routeDecision.reason} -> ${effectiveModel} (thinking: ${effectiveEffort})`);
+    } else if (images.length > 0 && !isVisionModel(effectiveModel)) {
+      const visionRoute = resolveSmartModelRoute({
+        selectedModel: 'auto',
+        selectedEffort: reasoningEffort,
+        prompt: text,
+        hasImages: true,
+        isPlanMode: activePlan,
+        healthMap: modelHealthMap,
+      });
+      effectiveModel = visionRoute.targetModel;
     }
 
     let finalText = text;
@@ -4140,7 +4192,7 @@ function AppContent() {
         messages: [userMessage],
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        model: effectiveModel,
+        model: selectedModel,
         reasoningEffort: reasoningEffort,
         isPlanMode: activePlan,
         activeRepo: activeRepo || null,
@@ -4446,7 +4498,7 @@ function AppContent() {
               body: JSON.stringify({
                 messages: currentMessagesForApi,
                 model: effectiveModel,
-                reasoning_effort: reasoningEffort,
+                reasoning_effort: effectiveEffort,
                 tools: requestTools.length > 0 ? requestTools : undefined,
               }),
               signal: controller.signal,
@@ -5423,7 +5475,7 @@ function AppContent() {
       currentAssistantMessageIdRef.current = '';
       currentConversationIdRef.current = '';
     }
-  }, [isPlanMode, selectedModel, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts, selectedPreviewElements]);
+  }, [isPlanMode, selectedModel, modelHealthMap, activeId, activeConversation, reasoningEffort, activeRepo, conversations, changes, skills, mcpServers, knowledgeFacts, selectedPreviewElements]);
 
   // ====== RESUME-AFTER-SCREEN-OFF: retoma quando a tela acender ======
   useEffect(() => {
@@ -6066,6 +6118,10 @@ function AppContent() {
           selectedElements={selectedPreviewElements}
           onRemoveSelectedElement={handleRemoveSelectedPreviewElement}
           onClearSelectedElements={() => setSelectedPreviewElements([])}
+          modelHealthMap={modelHealthMap}
+          isCheckingHealth={isCheckingHealth}
+          onRefreshHealth={refreshModelHealth}
+          lastAutoRoutedModel={lastAutoRoutedModel}
         />
         </div>
 

@@ -14,6 +14,7 @@ import transcribeHandler from './api/transcribe';
 import deploymentsHandler from './api/deployments';
 import browserHandler from './api/browser';
 import dbProjectsHandler from './api/db-projects';
+import modelsHealthHandler from './api/models-health';
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
@@ -65,6 +66,9 @@ export default {
       }
       if (path === '/api/db-projects' || path === '/api/db-projects/') {
         return await dbProjectsHandler(request, env);
+      }
+      if (path === '/api/models-health' || path === '/api/models-health/') {
+        return await modelsHealthHandler(request, env);
       }
 
       if (path.startsWith('/api/')) {

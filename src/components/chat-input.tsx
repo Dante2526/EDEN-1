@@ -3,7 +3,8 @@ import { ArrowUp, Square, Paperclip, AudioLines, MousePointerClick, X, Globe } f
 import { FileAttachmentPreviews } from './image-attachment';
 import { VoiceButton } from './voice-button';
 import { ModelControls } from './model-controls';
-import { ModelId, ReasoningEffort, AttachedDocument, SelectedPreviewElement } from '../lib/types';
+import { ConcreteModelId, ModelId, ReasoningEffort, AttachedDocument, SelectedPreviewElement } from '../lib/types';
+import { ModelHealthMap } from '../lib/smart-model-router';
 import { isVisionModel } from '../lib/models';
 import { fileToBase64, readFileAsText, generateId } from '../lib/utils';
 import { extractImagesFromClipboardData } from '../lib/clipboard-utils';
@@ -35,6 +36,10 @@ interface ChatInputProps {
   selectedElements?: SelectedPreviewElement[];
   onRemoveSelectedElement?: (id: string) => void;
   onClearSelectedElements?: () => void;
+  modelHealthMap?: ModelHealthMap;
+  isCheckingHealth?: boolean;
+  onRefreshHealth?: (force?: boolean) => void;
+  lastAutoRoutedModel?: ConcreteModelId | null;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = React.memo(({
@@ -59,6 +64,10 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
   selectedElements = [],
   onRemoveSelectedElement,
   onClearSelectedElements,
+  modelHealthMap,
+  isCheckingHealth,
+  onRefreshHealth,
+  lastAutoRoutedModel,
 }) => {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -129,10 +138,10 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
           const base64 = await fileToBase64(file);
           newImages.push(base64);
 
-          // Preserva modelo se ele já suportar visão (GLM Flash, Gemma 4 31B, Nemotron-3.5 Super VL)
-          const isVision = isVisionModel(selectedModel);
+          // Preserva 'auto' ou qualquer modelo que já suporte visão
+          const isVision = selectedModel === 'auto' || isVisionModel(selectedModel);
           if (!isVision) {
-            onSelectModel('z-ai/glm-5.3-flash');
+            onSelectModel('nvidia/nemotron-3.5-super-vl-120b-a12b');
             switchedToFlash = true;
           }
         } catch (err: any) {
@@ -495,6 +504,10 @@ export const ChatInput: React.FC<ChatInputProps> = React.memo(({
         onTogglePlanMode={onTogglePlanMode}
         conversationTokens={conversationTokens}
         onOpenTerminal={onOpenTerminal}
+        modelHealthMap={modelHealthMap}
+        isCheckingHealth={isCheckingHealth}
+        onRefreshHealth={onRefreshHealth}
+        lastAutoRoutedModel={lastAutoRoutedModel}
       />
     </div>
   );

@@ -226,13 +226,15 @@ export interface Conversation {
   isArchived?: boolean;
 }
 
-export type ModelId =
+export type ConcreteModelId =
   | 'z-ai/glm-5.3'
   | 'z-ai/glm-5.3-flash'
   | 'google/gemma-4-31b-it'
   | 'deepseek-ai/deepseek-v4.1-flash'
   | 'nvidia/nemotron-3.5-super-vl-120b-a12b'
   | 'nvidia/nemotron-3-ultra-550b-a55b';
+
+export type ModelId = 'auto' | ConcreteModelId;
 export type ReasoningEffort = 'low' | 'high' | 'max';
 
 export interface AppSettings {

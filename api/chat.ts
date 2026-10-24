@@ -159,7 +159,7 @@ export default async function handler(req: Request, envArg?: Env) {
       messages = [...sys, ...trimmed];
     }
 
-    const selectedModel = model || 'z-ai/glm-5.3';
+    const selectedModel = (!model || model === 'auto') ? 'nvidia/nemotron-3.5-super-vl-120b-a12b' : model;
     if (!ALLOWED_MODELS.includes(selectedModel)) {
       return new Response(JSON.stringify({ error: 'Modelo não autorizado.' }), {
         status: 403, headers: { 'Content-Type': 'application/json' },
@@ -306,11 +306,13 @@ export default async function handler(req: Request, envArg?: Env) {
         if (selectedModel === 'z-ai/glm-5.3') {
           p.reasoning_effort = apiEffort;
         } else if (
-          selectedEffort !== 'low' &&
-          (selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b')
+          selectedModel === 'google/gemma-4-31b-it' ||
+          selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b' ||
+          selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
         ) {
-          // Em modo 'low' (Pensamento rápido), não força enable_thinking para responder com latência mínima
-          p.chat_template_kwargs = { enable_thinking: true };
+          // Na NVIDIA NIM, a família Nemotron ativa enable_thinking=true por padrão no servidor.
+          // Passar explicitamente enable_thinking: false em 'low' reduz a latência de 30s para ~1s-2s!
+          p.chat_template_kwargs = { enable_thinking: selectedEffort !== 'low' };
         }
       }
       if (hasToolsActive) {
@@ -553,7 +555,7 @@ export default async function handler(req: Request, envArg?: Env) {
           const needsThinkSplitter =
             usingCloudflare ||
             selectedModel === 'google/gemma-4-31b-it' ||
-            selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+            selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' || selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b';
           const splitter: CloudflareThinkSplitter | null = needsThinkSplitter ? new CloudflareThinkSplitter() : null;
           // Buffer de linha SSE bruta (para o caso de um chunk cortar no meio de uma linha)
           let sseBuffer = '';

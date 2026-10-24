@@ -2570,3 +2570,44 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - `npm run build`: Bundle de produção e Cloudflare Pages Worker (`dist/_worker.js`, 218.2 kB) gerados com sucesso em 3.34s.
 - Code Review formal: Apontamentos de desconexão de gatilho, deduplicação e tracking de falhas corrigidos integralmente.
 - Deploy em produção: Publicado com sucesso no Cloudflare Pages (`https://12c2d7ef.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).
+
+
+
+## 142. Smart Model Router (Modo Automático), Monitor de Saúde NVIDIA NIM (`/api/models-health`) e Modo Turbo Nemotron (`enable_thinking: false`) (2026-10-24)
+
+### 1. Diagnóstico da Causa Raiz (Por que o Nemotron demorava ~30s e modelos travavam?)
+- **Raciocínio Forçado no Servidor da NVIDIA (`enable_thinking: true` default):**
+  - Ao testar os endpoints da NVIDIA NIM em tempo real, descobrimos que `nvidia/nemotron-3-ultra-550b-a55b` (550B) e `nvidia/nemotron-3.5-super-vl-120b-a12b` (120B) possuem o modo de pensamento profundo (`enable_thinking: true`) ativado por padrão no servidor da NVIDIA.
+  - Antes, quando `reasoning_effort` era `'low'`, o backend simplesmente omitia `chat_template_kwargs`, fazendo o servidor da NVIDIA cair no padrão `true` e gastar ~25-30 segundos pensando antes de emitir uma simples tool call de botão.
+  - Ao enviar explicitamente `chat_template_kwargs: { enable_thinking: false }` quando `selectedEffort === 'low'`, o tempo de resposta com 8 tools caiu de **~30s para 1.045 ms (1.0s)** no Nemotron 3.5 VL (120B) e **2.012 ms (2.0s)** no Nemotron 3 Ultra (550B).
+- **Instabilidade de Provedores Terceiros na NVIDIA NIM:**
+  - Modelos terceiros hospedados na NVIDIA (`deepseek-ai/deepseek-v4.1-flash`, `google/gemma-4-31b-it`, `z-ai/glm-5.3`) sofrem timeouts frequentes (>12s) nos servidores da NVIDIA, enquanto os modelos nativos da família `nvidia/nemotron-*` mantêm disponibilidade e baixa latência (~840ms a 1.7s).
+
+### 2. Implementações Realizadas
+1. **Motor de Roteamento Inteligente (`src/lib/smart-model-router.ts` & `src/lib/smart-model-router.test.ts`):**
+   - **Regra de Ouro:** Só atua quando `selectedModel === 'auto'`. Se o usuário selecionar manualmente qualquer modelo no seletor, `resolveSmartModelRoute` respeita 100% a escolha manual (`wasAutoRouted: false`).
+   - **Classificador de Intenção (`classifyTaskIntent`):**
+     - `vision`: Anexos visuais ou imagens → prioriza modelos VLM (`nvidia/nemotron-3.5-super-vl-120b-a12b`, `google/gemma-4-31b-it`, `qwen/qwen3.6-vl-32b-instruct`).
+     - `fast_practical`: Alterações práticas de UI, botões, cores, alinhamento, textos ou comandos diretos → prioriza os modelos mais rápidos com `suggestedEffort: 'low'` (Modo Turbo sem raciocínio lento).
+     - `deep_architectural`: Refatorações complexas de múltiplos módulos, segurança ou algoritmos → prioriza modelos de raciocínio profundo (`nvidia/nemotron-3-ultra-550b-a55b`) com `suggestedEffort: 'high'`.
+   - **Seleção Baseada em Saúde Real + Latência:** Filtra apenas os modelos com `status === 'online'` e desempata pelos que responderam com menor latência real na NVIDIA NIM.
+2. **Monitor de Saúde em Tempo Real (`/api/models-health` em `api/models-health.ts`, `_worker.ts`, `server.ts`):**
+   - Dispara probes leves (`max_tokens: 1, stream: false`) em paralelo para todos os modelos permitidos na NVIDIA NIM com timeout estrito de 4.5s e cache em memória de 60s (suportando `?force=true` para reteste manual instantâneo).
+   - Classifica cada modelo como:
+     - 🟢 `online` (respondeu em $\le 3200\text{ms}$)
+     - 🟡 `degraded` (lento, $> 3200\text{ms}$)
+     - 🔴 `offline` (timeout ou erro HTTP 4xx/5xx)
+3. **Modo Turbo Nemotron em `api/chat.ts`:**
+   - Atualizado `createNvidiaPayload` para sempre enviar `p.chat_template_kwargs = { enable_thinking: selectedEffort !== 'low' }` para `google/gemma-4-31b-it`, `nvidia/nemotron-3.5-super-vl-120b-a12b` e `nvidia/nemotron-3-ultra-550b-a55b`.
+4. **Interface Mobile-First no Seletor de Modelos (`src/components/model-controls.tsx`, `src/components/chat-input.tsx`, `src/App.tsx`):**
+   - Adicionado o card **"Automático (Smart Router)"** no topo da lista de modelos com badge `AUTO`.
+   - Em cada modelo da lista, exibido o status em tempo real: `🟢 Online · 0.8s`, `🟡 Lento · 3.5s` ou `🔴 Offline`.
+   - Adicionado botão **"Testar NVIDIA"** com área de toque Mobile-First ($\ge 44\times 44\text{px}$) no cabeçalho do modal para forçar uma nova checagem ao vivo quando desejar.
+
+### 3. Evidências de Verificação & Deploy
+- `npx tsc --noEmit`: **0 erros**.
+- `npm test`: **236/236 testes unitários passando** (47 suítes, incluindo 6 testes dedicados em `src/lib/smart-model-router.test.ts`).
+- `npm run build`: Bundle Vite + Cloudflare Worker (`dist/_worker.js`, 221.7 kB) compilados em 2.64s.
+- `python -m graphify update .`: Grafo de conhecimento atualizado (15.038 nós, 17.258 arestas, 1.017 comunidades).
+- Code Review formal (`3dcd8289-1917-4345-adcd-1ca3bef4be09`): **Ready to merge: Yes** (todos os 3 pontos de polimento aplicados).
+- Deploy em Produção: Publicado no Cloudflare Pages (`https://10fb45a6.synap-8yq.pages.dev` / `https://synap-8yq.pages.dev`).

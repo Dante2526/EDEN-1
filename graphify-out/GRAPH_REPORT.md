@@ -1,16 +1,16 @@
 # Graph Report - Synap  (2026-10-24)
 
 ## Corpus Check
-- 1055 files · ~1,678,716 words
+- 1058 files · ~1,680,993 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 15020 nodes · 17195 edges · 1021 communities (910 shown, 111 thin omitted)
+- 15038 nodes · 17258 edges · 1017 communities (906 shown, 111 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 127 edges (avg confidence: 0.63)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f9694e3b`
+- Built from commit: `7e49ed52`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -166,7 +166,6 @@
 - idb-keyval
 - jspdf
 - jspdf-autotable
-- run_pipeline
 - pptxgenjs
 - express
 - react-dom
@@ -363,7 +362,6 @@
 - Table of Contents (TOC) — Complete Reference
 - Route: Create New Document
 - Step 3 — Build the package (REQUIRED — this is the whole job)
-- add_toc_placeholders.py
 - 量化（Quant）
 - Icon Systems
 - Loom Design System
@@ -597,7 +595,6 @@
 - 📝 Exam / Quiz / Test Paper / Worksheet
 - Components — Art Direction JSON Lexicon
 - Font System
-- A0.2 - Typography Weight & Spacing System
 - __init__.py
 - JSON Schemas
 - Scene: Format Conversion
@@ -655,7 +652,6 @@
 - 8-Bit Orbit
 - Biennale Yellow
 - Grove
-- student_to_api_payload
 - Pin & Paper
 - Retro Windows
 - Retro Zine
@@ -1021,14 +1017,14 @@
 
 ## God Nodes (most connected - your core abstractions)
 1. `Walkthrough: Revisão e Hardening (Arquitetura e Infraestrutura)` - 143 edges
-2. `AppContent()` - 101 edges
+2. `AppContent()` - 102 edges
 3. `main()` - 39 edges
 4. `Document` - 36 edges
-5. `checkAuthAndRateLimit()` - 33 edges
+5. `checkAuthAndRateLimit()` - 35 edges
 6. `_request()` - 31 edges
-7. `_track_cost()` - 29 edges
-8. `DeckStage` - 29 edges
-9. `getEnv()` - 28 edges
+7. `getEnv()` - 30 edges
+8. `_track_cost()` - 29 edges
+9. `DeckStage` - 29 edges
 10. `BaseSchemaValidator` - 25 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -1046,11 +1042,11 @@
 ## Import Cycles
 - 1-file cycle: `skills/get-fortune-analysis/lunar_python.py -> skills/get-fortune-analysis/lunar_python.py`
 
-## Communities (1021 total, 111 thin omitted)
+## Communities (1017 total, 111 thin omitted)
 
 ### Community 0 - "_security.ts"
-Cohesion: 0.10
-Nodes (38): config, handler(), config, getSupabaseCredentials(), handler(), rowToIndexItem(), rowToSynapProject(), SupabaseRepoRow (+30 more)
+Cohesion: 0.11
+Nodes (36): config, handler(), config, getSupabaseCredentials(), handler(), rowToIndexItem(), rowToSynapProject(), SupabaseRepoRow (+28 more)
 
 ### Community 1 - "aminer_client.py"
 Cohesion: 0.07
@@ -1058,7 +1054,7 @@ Nodes (80): build_parser(), get_cost_summary(), main(), org_detail(), org_disamb
 
 ### Community 2 - "App.tsx"
 Cohesion: 0.03
-Nodes (93): ALL_CHAT_TOOLS, AppContent(), BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL (+85 more)
+Nodes (117): ALL_CHAT_TOOLS, AppContent(), BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL (+109 more)
 
 ### Community 3 - "QuizMasteryService"
 Cohesion: 0.11
@@ -1069,16 +1065,16 @@ Cohesion: 0.06
 Nodes (69): analyzeChartImage(), analyzeMultipleStocks(), analyzeStock(), buildDashboardPrompt(), buildReportPrompt(), extractVerdict(), MARKET_LABEL, detectMarket() (+61 more)
 
 ### Community 5 - "fetch_volunteers.py"
-Cohesion: 0.17
-Nodes (28): api_url(), apply_batch_item_to_payload(), batch_list_url(), build_request_payload(), call_api(), call_batch_list_api(), _empty_to_none(), group_schools_by_type() (+20 more)
+Cohesion: 0.08
+Nodes (53): cities_to_provinces(), _join_csv(), main(), Any, 返回倾向映射摘要，便于 Agent 向用户说明。, 将 student.json 转为 API 请求体。, student_to_api_payload(), summarize_preferences() (+45 more)
 
 ### Community 6 - "toc_validate.py"
 Cohesion: 0.08
 Nodes (57): check_conversion(), check_docx(), check_pdf(), check_run_hint_style(), check_toc_has_content(), _detect_language(), docx_has_toc_field(), find_toc_field_boundaries() (+49 more)
 
 ### Community 7 - "github.ts"
-Cohesion: 0.06
-Nodes (63): CreateRepoModal(), CreateRepoModalProps, FileExplorer(), FileExplorerProps, RepoList(), RepoListProps, DiffViewer(), DiffViewerProps (+55 more)
+Cohesion: 0.05
+Nodes (66): react, react, ChatImage(), SwipeableConversationItem(), CreateRepoModal(), CreateRepoModalProps, FileExplorer(), RepoList() (+58 more)
 
 ### Community 8 - "design_system.py"
 Cohesion: 0.06
@@ -1105,7 +1101,7 @@ Cohesion: 0.10
 Nodes (37): check_blank_pages(), check_body_page_numbers(), check_colors(), check_content_fill_ratio(), check_cover_bleed(), check_font_embedding(), check_formula_overflow(), check_helvetica_in_cjk() (+29 more)
 
 ### Community 14 - "types.ts"
-Cohesion: 0.34
+Cohesion: 0.31
 Nodes (13): BrowserRecipeModal(), BrowserRecipeModalProps, BrowserRecipe, BrowserRecipeAction, BrowserRecipeActionType, compileRecipeToPuppeteerScript(), createBrowserRecipe(), createRecipeAction() (+5 more)
 
 ### Community 15 - "compilerOptions"
@@ -1133,12 +1129,12 @@ Cohesion: 0.09
 Nodes (27): HTMLParser, _best_generic(), check_html(), check_pdf(), check_tex(), _contrast_ratio(), _extract_color(), _has_generic() (+19 more)
 
 ### Community 21 - "graphify-engine.ts"
-Cohesion: 0.11
-Nodes (29): ColorPalette, getNodePalette(), GraphModal(), GraphModalProps, Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode() (+21 more)
+Cohesion: 0.12
+Nodes (26): ColorPalette, getNodePalette(), GraphModal(), GraphModalProps, Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode() (+18 more)
 
 ### Community 22 - "run_loop"
-Cohesion: 0.11
-Nodes (27): generate_html(), main(), Generate HTML report from loop output data. If auto_refresh is True, adds a meta, _call_zai(), improve_description(), main(), Path, Run `z-ai chat -p` with the prompt and return the text response. (+19 more)
+Cohesion: 0.14
+Nodes (21): generate_html(), main(), Generate HTML report from loop output data. If auto_refresh is True, adds a meta, find_project_root(), main(), Path, Run the full eval set and return results., Find the project root by walking up from cwd looking for .glm/.      Mimics ho (+13 more)
 
 ### Community 23 - "pdf.py"
 Cohesion: 0.09
@@ -1162,7 +1158,7 @@ Nodes (27): llm, podcast, tts, z-ai, dependencies, z-ai-web-dev-sdk, description
 
 ### Community 29 - "run_pipeline"
 Cohesion: 0.06
-Nodes (35): ChatSidebar, ChatSidebarProps, ProjectsPanel, SwipeableConversationItem(), ClaudeLogoProps, EdenBonsaiLogo(), EdenBonsaiLogoProps, DarkModeToggle() (+27 more)
+Nodes (48): ChatSidebar, ChatSidebarProps, ProjectsPanel, SwipeableConversationItemProps, CompactionMarker(), CompactionMarkerProps, DarkModeToggle(), DarkModeToggleProps (+40 more)
 
 ### Community 30 - "compilerOptions"
 Cohesion: 0.07
@@ -1177,8 +1173,8 @@ Cohesion: 0.08
 Nodes (16): DocxXMLEditor, Add RSID and optionally enable track revisions and update fields in settings.xml, Get the next available change ID by checking all tracked change elements., Ensure w16du namespace is declared on the root element., Ensure w16cex namespace is declared on the root element., Ensure w14 namespace is declared on the root element., Inject RSID, author, and date attributes into DOM nodes where applicable., Replace node with automatic attribute injection. (+8 more)
 
 ### Community 33 - "subagent-runner.ts"
-Cohesion: 0.16
-Nodes (19): TOOL_MODELS, ALLOWED_MODELS, CLOUDFLARE_MODELS, isCloudflareModel(), isToolCapableModel(), isVisionModel(), TOOL_MODELS, VISION_MODELS (+11 more)
+Cohesion: 0.09
+Nodes (37): TOOL_MODELS, ChatInput, ChatInputProps, ModelControls(), ModelControlsProps, extractImagesFromClipboardData(), ALLOWED_MODELS, CLOUDFLARE_MODELS (+29 more)
 
 ### Community 34 - "generate_review.py"
 Cohesion: 0.15
@@ -1205,20 +1201,20 @@ Cohesion: 0.06
 Nodes (34): align_header(), apply_chart_colors(), apply_pie_colors(), border_header(), copy_style(), create_bar_chart(), create_line_chart(), create_pie_chart() (+26 more)
 
 ### Community 40 - "deployment-service.ts"
-Cohesion: 0.16
-Nodes (17): ChatHeader, ChatHeaderProps, DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal(), DeploymentLogModalProps, DeploymentStatusBadge(), DeploymentStatusBadgeProps (+9 more)
+Cohesion: 0.15
+Nodes (19): ChatHeader, ChatHeaderProps, DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal(), DeploymentLogModalProps, DeploymentStatusBadge(), DeploymentStatusBadgeProps (+11 more)
 
 ### Community 41 - "BaseSchemaValidator"
 Cohesion: 0.08
 Nodes (17): BaseSchemaValidator, Run all validation checks and return True if all pass., Validate that all XML files are well-formed., Base validator with common validation logic for document files., Validate that namespace prefixes in Ignorable attributes are declared., Validate that specific IDs are unique according to OOXML requirements., Validate that all .rels files properly reference files and that all files are re, Validate that all r:id attributes in XML files reference existing IDs         i (+9 more)
 
 ### Community 42 - "chat-message.tsx"
-Cohesion: 0.14
-Nodes (23): COMMON_EMOJIS, FONTS, ImageEditorModal(), ImageEditorModalProps, downloadDataUrl(), exportCanvasToPng(), BackgroundLayer, BaseLayer (+15 more)
+Cohesion: 0.29
+Nodes (6): CLIENT_HEADERS_TO_FORWARD, config, SERVER_HEADERS_TO_FORWARD, buildOpenCutInjectorScript(), OPENCUT_DO_NOT_TRANSLATE, OPENCUT_I18N_DICTIONARY
 
 ### Community 43 - "add_toc_placeholders.py"
-Cohesion: 0.16
-Nodes (9): react, react, ChatImage(), ErrorBoundaryProps, ErrorBoundaryState, GlobalErrorBoundary, isDynamicChunkError(), lazyWithRetry() (+1 more)
+Cohesion: 0.20
+Nodes (6): ErrorBoundaryProps, ErrorBoundaryState, GlobalErrorBoundary, isDynamicChunkError(), lazyWithRetry(), handleChunkError()
 
 ### Community 44 - "generate.ts"
 Cohesion: 0.16
@@ -1245,8 +1241,8 @@ Cohesion: 0.18
 Nodes (15): main(), main(), build_extraction_prompt(), _parse_docx(), parse_file(), _parse_pdf(), _parse_ppt(), _parse_pptx() (+7 more)
 
 ### Community 50 - "settings-modal.tsx"
-Cohesion: 0.08
-Nodes (46): CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatMessage, ChatMessageProps, CodeBlock(), CodeBlockProps, CompactionMarker(), CompactionMarkerProps (+38 more)
+Cohesion: 0.10
+Nodes (33): CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatMessage, ChatMessageProps, CodeBlock(), CodeBlockProps, OpenCutModal(), OpenCutModalProps (+25 more)
 
 ### Community 51 - "dependencies"
 Cohesion: 0.06
@@ -1529,8 +1525,8 @@ Cohesion: 0.04
 Nodes (47): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Layout Principles, 6. Depth & Elevation, 7. Do's and Don'ts, 8. Responsive Behavior (+39 more)
 
 ### Community 124 - "vercel.json"
-Cohesion: 0.13
-Nodes (24): SwipeableConversationItemProps, SettingsModal(), SettingsModalProps, SpeakButton(), SpeakButtonProps, removeGitHubPat(), setGitHubPat(), verifyGitHubPat() (+16 more)
+Cohesion: 0.11
+Nodes (25): ClaudeLogoProps, EdenBonsaiLogo(), EdenBonsaiLogoProps, SettingsModal(), SettingsModalProps, SpeakButton(), SpeakButtonProps, removeGitHubPat() (+17 more)
 
 ### Community 125 - "magazine-bg-webgl.js"
 Cohesion: 0.83
@@ -1591,10 +1587,6 @@ Nodes (43): **`agent-console-card`**, **`announcement-bar`**, **`blog-filter-chi
 ### Community 152 - "jspdf-autotable"
 Cohesion: 0.05
 Nodes (43): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Layout Principles, 6. Depth & Elevation, 7. Do's and Don'ts, 8. Responsive Behavior (+35 more)
-
-### Community 153 - "run_pipeline"
-Cohesion: 0.29
-Nodes (8): buildHeadlessRenderUrl(), buildPendingRemoteAction(), isRemoteCommandRequiringApproval(), ParsedPlaywrightCommand, parsePlaywrightCommand(), PendingRemoteAction, RemoteActionStatus, RemoteDeployProvider
 
 ### Community 154 - "pptxgenjs"
 Cohesion: 0.05
@@ -2154,7 +2146,7 @@ Nodes (25): 100 Industry-Specific Reasoning Rules, Architecture & Contributing, 
 
 ### Community 312 - "project-context.tsx"
 Cohesion: 0.13
-Nodes (33): ProjectsPanel(), TEMPLATES, generateProjectId(), ProjectContext, ProjectContextType, ProjectProvider(), TEMPLATE_STARTERS, useProjects() (+25 more)
+Nodes (34): ProjectsPanel(), TEMPLATES, normalizeRepoPath(), generateProjectId(), ProjectContext, ProjectContextType, ProjectProvider(), TEMPLATE_STARTERS (+26 more)
 
 ### Community 313 - "dot-matrix-xhs — Bayer 抖动黑白点阵封面"
 Cohesion: 0.08
@@ -2359,10 +2351,6 @@ Nodes (18): Blank Page Prevention, Builder Pattern Example, Code Architecture, C
 ### Community 363 - "Step 3 — Build the package (REQUIRED — this is the whole job)"
 Cohesion: 0.11
 Nodes (18): 3.1 Design — full justification document, 3.2.5 Execute (if execution environment is available), 3.2 Code — actually runnable, 3.3 Results — honest provenance, 3.4 Figures — 3–6 publication-grade, 3.5 Report — structured, 3.6 Quality gate, Cross-skill data flow (path convention) (+10 more)
-
-### Community 364 - "add_toc_placeholders.py"
-Cohesion: 0.19
-Nodes (17): batch_list_query_params(), get_province_mode(), infer_grade_type(), normalize_subjects_for_api(), parse_subjects_list(), Any, 从请求体构建 batch/list 查询参数。, 按省份规则规范化 subjects 字段。 (+9 more)
 
 ### Community 365 - "量化（Quant）"
 Cohesion: 0.11
@@ -3296,10 +3284,6 @@ Nodes (9): 1. Glass_Canvas, 2. Hero_Typography, 3. Floating_Meta, 4. Stat_Block,
 Cohesion: 0.20
 Nodes (9): Academic Pipeline (Tectonic / LaTeX), CJK Font Weight Guide, Creative Pipeline (Playwright / HTML), Emoji Font Fallback, Font Size Scale, Font Stacks (by pipeline), Font System, Report Pipeline (ReportLab) (+1 more)
 
-### Community 598 - "A0.2 - Typography Weight & Spacing System"
-Cohesion: 0.44
-Nodes (9): buildMcpRpcRequest(), convertMcpToolsToOpenAi(), executeMcpToolCall(), McpRpcRequest, parseMcpResponsePayload(), parseMcpToolResponse(), runTests(), testMcpConnection() (+1 more)
-
 ### Community 599 - "__init__.py"
 Cohesion: 0.24
 Nodes (5): Base validator with common validation logic for document files., Validator for Word document XML files against XSD schemas., Validation modules for Word document processing., Validator for PowerPoint presentation XML files against XSD schemas., Validator for tracked changes in Word documents.
@@ -3365,8 +3349,8 @@ Cohesion: 0.22
 Nodes (8): Analysis Tools, API Overview, Best Practices for Zhipu AI Stock Research (One-Shot Success Guide), Core Capabilities, Finance Skill, Market Data Retrieval, Market Intelligence, Zhipu AI - Hong Kong IPO Information
 
 ### Community 615 - "run_eval.py"
-Cohesion: 0.27
-Nodes (16): COBALT_INSTANCES, CobaltResponse, config, handler(), tryCobaltInstance(), detectMediaPlatform(), ExtractedMediaItem, ExtractedMediaResult (+8 more)
+Cohesion: 0.23
+Nodes (18): COBALT_INSTANCES, CobaltResponse, config, handler(), tryCobaltInstance(), isLocalOrPrivateUrl(), safeFetchWithRedirects(), detectMediaPlatform() (+10 more)
 
 ### Community 616 - "生成志愿填报报告"
 Cohesion: 0.22
@@ -3527,10 +3511,6 @@ Nodes (7): At a glance, Avoid for, Best for, Biennale Yellow, Output contract, S
 ### Community 655 - "Grove"
 Cohesion: 0.25
 Nodes (7): At a glance, Avoid for, Best for, Grove, Output contract, Source & license, Workflow
-
-### Community 656 - "student_to_api_payload"
-Cohesion: 0.36
-Nodes (8): cities_to_provinces(), _join_csv(), main(), Any, 返回倾向映射摘要，便于 Agent 向用户说明。, 将 student.json 转为 API 请求体。, student_to_api_payload(), summarize_preferences()
 
 ### Community 657 - "Pin & Paper"
 Cohesion: 0.25
@@ -3753,8 +3733,8 @@ Cohesion: 0.29
 Nodes (6): 转行 / 跨界叙事关键词, 通用关键词库（跨行业）, 通用硬技能, 通用职业资质, 通用软技能（任何岗位都吃香）, 量化结果通用模板
 
 ### Community 712 - "Data Analysis Patterns for Market Research"
-Cohesion: 0.50
-Nodes (4): Financial Analysis Patterns, Key Financial Metrics, Revenue Projection Model, Scenario Analysis Template
+Cohesion: 0.29
+Nodes (6): Data Analysis Patterns for Market Research, Financial Analysis Patterns, Key Financial Metrics, PESTLE Analysis, Revenue Projection Model, Scenario Analysis Template
 
 ### Community 713 - "Growth Rate Calculation"
 Cohesion: 0.29
@@ -4069,8 +4049,8 @@ Cohesion: 0.40
 Nodes (5): 2.1 Core Iron Rule: Content Must Fill the Page, 2.2 Anti-Top-Heavy, 2.3 Grid Area Allocation Iron Rule, 2.4 ★★★ Content-Proportional Row Allocation (Anti-Overlap Iron Rule), 2. Information Density & Page Fill
 
 ### Community 791 - "A0.3 - Z-Index Layer Management"
-Cohesion: 0.14
-Nodes (21): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), isLocalOrPrivateUrl(), safeFetchWithRedirects() (+13 more)
+Cohesion: 0.10
+Nodes (27): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), CODEC_MAP, CONTAINER_BOXES (+19 more)
 
 ### Community 792 - "Template 01: HUD Data Terminal - Ultra-Thick Vertical Anchor Line"
 Cohesion: 0.40
@@ -4429,8 +4409,8 @@ Cohesion: 0.50
 Nodes (3): Compliance note (discussion materials), External-distribution gate, Required disclosure blocks
 
 ### Community 882 - "Research Sources"
-Cohesion: 0.29
-Nodes (6): Data Analysis Patterns for Market Research, Data Validation, PESTLE Analysis, Primary Research, Research Sources, Secondary Research
+Cohesion: 0.50
+Nodes (4): Data Validation, Primary Research, Research Sources, Secondary Research
 
 ### Community 883 - "Chapter 3: Industry Drivers & Trends Visuals"
 Cohesion: 0.50
@@ -4585,8 +4565,8 @@ Cohesion: 0.36
 Nodes (9): config, enrichResultsWithContent(), extractTextFromHtml(), handler(), searchBing(), searchDuckDuckGoApi(), searchDuckDuckGoPost(), SearchResult (+1 more)
 
 ### Community 1006 - "load_json"
-Cohesion: 0.47
-Nodes (5): RuntimeError, load_json(), main(), merge(), Path
+Cohesion: 0.22
+Nodes (11): RuntimeError, load_json(), main(), merge(), Path, _call_zai(), improve_description(), main() (+3 more)
 
 ### Community 1007 - "inpaint.ts"
 Cohesion: 0.24
@@ -4594,7 +4574,7 @@ Nodes (15): config, handler(), ImageInpaintModal(), ImageInpaintModalProps, base
 
 ### Community 1012 - "_best_font_for_char"
 Cohesion: 0.08
-Nodes (46): ChatInput, ChatInputProps, FileAttachmentPreviews(), FileAttachmentPreviewsProps, ModelControls(), ModelControlsProps, extractImagesFromClipboardData(), applyFilePatches() (+38 more)
+Nodes (46): FileAttachmentPreviews(), FileAttachmentPreviewsProps, applyFilePatches(), countOccurrences(), EffectiveFileResolution, normalizePatchArgs(), PatchBlock, PatchResult (+38 more)
 
 ### Community 1015 - "voice-button.tsx"
 Cohesion: 0.35
@@ -4617,18 +4597,18 @@ Cohesion: 0.50
 Nodes (4): 141. PoC do Harness² (Google Research / arXiv:2610.14224): Auto-Evolução Recursiva de Prompts e Ferramentas (2026-10-24), 1. Contexto e Motivação, 2. Implementação no Éden, 3. Evidências de Verificação & Code Review
 
 ## Knowledge Gaps
-- **9599 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+9594 more)
+- **9603 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+9598 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **111 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `AppContent()` connect `App.tsx` to `subagent-runner.ts`, `project-context.tsx`, `video.ts`, `github.ts`, `deployment-service.ts`, `document-generator.ts`, `preview-html.ts`, `studio-panel.tsx`, `types.ts`, `settings-modal.tsx`, `_best_font_for_char`, `graphify-engine.ts`, `A0.3 - Z-Index Layer Management`, `DeckStage`, `vercel.json`, `run_pipeline`?**
+  _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Why does `PreviewDevTools()` connect `preview-html.ts` to `index.ts`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Why does `log()` connect `index.ts` to `preview-html.ts`?**
-  _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `Document` connect `._setup_tracking` to `DocxXMLEditor`, `toc_validate.py`, `jd_gap.py`, `main`, `dotenv`, `star_story_builder.py`, `.__init__`, `XMLEditor`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `AppContent()` (e.g. with `.prev()` and `query()`) actually correct?**
   _`AppContent()` has 3 INFERRED edges - model-reasoned connections that need verification._
@@ -4637,4 +4617,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 7 inferred relationships involving `Document` (e.g. with `_extract_headings_from_docx()` and `XMLEditor`) actually correct?**
   _`Document` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `config`, `config`, `config` to the rest of the system?**
-  _9599 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _9603 weakly-connected nodes found - possible documentation gaps or missing edges._

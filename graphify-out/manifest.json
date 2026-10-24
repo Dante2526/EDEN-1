@@ -5,8 +5,8 @@
     "semantic_hash": "3d4d49bc058571e3328ba2ba19d30c06"
   },
   "_worker.ts": {
-    "mtime": 1792852248.8306837,
-    "ast_hash": "275fcc0a3658a08d7987d7c2cbff74cf",
+    "mtime": 1792863640.680552,
+    "ast_hash": "787f4c1f861f9e4f8181d8e854effd56",
     "semantic_hash": ""
   },
   "api/chat-test.ts": {
@@ -15,8 +15,8 @@
     "semantic_hash": "e8cd1b719ee99cf591757ac77aa697ae"
   },
   "api/chat.ts": {
-    "mtime": 1792287216.951786,
-    "ast_hash": "57224fcdd1ba06463a9a59978b34ea12",
+    "mtime": 1792863640.6815593,
+    "ast_hash": "add147ab16c9eb42cd466091d8c74d92",
     "semantic_hash": ""
   },
   "api/deployments.ts": {
@@ -130,8 +130,8 @@
     "semantic_hash": "6759c4f9078319aaf1038a4b6af0f9ce"
   },
   "server.ts": {
-    "mtime": 1792852249.12919,
-    "ast_hash": "7ce8baa82f1b464b77f95dcefd4cde5a",
+    "mtime": 1792863640.680552,
+    "ast_hash": "7ea54adac9f0bca048967bcc0c2e522e",
     "semantic_hash": ""
   },
   "skills/ASR/scripts/asr.ts": {
@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792862095.5270011,
-    "ast_hash": "ae92c772ee8455ad74285801c804c50d",
+    "mtime": 1792863930.177603,
+    "ast_hash": "b4f96c0f3c82ddc49d4f6753a68755ce",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -985,8 +985,8 @@
     "semantic_hash": ""
   },
   "src/components/chat-input.tsx": {
-    "mtime": 1792443706.9768143,
-    "ast_hash": "47e05f8c9aa06047a9cab6d1d21eca73",
+    "mtime": 1792863930.1719184,
+    "ast_hash": "66977c665417007cef95a1200149ec88",
     "semantic_hash": ""
   },
   "src/components/chat-message.tsx": {
@@ -1085,8 +1085,8 @@
     "semantic_hash": "bb673c075a4d7bd8fc517b1f8c38ab7f"
   },
   "src/components/model-controls.tsx": {
-    "mtime": 1792847652.805128,
-    "ast_hash": "ade7c7f6d836285539de14ca2df46bc3",
+    "mtime": 1792863748.5520535,
+    "ast_hash": "0098f6b3387f8833abc2185734c4832d",
     "semantic_hash": ""
   },
   "src/components/project-workspace/local-preview.tsx": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": "d0298cdc8752c5190050279e9bf6da73"
   },
   "src/lib/types.ts": {
-    "mtime": 1792847773.067059,
-    "ast_hash": "91018f91a1036be408a9912e3b1791e1",
+    "mtime": 1792863424.0197394,
+    "ast_hash": "368da804084289c94c1f62a5b735b392",
     "semantic_hash": ""
   },
   "src/lib/use-continuous-voice.ts": {
@@ -6062,6 +6062,21 @@
   "src/lib/harness2-engine.ts": {
     "mtime": 1792862034.2189753,
     "ast_hash": "2299c30e6dfeafa2af56df527df4d7b9",
+    "semantic_hash": ""
+  },
+  "api/models-health.ts": {
+    "mtime": 1792863526.7304292,
+    "ast_hash": "d4a5b7329fd0085ee02383b0810568f9",
+    "semantic_hash": ""
+  },
+  "src/lib/smart-model-router.test.ts": {
+    "mtime": 1792863359.311474,
+    "ast_hash": "0b90f37040188d0cdaa4589f2818789a",
+    "semantic_hash": ""
+  },
+  "src/lib/smart-model-router.ts": {
+    "mtime": 1792863466.3087978,
+    "ast_hash": "0e182e621251750a56c8e3e2881f31a7",
     "semantic_hash": ""
   }
 }
