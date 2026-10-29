@@ -15,6 +15,7 @@ import deploymentsHandler from './api/deployments';
 import browserHandler from './api/browser';
 import dbProjectsHandler from './api/db-projects';
 import modelsHealthHandler from './api/models-health';
+import vlmAnalyzeHandler from './api/vlm-analyze';
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
@@ -69,6 +70,9 @@ export default {
       }
       if (path === '/api/models-health' || path === '/api/models-health/') {
         return await modelsHealthHandler(request, env);
+      }
+      if (path === '/api/vlm-analyze' || path === '/api/vlm-analyze/') {
+        return await vlmAnalyzeHandler(request, env);
       }
 
       if (path.startsWith('/api/')) {

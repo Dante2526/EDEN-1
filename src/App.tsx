@@ -5848,6 +5848,7 @@ function AppContent() {
         onAddKnowledgeFact={handleAddKnowledgeFact}
         onDeleteKnowledgeFact={handleDeleteKnowledgeFact}
         onClearKnowledgeFacts={handleClearKnowledgeFacts}
+        onOpenImageEditor={(project) => updateImageEditorState({ isOpen: true, project })}
       />
 
       {/* Main Content Area — tabs no topo (Chat / Preview / Agentes) */}

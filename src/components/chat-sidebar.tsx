@@ -18,6 +18,7 @@ import {
   ArchiveRestore,
   ChevronDown,
   ChevronRight,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Conversation, ActiveRepoState, Skill, McpServer, KnowledgeFact, KnowledgeCategory } from '../lib/types';
 import { formatDate } from '../lib/utils';
@@ -29,6 +30,8 @@ import { SourceControlPanel } from './source-control/source-control-panel';
 import { ExtensionsPanel } from './extensions/extensions-panel';
 import { DownloaderPanel } from './downloader/downloader-panel';
 import { DarkModeToggle } from './dark-mode-toggle';
+import { ImageDeconstructModal } from './image-deconstruct-modal';
+import type { ImageProject } from '../lib/image-layers';
 import { lazyWithRetry } from '../lib/lazy-retry';
 
 // Lazy load ProjectsPanel resiliente a deploys (Sandpack é pesado, só carrega quando usuário abre a aba)
@@ -346,6 +349,8 @@ interface ChatSidebarProps {
   onAddKnowledgeFact: (fact: string, category?: KnowledgeCategory) => void;
   onDeleteKnowledgeFact: (id: string) => void;
   onClearKnowledgeFacts: () => void;
+  // Desconstruir Imagem — abre o editor de camadas com a imagem desconstruída pela IA
+  onOpenImageEditor?: (project: ImageProject) => void;
 }
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
@@ -383,10 +388,12 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
   onAddKnowledgeFact,
   onDeleteKnowledgeFact,
   onClearKnowledgeFacts,
+  onOpenImageEditor,
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [isDownloaderOpen, setIsDownloaderOpen] = useState(false);
+  const [isDeconstructOpen, setIsDeconstructOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
   const activeConversations = React.useMemo(
@@ -607,6 +614,23 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
           </button>
         </div>
 
+        {/* Desconstruir Imagem Button — VLM separa componentes em camadas editáveis */}
+        <div className="px-3 pb-1">
+          <button
+            type="button"
+            onClick={() => setIsDeconstructOpen(true)}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500/15 to-purple-500/5 hover:from-purple-500/25 hover:to-purple-500/10 border border-purple-500/30 hover:border-purple-500/50 active:scale-[0.99] text-zinc-900 dark:text-[#f3efe6] font-medium text-xs sm:text-sm transition-all duration-200 cursor-pointer group shadow-sm"
+          >
+            <span className="font-medium tracking-tight flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-purple-500 dark:text-purple-400 group-hover:scale-110 transition-transform" />
+              Desconstruir Imagem
+            </span>
+            <span className="text-[10px] text-purple-500 dark:text-purple-400/80 font-mono font-medium group-hover:underline transition-colors">
+              VLM → camadas
+            </span>
+          </button>
+        </div>
+
         {/* New Chat Button (Modern DSS Pill) */}
         <div className="px-3 py-2">
           <button
@@ -750,6 +774,16 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
           </div>
         </div>
       )}
+
+      {/* Desconstruir Imagem Modal — VLM separa imagem em camadas editáveis */}
+      <ImageDeconstructModal
+        isOpen={isDeconstructOpen}
+        onClose={() => setIsDeconstructOpen(false)}
+        onProjectReady={(project) => {
+          setIsDeconstructOpen(false);
+          onOpenImageEditor?.(project);
+        }}
+      />
     </>
   );
 });
