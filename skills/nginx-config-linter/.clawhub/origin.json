@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "registry": "https://clawhub.ai",
+  "slug": "nginx-config-linter",
+  "ownerHandle": "charlie-morrison",
+  "installedVersion": "1.0.1",
+  "installedAt": 1793220143442,
+  "fingerprint": "4f08b837bedaa15303d9faf63ec277fe166276680ce8853f62b1c71387b20f64"
+}
