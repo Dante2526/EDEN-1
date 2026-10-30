@@ -20,10 +20,21 @@ export const config = {
  * um ImageProject e abrir no editor Fabric.js — onde o usuário pode
  * mover, recolorir, redimensionar, apagar/trocar, duplicar e trocar fundo.
  *
- * Modelo: nvidia/nemotron-3.5-super-vl-120b-a12b (sufixo -vl = vision-language).
+ * Modelos (cascata com fallback): glm-5.3-flash → gemma-4-31b-it →
+ * nemotron-3.5-super-vl-120b-a12b. Primeiro que retornar JSON válido vence.
  */
 
-const VLM_MODEL = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+/**
+ * Cascata de modelos VLM — do mais rápido pro mais preciso.
+ * glm-5.3-flash responde em ~5-15s; Nemotron VL 120B pode levar 30s+ (ou
+ * nunca, quando a NVIDIA tá instável). Tentamos o flash primeiro e caímos
+ * pro VL pesado só se o flash falhar.
+ */
+const VLM_CASCADE = [
+  { id: 'z-ai/glm-5.3-flash', timeoutMs: 25000, label: 'GLM-5.3 Flash' },
+  { id: 'google/gemma-4-31b-it', timeoutMs: 25000, label: 'Gemma 4 31B' },
+  { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 40000, label: 'Nemotron VL 120B' },
+];
 
 const SYSTEM_PROMPT = `Você é um analisador visual de imagens. Analise a imagem fornecida e retorne APENAS um JSON válido (sem markdown, sem texto adicional, sem fences) com a seguinte estrutura:
 
@@ -206,146 +217,142 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   const nvidiaKey = env.NVIDIA_API_KEY?.trim();
   if (!nvidiaKey || nvidiaKey.startsWith('sua_') || nvidiaKey.startsWith('nvapi-your')) {
     return new Response(
-      JSON.stringify({ error: 'NVIDIA_API_KEY não configurada. O desconstrutor de imagem requer o modelo Nemotron VL.' }),
+      JSON.stringify({ error: 'NVIDIA_API_KEY não configurada. O desconstrutor de imagem requer um modelo de visão.' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
   // =========================================================================
-  // Chamada NVIDIA Nemotron VL
+  // Cascata de modelos VLM: GLM-5.3 Flash → Gemma 4 → Nemotron VL
+  // Primeiro que retornar JSON válido vence.
   // =========================================================================
-  const payload = {
-    model: VLM_MODEL,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: 'Analise esta imagem e retorne o JSON estruturado conforme as instruções.' },
-          { type: 'image_url', image_url: { url: image } },
-        ],
-      },
-    ],
-    temperature: 0.2,
-    top_p: 0.7,
-    max_tokens: 4096,
-    stream: false,
-  };
-
   const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
+  const failures: string[] = [];
 
-  try {
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 45000);
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${nvidiaKey}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: ctrl.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      console.warn(`[VLM Analyze] NVIDIA ${res.status} ${res.statusText}: ${errText.slice(0, 300)}`);
-      return new Response(
-        JSON.stringify({
-          error: `Falha na análise VLM (NVIDIA ${res.status}).`,
-          details: errText.slice(0, 500),
-        }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data: any = await res.json();
-    const rawContent: string = data?.choices?.[0]?.message?.content || '';
-
-    if (!rawContent) {
-      return new Response(
-        JSON.stringify({ error: 'VLM retornou resposta vazia.' }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const analysis = extractJsonFromResponse(rawContent);
-
-    if (!analysis) {
-      console.warn('[VLM Analyze] Falha ao parsear JSON. Resposta bruta (300 chars):', rawContent.slice(0, 300));
-      return new Response(
-        JSON.stringify({
-          error: 'Não foi possível extrair JSON estruturado da resposta do VLM.',
-          raw_response: rawContent.slice(0, 1000),
-        }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Sanitiza e limita elementos
-    const sanitizedElements = (analysis.elements || [])
-      .filter((e) => e && typeof e === 'object' && e.type)
-      .slice(0, 8)
-      .map((e) => ({
-        type: e.type,
-        name: String(e.name || 'Elemento').slice(0, 60),
-        x: Math.max(0, Math.min(100, Number(e.x) || 50)),
-        y: Math.max(0, Math.min(100, Number(e.y) || 50)),
-        width: Math.max(1, Math.min(100, Number(e.width) || 20)),
-        height: Math.max(1, Math.min(100, Number(e.height) || 20)),
-        rotation: Math.max(0, Math.min(360, Number(e.rotation) || 0)),
-        shape: e.shape,
-        emoji: e.emoji,
-        text: e.text,
-        fontSize: Number(e.fontSize) || 48,
-        fontFamily: e.fontFamily || 'Inter, sans-serif',
-        fill: e.fill || '#000000',
-        fontWeight: e.fontWeight === 'bold' ? 'bold' : 'normal',
-        prompt: e.prompt,
-        dominant_color: e.dominant_color,
-      }));
-
-    const sanitizedAnalysis = {
-      background: {
-        prompt: String(analysis.background?.prompt || 'a neutral gradient background').slice(0, 500),
-        dominant_color: String(analysis.background?.dominant_color || '#ffffff').slice(0, 7),
-      },
-      elements: sanitizedElements,
-      meta: {
-        model: VLM_MODEL,
-        provider: 'NVIDIA NIM (Nemotron VL)',
-        element_count: sanitizedElements.length,
-        raw_tokens: data?.usage?.completion_tokens || 0,
-      },
+  for (const model of VLM_CASCADE) {
+    const payload = {
+      model: model.id,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Analise esta imagem e retorne o JSON estruturado conforme as instruções.' },
+            { type: 'image_url', image_url: { url: image } },
+          ],
+        },
+      ],
+      temperature: 0.2,
+      top_p: 0.7,
+      max_tokens: 4096,
+      stream: false,
     };
 
-    return new Response(JSON.stringify(sanitizedAnalysis), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-      },
-    });
-  } catch (err: any) {
-    console.warn('[VLM Analyze] Erro:', err?.message || err);
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), model.timeoutMs);
 
-    if (err?.name === 'AbortError') {
-      return new Response(
-        JSON.stringify({ error: 'Timeout na análise VLM (45s). Tente uma imagem menor.' }),
-        { status: 504, headers: { 'Content-Type': 'application/json' } }
-      );
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${nvidiaKey}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: ctrl.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        console.warn(`[VLM Analyze] ${model.label} ${res.status}: ${errText.slice(0, 200)}`);
+        failures.push(`${model.label}: HTTP ${res.status}`);
+        continue; // próximo modelo da cascata
+      }
+
+      const data: any = await res.json();
+      const rawContent: string = data?.choices?.[0]?.message?.content || '';
+
+      if (!rawContent) {
+        failures.push(`${model.label}: resposta vazia`);
+        continue;
+      }
+
+      const analysis = extractJsonFromResponse(rawContent);
+
+      if (!analysis || !analysis.background || !Array.isArray(analysis.elements)) {
+        console.warn(`[VLM Analyze] ${model.label} retornou JSON inválido. Bruto (200 chars):`, rawContent.slice(0, 200));
+        failures.push(`${model.label}: JSON malformado`);
+        continue;
+      }
+
+      // SUCESSO — sanitiza e retorna
+      const sanitizedElements = (analysis.elements || [])
+        .filter((e) => e && typeof e === 'object' && e.type)
+        .slice(0, 8)
+        .map((e) => ({
+          type: e.type,
+          name: String(e.name || 'Elemento').slice(0, 60),
+          x: Math.max(0, Math.min(100, Number(e.x) || 50)),
+          y: Math.max(0, Math.min(100, Number(e.y) || 50)),
+          width: Math.max(1, Math.min(100, Number(e.width) || 20)),
+          height: Math.max(1, Math.min(100, Number(e.height) || 20)),
+          rotation: Math.max(0, Math.min(360, Number(e.rotation) || 0)),
+          shape: e.shape,
+          emoji: e.emoji,
+          text: e.text,
+          fontSize: Number(e.fontSize) || 48,
+          fontFamily: e.fontFamily || 'Inter, sans-serif',
+          fill: e.fill || '#000000',
+          fontWeight: e.fontWeight === 'bold' ? 'bold' : 'normal',
+          prompt: e.prompt,
+          dominant_color: e.dominant_color,
+        }));
+
+      const sanitizedAnalysis = {
+        background: {
+          prompt: String(analysis.background?.prompt || 'a neutral gradient background').slice(0, 500),
+          dominant_color: String(analysis.background?.dominant_color || '#ffffff').slice(0, 7),
+        },
+        elements: sanitizedElements,
+        meta: {
+          model: model.id,
+          model_label: model.label,
+          provider: 'NVIDIA NIM',
+          element_count: sanitizedElements.length,
+          raw_tokens: data?.usage?.completion_tokens || 0,
+        },
+      };
+
+      return new Response(JSON.stringify(sanitizedAnalysis), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        },
+      });
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        console.warn(`[VLM Analyze] ${model.label} timeout (${model.timeoutMs}ms)`);
+        failures.push(`${model.label}: timeout`);
+      } else {
+        console.warn(`[VLM Analyze] ${model.label} erro:`, err?.message || err);
+        failures.push(`${model.label}: ${err?.message || 'erro'}`);
+      }
+      continue; // próximo modelo da cascata
     }
-
-    return new Response(
-      JSON.stringify({
-        error: 'Erro interno na análise VLM.',
-        details: err?.message || String(err),
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
   }
+
+  // =========================================================================
+  // Todos os modelos falharam
+  // =========================================================================
+  return new Response(
+    JSON.stringify({
+      error: 'Todos os modelos de visão falharam. A NVIDIA pode estar instável — tente novamente em alguns segundos.',
+      attempts: failures,
+    }),
+    { status: 502, headers: { 'Content-Type': 'application/json' } }
+  );
 }

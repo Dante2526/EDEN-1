@@ -35,7 +35,7 @@ import {
  * ==============================
  * Fluxo:
  *  1. Usuário anexa uma imagem (file picker, drag-drop, paste)
- *  2. POST /api/vlm-analyze → Nemotron VL detecta os componentes
+ *  2. POST /api/vlm-analyze → modelo VLM detecta os componentes
  *  3. Mostra preview da imagem com overlay das camadas detectadas
  *     (cada elemento com bounding box clicável)
  *  4. Para cada elemento, botão "Refazer" (híbrido): reanalisa só aquele
@@ -85,12 +85,56 @@ interface VlmAnalysis {
   elements: VlmElement[];
   meta?: {
     model?: string;
+    model_label?: string;
     provider?: string;
     element_count?: number;
   };
 }
 
 type Phase = 'upload' | 'analyzing' | 'review' | 'regenerating';
+
+/**
+ * Reduz a resolução da imagem (mantendo aspect ratio) se o lado maior
+ * ultrapassar `maxSide` px. Retorna JPEG data URL. Se a imagem já for
+ * menor, retorna o data URL original inalterado.
+ *
+ * Motivo: VLMs processam imagens em ~1024-1568px internamente de qualquer
+ * forma — enviar 4000px só infla o base64 e deixa a análise lenta.
+ */
+function downscaleImage(dataUrl: string, maxSide: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      const longest = Math.max(w, h);
+
+      // Já está dentro do limite — não faz nada (evita recompressão com perda)
+      if (longest <= maxSide) {
+        resolve(dataUrl);
+        return;
+      }
+
+      const scale = maxSide / longest;
+      const newW = Math.round(w * scale);
+      const newH = Math.round(h * scale);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = newW;
+      canvas.height = newH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas 2D não disponível'));
+        return;
+      }
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, newW, newH);
+      resolve(canvas.toDataURL('image/jpeg', 0.9));
+    };
+    img.onerror = () => reject(new Error('Falha ao carregar imagem'));
+    img.src = dataUrl;
+  });
+}
 
 export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
   isOpen,
@@ -155,8 +199,19 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
     reader.onload = () => {
       const result = reader.result;
       if (typeof result === 'string') {
-        setOriginalImage(result);
-        setPhase('upload'); // fica no upload até clicar em "Analisar"
+        // Downscaling: reduz a resolução antes de enviar pro VLM.
+        // Modelos de visão não precisam de mais que ~1568px pra detectar
+        // componentes — e payloads menores = análise bem mais rápida.
+        downscaleImage(result, 1568)
+          .then((scaled) => {
+            setOriginalImage(scaled);
+            setPhase('upload'); // fica no upload até clicar em "Analisar"
+          })
+          .catch(() => {
+            // Se o downscaling falhar (ex.: formato exótico), usa a original
+            setOriginalImage(result);
+            setPhase('upload');
+          });
       }
     };
     reader.onerror = () => setErrorMessage('Erro ao ler o arquivo.');
@@ -220,7 +275,10 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.error || `Erro ${res.status} na análise VLM.`);
+        // Mostra as tentativas da cascata (qual modelo falhou e por quê)
+        const attempts: string[] = Array.isArray(data?.attempts) ? data.attempts : [];
+        const attemptInfo = attempts.length > 0 ? ` (${attempts.join(' · ')})` : '';
+        throw new Error(`${data?.error || `Erro ${res.status} na análise VLM.`}${attemptInfo}`);
       }
 
       if (!data || !data.elements || !data.background) {
@@ -435,7 +493,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
               </div>
               <span className="text-[11px] text-[#a39d93] truncate hidden sm:inline">
                 {phase === 'upload' && 'Anexe uma imagem para separar em camadas editáveis'}
-                {phase === 'analyzing' && 'Nemotron VL está analisando os componentes…'}
+                {phase === 'analyzing' && 'A IA de visão está analisando os componentes…'}
                 {phase === 'review' && 'Revise as camadas detectadas e refine se precisar'}
                 {phase === 'regenerating' && 'Regenerando elemento…'}
               </span>
@@ -503,7 +561,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
                     <div className="flex items-center gap-2 text-[11px] text-[#a39d93]">
                       <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                       <span>
-                        A IA Nemotron VL vai detectar componentes: fundo, formas, textos, objetos.
+                        A IA de visão vai detectar componentes: fundo, formas, textos, objetos.
                       </span>
                     </div>
                   </div>
@@ -562,7 +620,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
               <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
               <div className="text-center">
                 <p className="text-base font-semibold text-[#f3efe6]">
-                  Nemotron VL está analisando…
+                  Analisando com IA de visão…
                 </p>
                 <p className="text-sm text-[#a39d93] mt-1">
                   Detectando fundo, formas, textos e objetos editáveis.
@@ -624,7 +682,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
                     {analysis.elements.length} camadas detectadas
                   </span>
                   <span className="text-[10px] text-[#a39d93] font-mono">
-                    {analysis.meta?.model?.split('/').pop() || 'Nemotron VL'}
+                    {analysis.meta?.model_label || analysis.meta?.model?.split('/').pop() || 'VLM'}
                   </span>
                 </div>
 
