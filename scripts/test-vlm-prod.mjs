@@ -26,6 +26,7 @@ async function main() {
     return;
   }
   console.log(`Modelo usado: ${data.meta?.model_label} (${data.meta?.model})`);
+  if (data.meta?.skipped?.length) console.log(`Descartados: ${data.meta.skipped.join(` | `)}`);
   console.log(`Elementos: ${data.elements.length}`);
   data.elements.forEach((e, i) => {
     console.log(`  [${i}] ${e.type} "${e.name}" @ (${e.x}%, ${e.y}%) ${e.width}x${e.height}% fill=${e.fill}${e.text ? ` text="${e.text}"` : ''}${e.prompt ? ` prompt="${e.prompt}"` : ''}`);

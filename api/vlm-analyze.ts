@@ -323,6 +323,8 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           provider: 'NVIDIA NIM',
           element_count: sanitizedElements.length,
           raw_tokens: data?.usage?.completion_tokens || 0,
+          /** Modelos descartados antes deste acertar (telemetry p/ debug) */
+          skipped: failures,
         },
       };
 
