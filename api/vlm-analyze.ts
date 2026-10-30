@@ -225,16 +225,19 @@ function validateAnalysis(analysis: VlmAnalysis | null): string | null {
 
 /**
  * Normaliza coordenadas — modelos sem thinking frequentemente ignoram a
- * instrução de porcentagem e devolvem pixels (ex: x=425 numa imagem de 851px)
- * ou a escala interna 0-1000 (padrão Qwen-VL) ou frações 0-1. Sem normalizar,
- * o sanitizador "clampa" tudo em 100 e todos os elementos colam no canto
- * inferior direito (bug reproduzido com a arte kaizen).
+ * instrução de porcentagem. Convenções observadas (validado com ground
+ * truth medido na arte kaizen, 851x353):
+ *   - ESCALA 0-1000 POR EIXO (grounding nativo estilo Qwen-VL): o Nemotron
+ *     VL usa isso — y=880 numa imagem de 353px de altura. Ground truth do
+ *     cartão branco (48.5%, 77.5%) vs /10 (48.0%, 72.0%) = match; via
+ *     "pixel" daria (56.4%, 84.6%) = errado.
+ *   - frações 0-1 (raro)
  *
  * Detecção pelo maior x/y observado:
- *   - > 100, com dimensões da imagem  → pixels: pct = v / dimensão * 100
- *   - > 100, sem dimensões            → escala 0-1000: v / 10
- *   - ≤ 1 com valores fracionários    → fração 0-1: v * 100
- *   - senão                           → já está em %, não mexe
+ *   - > 100  → escala 0-1000: v / 10 — SEMPRE, exceto se v > 1000 E couber
+ *     nas dimensões da imagem (aí é pixel de imagem > 1000px)
+ *   - ≤ 1 com valores fracionários → fração 0-1: v * 100
+ *   - senão  → já está em %, não mexe
  */
 /** Snapshot das coordenadas cruas p/ telemetria — diagnóstico de convenção */
 interface CoordsDebug {
@@ -273,7 +276,11 @@ function normalizeAnalysis(
 
   let mode: 'percent' | 'pixel' | 'scale1000' | 'unit' = 'percent';
   if (maxXY > 100) {
-    mode = imgW && imgH ? 'pixel' : 'scale1000';
+    // Regra validada com ground truth: 0-1000 é a convenção nativa do
+    // Nemotron VL. Só interpreta como pixel se o valor PASSAR de 1000
+    // (impossível na escala 0-1000) e ainda couber nas dimensões da imagem.
+    const fitsAsPixel = imgW && imgH && maxXY > 1000 && maxXY <= Math.max(imgW, imgH) * 1.02;
+    mode = fitsAsPixel ? 'pixel' : 'scale1000';
   } else if (maxXY <= 1 && hasFraction) {
     mode = 'unit';
   }
