@@ -31,9 +31,9 @@ export const config = {
  * pro VL pesado só se o flash falhar.
  */
 const VLM_CASCADE = [
-  { id: 'z-ai/glm-5.3-flash', timeoutMs: 25000, label: 'GLM-5.3 Flash' },
-  { id: 'google/gemma-4-31b-it', timeoutMs: 25000, label: 'Gemma 4 31B' },
-  { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 40000, label: 'Nemotron VL 120B' },
+  { id: 'z-ai/glm-5.3-flash', timeoutMs: 20000, label: 'GLM-5.3 Flash' },
+  { id: 'google/gemma-4-31b-it', timeoutMs: 20000, label: 'Gemma 4 31B' },
+  { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 45000, label: 'Nemotron VL 120B' },
 ];
 
 const SYSTEM_PROMPT = `Você é um analisador visual de imagens. Analise a imagem fornecida e retorne APENAS um JSON válido (sem markdown, sem texto adicional, sem fences) com a seguinte estrutura:

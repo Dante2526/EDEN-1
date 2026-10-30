@@ -148,6 +148,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hiddenElements, setHiddenElements] = useState<Set<number>>(new Set());
   const [refiningIndex, setRefiningIndex] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -167,6 +168,15 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
       return () => clearTimeout(t);
     }
   }, [isOpen]);
+
+  // Contador de segundos durante a análise (a cascata de modelos pode
+  // levar até ~85s no pior caso — o contador mostra que não travou)
+  useEffect(() => {
+    if (phase !== 'analyzing') return;
+    setElapsedSeconds(0);
+    const t = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [phase]);
 
   // Carrega imagem e extrai dimensões nativas
   useEffect(() => {
@@ -619,12 +629,18 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
               )}
               <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
               <div className="text-center">
-                <p className="text-base font-semibold text-[#f3efe6]">
+                <p className="text-base font-semibold text-[#f3efe6] flex items-center justify-center gap-2">
                   Analisando com IA de visão…
+                  <span className="font-mono text-purple-300 tabular-nums">{elapsedSeconds}s</span>
                 </p>
                 <p className="text-sm text-[#a39d93] mt-1">
                   Detectando fundo, formas, textos e objetos editáveis.
                 </p>
+                {elapsedSeconds > 20 && (
+                  <p className="text-xs text-[#a39d93]/70 mt-2 animate-pulse">
+                    Ainda trabalhando… se um modelo estiver lento, tentamos o próximo automaticamente.
+                  </p>
+                )}
               </div>
             </div>
           )}
