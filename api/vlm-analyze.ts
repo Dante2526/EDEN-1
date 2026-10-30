@@ -224,6 +224,76 @@ function validateAnalysis(analysis: VlmAnalysis | null): string | null {
 }
 
 /**
+ * Normaliza coordenadas — modelos sem thinking frequentemente ignoram a
+ * instrução de porcentagem e devolvem pixels (ex: x=425 numa imagem de 851px)
+ * ou a escala interna 0-1000 (padrão Qwen-VL) ou frações 0-1. Sem normalizar,
+ * o sanitizador "clampa" tudo em 100 e todos os elementos colam no canto
+  * inferior direito (bug reproduzido com a arte kaizen).
+ *
+ * Detecção pelo maior x/y observado:
+ *   - > 100, com dimensões da imagem  → pixels: pct = v / dimensão * 100
+ *   - > 100, sem dimensões            → escala 0-1000: v / 10
+ *   - ≤ 1 com valores fracionários    → fração 0-1: v * 100
+ *   - senão                           → já está em %, não mexe
+ */
+function normalizeAnalysis(analysis: VlmAnalysis, imgW?: number, imgH?: number): VlmAnalysis {
+  const els = analysis.elements;
+  if (!els.length) return analysis;
+
+  const nums = (v: unknown): number => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // --- detecta a convenção de x/y ---
+  const xyVals = els.flatMap((e) => [nums(e.x), nums(e.y)]).filter((v) => v > 0);
+  const maxXY = xyVals.length ? Math.max(...xyVals) : 0;
+  const hasFraction = xyVals.some((v) => v % 1 !== 0);
+
+  let mode: 'percent' | 'pixel' | 'scale1000' | 'unit' = 'percent';
+  if (maxXY > 100) {
+    mode = imgW && imgH ? 'pixel' : 'scale1000';
+  } else if (maxXY <= 1 && hasFraction) {
+    mode = 'unit';
+  }
+
+  if (mode !== 'percent') {
+    const conv = (v: number, isY: boolean): number => {
+      if (v <= 0) return v;
+      if (mode === 'pixel') return (v / (isY ? imgH! : imgW!)) * 100;
+      if (mode === 'scale1000') return v / 10;
+      return v * 100; // unit
+    };
+    els.forEach((e) => {
+      e.x = conv(nums(e.x), false);
+      e.y = conv(nums(e.y), true);
+    });
+  }
+
+  // --- width/height: mesma convenção, mas só converte se estourar 100 ---
+  const whVals = els.flatMap((e) => [nums(e.width), nums(e.height)]).filter((v) => v > 0);
+  const maxWH = whVals.length ? Math.max(...whVals) : 0;
+  const whHasFraction = whVals.some((v) => v % 1 !== 0);
+
+  if (maxWH > 100 || (maxWH <= 1 && whHasFraction && maxWH > 0)) {
+    const conv = (v: number, isY: boolean): number => {
+      if (v <= 0) return v;
+      if (maxWH > 100) {
+        if (mode === 'pixel' && imgW && imgH) return (v / (isY ? imgH : imgW)) * 100;
+        return v / 10; // scale1000 (ou pixel sem dims — aproximação)
+      }
+      return v * 100; // unit
+    };
+    els.forEach((e) => {
+      e.width = conv(nums(e.width), false);
+      e.height = conv(nums(e.height), true);
+    });
+  }
+
+  return analysis;
+}
+
+/**
  * Erro tipado de uma chamada VLM — carrega label do modelo + motivo
  * (para telemetria) + status HTTP / Retry-After (para backoff do estágio 2).
  */
@@ -252,6 +322,9 @@ interface VlmCallConfig {
   timeoutMs: number;
   image: string;
   nvidiaKey: string;
+  /** Dimensões (px) da imagem enviada — p/ normalizar coords em pixel → % */
+  imgW?: number;
+  imgH?: number;
   /** Sinal externo (aborta perdedores da corrida do estágio 2) */
   signal?: AbortSignal;
 }
@@ -278,7 +351,12 @@ async function callVlmModel(cfg: VlmCallConfig): Promise<VlmCallResult> {
       {
         role: 'user',
         content: [
-          { type: 'text', text: 'Analise esta imagem e retorne o JSON estruturado conforme as instruções.' },
+          {
+            type: 'text',
+            text: cfg.imgW && cfg.imgH
+              ? `A imagem tem ${cfg.imgW}x${cfg.imgH} pixels. Converta as posições de pixel para porcentagem (percent = pixel / dimensão * 100) e retorne o JSON estruturado conforme as instruções — todas as coordenadas entre 0 e 100.`
+              : 'Analise esta imagem e retorne o JSON estruturado conforme as instruções — todas as coordenadas entre 0 e 100.',
+          },
           { type: 'image_url', image_url: { url: cfg.image } },
         ],
       },
@@ -348,14 +426,17 @@ async function callVlmModel(cfg: VlmCallConfig): Promise<VlmCallResult> {
     }
 
     const analysis = extractJsonFromResponse(rawContent);
-    const invalidReason = validateAnalysis(analysis);
-    if (invalidReason || !analysis) {
+    // Normaliza ANTES de validar: converte pixels/0-1000/0-1 → porcentagem,
+    // senão o clamp do sanitizador cola tudo no canto (bug da arte kaizen)
+    const normalized = analysis ? normalizeAnalysis(analysis, cfg.imgW, cfg.imgH) : null;
+    const invalidReason = validateAnalysis(normalized);
+    if (invalidReason || !normalized) {
       console.warn(`[VLM Analyze] ${cfg.label} rejeitado (${invalidReason}). Bruto (200 chars):`, rawContent.slice(0, 200));
       throw new VlmCallError(cfg.label, invalidReason || 'JSON malformado');
     }
 
     return {
-      analysis,
+      analysis: normalized,
       completionTokens: data?.usage?.completion_tokens || 0,
       durationMs: Date.now() - t0,
     };
@@ -444,6 +525,11 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
     );
   }
 
+  // Dimensões opcionais da imagem enviada — usadas para converter
+  // coordenadas em pixel (que o modelo às vezes devolve) para porcentagem
+  const imgW = Number(body.width) > 0 ? Math.round(Number(body.width)) : undefined;
+  const imgH = Number(body.height) > 0 ? Math.round(Number(body.height)) : undefined;
+
   if (!image.startsWith('data:image/')) {
     return new Response(
       JSON.stringify({ error: 'Imagem deve ser um data URL base64 (data:image/...).' }),
@@ -475,7 +561,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   const failures: string[] = [];
 
   try {
-    const r = await callVlmModel({ ...STAGE_1, image, nvidiaKey });
+    const r = await callVlmModel({ ...STAGE_1, image, nvidiaKey, imgW, imgH });
     const sanitized = sanitizeAnalysis(r.analysis);
     return new Response(
       JSON.stringify({
@@ -513,7 +599,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   // decidida (distingue "falhou com HTTP 500" de "abortado porque outro venceu")
   const raceFailures: (string | null)[] = STAGE_2_RACE.map(() => null);
   const racePromises = STAGE_2_RACE.map((model, i) => {
-    const p = callVlmModel({ ...model, image, nvidiaKey, signal: raceControllers[i].signal }).then(
+    const p = callVlmModel({ ...model, image, nvidiaKey, imgW, imgH, signal: raceControllers[i].signal }).then(
       (r) => ({ ...r, model, index: i })
     );
     p.catch((e: any) => {

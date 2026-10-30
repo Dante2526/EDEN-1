@@ -151,6 +151,8 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   /** Versão reduzida (≤1024px) — enviada ao VLM. Análise mais rápida, mesmo resultado. */
   const [vlmImage, setVlmImage] = useState<string | null>(null);
+  /** Dimensões da imagem enviada ao VLM — o endpoint usa p/ converter pixel → % */
+  const [vlmDimensions, setVlmDimensions] = useState<{ w: number; h: number }>({ w: 1024, h: 1024 });
   const [imageDimensions, setImageDimensions] = useState<{ w: number; h: number }>({ w: 1024, h: 1024 });
   const [analysis, setAnalysis] = useState<VlmAnalysis | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -200,6 +202,20 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
     };
     img.src = originalImage;
   }, [originalImage]);
+
+  // Dimensões da versão enviada ao VLM (diferem da original após downscale;
+  // mesmas proporções, mas o endpoint precisa dos px exatos que o modelo viu
+  // p/ converter coordenadas de pixel em porcentagem)
+  useEffect(() => {
+    if (!vlmImage) return;
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setVlmDimensions({ w: img.naturalWidth, h: img.naturalHeight });
+      }
+    };
+    img.src = vlmImage;
+  }, [vlmImage]);
 
   // =========================================================================
   // File handling
@@ -291,7 +307,11 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
       const res = await fetch('/api/vlm-analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: analysisImage }),
+        body: JSON.stringify({
+          image: analysisImage,
+          width: vlmDimensions.w,
+          height: vlmDimensions.h,
+        }),
       });
 
       const data = await res.json();
@@ -336,6 +356,8 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image: analysisImage,
+          width: vlmDimensions.w,
+          height: vlmDimensions.h,
           refine: true,
           refine_prompt: refinePrompt,
           target_element: element,
