@@ -98,8 +98,10 @@ type Phase = 'upload' | 'analyzing' | 'review' | 'regenerating';
  * ultrapassar `maxSide` px. Retorna JPEG data URL. Se a imagem já for
  * menor, retorna o data URL original inalterado.
  *
- * Motivo: VLMs processam imagens em ~1024-1568px internamente de qualquer
+ * Motivo: VLMs processam imagens em ~1024px internamente de qualquer
  * forma — enviar 4000px só infla o base64 e deixa a análise lenta.
+ * PNGs com transparência ganham fundo branco (JPEG não tem alpha e o
+ * preto padrão confundiria o modelo).
  */
 function downscaleImage(dataUrl: string, maxSide: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -127,9 +129,12 @@ function downscaleImage(dataUrl: string, maxSide: number): Promise<string> {
         reject(new Error('Canvas 2D não disponível'));
         return;
       }
+      // Fundo branco: PNG com alpha viraria preto no JPEG (sem isso)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, newW, newH);
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, newW, newH);
-      resolve(canvas.toDataURL('image/jpeg', 0.9));
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
     };
     img.onerror = () => reject(new Error('Falha ao carregar imagem'));
     img.src = dataUrl;
@@ -142,7 +147,10 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
   onProjectReady,
 }) => {
   const [phase, setPhase] = useState<Phase>('upload');
+  /** Imagem ORIGINAL em resolução plena — vira o fundo do projeto (export nítido) */
   const [originalImage, setOriginalImage] = useState<string | null>(null);
+  /** Versão reduzida (≤1024px) — enviada ao VLM. Análise mais rápida, mesmo resultado. */
+  const [vlmImage, setVlmImage] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ w: number; h: number }>({ w: 1024, h: 1024 });
   const [analysis, setAnalysis] = useState<VlmAnalysis | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -160,6 +168,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
       const t = setTimeout(() => {
         setPhase('upload');
         setOriginalImage(null);
+        setVlmImage(null);
         setAnalysis(null);
         setErrorMessage(null);
         setHiddenElements(new Set());
@@ -169,8 +178,8 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
     }
   }, [isOpen]);
 
-  // Contador de segundos durante a análise (a cascata de modelos pode
-  // levar até ~85s no pior caso — o contador mostra que não travou)
+  // Contador de segundos durante a análise (estágio 1 + corrida paralela
+  // podem levar até ~80s no pior caso — o contador mostra que não travou)
   useEffect(() => {
     if (phase !== 'analyzing') return;
     setElapsedSeconds(0);
@@ -209,17 +218,19 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
     reader.onload = () => {
       const result = reader.result;
       if (typeof result === 'string') {
-        // Downscaling: reduz a resolução antes de enviar pro VLM.
-        // Modelos de visão não precisam de mais que ~1568px pra detectar
-        // componentes — e payloads menores = análise bem mais rápida.
-        downscaleImage(result, 1568)
+        // A original (full-res) é preservada como fundo do projeto final.
+        // A análise VLM usa uma versão ≤1024px — modelos de visão processam
+        // nessa resolução internamente, e payload menor = resposta mais rápida
+        // (e mais folga antes do timeout quando o NIM está lento).
+        setOriginalImage(result);
+        downscaleImage(result, 1024)
           .then((scaled) => {
-            setOriginalImage(scaled);
+            setVlmImage(scaled);
             setPhase('upload'); // fica no upload até clicar em "Analisar"
           })
           .catch(() => {
-            // Se o downscaling falhar (ex.: formato exótico), usa a original
-            setOriginalImage(result);
+            // Se o downscaling falhar (ex.: formato exótico), analisa a original
+            setVlmImage(result);
             setPhase('upload');
           });
       }
@@ -269,7 +280,8 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
   // Análise VLM
   // =========================================================================
   const handleAnalyze = async () => {
-    if (!originalImage) return;
+    const analysisImage = vlmImage || originalImage;
+    if (!analysisImage) return;
     setPhase('analyzing');
     setErrorMessage(null);
     setAnalysis(null);
@@ -279,7 +291,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
       const res = await fetch('/api/vlm-analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: originalImage }),
+        body: JSON.stringify({ image: analysisImage }),
       });
 
       const data = await res.json();
@@ -308,7 +320,8 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
   // Refazer elemento (híbrido): reanalisa só aquele elemento via VLM
   // =========================================================================
   const handleRefineElement = async (index: number) => {
-    if (!originalImage || !analysis) return;
+    const analysisImage = vlmImage || originalImage;
+    if (!analysisImage || !analysis) return;
 
     setRefiningIndex(index);
     setErrorMessage(null);
@@ -322,7 +335,7 @@ export const ImageDeconstructModal: React.FC<ImageDeconstructModalProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: originalImage,
+          image: analysisImage,
           refine: true,
           refine_prompt: refinePrompt,
           target_element: element,

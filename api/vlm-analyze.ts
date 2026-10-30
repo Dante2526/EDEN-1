@@ -8,8 +8,8 @@ export const config = {
 /**
  * VLM Analyze API — Desconstrutor de Imagem
  * ==========================================
- * Recebe uma imagem (base64 data URL) e usa o modelo NVIDIA Nemotron VL
- * (vision-language) para detectar os componentes visuais e retornar um JSON
+ * Recebe uma imagem (base64 data URL) e usa um modelo vision-language da
+ * NVIDIA NIM para detectar os componentes visuais e retornar um JSON
  * estruturado com:
  *   - background: prompt + cor dominante do fundo (pra regenerar via FLUX.1)
  *   - elements[]: cada elemento distinto detectado (shape / text / sticker / image)
@@ -20,24 +20,37 @@ export const config = {
  * um ImageProject e abrir no editor Fabric.js — onde o usuário pode
  * mover, recolorir, redimensionar, apagar/trocar, duplicar e trocar fundo.
  *
- * Modelos (cascata com fallback): nemotron-vl → glm-5.3-flash →
- * gemma-4-31b-it. Primeiro que retornar JSON válido vence.
+ * =========================================================================
+ * ESTRATÉGIA: "retry + corrida paralela" (substitui a cascata serial)
+ * =========================================================================
+ * Telemetria de produção:
+ *   - Nemotron VL 120B: 4/4 sucessos em 7-20s — o único modelo que entrega
+ *     o JSON pesado a tempo (testado novamente em 30/10/2026: 7.3s e 11.2s)
+ *   - GLM-5.3 Flash: 0/3 — nunca gerou o JSON dentro do timeout
+ *   - Gemma 4 31B: 0/3 — idem
+ *   - O NIM às vezes TRAVA inteiro (fila saturada): todos os modelos
+ *     esgotam o timeout numa janela de instabilidade (caso visto em produção)
+ *
+ * A cascata serial antiga queimava 45+25+25 = 95s no pior caso, com apenas
+ * 1 tentativa no único modelo que funciona. Nova estratégia:
+ *
+ *   Estágio 1: Nemotron sozinho @ 30s (caminho de sucesso: 7-20s)
+ *   Estágio 2 (só se o 1 falhar): pausa breve (respeita Retry-After em 429)
+ *     e dispara em PARALELO: Nemotron retry @ 40s + GLM Flash @ 40s + Gemma
+ *     @ 40s. O primeiro JSON válido vence; os demais são abortados.
+ *
+ * Pior caso: ~78s (vs 95s), com 2 tiros no Nemotron e 1 chance real nos
+ * modelos reserva — sem custo adicional no caminho feliz.
  */
 
-/**
- * Cascata de modelos VLM — telemetria de produção (3 testes reais):
- *   - Nemotron VL 120B: acerta em ~15-20s (3/3 sucessos) — o workhorse
- *   - GLM-5.3 Flash: timeout em 20s (0/3) — não gera o JSON pesado a tempo
- *   - Gemma 4 31B: timeout em 20s (0/3) — idem
- *
- * Por isso o Nemotron vai PRIMEIRO: caminho de sucesso ~20s (vs 60s se
- * queimássemos 40s em flash+gemma antes). Flash e Gemma ficam como
- * fallback pra quando o Nemotron especificamente estiver fora do ar.
- */
-const VLM_CASCADE = [
-  { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 45000, label: 'Nemotron VL 120B' },
-  { id: 'z-ai/glm-5.3-flash', timeoutMs: 25000, label: 'GLM-5.3 Flash' },
-  { id: 'google/gemma-4-31b-it', timeoutMs: 25000, label: 'Gemma 4 31B' },
+/** Estágio 1 — o workhorse comprovado. */
+const STAGE_1 = { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 30000, label: 'Nemotron VL 120B' };
+
+/** Estágio 2 — corrida paralela: retry do workhorse + reservas. */
+const STAGE_2_RACE = [
+  { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 40000, label: 'Nemotron VL 120B (retry)' },
+  { id: 'z-ai/glm-5.3-flash', timeoutMs: 40000, label: 'GLM-5.3 Flash' },
+  { id: 'google/gemma-4-31b-it', timeoutMs: 40000, label: 'Gemma 4 31B' },
 ];
 
 const SYSTEM_PROMPT = `Você é um analisador visual de imagens. Analise a imagem fornecida e retorne APENAS um JSON válido (sem markdown, sem texto adicional, sem fences) com a seguinte estrutura:
@@ -176,6 +189,192 @@ function extractJsonFromResponse(text: string): VlmAnalysis | null {
   return null;
 }
 
+/**
+ * Valida a estrutura da análise. Retorna o motivo da rejeição ou null se OK.
+ */
+function validateAnalysis(analysis: VlmAnalysis | null): string | null {
+  if (!analysis || !analysis.background || !Array.isArray(analysis.elements)) {
+    return 'JSON malformado';
+  }
+  const els = analysis.elements;
+  // Detecta o bug "todas as posições em 100%/100%" — modelo não entendeu
+  // o schema de porcentagem e jogou tudo no canto.
+  const allSamePosition =
+    els.length >= 2 &&
+    els.every((e) => Number(e.x) === Number(els[0].x) && Number(e.y) === Number(els[0].y));
+  if (allSamePosition) return 'posições duplicadas (schema bug)';
+  return null;
+}
+
+/**
+ * Erro tipado de uma chamada VLM — carrega label do modelo + motivo
+ * (para telemetria) + status HTTP / Retry-After (para backoff do estágio 2).
+ */
+class VlmCallError extends Error {
+  label: string;
+  reason: string;
+  status?: number;
+  retryAfterMs?: number;
+  /** true = abortado porque outro modelo venceu a corrida (não é falha real) */
+  abortedByRace?: boolean;
+
+  constructor(label: string, reason: string, status?: number, retryAfterMs?: number, abortedByRace?: boolean) {
+    super(`${label}: ${reason}`);
+    this.name = 'VlmCallError';
+    this.label = label;
+    this.reason = reason;
+    this.status = status;
+    this.retryAfterMs = retryAfterMs;
+    this.abortedByRace = abortedByRace;
+  }
+}
+
+interface VlmCallConfig {
+  id: string;
+  label: string;
+  timeoutMs: number;
+  image: string;
+  nvidiaKey: string;
+  /** Sinal externo (aborta perdedores da corrida do estágio 2) */
+  signal?: AbortSignal;
+}
+
+interface VlmCallResult {
+  analysis: VlmAnalysis;
+  completionTokens: number;
+  durationMs: number;
+}
+
+/**
+ * Uma chamada a um modelo VLM da NVIDIA NIM. Parseia e VALIDA a resposta —
+ * só resolve com análise estruturalmente válida; qualquer outro caso vira
+ * VlmCallError com motivo legível.
+ */
+async function callVlmModel(cfg: VlmCallConfig): Promise<VlmCallResult> {
+  const t0 = Date.now();
+  const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
+
+  const payload = {
+    model: cfg.id,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Analise esta imagem e retorne o JSON estruturado conforme as instruções.' },
+          { type: 'image_url', image_url: { url: cfg.image } },
+        ],
+      },
+    ],
+    temperature: 0.2,
+    top_p: 0.7,
+    max_tokens: 4096,
+    stream: false,
+  };
+
+  // Timeout próprio + repasse do abort externo (corrida)
+  const ownCtrl = new AbortController();
+  const onOuterAbort = () => ownCtrl.abort();
+  if (cfg.signal) {
+    if (cfg.signal.aborted) ownCtrl.abort();
+    else cfg.signal.addEventListener('abort', onOuterAbort);
+  }
+  const timeout = setTimeout(() => ownCtrl.abort(), cfg.timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${cfg.nvidiaKey}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: ownCtrl.signal,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.warn(`[VLM Analyze] ${cfg.label} ${res.status}: ${errText.slice(0, 200)}`);
+      const retryAfterRaw = res.headers.get('retry-after');
+      const retryAfterMs = retryAfterRaw ? Number(retryAfterRaw) * 1000 : undefined;
+      throw new VlmCallError(cfg.label, `HTTP ${res.status}`, res.status, retryAfterMs);
+    }
+
+    const data: any = await res.json();
+    const rawContent: string = data?.choices?.[0]?.message?.content || '';
+
+    if (!rawContent) {
+      throw new VlmCallError(cfg.label, 'resposta vazia');
+    }
+
+    const analysis = extractJsonFromResponse(rawContent);
+    const invalidReason = validateAnalysis(analysis);
+    if (invalidReason || !analysis) {
+      console.warn(`[VLM Analyze] ${cfg.label} rejeitado (${invalidReason}). Bruto (200 chars):`, rawContent.slice(0, 200));
+      throw new VlmCallError(cfg.label, invalidReason || 'JSON malformado');
+    }
+
+    return {
+      analysis,
+      completionTokens: data?.usage?.completion_tokens || 0,
+      durationMs: Date.now() - t0,
+    };
+  } catch (err: any) {
+    if (err instanceof VlmCallError) throw err;
+
+    if (err?.name === 'AbortError') {
+      // Abortado por fora = perdedor da corrida (não conta como falha real)
+      if (cfg.signal?.aborted) {
+        throw new VlmCallError(cfg.label, 'abortado (outro modelo venceu a corrida)', undefined, undefined, true);
+      }
+      throw new VlmCallError(cfg.label, `timeout (${Math.round(cfg.timeoutMs / 1000)}s)`);
+    }
+
+    throw new VlmCallError(cfg.label, err?.message || 'erro de rede');
+  } finally {
+    clearTimeout(timeout);
+    cfg.signal?.removeEventListener('abort', onOuterAbort);
+  }
+}
+
+/** Sanitiza + limita a análise antes de devolver pro client. */
+function sanitizeAnalysis(analysis: VlmAnalysis) {
+  const sanitizedElements = (analysis.elements || [])
+    .filter((e) => e && typeof e === 'object' && e.type)
+    .slice(0, 8)
+    .map((e) => ({
+      type: e.type,
+      name: String(e.name || 'Elemento').slice(0, 60),
+      x: Math.max(0, Math.min(100, Number(e.x) || 50)),
+      y: Math.max(0, Math.min(100, Number(e.y) || 50)),
+      width: Math.max(1, Math.min(100, Number(e.width) || 20)),
+      height: Math.max(1, Math.min(100, Number(e.height) || 20)),
+      rotation: Math.max(0, Math.min(360, Number(e.rotation) || 0)),
+      shape: e.shape,
+      emoji: e.emoji,
+      text: e.text,
+      fontSize: Number(e.fontSize) || 48,
+      fontFamily: e.fontFamily || 'Inter, sans-serif',
+      fill: e.fill || '#000000',
+      fontWeight: e.fontWeight === 'bold' ? 'bold' : 'normal',
+      prompt: e.prompt,
+      dominant_color: e.dominant_color,
+    }));
+
+  return {
+    background: {
+      prompt: String(analysis.background?.prompt || 'a neutral gradient background').slice(0, 500),
+      dominant_color: String(analysis.background?.dominant_color || '#ffffff').slice(0, 7),
+    },
+    elements: sanitizedElements,
+  };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default async function handler(req: Request, envArg?: Env): Promise<Response> {
   const env = getEnv(envArg);
   const sec = await checkAuthAndRateLimit(req, env);
@@ -231,148 +430,122 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
   }
 
   // =========================================================================
-  // Cascata de modelos VLM: GLM-5.3 Flash → Gemma 4 → Nemotron VL
-  // Primeiro que retornar JSON válido vence.
+  // ESTÁGIO 1 — Nemotron sozinho (caminho feliz: 7-20s)
   // =========================================================================
-  const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
+  const t0 = Date.now();
   const failures: string[] = [];
 
-  for (const model of VLM_CASCADE) {
-    const payload = {
-      model: model.id,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Analise esta imagem e retorne o JSON estruturado conforme as instruções.' },
-            { type: 'image_url', image_url: { url: image } },
-          ],
-        },
-      ],
-      temperature: 0.2,
-      top_p: 0.7,
-      max_tokens: 4096,
-      stream: false,
-    };
-
-    try {
-      const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), model.timeoutMs);
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${nvidiaKey}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-        signal: ctrl.signal,
-      });
-
-      clearTimeout(timeout);
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        console.warn(`[VLM Analyze] ${model.label} ${res.status}: ${errText.slice(0, 200)}`);
-        failures.push(`${model.label}: HTTP ${res.status}`);
-        continue; // próximo modelo da cascata
-      }
-
-      const data: any = await res.json();
-      const rawContent: string = data?.choices?.[0]?.message?.content || '';
-
-      if (!rawContent) {
-        failures.push(`${model.label}: resposta vazia`);
-        continue;
-      }
-
-      const analysis = extractJsonFromResponse(rawContent);
-
-      if (!analysis || !analysis.background || !Array.isArray(analysis.elements)) {
-        console.warn(`[VLM Analyze] ${model.label} retornou JSON inválido. Bruto (200 chars):`, rawContent.slice(0, 200));
-        failures.push(`${model.label}: JSON malformado`);
-        continue;
-      }
-
-      // Detecta o bug "todas as posições em 100%/100%" — modelo não entendeu
-      // o schema de porcentagem e jogou tudo no canto. Rejeita e tenta próximo.
-      const allSamePosition = analysis.elements.length >= 2 && analysis.elements.every(
-        (e) => Number(e.x) === Number(analysis.elements[0].x) && Number(e.y) === Number(analysis.elements[0].y)
-      );
-      if (allSamePosition) {
-        console.warn(`[VLM Analyze] ${model.label} retornou todos os elementos na mesma posição — rejeitando (schema bug).`);
-        failures.push(`${model.label}: posições duplicadas (schema bug)`);
-        continue;
-      }
-
-      // SUCESSO — sanitiza e retorna
-      const sanitizedElements = (analysis.elements || [])
-        .filter((e) => e && typeof e === 'object' && e.type)
-        .slice(0, 8)
-        .map((e) => ({
-          type: e.type,
-          name: String(e.name || 'Elemento').slice(0, 60),
-          x: Math.max(0, Math.min(100, Number(e.x) || 50)),
-          y: Math.max(0, Math.min(100, Number(e.y) || 50)),
-          width: Math.max(1, Math.min(100, Number(e.width) || 20)),
-          height: Math.max(1, Math.min(100, Number(e.height) || 20)),
-          rotation: Math.max(0, Math.min(360, Number(e.rotation) || 0)),
-          shape: e.shape,
-          emoji: e.emoji,
-          text: e.text,
-          fontSize: Number(e.fontSize) || 48,
-          fontFamily: e.fontFamily || 'Inter, sans-serif',
-          fill: e.fill || '#000000',
-          fontWeight: e.fontWeight === 'bold' ? 'bold' : 'normal',
-          prompt: e.prompt,
-          dominant_color: e.dominant_color,
-        }));
-
-      const sanitizedAnalysis = {
-        background: {
-          prompt: String(analysis.background?.prompt || 'a neutral gradient background').slice(0, 500),
-          dominant_color: String(analysis.background?.dominant_color || '#ffffff').slice(0, 7),
-        },
-        elements: sanitizedElements,
+  try {
+    const r = await callVlmModel({ ...STAGE_1, image, nvidiaKey });
+    const sanitized = sanitizeAnalysis(r.analysis);
+    return new Response(
+      JSON.stringify({
+        ...sanitized,
         meta: {
-          model: model.id,
-          model_label: model.label,
+          model: STAGE_1.id,
+          model_label: STAGE_1.label,
           provider: 'NVIDIA NIM',
-          element_count: sanitizedElements.length,
-          raw_tokens: data?.usage?.completion_tokens || 0,
-          /** Modelos descartados antes deste acertar (telemetry p/ debug) */
+          stage: 1,
+          element_count: sanitized.elements.length,
+          raw_tokens: r.completionTokens,
+          duration_ms: r.durationMs,
+          elapsed_ms: Date.now() - t0,
+          skipped: [] as string[],
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
+    );
+  } catch (err: any) {
+    if (!(err instanceof VlmCallError)) throw err;
+    failures.push(`${err.label}: ${err.reason}`);
+
+    // Backoff antes do estágio 2 — deixa o load balancer do NIM respirar.
+    // Em 429 respeita o Retry-After (cap 8s); nos demais casos, 2.5s.
+    const backoff = err.status === 429 ? Math.min(8000, err.retryAfterMs || 5000) : 2500;
+    await sleep(backoff);
+  }
+
+  // =========================================================================
+  // ESTÁGIO 2 — corrida paralela: Nemotron retry + reservas.
+  // Primeiro JSON válido vence; perdedores são abortados.
+  // =========================================================================
+  const raceControllers = STAGE_2_RACE.map(() => new AbortController());
+  // Side-channel: registra falhas reais que ocorreram ANTES da corrida ser
+  // decidida (distingue "falhou com HTTP 500" de "abortado porque outro venceu")
+  const raceFailures: (string | null)[] = STAGE_2_RACE.map(() => null);
+  const racePromises = STAGE_2_RACE.map((model, i) => {
+    const p = callVlmModel({ ...model, image, nvidiaKey, signal: raceControllers[i].signal }).then(
+      (r) => ({ ...r, model, index: i })
+    );
+    p.catch((e: any) => {
+      if (e instanceof VlmCallError && !e.abortedByRace) {
+        raceFailures[i] = `${e.label}: ${e.reason}`;
+      }
+    });
+    return p;
+  });
+
+  try {
+    const winner = await Promise.any(racePromises);
+
+    // Aborta os perdedores (libera sockets; rejections já tratadas acima)
+    raceControllers.forEach((c, j) => {
+      if (j !== winner.index) c.abort();
+    });
+
+    const sanitized = sanitizeAnalysis(winner.analysis);
+
+    // Telemetria dos perdedores: falha real se já tinha falhado, senão corte
+    STAGE_2_RACE.forEach((m, j) => {
+      if (j !== winner.index) {
+        failures.push(raceFailures[j] || `${m.label}: abortado (outro modelo venceu)`);
+      }
+    });
+
+    return new Response(
+      JSON.stringify({
+        ...sanitized,
+        meta: {
+          model: winner.model.id,
+          model_label: winner.model.label,
+          provider: 'NVIDIA NIM',
+          stage: 2,
+          element_count: sanitized.elements.length,
+          raw_tokens: winner.completionTokens,
+          duration_ms: winner.durationMs,
+          elapsed_ms: Date.now() - t0,
           skipped: failures,
         },
-      };
-
-      return new Response(JSON.stringify(sanitizedAnalysis), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-        },
-      });
-    } catch (err: any) {
-      if (err?.name === 'AbortError') {
-        console.warn(`[VLM Analyze] ${model.label} timeout (${model.timeoutMs}ms)`);
-        failures.push(`${model.label}: timeout`);
-      } else {
-        console.warn(`[VLM Analyze] ${model.label} erro:`, err?.message || err);
-        failures.push(`${model.label}: ${err?.message || 'erro'}`);
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
+    );
+  } catch (agg: any) {
+    // Promise.any AggregateError — todas as chamadas do estágio 2 falharam
+    for (const e of agg?.errors || []) {
+      if (e instanceof VlmCallError && !e.abortedByRace) {
+        failures.push(`${e.label}: ${e.reason}`);
       }
-      continue; // próximo modelo da cascata
     }
   }
 
   // =========================================================================
-  // Todos os modelos falharam
+  // Tudo falhou — mensagem diferenciada por tipo de falha
   // =========================================================================
+  const elapsedS = Math.round((Date.now() - t0) / 1000);
+  const allTimeouts = failures.length > 0 && failures.every((f) => f.includes('timeout'));
+  const hitRateLimit = failures.some((f) => f.includes('429'));
+
+  const errorMsg = allTimeouts
+    ? 'Todos os modelos de visão esgotaram o tempo limite. A NVIDIA parece instável neste momento — aguarde ~1 minuto e tente novamente.'
+    : hitRateLimit
+      ? 'Limite de requisições da NVIDIA atingido. Aguarde um momento antes de tentar novamente.'
+      : 'Todos os modelos de visão falharam. Tente novamente em alguns segundos.';
+
   return new Response(
     JSON.stringify({
-      error: 'Todos os modelos de visão falharam. A NVIDIA pode estar instável — tente novamente em alguns segundos.',
+      error: errorMsg,
       attempts: failures,
+      elapsed_s: elapsedS,
     }),
     { status: 502, headers: { 'Content-Type': 'application/json' } }
   );
