@@ -496,14 +496,24 @@ export const ImageEditorModal: React.FC<ImageEditorModalProps> = ({
 
           {/* Canvas central */}
           <div className="flex-1 flex flex-col min-w-0 bg-[#0a0a0a] relative">
-            <div ref={canvasContainerRef} className="flex-1 flex items-center justify-center overflow-hidden p-2 sm:p-4" style={{ background: 'repeating-conic-gradient(#1a1a1a 0% 25%, #0d0d0d 0% 50%) 50% / 24px 24px' }}>
-              {isLoading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[color:var(--c-bg-181714)]/90 backdrop-blur-xs text-center p-4 space-y-3">
-                  <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-                  <div className="text-sm text-[color:var(--c-fg-f3efe6)]">Carregando editor...</div>
-                </div>
-              )}
-            </div>
+            {/*
+             * ⚠️ CORREÇÃO CRASH "removeChild: not a child of this node":
+             * O canvas Fabric é montado IMPERATIVAMENTE dentro deste div
+             * (initCanvas faz container.innerHTML = '' + appendChild(canvas)).
+             * Este div NUNCA pode ter filhos renderizados pelo React — o
+             * innerHTML = '' os destruiria por baixo do React, e o commit
+             * seguinte (setIsLoading(false) removendo o overlay) explodiria
+             * em NotFoundError: removeChild. Por isso o overlay de loading
+             * é IRMÃO absoluto deste container (ancorado no wrapper relative
+             * acima), nunca filho. Não renderizar children React aqui.
+             */}
+            <div ref={canvasContainerRef} className="flex-1 flex items-center justify-center overflow-hidden p-2 sm:p-4" style={{ background: 'repeating-conic-gradient(#1a1a1a 0% 25%, #0d0d0d 0% 50%) 50% / 24px 24px' }} />
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[color:var(--c-bg-181714)]/90 backdrop-blur-xs text-center p-4 space-y-3">
+                <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+                <div className="text-sm text-[color:var(--c-fg-f3efe6)]">Carregando editor...</div>
+              </div>
+            )}
 
             {onRegenerateBackground && (
               <div className="px-3 py-2 bg-[color:var(--c-bg-201e1a)] border-t border-[color:var(--c-bg-38352e)] flex items-center gap-2 shrink-0">
