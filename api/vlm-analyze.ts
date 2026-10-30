@@ -89,7 +89,7 @@ REGRAS OBRIGATÓRIAS:
 4. y é a posição vertical do CENTRO do elemento em porcentagem (0 = topo, 50 = meio, 100 = base). NUNCA use 100 para todos.
 5. width é a largura do elemento em porcentagem da largura total da imagem. Um texto curto geralmente tem width ~10-20%; um objeto grande ~30-60%. NUNCA use 100 para tudo.
 6. height é a altura do elemento em porcentagem da altura total da imagem.
-7. Exemplo: um botão no canto inferior direito de uma imagem 1024x768 pode ter x=85, y=92, width=20, height=8.
+7. EXEMPLO COM CÁLCULO: numa imagem de 851x353 pixels, um elemento cujo centro está no pixel (425, 176) — exatamente no meio — deve ter x = 50, y = 50. Um elemento no canto inferior direito tem x ≈ 85, y ≈ 92. NUNCA responda em pixels, nem numa escala de 0 a 1000 — SEMPRE porcentagem 0-100.
 8. Para type=image, descreva o objeto complexo (ex: 'a green tree with brown trunk', 'a yellow sun with rays', 'a female character wearing a red dress').
 9. Para type=text, use o texto exato detectado na imagem.
 10. Para type=sticker, use o emoji mais próximo do elemento visual.
@@ -228,7 +228,7 @@ function validateAnalysis(analysis: VlmAnalysis | null): string | null {
  * instrução de porcentagem e devolvem pixels (ex: x=425 numa imagem de 851px)
  * ou a escala interna 0-1000 (padrão Qwen-VL) ou frações 0-1. Sem normalizar,
  * o sanitizador "clampa" tudo em 100 e todos os elementos colam no canto
-  * inferior direito (bug reproduzido com a arte kaizen).
+ * inferior direito (bug reproduzido com a arte kaizen).
  *
  * Detecção pelo maior x/y observado:
  *   - > 100, com dimensões da imagem  → pixels: pct = v / dimensão * 100
@@ -236,14 +236,35 @@ function validateAnalysis(analysis: VlmAnalysis | null): string | null {
  *   - ≤ 1 com valores fracionários    → fração 0-1: v * 100
  *   - senão                           → já está em %, não mexe
  */
-function normalizeAnalysis(analysis: VlmAnalysis, imgW?: number, imgH?: number): VlmAnalysis {
+/** Snapshot das coordenadas cruas p/ telemetria — diagnóstico de convenção */
+interface CoordsDebug {
+  mode: string;
+  imgW?: number;
+  imgH?: number;
+  raw: Array<{ name: string; x: number; y: number; width: number; height: number }>;
+}
+
+function normalizeAnalysis(
+  analysis: VlmAnalysis,
+  imgW?: number,
+  imgH?: number
+): { analysis: VlmAnalysis; debug: CoordsDebug | null } {
   const els = analysis.elements;
-  if (!els.length) return analysis;
+  if (!els.length) return { analysis, debug: null };
 
   const nums = (v: unknown): number => {
     const n = Number(v);
     return Number.isFinite(n) ? n : 0;
   };
+
+  const snapshot = (): CoordsDebug['raw'] =>
+    els.map((e) => ({
+      name: String(e.name || '?').slice(0, 30),
+      x: nums(e.x),
+      y: nums(e.y),
+      width: nums(e.width),
+      height: nums(e.height),
+    }));
 
   // --- detecta a convenção de x/y ---
   const xyVals = els.flatMap((e) => [nums(e.x), nums(e.y)]).filter((v) => v > 0);
@@ -257,18 +278,22 @@ function normalizeAnalysis(analysis: VlmAnalysis, imgW?: number, imgH?: number):
     mode = 'unit';
   }
 
-  if (mode !== 'percent') {
-    const conv = (v: number, isY: boolean): number => {
-      if (v <= 0) return v;
-      if (mode === 'pixel') return (v / (isY ? imgH! : imgW!)) * 100;
-      if (mode === 'scale1000') return v / 10;
-      return v * 100; // unit
-    };
-    els.forEach((e) => {
-      e.x = conv(nums(e.x), false);
-      e.y = conv(nums(e.y), true);
-    });
+  if (mode === 'percent') {
+    return { analysis, debug: null };
   }
+
+  const debug: CoordsDebug = { mode, imgW, imgH, raw: snapshot() };
+
+  const conv = (v: number, isY: boolean): number => {
+    if (v <= 0) return v;
+    if (mode === 'pixel') return (v / (isY ? imgH! : imgW!)) * 100;
+    if (mode === 'scale1000') return v / 10;
+    return v * 100; // unit
+  };
+  els.forEach((e) => {
+    e.x = conv(nums(e.x), false);
+    e.y = conv(nums(e.y), true);
+  });
 
   // --- width/height: mesma convenção, mas só converte se estourar 100 ---
   const whVals = els.flatMap((e) => [nums(e.width), nums(e.height)]).filter((v) => v > 0);
@@ -276,7 +301,7 @@ function normalizeAnalysis(analysis: VlmAnalysis, imgW?: number, imgH?: number):
   const whHasFraction = whVals.some((v) => v % 1 !== 0);
 
   if (maxWH > 100 || (maxWH <= 1 && whHasFraction && maxWH > 0)) {
-    const conv = (v: number, isY: boolean): number => {
+    const convWh = (v: number, isY: boolean): number => {
       if (v <= 0) return v;
       if (maxWH > 100) {
         if (mode === 'pixel' && imgW && imgH) return (v / (isY ? imgH : imgW)) * 100;
@@ -285,12 +310,12 @@ function normalizeAnalysis(analysis: VlmAnalysis, imgW?: number, imgH?: number):
       return v * 100; // unit
     };
     els.forEach((e) => {
-      e.width = conv(nums(e.width), false);
-      e.height = conv(nums(e.height), true);
+      e.width = convWh(nums(e.width), false);
+      e.height = convWh(nums(e.height), true);
     });
   }
 
-  return analysis;
+  return { analysis, debug };
 }
 
 /**
@@ -331,6 +356,7 @@ interface VlmCallConfig {
 
 interface VlmCallResult {
   analysis: VlmAnalysis;
+  coordsDebug: CoordsDebug | null;
   completionTokens: number;
   durationMs: number;
 }
@@ -428,15 +454,18 @@ async function callVlmModel(cfg: VlmCallConfig): Promise<VlmCallResult> {
     const analysis = extractJsonFromResponse(rawContent);
     // Normaliza ANTES de validar: converte pixels/0-1000/0-1 → porcentagem,
     // senão o clamp do sanitizador cola tudo no canto (bug da arte kaizen)
-    const normalized = analysis ? normalizeAnalysis(analysis, cfg.imgW, cfg.imgH) : null;
-    const invalidReason = validateAnalysis(normalized);
-    if (invalidReason || !normalized) {
+    const normalizedRes = analysis
+      ? normalizeAnalysis(analysis, cfg.imgW, cfg.imgH)
+      : { analysis: null as VlmAnalysis | null, debug: null as CoordsDebug | null };
+    const invalidReason = validateAnalysis(normalizedRes.analysis);
+    if (invalidReason || !normalizedRes.analysis) {
       console.warn(`[VLM Analyze] ${cfg.label} rejeitado (${invalidReason}). Bruto (200 chars):`, rawContent.slice(0, 200));
       throw new VlmCallError(cfg.label, invalidReason || 'JSON malformado');
     }
 
     return {
-      analysis: normalized,
+      analysis: normalizedRes.analysis,
+      coordsDebug: normalizedRes.debug,
       completionTokens: data?.usage?.completion_tokens || 0,
       durationMs: Date.now() - t0,
     };
@@ -576,6 +605,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           duration_ms: r.durationMs,
           elapsed_ms: Date.now() - t0,
           skipped: [] as string[],
+          ...(r.coordsDebug ? { coords_debug: r.coordsDebug } : {}),
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
@@ -640,6 +670,7 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
           duration_ms: winner.durationMs,
           elapsed_ms: Date.now() - t0,
           skipped: failures,
+          ...(winner.coordsDebug ? { coords_debug: winner.coordsDebug } : {}),
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
