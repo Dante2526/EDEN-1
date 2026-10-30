@@ -20,20 +20,24 @@ export const config = {
  * um ImageProject e abrir no editor Fabric.js — onde o usuário pode
  * mover, recolorir, redimensionar, apagar/trocar, duplicar e trocar fundo.
  *
- * Modelos (cascata com fallback): glm-5.3-flash → gemma-4-31b-it →
- * nemotron-3.5-super-vl-120b-a12b. Primeiro que retornar JSON válido vence.
+ * Modelos (cascata com fallback): nemotron-vl → glm-5.3-flash →
+ * gemma-4-31b-it. Primeiro que retornar JSON válido vence.
  */
 
 /**
- * Cascata de modelos VLM — do mais rápido pro mais preciso.
- * glm-5.3-flash responde em ~5-15s; Nemotron VL 120B pode levar 30s+ (ou
- * nunca, quando a NVIDIA tá instável). Tentamos o flash primeiro e caímos
- * pro VL pesado só se o flash falhar.
+ * Cascata de modelos VLM — telemetria de produção (3 testes reais):
+ *   - Nemotron VL 120B: acerta em ~15-20s (3/3 sucessos) — o workhorse
+ *   - GLM-5.3 Flash: timeout em 20s (0/3) — não gera o JSON pesado a tempo
+ *   - Gemma 4 31B: timeout em 20s (0/3) — idem
+ *
+ * Por isso o Nemotron vai PRIMEIRO: caminho de sucesso ~20s (vs 60s se
+ * queimássemos 40s em flash+gemma antes). Flash e Gemma ficam como
+ * fallback pra quando o Nemotron especificamente estiver fora do ar.
  */
 const VLM_CASCADE = [
-  { id: 'z-ai/glm-5.3-flash', timeoutMs: 20000, label: 'GLM-5.3 Flash' },
-  { id: 'google/gemma-4-31b-it', timeoutMs: 20000, label: 'Gemma 4 31B' },
   { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 45000, label: 'Nemotron VL 120B' },
+  { id: 'z-ai/glm-5.3-flash', timeoutMs: 25000, label: 'GLM-5.3 Flash' },
+  { id: 'google/gemma-4-31b-it', timeoutMs: 25000, label: 'Gemma 4 31B' },
 ];
 
 const SYSTEM_PROMPT = `Você é um analisador visual de imagens. Analise a imagem fornecida e retorne APENAS um JSON válido (sem markdown, sem texto adicional, sem fences) com a seguinte estrutura:
