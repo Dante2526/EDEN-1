@@ -72,15 +72,19 @@ const SYSTEM_PROMPT = `Você é um analisador visual de imagens. Analise a image
 REGRAS OBRIGATÓRIAS:
 1. Detecte APENAS elementos visualmente distintos e editáveis. Não descreva cada pixel.
 2. Máximo 8 elementos para manter o projeto gerenciável.
-3. Posições (x, y) são em PORCENTAGEM (0-100) da dimensão da imagem, onde (0,0) é o canto superior esquerdo. Representam o CENTRO do elemento.
-4. width e height também em PORCENTAGEM (0-100) da dimensão da imagem.
-5. Para type=image, descreva o objeto complexo (ex: 'a green tree with brown trunk', 'a yellow sun with rays', 'a female character wearing a red dress').
-6. Para type=text, use o texto exato detectado na imagem.
-7. Para type=sticker, use o emoji mais próximo do elemento visual.
-8. Para type=shape, escolha a forma geométrica mais próxima (rect/circle/triangle/line).
-9. rotation em graus (0-360).
-10. Use cores hex válidas (#rrggbb).
-11. Retorne SOMENTE o JSON, sem markdown, sem explicação, sem fences.`;
+3. x é a posição horizontal do CENTRO do elemento em porcentagem (0 = borda esquerda, 50 = centro, 100 = borda direita). NUNCA use 100 para todos — calcule a posição real observando a imagem.
+4. y é a posição vertical do CENTRO do elemento em porcentagem (0 = topo, 50 = meio, 100 = base). NUNCA use 100 para todos.
+5. width é a largura do elemento em porcentagem da largura total da imagem. Um texto curto geralmente tem width ~10-20%; um objeto grande ~30-60%. NUNCA use 100 para tudo.
+6. height é a altura do elemento em porcentagem da altura total da imagem.
+7. Exemplo: um botão no canto inferior direito de uma imagem 1024x768 pode ter x=85, y=92, width=20, height=8.
+8. Para type=image, descreva o objeto complexo (ex: 'a green tree with brown trunk', 'a yellow sun with rays', 'a female character wearing a red dress').
+9. Para type=text, use o texto exato detectado na imagem.
+10. Para type=sticker, use o emoji mais próximo do elemento visual.
+11. Para type=shape, escolha a forma geométrica mais próxima (rect/circle/triangle/line).
+12. rotation em graus (0-360).
+13. Use cores hex válidas (#rrggbb).
+14. Retorne SOMENTE o JSON, sem markdown, sem explicação, sem fences.
+15. ANTES de retornar, confira: cada elemento tem x, y, width, height DIFERENTES baseados na posição real na imagem. Se todos os valores forem iguais, você errou — refaça.`;
 
 interface VlmElement {
   type: 'shape' | 'sticker' | 'text' | 'image';
@@ -289,6 +293,17 @@ export default async function handler(req: Request, envArg?: Env): Promise<Respo
       if (!analysis || !analysis.background || !Array.isArray(analysis.elements)) {
         console.warn(`[VLM Analyze] ${model.label} retornou JSON inválido. Bruto (200 chars):`, rawContent.slice(0, 200));
         failures.push(`${model.label}: JSON malformado`);
+        continue;
+      }
+
+      // Detecta o bug "todas as posições em 100%/100%" — modelo não entendeu
+      // o schema de porcentagem e jogou tudo no canto. Rejeita e tenta próximo.
+      const allSamePosition = analysis.elements.length >= 2 && analysis.elements.every(
+        (e) => Number(e.x) === Number(analysis.elements[0].x) && Number(e.y) === Number(analysis.elements[0].y)
+      );
+      if (allSamePosition) {
+        console.warn(`[VLM Analyze] ${model.label} retornou todos os elementos na mesma posição — rejeitando (schema bug).`);
+        failures.push(`${model.label}: posições duplicadas (schema bug)`);
         continue;
       }
 
