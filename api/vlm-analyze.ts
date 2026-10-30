@@ -44,13 +44,13 @@ export const config = {
  */
 
 /** Estágio 1 — o workhorse comprovado. */
-const STAGE_1 = { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 30000, label: 'Nemotron VL 120B' };
+const STAGE_1 = { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 35000, label: 'Nemotron VL 120B' };
 
 /** Estágio 2 — corrida paralela: retry do workhorse + reservas. */
 const STAGE_2_RACE = [
-  { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 40000, label: 'Nemotron VL 120B (retry)' },
-  { id: 'z-ai/glm-5.3-flash', timeoutMs: 40000, label: 'GLM-5.3 Flash' },
-  { id: 'google/gemma-4-31b-it', timeoutMs: 40000, label: 'Gemma 4 31B' },
+  { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 45000, label: 'Nemotron VL 120B (retry)' },
+  { id: 'z-ai/glm-5.3-flash', timeoutMs: 45000, label: 'GLM-5.3 Flash' },
+  { id: 'google/gemma-4-31b-it', timeoutMs: 45000, label: 'Gemma 4 31B' },
 ];
 
 const SYSTEM_PROMPT = `Você é um analisador visual de imagens. Analise a imagem fornecida e retorne APENAS um JSON válido (sem markdown, sem texto adicional, sem fences) com a seguinte estrutura:
@@ -133,13 +133,30 @@ interface VlmAnalysis {
 
 /**
  * Extrai o JSON da resposta do VLM — tolerante a fences acidentais e texto extra.
+ * Modelos de raciocínio às vezes envolvem a resposta em <think>...</think>:
+ * prefere o texto DEPOIS da última tag de fechamento; se não achar JSON lá,
+ * tenta o texto completo (o thinking pode conter o JSON pronto).
  */
 function extractJsonFromResponse(text: string): VlmAnalysis | null {
   if (!text) return null;
 
+  const thinkClose = text.lastIndexOf('</think>');
+  if (thinkClose !== -1) {
+    const after = extractBalancedJson(text.slice(thinkClose + '</think>'.length));
+    if (after) return after;
+  }
+  return extractBalancedJson(text);
+}
+
+function extractBalancedJson(text: string): VlmAnalysis | null {
+  if (!text) return null;
+
   // Tenta parse direto primeiro
   try {
-    return JSON.parse(text);
+    const direct: any = JSON.parse(text);
+    if (direct && typeof direct === 'object' && direct.background && Array.isArray(direct.elements)) {
+      return direct as VlmAnalysis;
+    }
   } catch {}
 
   // Procura pelo primeiro { ... } balanceado
@@ -268,8 +285,14 @@ async function callVlmModel(cfg: VlmCallConfig): Promise<VlmCallResult> {
     ],
     temperature: 0.2,
     top_p: 0.7,
-    max_tokens: 4096,
+    max_tokens: 8192,
     stream: false,
+    // CRÍTICO: Nemotron 3.5 (e GLM 5.x) são modelos de RACIOCÍNIO. Com thinking
+    // ligado, o raciocínio interno consome o orçamento de tokens e o content
+    // chega VAZIO com finish_reason=length (reproduzido com imagem complexa:
+    // 2x "resposta vazia" em ~25s). Desligar o thinking faz o modelo responder
+    // direto — mais rápido e sem o bug. Modelos sem suporte ignoram o kwarg.
+    chat_template_kwargs: { thinking: false },
   };
 
   // Timeout próprio + repasse do abort externo (corrida)
@@ -302,10 +325,26 @@ async function callVlmModel(cfg: VlmCallConfig): Promise<VlmCallResult> {
     }
 
     const data: any = await res.json();
-    const rawContent: string = data?.choices?.[0]?.message?.content || '';
+    const choice = data?.choices?.[0];
+    let rawContent: string = choice?.message?.content || '';
+
+    // Fallback p/ modelos de raciocínio: alguns builds NIM entregam a resposta
+    // em reasoning_content quando o content vem vazio
+    if (!rawContent) {
+      const reasoning = choice?.message?.reasoning_content || choice?.message?.reasoning || '';
+      if (reasoning) rawContent = reasoning;
+    }
 
     if (!rawContent) {
-      throw new VlmCallError(cfg.label, 'resposta vazia');
+      // finish_reason na telemetria: "length" = thinking comeu o orçamento;
+      // "content_filter" = filtro de segurança bloqueou a imagem
+      const finishReason = choice?.finish_reason || '?';
+      console.warn(
+        `[VLM Analyze] ${cfg.label} resposta vazia. finish_reason=${finishReason}`,
+        `message_keys=${Object.keys(choice?.message || {}).join(',')}`,
+        `usage=${JSON.stringify(data?.usage || {}).slice(0, 200)}`
+      );
+      throw new VlmCallError(cfg.label, `resposta vazia (finish_reason=${finishReason})`);
     }
 
     const analysis = extractJsonFromResponse(rawContent);
