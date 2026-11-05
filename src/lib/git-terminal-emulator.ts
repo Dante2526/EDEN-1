@@ -161,8 +161,11 @@ export function parseCommandArgs(cmdString: string): { command: string; args: st
         flags[token.substring(2)] = true;
       }
     } else if (token.startsWith('-') && token.length > 1) {
-      // e.g. -la, -a, -m, -o, -H
+      // e.g. -la, -a, -m, -o, -H, -60, -3
       const flagStr = token.substring(1);
+      if (/^\d+$/.test(flagStr)) {
+        flags['n'] = flagStr;
+      } else
       if ((flagStr === 'm' || flagStr === 'b' || flagStr === 'c' || flagStr === 'n' || flagStr === 'o' || flagStr === 'H') && i + 1 < tokens.length) {
         flags[flagStr] = cleanTokenQuotes(tokens[i + 1]);
         i++;
@@ -217,6 +220,92 @@ function splitPipeSegments(cmd: string): string[] {
   return segments;
 }
 
+function hasChainedBashOperators(cmd: string): boolean {
+  let inQ = false;
+  let qCh = '';
+  let isEsc = false;
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (isEsc) {
+      isEsc = false;
+      continue;
+    }
+    if (ch === '\\') {
+      isEsc = true;
+      continue;
+    }
+    if ((ch === '"' || ch === "'") && !inQ) {
+      inQ = true;
+      qCh = ch;
+    } else if (ch === qCh && inQ) {
+      inQ = false;
+      qCh = '';
+    } else if (!inQ) {
+      if (ch === ';') return true;
+      if (ch === '&' && cmd[i + 1] === '&') return true;
+      if (ch === '|' && cmd[i + 1] === '|') return true;
+    }
+  }
+  return false;
+}
+
+function sanitizeBashRedirections(cmd: string): string {
+  let result = '';
+  let inQ = false;
+  let qCh = '';
+  let isEsc = false;
+  let i = 0;
+
+  while (i < cmd.length) {
+    const ch = cmd[i];
+    if (isEsc) {
+      result += ch;
+      isEsc = false;
+      i++;
+      continue;
+    }
+    if (ch === '\\') {
+      result += ch;
+      isEsc = true;
+      i++;
+      continue;
+    }
+    if ((ch === '"' || ch === "'") && !inQ) {
+      inQ = true;
+      qCh = ch;
+      result += ch;
+      i++;
+      continue;
+    }
+    if (ch === qCh && inQ) {
+      inQ = false;
+      qCh = '';
+      result += ch;
+      i++;
+      continue;
+    }
+
+    if (!inQ) {
+      const rest = cmd.slice(i);
+      const devNullMatch = rest.match(/^(?:2>|1>|>|&>)\s*\/dev\/null/i);
+      if (devNullMatch) {
+        i += devNullMatch[0].length;
+        continue;
+      }
+      const redirectFdMatch = rest.match(/^2>&1/);
+      if (redirectFdMatch) {
+        i += redirectFdMatch[0].length;
+        continue;
+      }
+    }
+
+    result += ch;
+    i++;
+  }
+
+  return result.trim();
+}
+
 /**
  * Main Git Terminal Emulator Engine
  * Translates Git/Unix shell commands to real GitHub REST API calls, virtual /tmp filesystem and active app state.
@@ -225,7 +314,8 @@ export async function executeEmulatedCommand(
   rawCommand: string,
   context: TerminalEmulatorContext
 ): Promise<TerminalEmulatorResult> {
-  const trimmed = rawCommand.trim();
+  const sanitized = sanitizeBashRedirections(rawCommand);
+  const trimmed = sanitized.trim();
   if (!trimmed) {
     return {
       stdout: '',
@@ -234,6 +324,20 @@ export async function executeEmulatedCommand(
       cwd: context.cwd,
       executionTimeMs: 0,
       success: true,
+    };
+  }
+
+  if (hasChainedBashOperators(trimmed)) {
+    return {
+      stdout: '',
+      stderr:
+        '⚠️ Bloqueado: Operadores encadeados do Bash (||, &&, ;) não são suportados.\n' +
+        'O Éden executa em ambiente Web/Navegador (não é um shell Linux).\n' +
+        'Para inspecionar ou alterar código no repositório, use as ferramentas nativas dedicadas (search_code, read_file, list_files, patch_file).',
+      exitCode: 1,
+      cwd: context.cwd,
+      executionTimeMs: 0,
+      success: false,
     };
   }
 
@@ -447,57 +551,52 @@ async function executeSingleCommand(
     }
 
     if (command === 'cat' || command === 'head' || command === 'tail') {
-      if (args.length === 0) {
-        return makeResult('', `Uso: ${command} <caminho-do-arquivo>`, 1);
-      }
-
-      const rawPath = args[0] || '';
-      const resolved = resolvePath(context.cwd, rawPath);
-      if (resolved.startsWith('/tmp/') || rawPath.startsWith('/tmp/') || rawPath.startsWith('tmp/')) {
-        const content = getVirtualTmpFile(rawPath) ?? getVirtualTmpFile(resolved);
-        if (content === undefined) {
-          return makeResult('', `${command}: ${rawPath}: Arquivo não encontrado no /tmp`, 1);
-        }
-        const lines = content.split('\n');
-        if (command === 'head') {
-          const n = typeof flags['n'] === 'string' ? parseInt(flags['n'], 10) : 10;
-          return makeResult(lines.slice(0, n).join('\n'));
-        }
-        if (command === 'tail') {
-          const n = typeof flags['n'] === 'string' ? parseInt(flags['n'], 10) : 10;
-          return makeResult(lines.slice(-n).join('\n'));
-        }
-        return makeResult(content);
-      }
-
-      if (!owner || !repo) {
-        return makeResult('', 'fatal: nenhum repositório GitHub ativo.', 1);
-      }
-
-      const filePath = resolvePath(context.cwd, args[0]).replace(/^\//, '');
-
-      // First check in local pending changes
-      const localMatch = context.changes.find((c) => c.path === filePath);
       let content = '';
 
-      if (localMatch) {
-        content = localMatch.newContent;
+      if (typeof stdin === 'string' && (args.length === 0 || args[0] === '-')) {
+        content = stdin;
       } else {
-        try {
-          content = await fetchFileContent(null, owner, repo, filePath, branch);
-        } catch (err: any) {
-          return makeResult('', `${command}: ${filePath}: Arquivo não encontrado no repositório GitHub.`, 1);
+        if (args.length === 0) {
+          return makeResult('', `Uso: ${command} <caminho-do-arquivo>`, 1);
+        }
+
+        const rawPath = args[0] || '';
+        const resolved = resolvePath(context.cwd, rawPath);
+        if (resolved.startsWith('/tmp/') || rawPath.startsWith('/tmp/') || rawPath.startsWith('tmp/')) {
+          const tmpContent = getVirtualTmpFile(rawPath) ?? getVirtualTmpFile(resolved);
+          if (tmpContent === undefined) {
+            return makeResult('', `${command}: ${rawPath}: Arquivo não encontrado no /tmp`, 1);
+          }
+          content = tmpContent;
+        } else {
+          if (!owner || !repo) {
+            return makeResult('', 'fatal: nenhum repositório GitHub ativo.', 1);
+          }
+
+          const filePath = resolvePath(context.cwd, args[0]).replace(/^\//, '');
+
+          // First check in local pending changes
+          const localMatch = context.changes.find((c) => c.path === filePath);
+          if (localMatch) {
+            content = localMatch.newContent;
+          } else {
+            try {
+              content = await fetchFileContent(null, owner, repo, filePath, branch);
+            } catch (err: any) {
+              return makeResult('', `${command}: ${filePath}: Arquivo não encontrado no repositório GitHub.`, 1);
+            }
+          }
         }
       }
 
       const lines = content.split('\n');
       if (command === 'head') {
-        const n = typeof flags['n'] === 'string' ? parseInt(flags['n'], 10) : 10;
-        return makeResult(lines.slice(0, n).join('\n'));
+        const n = typeof flags['n'] === 'string' ? Math.max(0, parseInt(flags['n'], 10) || 0) : 10;
+        return makeResult(n === 0 ? '' : lines.slice(0, n).join('\n'));
       }
       if (command === 'tail') {
-        const n = typeof flags['n'] === 'string' ? parseInt(flags['n'], 10) : 10;
-        return makeResult(lines.slice(-n).join('\n'));
+        const n = typeof flags['n'] === 'string' ? Math.max(0, parseInt(flags['n'], 10) || 0) : 10;
+        return makeResult(n === 0 ? '' : lines.slice(-n).join('\n'));
       }
 
       return makeResult(content);

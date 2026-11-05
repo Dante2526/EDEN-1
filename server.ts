@@ -17,6 +17,8 @@ import browserHandler from './api/browser';
 import imageHandler from './api/image';
 import inpaintHandler from './api/inpaint';
 import dbProjectsHandler from './api/db-projects';
+import dbConversationsHandler from './api/db-conversations';
+import dbStateHandler from './api/db-state';
 import modelsHealthHandler from './api/models-health';
 import vlmAnalyzeHandler from './api/vlm-analyze';
 import { Env } from './lib/server/env';
@@ -150,6 +152,8 @@ app.all('/api/browser', adaptWebHandler(browserHandler));
 app.all('/api/image', adaptWebHandler(imageHandler));
 app.all('/api/inpaint', adaptWebHandler(inpaintHandler));
 app.all('/api/db-projects', adaptWebHandler(dbProjectsHandler));
+app.all('/api/db-conversations', adaptWebHandler(dbConversationsHandler));
+app.all('/api/db-state', adaptWebHandler(dbStateHandler));
 app.all('/api/models-health', adaptWebHandler(modelsHealthHandler));
 app.all('/api/vlm-analyze', adaptWebHandler(vlmAnalyzeHandler));
 

@@ -2741,3 +2741,74 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
 - `npm run build`: Compilação em 2.95s (`dist/_worker.js` 222.4 kB).
 - `python -m graphify update .`: Grafo atualizado (15.053 nós, 17.278 arestas, 1.023 comunidades).
 - Deploy em produção: Publicado com sucesso no Cloudflare Pages (`https://d935c02b.eden-ia.pages.dev` / `https://eden-ia.pages.dev`).
+
+
+## 25. Sincronização em Nuvem do Chat no Supabase & Blindagem RLS (Mobile & Desktop)
+
+- **Problema:** As conversas e mensagens do chat ficavam restritas ao IndexedDB do navegador local, impossibilitando que o usuário visse o mesmo histórico no celular e no computador. Além disso, a tabela `synap_repositories` no Supabase estava com o Row Level Security (RLS) desligado.
+- **Solução Implementada:**
+  - **DDL & Migração Supabase:**
+    - Criada a tabela `synap_conversations` com campos JSONB completos para mensagens, repositório ativo, planejamento e compactação de contexto.
+    - Habilitado Row Level Security (RLS) em `synap_repositories` e `synap_conversations` com políticas estritas de acesso exclusivo para `service_role`.
+    - Criado índice otimizado `idx_synap_conversations_updated_at` para ordenação ultrarrápida.
+  - **API Serverless Edge (`/api/db-conversations`):**
+    - Endpoints de `list`, `get`, `upsert`, `batch_sync`, `delete` e `clear_all`.
+    - Resolução determinística de conflitos de concorrência com checagem de timestamp (`updatedAt`).
+    - Registro e roteamento unificados no Express (`server.ts`) e no Cloudflare Pages (`_worker.ts`).
+  - **Camada Offline-First no Cliente (`src/lib/storage.ts` & `src/App.tsx`):**
+    - Leitura instantânea de 0ms do IndexedDB no boot com sincronização não-bloqueante em nuvem.
+    - Debounce de 2.500ms com trava de concorrência (`isSyncing`) para evitar rajadas de escrita durante streams de tokens.
+    - Listener reativo `onCloudConversationsSynced` que atualiza a interface automaticamente quando novas conversas são sincronizadas em outro aparelho.
+  - **Evidências de Verificação:**
+    - Teste funcional de ciclo de vida do Supabase (Upsert 201, Get 200, Delete 204).
+    - `tsc --noEmit`: 0 erros de tipagem estrita.
+    - `npm test`: 237/237 testes passando (47 suítes).
+    - `npm run build`: Compilação de produção concluída com `dist/_worker.js` gerado com sucesso.
+
+
+## 26. Sincronização Unificada de Estado no Supabase (Memória IA, Configurações, Skills e MCP)
+
+- **Problema:** A memória de longo prazo da IA (fatos aprendidos e preferências), as configurações de áudio/tema, as habilidades customizadas e os servidores MCP ficavam isolados no IndexedDB e localStorage do dispositivo. Se o usuário alternasse para o celular, a IA sofria "amnésia" e as customizações precisavam ser recriadas.
+- **Solução Implementada:**
+  - **DDL & Migração Supabase:**
+    - Criada a tabela `public.synap_user_state` com colunas JSONB dedicadas para `settings`, `skills`, `mcp_servers` e `knowledge_facts`.
+    - Ativado Row Level Security (RLS) com política exclusiva para a role `service_role`.
+  - **Endpoint Serverless Edge (`/api/db-state`):**
+    - Métodos `GET ?action=get` (carregamento instantâneo) e `POST ?action=upsert` (com resolução inteligente de timestamps para evitar sobrescrita cega).
+    - Mapeamento e roteamento ativo no Express local (`server.ts`) e no Cloudflare Pages (`_worker.ts`).
+  - **Integração no Cliente (`src/lib/storage.ts` & `src/App.tsx`):**
+    - Chamada atômica unificada no boot (`fetchUserStateFromCloud`) sem travar a renderização inicial de 0ms do IndexedDB.
+    - Debounce automático de 2.000ms nos métodos `saveSettings`, `saveSkills`, `saveMcpServers` e `saveKnowledgeFacts`.
+  - **Evidências de Verificação:**
+    - Teste de inserção e consulta no Supabase (Upsert 201, Get 200).
+    - `tsc --noEmit`: 0 erros.
+    - `npm test`: 237/237 testes passando (47 suítes).
+    - `npm run build`: Compilação de produção verde em 3.81s (`dist/_worker.js` 238.7 kB).
+
+
+- **Deploy em Produção:** Publicado no Cloudflare Pages com sucesso (`https://c4ab7a9a.eden-ia.pages.dev` e `https://eden-ia.pages.dev`).
+
+## 148. Internalização de Ambiente Web Não-Linux & Blindagem do Terminal contra Bashisms (2026-10-24)
+
+- **Problema:** O modelo de IA tentava executar comandos bash complexos no terminal virtual do Éden (`cd /workspace 2>/dev/null || cd . ; pwd; git log ...` e `grep -n "Studio" src_codebase.txt | head -60`), recebendo erros `exit 1` e gastando turnos e tokens à toa antes de se auto-corrigir para as ferramentas nativas.
+- **Solução Implementada:**
+  1. **Internalização no System Prompt (`src/App.tsx`):**
+     - Declarado explicitamente no `basePrompt` e no `repoPrompt` que o Éden opera em ambiente Web/Navegador (**não é Linux nem Docker**) e que não existem diretórios fictícios como `/workspace`.
+     - Proibido expressamente o uso de comandos bash (`cd /workspace`, `2>/dev/null`, `||`, `;`) para tentar ler arquivos.
+     - Instruído o modelo a utilizar SEMPRE as ferramentas nativas dedicadas do Éden: `search_code`, `read_file` (com suporte a `start_line`/`end_line`), `list_files`, `patch_file` e `edit_file`.
+  2. **Refinamento dos Metadados da Tool (`TERMINAL_TOOL` em `src/App.tsx`):**
+     - Removida a menção de "shell/bash" dos parâmetros da ferramenta.
+     - Descrição atualizada para esclarecer que é um emulador client-side focado em Git, curl, ffprobe e utilitários específicos.
+  3. **Blindagem e Resiliência no Emulador (`src/lib/git-terminal-emulator.ts`):**
+     - **Sanitização de Redirecionamentos:** Remoção automática e segura de sufixos `2>/dev/null`, `2>&1`, `1>/dev/null` fora de strings antes da execução.
+     - **Suporte a Stdin em `head`, `tail` e `cat`:** Permite que pipes (`... | head -60` ou `... | head -n 10`) processem a entrada de `stdin` sem exigir caminho de arquivo, incluindo suporte a flags numéricas `-N` e `-0`.
+     - **Bloqueio Instrutivo com Fail-Fast:** Operadores encadeados do Bash (`||`, `&&`, `;`) fora de aspas são interceptados com `exit 1` e mensagem pedagógica orientando a IA a usar as ferramentas nativas.
+  4. **Testes Unitários TDD (`src/lib/git-terminal-emulator.test.ts`):**
+     - Testes automatizados cobrindo pipes com `stdin` em `head` e `tail` (com `-n N`, `-N` e `-n 0`), sanitização de `2>/dev/null`/`2>&1`, bloqueio de operadores encadeados e tolerância a operadores dentro de aspas.
+- **Evidências de Verificação:**
+  - `npm test`: **240/240 testes passando** (47 suítes, 100% verde).
+  - `npx tsc -p tsconfig.app.json --noEmit`: **0 erros de compilação**.
+  - `npm run build`: Bundle Vite e Cloudflare Pages Functions Worker (`dist/_worker.js`, 238.7 kB) gerados com sucesso.
+  - `python -m graphify update .`: Grafo de conhecimento atualizado (15.086 nós, 17.371 arestas, 1.025 comunidades).
+  - Code Review formal: **Ready to Merge: YES** (0 issues críticos ou importantes).
+

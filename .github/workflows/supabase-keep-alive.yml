@@ -1,0 +1,30 @@
+name: Supabase Keep-Alive (Anti-Pausa)
+
+on:
+  schedule:
+    # Executa a cada 3 dias às 05:00 UTC (garante que nunca atinja os 7 dias de inatividade)
+    - cron: '0 5 */3 * *'
+  workflow_dispatch: # Permite disparo manual com 1 clique no GitHub Actions
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping de Atividade no Supabase
+        run: |
+          URL="https://bbknyzepwnzxkusdooxd.supabase.co/rest/v1/synap_conversations?select=id&limit=1"
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          if [ -z "$KEY" ]; then
+            KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJia255emVwd256eGt1c2Rvb3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NDU0OTQsImV4cCI6MjEwODQyMTQ5NH0.1OJB4jkMjKfxoquIywBNikrd1-IYqGm-muR5yzOj8zw"
+          fi
+          
+          echo "Disparando requisição de atividade para o Supabase..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -H "apikey: $KEY" "$URL" || true)
+          HTTP_STATUS=$(echo "$RESPONSE" | tr -d '\r' | grep 'HTTP_STATUS:' | cut -d':' -f2)
+          echo "Resposta HTTP: $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "206" ] || [ "$HTTP_STATUS" = "204" ] || [ "$HTTP_STATUS" = "201" ]; then
+            echo "✅ Supabase ativo com sucesso! O contador de 7 dias foi resetado."
+          else
+            echo "ℹ️ Chamada efetuada (Status $HTTP_STATUS). Se o projeto estiver pausado, despause no painel do Supabase."
+          fi

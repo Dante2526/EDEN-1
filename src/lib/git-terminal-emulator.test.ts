@@ -151,3 +151,61 @@ test('Comando find - busca de arquivos por padrão -name em /tmp e alterações 
   assert.equal(findRes.exitCode, 0);
   assert.ok(findRes.stdout.includes('src/components/chat-header.tsx'));
 });
+
+test('Pipe Unix: head e tail consumindo entrada via stdin (incluindo flags -N e -n N)', async () => {
+  const multiline = 'linha1\nlinha2\nlinha3\nlinha4\nlinha5';
+
+  // head -n 2 via stdin
+  const headRes1 = await executeTerminalCommand(`echo "${multiline}" | head -n 2`, createMockContext());
+  assert.equal(headRes1.exitCode, 0);
+  assert.equal(headRes1.stdout, 'linha1\nlinha2');
+
+  // head -3 via stdin (sintaxe comum do Linux: head -60)
+  const headRes2 = await executeTerminalCommand(`echo "${multiline}" | head -3`, createMockContext());
+  assert.equal(headRes2.exitCode, 0);
+  assert.equal(headRes2.stdout, 'linha1\nlinha2\nlinha3');
+
+  // tail -2 via stdin
+  const tailRes = await executeTerminalCommand(`echo "${multiline}" | tail -2`, createMockContext());
+  assert.equal(tailRes.exitCode, 0);
+  assert.equal(tailRes.stdout, 'linha4\nlinha5');
+});
+
+test('Sanitização de redirecionamentos bash: 2>/dev/null e 2>&1', async () => {
+  clearVirtualTmpFiles();
+  setVirtualTmpFile('/tmp/teste.txt', 'conteúdo seguro');
+
+  // cat com 2>/dev/null anexado
+  const res1 = await executeTerminalCommand('cat /tmp/teste.txt 2>/dev/null', createMockContext());
+  assert.equal(res1.exitCode, 0);
+  assert.equal(res1.stdout, 'conteúdo seguro');
+
+  // echo com 2>&1
+  const res2 = await executeTerminalCommand('echo "olá mundo" 2>&1', createMockContext());
+  assert.equal(res2.exitCode, 0);
+  assert.equal(res2.stdout, 'olá mundo');
+});
+
+test('Detecção de operadores encadeados do Bash (||, &&, ;) com aviso instrutivo de ambiente Web', async () => {
+  const chainedRes = await executeTerminalCommand(
+    'cd /workspace 2>/dev/null || cd . ; pwd',
+    createMockContext()
+  );
+  assert.equal(chainedRes.exitCode, 1);
+  assert.ok(chainedRes.stderr.includes('O Éden executa em ambiente Web/Navegador'));
+  assert.ok(chainedRes.stderr.includes('search_code'));
+
+  // Operadores dentro de aspas NÃO devem ser bloqueados
+  const quotedRes = await executeTerminalCommand('echo "teste && auth; login"', createMockContext());
+  assert.equal(quotedRes.exitCode, 0);
+  assert.equal(quotedRes.stdout, 'teste && auth; login');
+
+  // head e tail com -n 0 devem retornar string vazia
+  const zeroHead = await executeTerminalCommand('echo "linha1\nlinha2" | head -n 0', createMockContext());
+  assert.equal(zeroHead.exitCode, 0);
+  assert.equal(zeroHead.stdout, '');
+
+  const zeroTail = await executeTerminalCommand('echo "linha1\nlinha2" | tail -n 0', createMockContext());
+  assert.equal(zeroTail.exitCode, 0);
+  assert.equal(zeroTail.stdout, '');
+});

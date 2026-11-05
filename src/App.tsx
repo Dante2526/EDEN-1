@@ -26,6 +26,8 @@ import {
 import {
   loadConversations,
   saveConversations,
+  onCloudConversationsSynced,
+  deleteConversationFromCloud,
   loadSettings,
   saveSettings,
   clearAllConversations,
@@ -36,6 +38,7 @@ import {
   saveMcpServers,
   loadKnowledgeFacts,
   saveKnowledgeFacts,
+  fetchUserStateFromCloud,
 } from './lib/storage';
 import { formatKnowledgePrompt, createKnowledgeFact } from './lib/knowledge-base';
 import {
@@ -479,15 +482,18 @@ const TERMINAL_TOOL = {
   function: {
     name: 'run_terminal_command',
     description:
-      'Executa comandos no Terminal do Éden com utilitários reais integrados:\n' +
-      '1) Rede e HTTP: curl (com suporte a -I, -H, -X, requisições HTTP reais) e playwright <url> (renderização headless).\n' +
-      '2) Multimídia e Streams: ffprobe (inspeção de streams, codecs, duração e integridade) e ffmpeg (decodificação de frames na GPU e transcode).\n' +
-      '3) Git e Unix: git (status, log, diff, commit, branch, checkout), ls, cat, pwd, grep, echo, clear.\n' +
-      'Use SEMPRE que precisar inspecionar requisições com curl, testar streams com ffprobe ou rodar comandos.',
+      'Executa comandos no Terminal Web do Éden (ambiente client-side do navegador, NÃO é um Linux/Docker):\n' +
+      '1) Utilitários integrados: curl (com suporte a -I, -H, -X, requisições HTTP reais), playwright <url> (renderização headless), ffprobe e ffmpeg (decodificação de frames na GPU e transcode).\n' +
+      '2) Git e Arquivos Virtuais: git (status, log, diff, commit, branch, checkout), ls, cat, pwd, echo, clear.\n' +
+      '3) ATENÇÃO: NÃO é um shell Linux. Proibido usar operadores bash (||, &&, ;, 2>/dev/null) ou diretórios Linux (/workspace). Para ler, pesquisar ou editar arquivos no repositório, NUNCA use o terminal: use SEMPRE as ferramentas dedicadas search_code, read_file, patch_file e edit_file.',
     parameters: {
       type: 'object',
       properties: {
-        command: { type: 'string', description: 'Comando do shell/bash a ser executado' },
+        command: {
+          type: 'string',
+          description:
+            'Comando individual emulado (ex: git status, git log, curl -I https://..., ffprobe <url>). Não suporta encadeamentos bash (||, ;, &&, 2>/dev/null). Para ler código do repositório, use read_file ou search_code.',
+        },
       },
       required: ['command'],
     },
@@ -1898,6 +1904,54 @@ function AppContent() {
     loadKnowledgeFacts().then((loadedFacts) => {
       setKnowledgeFacts(loadedFacts);
     });
+
+    // Sincroniza Memória da IA, Configurações, Skills e MCP do Supabase
+    fetchUserStateFromCloud().then((cloudState) => {
+      if (!cloudState) return;
+      if (cloudState.settings && Object.keys(cloudState.settings).length > 0) {
+        setSettings((prev) => ({ ...prev, ...cloudState.settings }));
+      }
+      if (Array.isArray(cloudState.skills) && cloudState.skills.length > 0) {
+        setSkills(cloudState.skills);
+      }
+      if (Array.isArray(cloudState.mcpServers) && cloudState.mcpServers.length > 0) {
+        setMcpServers(cloudState.mcpServers);
+      }
+      if (Array.isArray(cloudState.knowledgeFacts) && cloudState.knowledgeFacts.length > 0) {
+        setKnowledgeFacts(cloudState.knowledgeFacts);
+      }
+    });
+
+    const unsubscribeCloud = onCloudConversationsSynced((cloudConvs) => {
+      setConversations((prev) => {
+        const map = new Map<string, Conversation>();
+        for (const c of prev) map.set(c.id, c);
+        let changed = false;
+        for (const c of cloudConvs) {
+          const existing = map.get(c.id);
+          if (!existing || c.updatedAt > existing.updatedAt) {
+            map.set(c.id, c);
+            changed = true;
+          }
+        }
+        if (!changed) return prev;
+        const merged = Array.from(map.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+        if (prev.length === 0 && merged.length > 0) {
+          const first = merged[0];
+          setActiveId(first.id);
+          if (first.model) setSelectedModel(first.model as ModelId);
+          if (first.reasoningEffort) setReasoningEffort(first.reasoningEffort);
+          if (first.isPlanMode !== undefined) setIsPlanMode(first.isPlanMode);
+          if (first.isWebSearchMode !== undefined) setIsWebSearchMode(first.isWebSearchMode);
+          if (first.activeRepo) setActiveRepo(first.activeRepo);
+        }
+        return merged;
+      });
+    });
+
+    return () => {
+      unsubscribeCloud();
+    };
   }, []);
 
   // Persist conversations
@@ -2368,6 +2422,7 @@ function AppContent() {
 
   const handleDeleteConversation = useCallback((id: string) => {
     setConversations((prev) => prev.filter((c) => c.id !== id));
+    deleteConversationFromCloud(id);
     if (activeId === id) {
       const remaining = conversations.filter((c) => c.id !== id);
       if (remaining.length > 0) {
@@ -4286,6 +4341,9 @@ function AppContent() {
             graphRagSummary
           : `Você tem acesso às ferramentas de código: read_file, list_files, search_code, query_code_graph, query_architecture_graph, patch_file, edit_file e batch_edit_files APENAS para o repositório "${chatActiveRepo.fullName}".\n` +
             `Você NÃO tem permissão nem acesso a nenhum outro repositório do usuário. Cada conversa possui isolamento estrito de repositório.\n` +
+            `AMBIENTE WEB DO ÉDEN (NÃO É LINUX): Você NÃO está em um container Linux, VPS ou servidor com terminal bash. Não existem caminhos fictícios como "/workspace". ` +
+            `É TERMINANTEMENTE PROIBIDO usar a ferramenta \`run_terminal_command\` com comandos de shell/bash (ex: \`cd /workspace\`, \`grep ... | head\`, encadeamentos com \`;\` ou \`||\`, ou redirecionamentos \`2>/dev/null\`) para inspecionar ou buscar código no repositório! ` +
+            `Para buscar código ou inspecionar arquivos no repositório, use OBRIGATORIAMENTE as ferramentas dedicadas \`search_code\`, \`read_file\` (que suporta start_line/end_line) e \`list_files\`.\n` +
             `VELOCIDADE MÁXIMA DE IDE (EXECUÇÃO DIRETA): O mapa de arquivos e dependências do Grafo de Conhecimento já está injetado abaixo no seu contexto! Para alterações pontuais (ex: mover um botão de lugar, trocar texto, ajustar classe CSS), NÃO gaste rodadas extras chamando query_code_graph ou list_files se o arquivo já estiver visível — chame \`read_file\` e em seguida \`patch_file\` imediatamente!\n` +
             `USE query_code_graph APENAS SE NECESSÁRIO: O grafo de arquitetura já está extraído em memória. Consulte \`query_code_graph\` apenas para refatorações multi-arquivo ou quando não souber qual arquivo importa um módulo; para edições diretas de UI/botões/textos, vá direto ao \`read_file\` e \`patch_file\`.\n` +
             `IMPORTANTE SOBRE O GRAPHIFY: No ambiente web do Éden, o grafo de conhecimento JÁ ESTÁ EXTRAÍDO E CARREGADO EM MEMÓRIA automaticamente. NUNCA tente rodar comandos de terminal como "graphify extract" ou "graphify update", e NUNCA escreva para o usuário que vai extrair o grafo em segundo plano — basta chamar diretamente a ferramenta query_code_graph.\n` +
@@ -4337,7 +4395,7 @@ function AppContent() {
         'Se você precisar inspecionar, listar arquivos, ler código, alterar código, rodar comando no terminal, pesquisar na web ou rodar script, EMITA A TOOL_CALL IMEDIATAMENTE NA PRIMEIRA RESPOSTA.\n' +
         'É ESTRITAMENTE PROIBIDO responder apenas prometendo ou anunciando que vai agir (ex: "Vou criar o arquivo...", "Vou listar os arquivos...", "Vou localizar...", "Primeiro vou...", "Deixe-me verificar...", "Preciso conferir o config:"). Emita a chamada de ferramenta na mesma resposta!\n' +
         'Regras estritas para ferramentas:\n' +
-        '1. Terminal do Éden (run_terminal_command): Você tem acesso à ferramenta `run_terminal_command` com utilitários reais integrados: `curl` (inspeção de cabeçalhos e requests HTTP), `ffprobe` e `ffmpeg` (inspeção de streams, codecs, duração e decodificação real na GPU/WASM), `playwright <url>` (renderização headless de URLs), além de `git` e comandos Unix (`ls`, `cat`, `grep`, `pwd`, `echo`). Use `run_terminal_command` sempre que o usuário pedir para inspecionar requisições, rodar curl, decodificar vídeo/áudio ou executar operações.\n' +
+        '1. Terminal do Éden (run_terminal_command): O Éden roda em ambiente Web/Navegador (NÃO é um Linux nem container Docker). A ferramenta `run_terminal_command` é um emulador client-side com utilitários específicos integrados: `curl` (inspeção de cabeçalhos e requests HTTP), `ffprobe` e `ffmpeg` (inspeção e decodificação real na GPU/WASM), `playwright <url>` (renderização headless de URLs) e `git` (status, log, diff, commit). PROIBIDO tentar comandos de shell Linux com `cd /workspace`, `2>/dev/null`, `;` ou `||`. Para buscar termos ou ler código no repositório, NUNCA use o terminal: use SEMPRE as ferramentas nativas `search_code`, `read_file` e `list_files`!\n' +
         '2. Navegação e Busca Web: Use `web_search` para encontrar fontes e links na internet. Use `fetch_url` para acessar e ler o conteúdo completo de artigos, tutoriais e documentações (suporta `render_js: true` para SPAs).\n' +
         '3. Execução de Python Real (run_python): Você tem a ferramenta `run_python` para executar código Python 3 real no navegador via WebAssembly (Pyodide). Ela possui ACESSO REAL À INTERNET via `urllib.request.urlopen` (com suporte a headers customizados) e instala pacotes automaticamente sob demanda (`bs4`/`BeautifulSoup`, `lxml`, `numpy`, `pandas`). Use para web scraping avançado, regex em HTML, cálculos matemáticos exatos e análise de dados.\n' +
         '4. Geração de Arquivos e Documentos: Você tem a ferramenta `generate_document` para compilar e disponibilizar arquivos reais para download nos formatos PDF, Excel (.xlsx), Word (.docx) ou PowerPoint (.pptx). Use-a sempre que o usuário pedir planilhas, relatórios em PDF, contratos em Word ou apresentações em slides.\n' +

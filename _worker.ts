@@ -14,6 +14,8 @@ import transcribeHandler from './api/transcribe';
 import deploymentsHandler from './api/deployments';
 import browserHandler from './api/browser';
 import dbProjectsHandler from './api/db-projects';
+import dbConversationsHandler from './api/db-conversations';
+import dbStateHandler from './api/db-state';
 import modelsHealthHandler from './api/models-health';
 import vlmAnalyzeHandler from './api/vlm-analyze';
 
@@ -67,6 +69,12 @@ export default {
       }
       if (path === '/api/db-projects' || path === '/api/db-projects/') {
         return await dbProjectsHandler(request, env);
+      }
+      if (path === '/api/db-conversations' || path === '/api/db-conversations/') {
+        return await dbConversationsHandler(request, env);
+      }
+      if (path === '/api/db-state' || path === '/api/db-state/') {
+        return await dbStateHandler(request, env);
       }
       if (path === '/api/models-health' || path === '/api/models-health/') {
         return await modelsHealthHandler(request, env);

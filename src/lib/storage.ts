@@ -261,10 +261,127 @@ export const DEFAULT_SETTINGS: AppSettings = {
   speechRate: 1.0,
 };
 
+function getApiHeaders(): Record<string, string> {
+  const secret =
+    typeof import.meta !== 'undefined' && (import.meta as any).env
+      ? (import.meta as any).env.VITE_API_SECRET || ''
+      : '';
+  return {
+    'Content-Type': 'application/json',
+    'x-api-key': secret,
+  };
+}
+
+let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let isSyncing = false;
+let pendingSyncPayload: Conversation[] | null = null;
+const cloudSyncListeners = new Set<(conversations: Conversation[]) => void>();
+
+export function onCloudConversationsSynced(callback: (conversations: Conversation[]) => void): () => void {
+  cloudSyncListeners.add(callback);
+  return () => cloudSyncListeners.delete(callback);
+}
+
+export async function syncConversationsWithCloud(localConvs: Conversation[]): Promise<Conversation[]> {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return localConvs;
+
+  // Se já há um sync ativo em andamento, enfileira o payload mais recente e aguarda
+  if (isSyncing) {
+    pendingSyncPayload = localConvs;
+    return localConvs;
+  }
+
+  isSyncing = true;
+  try {
+    const res = await fetch('/api/db-conversations?action=batch_sync', {
+      method: 'POST',
+      headers: getApiHeaders(),
+      body: JSON.stringify({ conversations: localConvs }),
+    });
+
+    if (!res.ok) return localConvs;
+    const data = await res.json();
+
+    if (data?.configured && data?.ok && Array.isArray(data?.conversations)) {
+      const cloudConvs: Conversation[] = data.conversations;
+
+      // Monta índice local atualizado do IndexedDB para prevenir race conditions
+      const currentStored = (await get<Conversation[]>(CONVERSATIONS_KEY)) || localConvs;
+      const map = new Map<string, Conversation>();
+      for (const c of currentStored) {
+        map.set(c.id, c);
+      }
+
+      let hasNewOrUpdated = false;
+      for (const c of cloudConvs) {
+        const local = map.get(c.id);
+        if (!local) {
+          map.set(c.id, c);
+          hasNewOrUpdated = true;
+        } else if (c.updatedAt > local.updatedAt) {
+          map.set(c.id, c);
+          hasNewOrUpdated = true;
+        }
+      }
+
+      if (hasNewOrUpdated) {
+        const merged = Array.from(map.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+        await set(CONVERSATIONS_KEY, merged);
+        cloudSyncListeners.forEach((fn) => {
+          try {
+            fn(merged);
+          } catch {}
+        });
+        return merged;
+      }
+    }
+  } catch (err) {
+    console.warn('[Storage] Falha ao sincronizar conversas com o Supabase:', err);
+  } finally {
+    isSyncing = false;
+    // Se novas alterações acumularam enquanto sincronizava, despacha a fila pendente
+    if (pendingSyncPayload) {
+      const nextPayload = pendingSyncPayload;
+      pendingSyncPayload = null;
+      syncConversationsWithCloud(nextPayload).catch(() => {});
+    }
+  }
+
+  return localConvs;
+}
+
+export async function deleteConversationFromCloud(id: string): Promise<void> {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined' || !id) return;
+  try {
+    await fetch(`/api/db-conversations?action=delete&id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getApiHeaders(),
+    });
+  } catch (err) {
+    console.warn('[Storage] Erro ao deletar conversa do Supabase:', err);
+  }
+}
+
+export async function clearAllConversationsFromCloud(): Promise<void> {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return;
+  try {
+    await fetch('/api/db-conversations?action=clear_all', {
+      method: 'POST',
+      headers: getApiHeaders(),
+    });
+  } catch (err) {
+    console.warn('[Storage] Erro ao limpar conversas do Supabase:', err);
+  }
+}
+
 export async function loadConversations(): Promise<Conversation[]> {
   try {
-    const data = await get<Conversation[]>(CONVERSATIONS_KEY);
-    return data || [];
+    const local = (await get<Conversation[]>(CONVERSATIONS_KEY)) || [];
+    if (typeof window !== 'undefined') {
+      // Dispara sync em background sem bloquear o retorno inicial instantâneo
+      syncConversationsWithCloud(local).catch(() => {});
+    }
+    return local;
   } catch (error) {
     console.error('Failed to load conversations from IndexedDB:', error);
     return [];
@@ -274,6 +391,13 @@ export async function loadConversations(): Promise<Conversation[]> {
 export async function saveConversations(conversations: Conversation[]): Promise<void> {
   try {
     await set(CONVERSATIONS_KEY, conversations);
+    if (typeof window !== 'undefined' && conversations.length > 0) {
+      if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        // Envia todas as conversas íntegras com debounce de 2.5s
+        syncConversationsWithCloud(conversations).catch(() => {});
+      }, 2500);
+    }
   } catch (error) {
     console.error('Failed to save conversations to IndexedDB:', error);
   }
@@ -282,9 +406,94 @@ export async function saveConversations(conversations: Conversation[]): Promise<
 export async function clearAllConversations(): Promise<void> {
   try {
     await clear();
+    clearAllConversationsFromCloud().catch(() => {});
   } catch (error) {
     console.error('Failed to clear conversations:', error);
   }
+}
+
+
+// ============================================================================
+// Sincronização Unificada de Estado do Usuário no Supabase (/api/db-state)
+// (Configurações, Memória da IA, Skills Customizadas, Servidores MCP)
+// ============================================================================
+let userStateDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let isStateSyncing = false;
+let pendingStatePatch: Record<string, any> = {};
+
+export interface CloudUserState {
+  settings?: AppSettings;
+  skills?: Skill[];
+  mcpServers?: McpServer[];
+  knowledgeFacts?: KnowledgeFact[];
+  updatedAt?: number;
+}
+
+const cloudStateListeners = new Set<(state: CloudUserState) => void>();
+
+export function onCloudStateSynced(callback: (state: CloudUserState) => void): () => void {
+  cloudStateListeners.add(callback);
+  return () => cloudStateListeners.delete(callback);
+}
+
+export async function fetchUserStateFromCloud(): Promise<CloudUserState | null> {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return null;
+  try {
+    const res = await fetch('/api/db-state?action=get', {
+      method: 'GET',
+      headers: getApiHeaders(),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data?.configured && data?.ok && data?.state) {
+      return data.state as CloudUserState;
+    }
+  } catch (err) {
+    console.warn('[Storage] Falha ao buscar estado do Supabase:', err);
+  }
+  return null;
+}
+
+export async function syncUserStateWithCloud(patch: {
+  settings?: AppSettings;
+  skills?: Skill[];
+  mcpServers?: McpServer[];
+  knowledgeFacts?: KnowledgeFact[];
+}): Promise<void> {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return;
+
+  pendingStatePatch = { ...pendingStatePatch, ...patch };
+
+  if (userStateDebounceTimer) clearTimeout(userStateDebounceTimer);
+  userStateDebounceTimer = setTimeout(async () => {
+    if (isStateSyncing) return;
+    isStateSyncing = true;
+    const payload = { ...pendingStatePatch, updatedAt: Date.now() };
+    pendingStatePatch = {};
+
+    try {
+      const res = await fetch('/api/db-state?action=upsert', {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.configured && data?.ok && data?.state) {
+          cloudStateListeners.forEach((fn) => {
+            try { fn(data.state); } catch {}
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[Storage] Falha ao enviar estado para o Supabase:', err);
+    } finally {
+      isStateSyncing = false;
+      if (Object.keys(pendingStatePatch).length > 0) {
+        syncUserStateWithCloud({});
+      }
+    }
+  }, 2000);
 }
 
 export async function loadStudioSessions(): Promise<StudioSession[]> {
