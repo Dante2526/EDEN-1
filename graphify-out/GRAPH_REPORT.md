@@ -1,16 +1,16 @@
 # Graph Report - Synap  (2026-11-05)
 
 ## Corpus Check
-- 1247 files · ~1,840,921 words
+- 1249 files · ~1,844,666 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 16689 nodes · 18990 edges · 1182 communities (1053 shown, 129 thin omitted)
+- 16699 nodes · 19013 edges · 1183 communities (1054 shown, 129 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 128 edges (avg confidence: 0.63)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `363cf592`
+- Built from commit: `1ac9a780`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1161,9 +1161,10 @@
 - task-brief
 - find-polluter.sh
 - test-academic.md
+- pwa-install-button.tsx
 
 ## God Nodes (most connected - your core abstractions)
-1. `Walkthrough: Revisão e Hardening (Arquitetura e Infraestrutura)` - 153 edges
+1. `Walkthrough: Revisão e Hardening (Arquitetura e Infraestrutura)` - 154 edges
 2. `AppContent()` - 105 edges
 3. `checkAuthAndRateLimit()` - 41 edges
 4. `main()` - 39 edges
@@ -1177,23 +1178,23 @@
 ## Surprising Connections (you probably didn't know these)
 - `ConversationIndexItem` --references--> `ReasoningEffort`  [EXTRACTED]
   api/db-conversations.ts → src/lib/types.ts
+- `ChatImage()` --references--> `react`  [EXTRACTED]
+  src/components/chat-message.tsx → package.json
 - `AppContent()` --indirect_call--> `query()`  [INFERRED]
   src/App.tsx → skills/video-generation/scripts/video.ts
 - `handler()` --calls--> `getEnv()`  [EXTRACTED]
   api/browser.ts → lib/server/env.ts
 - `handler()` --calls--> `checkAuthAndRateLimit()`  [EXTRACTED]
   api/browser.ts → lib/server/_security.ts
-- `handler()` --calls--> `getEnv()`  [EXTRACTED]
-  api/chat.ts → lib/server/env.ts
 
 ## Import Cycles
 - 1-file cycle: `skills/get-fortune-analysis/lunar_python.py -> skills/get-fortune-analysis/lunar_python.py`
 
-## Communities (1182 total, 129 thin omitted)
+## Communities (1183 total, 129 thin omitted)
 
 ### Community 0 - "_security.ts"
-Cohesion: 0.08
-Nodes (46): config, handler(), config, getSupabaseCredentials(), handler(), rowToIndexItem(), rowToSynapProject(), SupabaseRepoRow (+38 more)
+Cohesion: 0.09
+Nodes (45): config, handler(), config, ConversationIndexItem, conversationToRow(), getSupabaseCredentials(), handler(), rowToConversation() (+37 more)
 
 ### Community 1 - "aminer_client.py"
 Cohesion: 0.07
@@ -1201,7 +1202,7 @@ Nodes (80): build_parser(), get_cost_summary(), main(), org_detail(), org_disamb
 
 ### Community 2 - "App.tsx"
 Cohesion: 0.03
-Nodes (119): ALL_CHAT_TOOLS, AppContent(), BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL (+111 more)
+Nodes (114): ALL_CHAT_TOOLS, AppContent(), BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL (+106 more)
 
 ### Community 3 - "QuizMasteryService"
 Cohesion: 0.11
@@ -1221,7 +1222,7 @@ Nodes (57): check_conversion(), check_docx(), check_pdf(), check_run_hint_style(
 
 ### Community 7 - "github.ts"
 Cohesion: 0.05
-Nodes (68): ChatHeader, ChatHeaderProps, CreateRepoModal(), CreateRepoModalProps, FileExplorer(), FileExplorerProps, RepoList(), RepoListProps (+60 more)
+Nodes (85): react, react, ChatSidebarProps, ProjectsPanel, SwipeableConversationItem(), DarkModeToggle(), DarkModeToggleProps, ExtensionsPanel() (+77 more)
 
 ### Community 8 - "design_system.py"
 Cohesion: 0.06
@@ -1276,8 +1277,8 @@ Cohesion: 0.09
 Nodes (27): HTMLParser, _best_generic(), check_html(), check_pdf(), check_tex(), _contrast_ratio(), _extract_color(), _has_generic() (+19 more)
 
 ### Community 21 - "graphify-engine.ts"
-Cohesion: 0.12
-Nodes (26): ColorPalette, getNodePalette(), GraphModal(), GraphModalProps, Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode() (+18 more)
+Cohesion: 0.08
+Nodes (35): ColorPalette, getNodePalette(), GraphModal(), GraphModalProps, Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode() (+27 more)
 
 ### Community 22 - "run_loop"
 Cohesion: 0.11
@@ -1304,8 +1305,8 @@ Cohesion: 0.07
 Nodes (27): llm, podcast, tts, z-ai, dependencies, z-ai-web-dev-sdk, description, devDependencies (+19 more)
 
 ### Community 29 - "run_pipeline"
-Cohesion: 0.06
-Nodes (28): react, react, ChatImage(), ChatSidebar, ChatSidebarProps, ProjectsPanel, SwipeableConversationItem(), ClaudeLogoProps (+20 more)
+Cohesion: 0.21
+Nodes (5): ErrorBoundaryProps, ErrorBoundaryState, GlobalErrorBoundary, isDynamicChunkError(), handleChunkError()
 
 ### Community 30 - "compilerOptions"
 Cohesion: 0.07
@@ -1348,8 +1349,8 @@ Cohesion: 0.06
 Nodes (34): align_header(), apply_chart_colors(), apply_pie_colors(), border_header(), copy_style(), create_bar_chart(), create_line_chart(), create_pie_chart() (+26 more)
 
 ### Community 40 - "deployment-service.ts"
-Cohesion: 0.18
-Nodes (15): DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal(), DeploymentLogModalProps, DeploymentStatusBadge(), DeploymentStatusBadgeProps, DeploymentInfo, DeploymentLogResponse (+7 more)
+Cohesion: 0.16
+Nodes (17): ChatHeader, ChatHeaderProps, DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal(), DeploymentLogModalProps, DeploymentStatusBadge(), DeploymentStatusBadgeProps (+9 more)
 
 ### Community 41 - "BaseSchemaValidator"
 Cohesion: 0.08
@@ -1388,8 +1389,8 @@ Cohesion: 0.18
 Nodes (15): main(), main(), build_extraction_prompt(), _parse_docx(), parse_file(), _parse_pdf(), _parse_ppt(), _parse_pptx() (+7 more)
 
 ### Community 50 - "settings-modal.tsx"
-Cohesion: 0.06
-Nodes (56): SupabaseConversationRow, CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatMessage, ChatMessageProps, CodeBlock(), CodeBlockProps, CompactionMarker() (+48 more)
+Cohesion: 0.10
+Nodes (33): CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatImage(), ChatMessage, ChatMessageProps, CodeBlock(), CodeBlockProps, OpenCutModal() (+25 more)
 
 ### Community 51 - "dependencies"
 Cohesion: 0.06
@@ -1421,7 +1422,7 @@ Nodes (7): Generate detailed word-level differences using git word diff., Valida
 
 ### Community 58 - "._validate_single_file_xsd"
 Cohesion: 0.01
-Nodes (146): 100. Inicialização e Mapeamento Completo com Graphify, 101. Upgrades de Elite dos Agentes Éden: `patch_file`, Memória Contínua e Superpoderes Multi-Agente, 102. Modo Plano Obrigatório (Hard-Gate de Escrita + Botão Aprovar e Executar Plano), 103. Auditoria Arquitetural e Correção de 5 Bugs Críticos e Médios, 104. Correção do Travamento Infinito em "Pensando…" e Auto-Continuação Inteligente, 105. Aceleração de Conexão e Redução de Time-To-First-Token (TTFT) com a NVIDIA NIM, 106. Higienização do Live Preview (Import Map e Exclusão de Testes/Linters), 107. Superpoderes de Scraping, `curl`, `ffprobe` e Ponte de Rede Python no Éden (+138 more)
+Nodes (147): 100. Inicialização e Mapeamento Completo com Graphify, 101. Upgrades de Elite dos Agentes Éden: `patch_file`, Memória Contínua e Superpoderes Multi-Agente, 102. Modo Plano Obrigatório (Hard-Gate de Escrita + Botão Aprovar e Executar Plano), 103. Auditoria Arquitetural e Correção de 5 Bugs Críticos e Médios, 104. Correção do Travamento Infinito em "Pensando…" e Auto-Continuação Inteligente, 105. Aceleração de Conexão e Redução de Time-To-First-Token (TTFT) com a NVIDIA NIM, 106. Higienização do Live Preview (Import Map e Exclusão de Testes/Linters), 107. Superpoderes de Scraping, `curl`, `ffprobe` e Ponte de Rede Python no Éden (+139 more)
 
 ### Community 59 - "migrate-theme.mjs"
 Cohesion: 0.20
@@ -1673,7 +1674,7 @@ Nodes (47): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typograph
 
 ### Community 124 - "vercel.json"
 Cohesion: 0.08
-Nodes (41): FileAttachmentPreviews(), FileAttachmentPreviewsProps, SettingsModal(), SettingsModalProps, removeGitHubPat(), setGitHubPat(), verifyGitHubPat(), CloudUserState (+33 more)
+Nodes (48): FileAttachmentPreviews(), FileAttachmentPreviewsProps, applyFilePatches(), countOccurrences(), EffectiveFileResolution, normalizePatchArgs(), PatchBlock, PatchResult (+40 more)
 
 ### Community 125 - "magazine-bg-webgl.js"
 Cohesion: 0.83
@@ -1736,8 +1737,8 @@ Cohesion: 0.05
 Nodes (43): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Layout Principles, 6. Depth & Elevation, 7. Do's and Don'ts, 8. Responsive Behavior (+35 more)
 
 ### Community 153 - "remote-gate.ts"
-Cohesion: 0.27
-Nodes (11): SpeakButton(), SpeakButtonProps, cachedVoices, cleanTextForSpeech(), fallbackToBrowserSpeech(), getBestPortugueseVoice(), NEURAL_VOICES, NeuralVoice (+3 more)
+Cohesion: 0.11
+Nodes (27): SwipeableConversationItemProps, ClaudeLogoProps, EdenBonsaiLogo(), EdenBonsaiLogoProps, SettingsModal(), SettingsModalProps, SpeakButton(), SpeakButtonProps (+19 more)
 
 ### Community 154 - "pptxgenjs"
 Cohesion: 0.05
@@ -2296,8 +2297,8 @@ Cohesion: 0.08
 Nodes (25): 100 Industry-Specific Reasoning Rules, Architecture & Contributing, Available Styles (67), Design System Command (Advanced), Example Prompts, Features, For Contributors, For Users (+17 more)
 
 ### Community 312 - "project-context.tsx"
-Cohesion: 0.14
-Nodes (29): ProjectsPanel(), TEMPLATES, generateProjectId(), ProjectContext, ProjectContextType, ProjectProvider(), TEMPLATE_STARTERS, useProjects() (+21 more)
+Cohesion: 0.13
+Nodes (34): ProjectsPanel(), TEMPLATES, normalizeRepoPath(), generateProjectId(), ProjectContext, ProjectContextType, ProjectProvider(), TEMPLATE_STARTERS (+26 more)
 
 ### Community 313 - "dot-matrix-xhs — Bayer 抖动黑白点阵封面"
 Cohesion: 0.08
@@ -4212,8 +4213,8 @@ Cohesion: 0.40
 Nodes (5): 2.1 Core Iron Rule: Content Must Fill the Page, 2.2 Anti-Top-Heavy, 2.3 Grid Area Allocation Iron Rule, 2.4 ★★★ Content-Proportional Row Allocation (Anti-Overlap Iron Rule), 2. Information Density & Page Fill
 
 ### Community 791 - "A0.3 - Z-Index Layer Management"
-Cohesion: 0.10
-Nodes (29): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), isLocalOrPrivateUrl(), safeFetchWithRedirects() (+21 more)
+Cohesion: 0.14
+Nodes (21): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), isLocalOrPrivateUrl(), safeFetchWithRedirects() (+13 more)
 
 ### Community 792 - "Template 01: HUD Data Terminal - Ultra-Thick Vertical Anchor Line"
 Cohesion: 0.40
@@ -4748,8 +4749,8 @@ Cohesion: 0.50
 Nodes (4): 139. Banco de Dados Supabase para Repositórios GitHub + Velocidade 0ms (Nível IDE) (2026-10-24), 1. Diagnóstico & Arquitetura (Supabase vs Firebase), 2. Arquivos Criados e Modificados, 3. Evidências de Verificação e Code Review
 
 ### Community 1018 - "opencut-proxy.ts"
-Cohesion: 0.13
-Nodes (29): downscaleImage(), ImageDeconstructModal(), ImageDeconstructModalProps, Phase, VlmAnalysis, VlmElement, COMMON_EMOJIS, FONTS (+21 more)
+Cohesion: 0.10
+Nodes (36): downscaleImage(), ImageDeconstructModal(), ImageDeconstructModalProps, Phase, VlmAnalysis, VlmElement, COMMON_EMOJIS, FONTS (+28 more)
 
 ### Community 1019 - "A0.3 - Z-Index Layer Management"
 Cohesion: 0.40
@@ -4984,12 +4985,12 @@ Cohesion: 0.18
 Nodes (11): Avoid assuming tools are installed, Create verifiable intermediate outputs, MCP tool references, Next steps, Package dependencies, Returns: "OK" or lists conflicts, Runtime environment, Technical notes (+3 more)
 
 ### Community 1077 - "context-compactor.ts"
-Cohesion: 0.36
-Nodes (9): SwipeableConversationItemProps, buildCompactionPrompt(), compactConversation(), estimateConversationTokens(), prepareMessagesForApi(), shouldCompact(), createMockMessage(), runTests() (+1 more)
+Cohesion: 0.25
+Nodes (12): SupabaseConversationRow, CompactionMarker(), CompactionMarkerProps, buildCompactionPrompt(), compactConversation(), estimateConversationTokens(), prepareMessagesForApi(), shouldCompact() (+4 more)
 
 ### Community 1078 - "mcp-client.ts"
-Cohesion: 0.44
-Nodes (9): buildMcpRpcRequest(), convertMcpToolsToOpenAi(), executeMcpToolCall(), McpRpcRequest, parseMcpResponsePayload(), parseMcpToolResponse(), runTests(), testMcpConnection() (+1 more)
+Cohesion: 0.28
+Nodes (7): CLIENT_HEADERS_TO_FORWARD, config, handler(), SERVER_HEADERS_TO_FORWARD, buildOpenCutInjectorScript(), OPENCUT_DO_NOT_TRANSLATE, OPENCUT_I18N_DICTIONARY
 
 ### Community 1079 - "test_vlm_race_logic.mjs"
 Cohesion: 0.27
@@ -5120,8 +5121,8 @@ Cohesion: 0.25
 Nodes (7): Bite-Sized Task Granularity, Execution Handoff, Overview, Plan Document Header, Remember, Task Structure, Writing Plans
 
 ### Community 1111 - "db-conversations.ts"
-Cohesion: 0.43
-Nodes (6): config, ConversationIndexItem, conversationToRow(), getSupabaseCredentials(), handler(), rowToConversation()
+Cohesion: 0.29
+Nodes (6): DownloaderPanel(), DownloadResult, HistoryItem, PickerItem, PLATFORM_ICONS, SUPPORTED_PLATFORMS
 
 ### Community 1112 - "stop-server.sh"
 Cohesion: 0.43
@@ -5259,25 +5260,29 @@ Nodes (4): File Organization, Self-Contained Skill, Skill with Heavy Reference, 
 Cohesion: 0.50
 Nodes (4): Pattern, Reference, Skill Types, Technique
 
+### Community 1182 - "pwa-install-button.tsx"
+Cohesion: 0.60
+Nodes (3): PWAInstallButton(), BeforeInstallPromptEvent, usePWAInstall()
+
 ## Knowledge Gaps
-- **10734 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+10729 more)
+- **10736 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+10731 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **129 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `dependencies` to `vite`, `package.json`, `thinking-orbs`, `@stackblitz/sdk`, `document-generator.ts`, `voice-button.tsx`, `cheerio`, `Éden - Arquitetura, Motores e Tipos`, `motion`, `Éden - Frontend, Componentes e Telas`, `Éden - Backend, Servidor e Rotas Edge`, `run_pipeline`, `cheerio`, `react-diff-viewer-continued`?**
+- **Why does `dependencies` connect `dependencies` to `vite`, `package.json`, `thinking-orbs`, `@stackblitz/sdk`, `github.ts`, `document-generator.ts`, `voice-button.tsx`, `cheerio`, `Éden - Arquitetura, Motores e Tipos`, `motion`, `Éden - Frontend, Componentes e Telas`, `Éden - Backend, Servidor e Rotas Edge`, `cheerio`, `react-diff-viewer-continued`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `react` connect `run_pipeline` to `App.tsx`, `dependencies`, `github.ts`?**
+- **Why does `react` connect `github.ts` to `App.tsx`, `dependencies`, `settings-modal.tsx`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `AppContent()` connect `App.tsx` to `github.ts`, `preview-html.ts`, `studio-panel.tsx`, `types.ts`, `graphify-engine.ts`, `A0.3 - Z-Index Layer Management`, `DeckStage`, `remote-gate.ts`, `run_pipeline`, `subagent-runner.ts`, `deployment-service.ts`, `settings-modal.tsx`, `context-compactor.ts`, `mcp-client.ts`, `project-context.tsx`, `document-generator.ts`, `db-projects.ts`, `opencut-proxy.ts`, `vercel.json`?**
+- **Why does `AppContent()` connect `App.tsx` to `subagent-runner.ts`, `project-context.tsx`, `github.ts`, `deployment-service.ts`, `document-generator.ts`, `preview-html.ts`, `studio-panel.tsx`, `types.ts`, `settings-modal.tsx`, `context-compactor.ts`, `db-projects.ts`, `graphify-engine.ts`, `DeckStage`, `remote-gate.ts`, `opencut-proxy.ts`, `vercel.json`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `AppContent()` (e.g. with `.prev()` and `query()`) actually correct?**
   _`AppContent()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 28 inferred relationships involving `main()` (e.g. with `org_detail()` and `org_disambiguate()`) actually correct?**
   _`main()` has 28 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `config`, `config`, `config` to the rest of the system?**
-  _10734 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _10736 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `_security.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.08243727598566308 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08852459016393442 - nodes in this community are weakly interconnected._

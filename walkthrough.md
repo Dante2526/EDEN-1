@@ -2855,3 +2855,35 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `npm run build`: Bundle Vite e Cloudflare Pages Functions Worker compilados com sucesso.
   - Grafo Graphify sincronizado (`python -m graphify update .`).
   - Code review formal: **Aprovado com rigor técnico**.
+
+
+## 151. Alinhamento Milimétrico e Pixel Snapping no Desconstrutor de Imagem (2026-11-05)
+
+- **Problema:** As caixas delimitadoras roxas geradas pela IA no Desconstrutor de Imagem não ficavam rentes ou certinhas em volta dos elementos (ícones, textos, formas, stickers), gerando caixas frouxas ou deslocadas (ex.: o ícone da câmera ficava com sobra vertical e a caixa de texto "Sem Imagem" cortava o topo ou caía para baixo).
+- **Causas Raízes Identificadas:**
+  1. **Aritmética Flutuante Imprecisa do VLM:** O modelo de visão (`nemotron-3.5-super-vl-120b-a12b`), operando sem raciocínio em rascunho (`thinking: false`), cometia erros de divisão e cálculo de centro (`x, y, width, height` em porcentagem 0-100), enquanto sua convenção nativa treinada é o grounding de caixas (`box_2d: [ymin, xmin, ymax, xmax]` na escala 0-1000).
+  2. **Ausência de Imantação Local de Pixels:** Não havia algoritmo no cliente para inspecionar os pixels reais do Canvas e imantar as bordas contra o contraste do fundo local.
+  3. **Interface Rígida sem Ajuste Manual:** Na tela de revisão, o usuário não conseguia redimensionar nem reposicionar as caixas antes de enviá-las ao editor Fabric.js.
+- **Soluções Implementadas em 3 Níveis:**
+  1. **Grounding Nativo e Blindagem Anti-Dupla-Normalização (`api/vlm-analyze.ts`):**
+     - Prompt do sistema atualizado para exigir `box_2d: [ymin, xmin, ymax, xmax]` (0 a 1000).
+     - Conversão determinística em `normalizeAnalysis` via `box2dToPercent` (`w = (xmax - xmin)/10`, `center_x = (xmin + xmax)/20`).
+     - Elementos convertidos via `box_2d` são isolados em `Set` para prevenir dupla divisão indevida por 10.
+     - Preservação da propriedade `box_2d` em `sanitizeAnalysis`.
+  2. **Motor de Pixel Snapping Inteligente com Suporte a Alpha (`src/lib/image-bbox-snapper.ts`):**
+     - Módulo com as funções `box2dToPercent()`, `snapBBoxToPixels()`, `snapAllElements()` e `computeBBoxResize()`.
+     - Amostra a cor média do fundo ao redor da janela expandida e mede a distância euclidiana de cor ($\Delta E \ge 26$).
+     - Tratamento especial para fundos transparentes (se a borda da janela tiver `alpha < 20`, qualquer pixel com `alpha >= 20` é considerado foreground imediato).
+     - Fallback defensivo que mantém a caixa original intacta caso não haja contraste suficiente.
+  3. **Ajuste Manual Interativo e Ergonomia Mobile-First (`src/components/image-deconstruct-modal.tsx`):**
+     - **Auto-Snap Imediato:** Ao receber a resposta da IA, executa automaticamente o snapping antes da tela de revisão ser exibida.
+     - **Manipulação Manual Fluida:** Permite selecionar elementos com clique/toque, arrastar a caixa inteira (`cursor-move`) e redimensionar via 8 alças (4 cantos + 4 bordas) com cálculo delta sem drift.
+     - **Área de Toque Mobile-First:** Cada alça possui área de toque invisível de `min-w-[44px] min-h-[44px]` com `touch-none` e dot visual de 10px.
+     - **Ações Rápidas:** Botões *"Auto-Imantar Caixas (Snap)"* no cabeçalho e *"Imantar caixa aos pixels"* (ícone `Wand2`) em cada linha da lista de camadas (com touch target de 36x36px).
+- **Evidências de Verificação:**
+  - `src/lib/image-bbox-snapper.test.ts`: **9/9 testes passando** (cobertura total de conversão, snap em canvas mockado, tolerância a ruído, fallbacks e redimensionamento).
+  - `npm test`: **249/249 testes passando** (49 suítes, 100% verde).
+  - `npx tsc -p tsconfig.app.json --noEmit`: **0 erros de tipagem**.
+  - `npm run build`: Bundle de produção gerado com sucesso em 5.16s e artefatos Cloudflare Pages copiados para `dist/`.
+  - Grafo Graphify atualizado: `16.699 nós, 19.013 arestas, 1.183 comunidades`.
+  - Code Review independente: **Aprovado (Ready to Merge: YES)**.

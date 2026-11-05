@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1793878036.8573864,
-    "ast_hash": "27c58d30ed61f110d45a08886f8478e9",
+    "mtime": 1793902549.0752547,
+    "ast_hash": "50b222b66ae3a7398b603ea2c042e2cf",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -6010,8 +6010,8 @@
     "semantic_hash": ""
   },
   "src/components/image-editor/image-editor-modal.tsx": {
-    "mtime": 1793901165.4877508,
-    "ast_hash": "52394b1df90dfc13097fa04ab61a478c",
+    "mtime": 1793902314.330545,
+    "ast_hash": "0eafa0dbe0142e08b4b7f46fec3a5e67",
     "semantic_hash": ""
   },
   "src/lib/github.test.ts": {
@@ -6090,8 +6090,8 @@
     "semantic_hash": ""
   },
   "api/vlm-analyze.ts": {
-    "mtime": 1793877423.3441284,
-    "ast_hash": "1e6287b0910635b734322e4ed92bfb05",
+    "mtime": 1793913299.9548824,
+    "ast_hash": "9d199a9bf9737ccbaa12921b1df978c1",
     "semantic_hash": ""
   },
   "scripts/gen_kaizen_payload.py": {
@@ -6320,8 +6320,8 @@
     "semantic_hash": ""
   },
   "src/components/image-deconstruct-modal.tsx": {
-    "mtime": 1793900937.784136,
-    "ast_hash": "111c30a3d2af935c0026a5b087a1fa6a",
+    "mtime": 1793915156.0756063,
+    "ast_hash": "83fec401f067a099004a563e9b6d638c",
     "semantic_hash": ""
   },
   "src/lib/opencut-i18n-dictionary.ts": {
@@ -7037,6 +7037,16 @@
   "skills/writing-skills/references/testing-skills-with-subagents.md": {
     "mtime": 1793875666.416394,
     "ast_hash": "120bf2a1ec6729d0f9ad73cc221821eb",
+    "semantic_hash": ""
+  },
+  "src/lib/image-bbox-snapper.test.ts": {
+    "mtime": 1793913436.5745947,
+    "ast_hash": "d6a1a2b6262ac662bb0a72057be00691",
+    "semantic_hash": ""
+  },
+  "src/lib/image-bbox-snapper.ts": {
+    "mtime": 1793913403.071349,
+    "ast_hash": "a5b2b9bb264612200639a12a72fd591c",
     "semantic_hash": ""
   }
 }

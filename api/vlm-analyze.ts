@@ -1,5 +1,6 @@
 import { Env, getEnv } from '../lib/server/env';
 import { checkAuthAndRateLimit } from '../lib/server/_security';
+import { box2dToPercent } from '../src/lib/image-bbox-snapper';
 
 export const config = {
   runtime: 'edge',
@@ -63,6 +64,7 @@ const SYSTEM_PROMPT = `Você é um analisador visual de imagens. Analise a image
     {
       "type": "shape | sticker | text | image",
       "name": "nome amigável em PT-BR (ex: 'Árvore', 'Sol', 'Botão', 'Título')",
+      "box_2d": [ymin, xmin, ymax, xmax],
       "x": 0-100,
       "y": 0-100,
       "width": 0-100,
@@ -88,7 +90,7 @@ REGRAS OBRIGATÓRIAS:
 4. y é a posição vertical do CENTRO do elemento em porcentagem (0 = topo, 50 = meio, 100 = base). NUNCA use 100 para todos.
 5. width é a largura do elemento em porcentagem da largura total da imagem. Um texto curto geralmente tem width ~10-20%; um objeto grande ~30-60%. NUNCA use 100 para tudo.
 6. height é a altura do elemento em porcentagem da altura total da imagem.
-7. EXEMPLO COM CÁLCULO: numa imagem de 851x353 pixels, um elemento cujo centro está no pixel (425, 176) — exatamente no meio — deve ter x = 50, y = 50. Um elemento no canto inferior direito tem x ≈ 85, y ≈ 92. NUNCA responda em pixels, nem numa escala de 0 a 1000 — SEMPRE porcentagem 0-100.
+7. PRECISÃO DE ENQUADRAMENTO (MUITO IMPORTANTE): Sempre inclua "box_2d": [ymin, xmin, ymax, xmax] com as coordenadas exatas da caixa delimitadora do elemento na escala padrão 0-1000 (onde 0 é o início e 1000 é o final de cada dimensão), abraçando milimetricamente o elemento. Preencha também x, y, width e height proporcionais em porcentagem 0-100.
 8. Para type=image, descreva o objeto complexo (ex: 'a green tree with brown trunk', 'a yellow sun with rays', 'a female character wearing a red dress').
 9. Para type=text, use o texto exato detectado na imagem.
 10. Para type=sticker, use o emoji mais próximo do elemento visual.
@@ -101,6 +103,7 @@ REGRAS OBRIGATÓRIAS:
 interface VlmElement {
   type: 'shape' | 'sticker' | 'text' | 'image';
   name: string;
+  box_2d?: [number, number, number, number];
   x: number;
   y: number;
   width: number;
@@ -268,8 +271,32 @@ function normalizeAnalysis(
       height: nums(e.height),
     }));
 
-  // --- detecta a convenção de x/y ---
-  const xyVals = els.flatMap((e) => [nums(e.x), nums(e.y)]).filter((v) => v > 0);
+  // 0. Grounding nativo: se o elemento contiver box_2d [ymin, xmin, ymax, xmax] (0-1000),
+  // calcula x, y, width e height exatos com precisão geométrica milimétrica
+  const convertedViaBox2d = new Set<number>();
+  els.forEach((e, idx) => {
+    if (Array.isArray(e.box_2d) && e.box_2d.length === 4) {
+      const [ymin, xmin, ymax, xmax] = e.box_2d.map(nums);
+      if (
+        ymin >= 0 && ymin <= 1000 &&
+        xmin >= 0 && xmin <= 1000 &&
+        ymax >= 0 && ymax <= 1000 &&
+        xmax >= 0 && xmax <= 1000 &&
+        (ymax > ymin && xmax > xmin)
+      ) {
+        const converted = box2dToPercent([ymin, xmin, ymax, xmax]);
+        e.x = converted.x;
+        e.y = converted.y;
+        e.width = converted.width;
+        e.height = converted.height;
+        convertedViaBox2d.add(idx);
+      }
+    }
+  });
+
+  // --- detecta a convenção de x/y (apenas nos elementos NÃO convertidos por box_2d para evitar dupla normalização) ---
+  const unconvertedEls = els.filter((_, idx) => !convertedViaBox2d.has(idx));
+  const xyVals = unconvertedEls.flatMap((e) => [nums(e.x), nums(e.y)]).filter((v) => v > 0);
   const maxXY = xyVals.length ? Math.max(...xyVals) : 0;
   const hasFraction = xyVals.some((v) => v % 1 !== 0);
 
@@ -284,7 +311,7 @@ function normalizeAnalysis(
     mode = 'unit';
   }
 
-  if (mode === 'percent') {
+  if (mode === 'percent' || unconvertedEls.length === 0) {
     return { analysis, debug: null };
   }
 
@@ -296,13 +323,14 @@ function normalizeAnalysis(
     if (mode === 'scale1000') return v / 10;
     return v * 100; // unit
   };
-  els.forEach((e) => {
+  els.forEach((e, idx) => {
+    if (convertedViaBox2d.has(idx)) return;
     e.x = conv(nums(e.x), false);
     e.y = conv(nums(e.y), true);
   });
 
   // --- width/height: mesma convenção, mas só converte se estourar 100 ---
-  const whVals = els.flatMap((e) => [nums(e.width), nums(e.height)]).filter((v) => v > 0);
+  const whVals = unconvertedEls.flatMap((e) => [nums(e.width), nums(e.height)]).filter((v) => v > 0);
   const maxWH = whVals.length ? Math.max(...whVals) : 0;
   const whHasFraction = whVals.some((v) => v % 1 !== 0);
 
@@ -315,7 +343,8 @@ function normalizeAnalysis(
       }
       return v * 100; // unit
     };
-    els.forEach((e) => {
+    els.forEach((e, idx) => {
+      if (convertedViaBox2d.has(idx)) return;
       e.width = convWh(nums(e.width), false);
       e.height = convWh(nums(e.height), true);
     });
@@ -501,6 +530,7 @@ function sanitizeAnalysis(analysis: VlmAnalysis) {
     .map((e) => ({
       type: e.type,
       name: String(e.name || 'Elemento').slice(0, 60),
+      box_2d: Array.isArray(e.box_2d) && e.box_2d.length === 4 ? e.box_2d : undefined,
       x: Math.max(0, Math.min(100, Number(e.x) || 50)),
       y: Math.max(0, Math.min(100, Number(e.y) || 50)),
       width: Math.max(1, Math.min(100, Number(e.width) || 20)),
