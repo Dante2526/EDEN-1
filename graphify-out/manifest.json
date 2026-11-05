@@ -5,8 +5,8 @@
     "semantic_hash": "3d4d49bc058571e3328ba2ba19d30c06"
   },
   "_worker.ts": {
-    "mtime": 1792864224.641047,
-    "ast_hash": "787f4c1f861f9e4f8181d8e854effd56",
+    "mtime": 1792890766.6638582,
+    "ast_hash": "110b882f578aefa298de335e410838c6",
     "semantic_hash": ""
   },
   "api/chat-test.ts": {
@@ -75,8 +75,8 @@
     "semantic_hash": "cb1c018e9f6ac60181099cb9aed8583f"
   },
   "package.json": {
-    "mtime": 1792867680.3965938,
-    "ast_hash": "0e088bddafeaaf0e65b25a11d9e866e4",
+    "mtime": 1792891132.1800702,
+    "ast_hash": "4b7d6d0e62df4c7f67fd89caea5dc00d",
     "semantic_hash": ""
   },
   "public/manifest.json": {
@@ -130,8 +130,8 @@
     "semantic_hash": "6759c4f9078319aaf1038a4b6af0f9ce"
   },
   "server.ts": {
-    "mtime": 1792864224.7299476,
-    "ast_hash": "7ea54adac9f0bca048967bcc0c2e522e",
+    "mtime": 1792890757.2472315,
+    "ast_hash": "25ac943ae861fa462545aa5927b5d0e2",
     "semantic_hash": ""
   },
   "skills/ASR/scripts/asr.ts": {
@@ -975,8 +975,8 @@
     "semantic_hash": "3347a6b00321253ff2ac15e640047e53"
   },
   "src/App.tsx": {
-    "mtime": 1792875750.4941638,
-    "ast_hash": "8b047a2852bb393ba830fd0f3fe489f3",
+    "mtime": 1792892112.3889194,
+    "ast_hash": "0a4d85b3c850bc7c30afa49fde7d5352",
     "semantic_hash": ""
   },
   "src/components/chat-header.tsx": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": "05fc5454d8770ed9133080ecc821c695"
   },
   "src/lib/git-terminal-emulator.ts": {
-    "mtime": 1792847653.0081162,
-    "ast_hash": "2d91d72a76f935a84c7df8fab7b82c4d",
+    "mtime": 1792892498.9175632,
+    "ast_hash": "87ad6d627967c6387cf924b783e8794a",
     "semantic_hash": ""
   },
   "src/lib/github-commit.ts": {
@@ -1375,8 +1375,8 @@
     "semantic_hash": "123089b80edf7590952dbee86c167693"
   },
   "src/lib/storage.ts": {
-    "mtime": 1792875239.1001437,
-    "ast_hash": "56781ad145dd0ed205fa5bd123db5eef",
+    "mtime": 1792890802.212096,
+    "ast_hash": "469b833286558592490b253052c437d2",
     "semantic_hash": ""
   },
   "src/lib/streaming-speech-queue.test.ts": {
@@ -5510,8 +5510,8 @@
     "semantic_hash": ""
   },
   "walkthrough.md": {
-    "mtime": 1792869233.6914632,
-    "ast_hash": "159ad932f65395fcc1658f98a26abcda",
+    "mtime": 1792891169.3597782,
+    "ast_hash": "8f50d81cfe30ed16d65b2f169d036046",
     "semantic_hash": ""
   },
   "skills/literature-survey/references/01-bibliography-expansion.md": {
@@ -5870,8 +5870,8 @@
     "semantic_hash": ""
   },
   "src/lib/git-terminal-emulator.test.ts": {
-    "mtime": 1792847653.0071287,
-    "ast_hash": "af5e09d0f8ddde28114db6d0bffae1fa",
+    "mtime": 1792892508.7082057,
+    "ast_hash": "29a9ddbe94ad24183453646c99a5bdfb",
     "semantic_hash": ""
   },
   "src/components/preview-devtools.tsx": {
@@ -6045,8 +6045,8 @@
     "semantic_hash": ""
   },
   "supabase/schema.sql": {
-    "mtime": 1792852249.1382184,
-    "ast_hash": "f40bb2b43d801d533ca6bf2bf67555fa",
+    "mtime": 1792890729.4408016,
+    "ast_hash": "fd73b9c2bd01adbb008039979f9ef248",
     "semantic_hash": ""
   },
   ".agents/rules/protect-flow-finance.md": {
@@ -6077,6 +6077,16 @@
   "src/lib/smart-model-router.ts": {
     "mtime": 1792867128.521617,
     "ast_hash": "7f59f5ea5a54d8d7d513b86337ae604e",
+    "semantic_hash": ""
+  },
+  "api/db-conversations.ts": {
+    "mtime": 1792888646.6518745,
+    "ast_hash": "7cad1cae05cc9066e62d3e1f4a2c316e",
+    "semantic_hash": ""
+  },
+  "api/db-state.ts": {
+    "mtime": 1792890747.6950953,
+    "ast_hash": "f5c15416893919bfde2643234efa2bdc",
     "semantic_hash": ""
   }
 }

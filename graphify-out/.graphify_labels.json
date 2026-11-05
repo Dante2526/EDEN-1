@@ -1021,5 +1021,7 @@
   "1019": "A0.3 - Z-Index Layer Management",
   "1020": "141. PoC do Harness² (Google Research / arXiv:2610.14224): Auto-Evolução Recursiva de Prompts e Ferramentas (2026-10-24)",
   "1021": "143. Adição de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)",
-  "1022": "146. Correção dos Bugs de Print Duplicado (Ctrl+V) e Ditado por Voz Longo (2026-10-24)"
+  "1022": "146. Correção dos Bugs de Print Duplicado (Ctrl+V) e Ditado por Voz Longo (2026-10-24)",
+  "1024": "147. Botão `+` Estilo Google Gemini, Modos Ativos, Calibração de Canvas e Remoção de Cards no Studio (2026-10-24)",
+  "1025": "pyodide-client.ts"
 }
