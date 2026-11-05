@@ -26,7 +26,7 @@ function runTests() {
     title: 'Short',
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    model: 'z-ai/glm-5.3',
+    model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
     reasoningEffort: 'low',
     messages: Array.from({ length: 10 }, (_, i) => createMockMessage(`m-${i}`, 'user', `Msg ${i}`)),
   };

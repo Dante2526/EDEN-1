@@ -8,20 +8,19 @@ import {
 
 describe('Smart Model Router (Modo Automático + Health Check Aware)', () => {
   const mockHealthOnlineAll: ModelHealthMap = {
-    'z-ai/glm-5.3': { id: 'z-ai/glm-5.3', status: 'online', latencyMs: 1200, checkedAt: Date.now() },
-    'z-ai/glm-5.3-flash': { id: 'z-ai/glm-5.3-flash', status: 'online', latencyMs: 450, checkedAt: Date.now() },
-    'google/gemma-4-31b-it': { id: 'google/gemma-4-31b-it', status: 'online', latencyMs: 900, checkedAt: Date.now() },
-    'deepseek-ai/deepseek-v4.1-flash': { id: 'deepseek-ai/deepseek-v4.1-flash', status: 'online', latencyMs: 500, checkedAt: Date.now() },
+    'nvidia/nemotron-3.5-lightning-30b-a3b': { id: 'nvidia/nemotron-3.5-lightning-30b-a3b', status: 'online', latencyMs: 250, checkedAt: Date.now() },
+    'google/gemma-4-31b-it': { id: 'google/gemma-4-31b-it', status: 'online', latencyMs: 650, checkedAt: Date.now() },
+    'minimaxai/minimax-m3.1-flash': { id: 'minimaxai/minimax-m3.1-flash', status: 'online', latencyMs: 330, checkedAt: Date.now() },
+    'google/diffusiongemma-26b-a4b-it': { id: 'google/diffusiongemma-26b-a4b-it', status: 'online', latencyMs: 520, checkedAt: Date.now() },
     'nvidia/nemotron-3.5-super-vl-120b-a12b': { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', status: 'online', latencyMs: 850, checkedAt: Date.now() },
     'nvidia/nemotron-3-ultra-550b-a55b': { id: 'nvidia/nemotron-3-ultra-550b-a55b', status: 'online', latencyMs: 1800, checkedAt: Date.now() },
   };
 
-  // Cenário real diagnosticado na NVIDIA onde GLM, Gemma e DeepSeek estão com timeout e só os Nemotrons estão online
   const mockHealthOnlyNemotronOnline: ModelHealthMap = {
-    'z-ai/glm-5.3': { id: 'z-ai/glm-5.3', status: 'offline', latencyMs: null, checkedAt: Date.now() },
-    'z-ai/glm-5.3-flash': { id: 'z-ai/glm-5.3-flash', status: 'offline', latencyMs: null, checkedAt: Date.now() },
+    'nvidia/nemotron-3.5-lightning-30b-a3b': { id: 'nvidia/nemotron-3.5-lightning-30b-a3b', status: 'online', latencyMs: 500, checkedAt: Date.now() },
     'google/gemma-4-31b-it': { id: 'google/gemma-4-31b-it', status: 'offline', latencyMs: null, checkedAt: Date.now() },
-    'deepseek-ai/deepseek-v4.1-flash': { id: 'deepseek-ai/deepseek-v4.1-flash', status: 'offline', latencyMs: null, checkedAt: Date.now() },
+    'minimaxai/minimax-m3.1-flash': { id: 'minimaxai/minimax-m3.1-flash', status: 'offline', latencyMs: null, checkedAt: Date.now() },
+    'google/diffusiongemma-26b-a4b-it': { id: 'google/diffusiongemma-26b-a4b-it', status: 'offline', latencyMs: null, checkedAt: Date.now() },
     'nvidia/nemotron-3.5-super-vl-120b-a12b': { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', status: 'online', latencyMs: 840, checkedAt: Date.now() },
     'nvidia/nemotron-3-ultra-550b-a55b': { id: 'nvidia/nemotron-3-ultra-550b-a55b', status: 'online', latencyMs: 1750, checkedAt: Date.now() },
   };
@@ -76,11 +75,11 @@ describe('Smart Model Router (Modo Automático + Health Check Aware)', () => {
 
     assert.equal(decision.isAutoRouted, true);
     assert.equal(decision.intent, 'fast_practical');
-    assert.equal(decision.targetModel, 'z-ai/glm-5.3-flash');
+    assert.equal(decision.targetModel, 'nvidia/nemotron-3.5-lightning-30b-a3b');
     assert.equal(decision.targetEffort, 'low');
   });
 
-  it('no modo "auto", NUNCA deve enviar para modelos offline: se GLM/Gemma/DeepSeek caírem, roteia para o Nemotron online mais rápido', () => {
+  it('no modo "auto", NUNCA deve enviar para modelos offline: roteia para o online mais rápido', () => {
     const decision = resolveSmartModelRoute({
       selectedModel: 'auto',
       selectedEffort: 'low',
@@ -91,7 +90,7 @@ describe('Smart Model Router (Modo Automático + Health Check Aware)', () => {
     });
 
     assert.equal(decision.isAutoRouted, true);
-    assert.equal(decision.targetModel, 'nvidia/nemotron-3.5-super-vl-120b-a12b');
+    assert.equal(decision.targetModel, 'nvidia/nemotron-3.5-lightning-30b-a3b');
     assert.equal(decision.targetEffort, 'low');
   });
 

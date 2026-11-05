@@ -528,9 +528,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onChange={(e) => handleUpdateStudioAgent(role, { model: e.target.value as ModelId })}
                       className="flex-1 bg-[color:var(--c-bg-181614)] border border-[color:var(--c-bg-2b2924)] rounded-lg px-2 py-1.5 text-xs text-[color:var(--c-fg-a39d93)] focus:border-[#d97757] focus:outline-none"
                     >
-                      <option value="z-ai/glm-5.3">GLM-5.3 (Completo)</option>
-                      <option value="z-ai/glm-5.3-flash">GLM-5.3-Flash (Rápido)</option>
-                      <option value="moonshotai/kimi-k3">Kimi K3 (Longo Contexto)</option>
+                      <option value="nvidia/nemotron-3.5-lightning-30b-a3b">Nemotron 3.5 Lightning (30B - 500ms)</option>
+                      <option value="google/gemma-4-31b-it">Google Gemma 4 (31B - 660ms)</option>
+                      <option value="nvidia/nemotron-3.5-super-vl-120b-a12b">Nemotron 3.5 Super VL (120B)</option>
+                      <option value="nvidia/nemotron-3-ultra-550b-a55b">Nemotron 3 Ultra (550B)</option>
+                      <option value="minimaxai/minimax-m3.1-flash">MiniMax M3.1 Flash</option>
+                      <option value="google/diffusiongemma-26b-a4b-it">DiffusionGemma (26B)</option>
                     </select>
                     <select
                       value={studioConfig[role].reasoningEffort}

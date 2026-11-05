@@ -1540,11 +1540,11 @@ function AppContent() {
       const saved = localStorage.getItem(MODEL_STORAGE_KEY);
       if (
         saved === 'auto' ||
-        saved === 'z-ai/glm-5.3' ||
-        saved === 'z-ai/glm-5.3-flash' ||
+        saved === 'nvidia/nemotron-3.5-lightning-30b-a3b' ||
         saved === 'google/gemma-4-31b-it' ||
-        saved === 'deepseek-ai/deepseek-v4.1-flash' ||
         saved === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ||
+        saved === 'minimaxai/minimax-m3.1-flash' ||
+        saved === 'google/diffusiongemma-26b-a4b-it' ||
         saved === 'nvidia/nemotron-3-ultra-550b-a55b'
       ) {
         return saved;
@@ -6193,7 +6193,7 @@ function AppContent() {
           onSendMessage={(content, imgs, docs, pMode) => handleSendMessage(content, imgs, docs, undefined, pMode)}
           onStopGeneration={handleStopGeneration}
           isLoading={isStreaming}
-          isFlashModel={selectedModel === 'z-ai/glm-5.3-flash' || selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'deepseek-ai/deepseek-v4.1-flash' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'}
+          isFlashModel={selectedModel === 'nvidia/nemotron-3.5-lightning-30b-a3b' || selectedModel === 'google/gemma-4-31b-it' || selectedModel === 'minimaxai/minimax-m3.1-flash' || selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'}
           selectedModel={selectedModel}
           onSelectModel={handleSelectModel}
           reasoningEffort={reasoningEffort}

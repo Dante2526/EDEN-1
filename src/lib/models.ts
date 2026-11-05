@@ -1,18 +1,13 @@
 export const ALLOWED_MODELS = [
-  'z-ai/glm-5.3',
-  'z-ai/glm-5.3-flash',
-  'google/gemma-4-31b-it',
-  'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-lightning-30b-a3b',
+  'google/gemma-4-31b-it',
+  'nvidia/nemotron-3.5-super-vl-120b-a12b',
   'minimaxai/minimax-m3.1-flash',
   'google/diffusiongemma-26b-a4b-it',
-  'openai/gpt-oss-20b',
-  'nvidia/nemotron-3.5-super-vl-120b-a12b',
   'nvidia/nemotron-3-ultra-550b-a55b',
 ] as const;
 
 export const VISION_MODELS = [
-  'z-ai/glm-5.3-flash',
   'google/gemma-4-31b-it',
   'nvidia/nemotron-3.5-super-vl-120b-a12b',
 ] as const;
@@ -32,18 +27,14 @@ export function isCloudflareModel(model: string): boolean {
 
 /**
  * Modelos que suportam execução nativa de ferramentas (OpenAI Function Calling).
- * Todos os 5 modelos NVIDIA acima suportam ferramentas nativas.
+ * Todos os 6 modelos NVIDIA online suportam ferramentas nativas.
  */
 export const TOOL_MODELS = [
-  'z-ai/glm-5.3',
-  'z-ai/glm-5.3-flash',
-  'google/gemma-4-31b-it',
-  'deepseek-ai/deepseek-v4.1-flash',
   'nvidia/nemotron-3.5-lightning-30b-a3b',
+  'google/gemma-4-31b-it',
+  'nvidia/nemotron-3.5-super-vl-120b-a12b',
   'minimaxai/minimax-m3.1-flash',
   'google/diffusiongemma-26b-a4b-it',
-  'openai/gpt-oss-20b',
-  'nvidia/nemotron-3.5-super-vl-120b-a12b',
   'nvidia/nemotron-3-ultra-550b-a55b',
 ] as const;
 

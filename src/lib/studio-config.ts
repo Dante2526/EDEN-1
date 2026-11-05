@@ -3,8 +3,8 @@ import { StudioAgent } from '../studio/studio-types';
 
 export const DEFAULT_STUDIO_CONFIG = {
   planner: { role: 'planner', model: 'moonshotai/kimi-k3', reasoningEffort: 'max' } as StudioAgent,
-  reviewer: { role: 'reviewer', model: 'z-ai/glm-5.3', reasoningEffort: 'high' } as StudioAgent,
-  implementer: { role: 'implementer', model: 'z-ai/glm-5.3', reasoningEffort: 'low' } as StudioAgent,
+  reviewer: { role: 'reviewer', model: 'nvidia/nemotron-3-ultra-550b-a55b', reasoningEffort: 'high' } as StudioAgent,
+  implementer: { role: 'implementer', model: 'nvidia/nemotron-3-ultra-550b-a55b', reasoningEffort: 'low' } as StudioAgent,
 };
 
 const CONFIG_KEY = 'synap_studio_config';

@@ -146,10 +146,8 @@ export function resolveSmartModelRoute(input: SmartRouteInput): SmartRouteDecisi
   if (intent === 'deep_architectural') {
     const deepCandidates: ConcreteModelId[] = [
       'nvidia/nemotron-3-ultra-550b-a55b',
-      'z-ai/glm-5.3',
       'nvidia/nemotron-3.5-super-vl-120b-a12b',
       'google/gemma-4-31b-it',
-      'z-ai/glm-5.3-flash',
     ];
     const picked = pickHealthyCandidate(
       deepCandidates,
@@ -171,13 +169,9 @@ export function resolveSmartModelRoute(input: SmartRouteInput): SmartRouteDecisi
     'nvidia/nemotron-3.5-lightning-30b-a3b',
     'minimaxai/minimax-m3.1-flash',
     'google/diffusiongemma-26b-a4b-it',
-    'openai/gpt-oss-20b',
-    'z-ai/glm-5.3-flash',
-    'deepseek-ai/deepseek-v4.1-flash',
-    'nvidia/nemotron-3.5-super-vl-120b-a12b',
     'google/gemma-4-31b-it',
+    'nvidia/nemotron-3.5-super-vl-120b-a12b',
     'nvidia/nemotron-3-ultra-550b-a55b',
-    'z-ai/glm-5.3',
   ];
   const picked = pickHealthyCandidate(
     fastCandidates,
@@ -202,14 +196,8 @@ export function getShortModelName(modelId: string): string {
   switch (modelId) {
     case 'auto':
       return 'Automático ⚡';
-    case 'z-ai/glm-5.3-flash':
-      return 'GLM-5.3 Flash';
-    case 'z-ai/glm-5.3':
-      return 'GLM-5.3';
     case 'google/gemma-4-31b-it':
       return 'Gemma 4 31B';
-    case 'deepseek-ai/deepseek-v4.1-flash':
-      return 'DeepSeek V4.1';
     case 'nvidia/nemotron-3.5-super-vl-120b-a12b':
       return 'Nemotron VL 120B';
     case 'nvidia/nemotron-3.5-lightning-30b-a3b':
@@ -218,8 +206,6 @@ export function getShortModelName(modelId: string): string {
       return 'MiniMax Flash';
     case 'google/diffusiongemma-26b-a4b-it':
       return 'DiffusionGemma 26B';
-    case 'openai/gpt-oss-20b':
-      return 'GPT-OSS 20B';
     case 'nvidia/nemotron-3-ultra-550b-a55b':
       return 'Nemotron 3 Ultra';
     default:

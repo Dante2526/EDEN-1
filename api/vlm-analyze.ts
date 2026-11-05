@@ -49,7 +49,6 @@ const STAGE_1 = { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 35000
 /** Estágio 2 — corrida paralela: retry do workhorse + reservas. */
 const STAGE_2_RACE = [
   { id: 'nvidia/nemotron-3.5-super-vl-120b-a12b', timeoutMs: 45000, label: 'Nemotron VL 120B (retry)' },
-  { id: 'z-ai/glm-5.3-flash', timeoutMs: 45000, label: 'GLM-5.3 Flash' },
   { id: 'google/gemma-4-31b-it', timeoutMs: 45000, label: 'Gemma 4 31B' },
 ];
 

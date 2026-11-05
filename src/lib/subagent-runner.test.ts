@@ -124,7 +124,7 @@ async function runTests() {
     const toolSubagentResult = await runSubagent({
       role: 'Inspetor de Código',
       task: 'Verificar exportações em src/lib/models.ts',
-      model: 'z-ai/glm-5.3-flash',
+      model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
       apiKeySecret: 'mock_secret',
       tools: [{ type: 'function', function: { name: 'read_file' } }],
       onExecuteTool: async (name, args) => {

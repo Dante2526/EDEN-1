@@ -302,9 +302,7 @@ export default async function handler(req: Request, envArg?: Env) {
       if (typeof customTemperature === 'number') {
         p.temperature = customTemperature;
       }
-      if (selectedModel === 'z-ai/glm-5.3') {
-        p.stream_options = { include_usage: true };
-      }
+      p.stream_options = { include_usage: true };
       if (includeReasoning && apiEffort && apiEffort !== 'default') {
         if (selectedModel === 'z-ai/glm-5.3') {
           p.reasoning_effort = apiEffort;
@@ -562,8 +560,7 @@ export default async function handler(req: Request, envArg?: Env) {
             selectedModel === 'google/gemma-4-31b-it' ||
             selectedModel === 'nvidia/nemotron-3.5-lightning-30b-a3b' ||
             selectedModel === 'minimaxai/minimax-m3.1-flash' ||
-            selectedModel === 'openai/gpt-oss-20b' ||
-            selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ||
+                        selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b' ||
             selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b';
           const splitter: CloudflareThinkSplitter | null = needsThinkSplitter ? new CloudflareThinkSplitter() : null;
           // Buffer de linha SSE bruta (para o caso de um chunk cortar no meio de uma linha)

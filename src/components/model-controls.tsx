@@ -64,66 +64,41 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
       isAuto: true,
     },
     {
-      id: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
-      title: 'Nemotron-3.5 Super VL',
-      subtitle: 'NVIDIA 120B Super VL — Visão multimodal e execução turbo (~1s)',
-      badge: 'NVIDIA × VL',
-    },
-    {
-      id: 'nvidia/nemotron-3-ultra-550b-a55b',
-      title: 'Nemotron 3 Ultra',
-      subtitle: 'NVIDIA 550B MoE híbrido — Máxima inteligência e ferramentas (~2s)',
-      badge: 'NVIDIA ⚡ 550B',
-    },
-    {
       id: 'nvidia/nemotron-3.5-lightning-30b-a3b',
       title: 'Nemotron 3.5 Lightning 30B',
-      subtitle: 'NVIDIA 30B MoE — Ultrarrápido (~270ms), ágil em código, UI e ferramentas',
+      subtitle: 'NVIDIA 30B MoE — Ultrarrápido (~500ms), o mais veloz em código, UI e ferramentas',
       badge: 'NVIDIA ⚡ 30B',
+    },
+    {
+      id: 'google/gemma-4-31b-it',
+      title: 'Gemma 4 31B',
+      subtitle: 'Google DeepMind multimodal (~660ms, 256k contexto, visão e lógica)',
+      badge: 'Google × 31B',
+    },
+    {
+      id: 'nvidia/nemotron-3.5-super-vl-120b-a12b',
+      title: 'Nemotron-3.5 Super VL',
+      subtitle: 'NVIDIA 120B Super VL — Visão multimodal e análise de telas (~1s)',
+      badge: 'NVIDIA × VL',
     },
     {
       id: 'minimaxai/minimax-m3.1-flash',
       title: 'MiniMax M3.1 Flash',
-      subtitle: 'MiniMax Flash — Alta velocidade (~330ms) e raciocínio prático de ponta',
+      subtitle: 'MiniMax Flash — Alta velocidade e raciocínio prático de ponta',
       badge: 'MiniMax ⚡',
     },
     {
       id: 'google/diffusiongemma-26b-a4b-it',
       title: 'DiffusionGemma 26B',
-      subtitle: 'Google DeepMind 26B — Resposta direta (~520ms) e lógica apurada',
+      subtitle: 'Google DeepMind 26B — Resposta direta (~1.1s) e lógica apurada',
       badge: 'Google × 26B',
     },
     {
-      id: 'openai/gpt-oss-20b',
-      title: 'OpenAI GPT-OSS 20B',
-      subtitle: 'OpenAI Open-Weights 20B — Precisão em código, schemas JSON e ferramentas',
-      badge: 'OpenAI × 20B',
-    },
-    {
-      id: 'z-ai/glm-5.3-flash',
-      title: 'GLM-5.3 Flash',
-      subtitle: 'Rápido + Suporte multimodal a visão e fotos',
-      badge: 'Visão',
-    },
-    {
-      id: 'z-ai/glm-5.3',
-      title: 'GLM-5.3',
-      subtitle: 'Raciocínio analítico avançado e raciocínio profundo de fundo',
-      badge: 'Pensar',
-    },
-    {
-      id: 'google/gemma-4-31b-it',
-      title: 'Gemma 4 31B',
-      subtitle: 'Google DeepMind multimodal (256k contexto, visão e lógica)',
-      badge: 'Google × 31B',
-    },
-    {
-      id: 'deepseek-ai/deepseek-v4.1-flash',
-      title: 'DeepSeek V4.1 Flash',
-      subtitle: 'Rápido e eficiente — tempo custo-benefício',
-      badge: 'Flash',
-    },
-  ];
+      id: 'nvidia/nemotron-3-ultra-550b-a55b',
+      title: 'Nemotron 3 Ultra',
+      subtitle: 'NVIDIA 550B MoE híbrido — Máxima inteligência e raciocínio profundo (~2s)',
+      badge: 'NVIDIA ⚡ 550B',
+    },  ];
 
   const reasoningLevels: Array<{
     id: ReasoningEffort;
@@ -210,28 +185,19 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                 ? lastAutoRoutedModel
                   ? `Auto · ${getShortModelName(lastAutoRoutedModel)}`
                   : 'Automático ⚡'
-                : selectedModel === 'z-ai/glm-5.3'
-                  ? 'GLM-5.3'
-                  : selectedModel === 'z-ai/glm-5.3-flash'
-                    ? 'GLM Flash'
-                    : selectedModel === 'google/gemma-4-31b-it'
-                      ? 'Gemma 4 31B'
-                      : selectedModel === 'deepseek-ai/deepseek-v4.1-flash'
-                        ? 'DeepSeek V4.1'
-                        : selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
-                          ? 'Nemotron VL'
+                : selectedModel === 'nvidia/nemotron-3.5-lightning-30b-a3b'
+                  ? 'Nemotron Lightning'
+                  : selectedModel === 'google/gemma-4-31b-it'
+                    ? 'Gemma 4 31B'
+                    : selectedModel === 'nvidia/nemotron-3.5-super-vl-120b-a12b'
+                      ? 'Nemotron VL'
+                      : selectedModel === 'minimaxai/minimax-m3.1-flash'
+                        ? 'MiniMax Flash'
+                        : selectedModel === 'google/diffusiongemma-26b-a4b-it'
+                          ? 'DiffusionGemma'
                           : selectedModel === 'nvidia/nemotron-3-ultra-550b-a55b'
                             ? 'Nemotron 3 Ultra'
-                            : selectedModel === 'nvidia/nemotron-3.5-lightning-30b-a3b'
-                              ? 'Nemotron Lightning'
-                              : selectedModel === 'minimaxai/minimax-m3.1-flash'
-                                ? 'MiniMax Flash'
-                                : selectedModel === 'google/diffusiongemma-26b-a4b-it'
-                                  ? 'DiffusionGemma'
-                                  : selectedModel === 'openai/gpt-oss-20b'
-                                    ? 'GPT-OSS 20B'
-                                    : 'Automático ⚡'}
-            </span>
+                            : 'Automático ⚡'}            </span>
             <ChevronDown className="w-3.5 h-3.5 text-zinc-500 dark:text-[color:var(--c-fg-8c867a)] shrink-0" />
           </button>
 

@@ -316,7 +316,7 @@ export const SourceControlPanel: React.FC<SourceControlPanelProps> = ({
               content: `Arquivos alterados:\n${filesSummary}\n\nGere o commit:`,
             },
           ],
-          model: 'z-ai/glm-5.3-flash',
+          model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
           reasoning_effort: 'none',
           max_tokens: 50,
           temperature: 0.2,

@@ -134,7 +134,7 @@ export async function compactConversation(
         messages: [{ role: 'user', content: prompt }],
         // GLM-5.3 Flash: rápido e estável para compactação.
         // Não usa tools nem reasoning_effort (flash não suporta reasoning).
-        model: 'z-ai/glm-5.3-flash',
+        model: 'nvidia/nemotron-3.5-lightning-30b-a3b',
         reasoning_effort: 'low',
         tools: [],
       }),
