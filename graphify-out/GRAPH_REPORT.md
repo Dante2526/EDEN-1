@@ -1,16 +1,16 @@
-# Graph Report - Synap  (2026-10-24)
+# Graph Report - Synap  (2026-11-05)
 
 ## Corpus Check
-- 1060 files · ~1,688,855 words
+- 1247 files · ~1,840,921 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 15086 nodes · 17371 edges · 1025 communities (914 shown, 111 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 127 edges (avg confidence: 0.63)
+- 16689 nodes · 18990 edges · 1182 communities (1053 shown, 129 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 128 edges (avg confidence: 0.63)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8c57886b`
+- Built from commit: `363cf592`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1020,24 +1020,163 @@
 - 141. PoC do Harness² (Google Research / arXiv:2610.14224): Auto-Evolução Recursiva de Prompts e Ferramentas (2026-10-24)
 - 143. Adição de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026-10-24)
 - 146. Correção dos Bugs de Print Duplicado (Ctrl+V) e Ditado por Voz Longo (2026-10-24)
+- DCL Skill Auditor — Leibniz Layer™
 - 147. Botão `+` Estilo Google Gemini, Modos Ativos, Calibração de Canvas e Remoção de Cards no Studio (2026-10-24)
 - pyodide-client.ts
+- Test-Driven Development (TDD)
+- nginx-config-linter.py
+- Changelog
+- What You Must Do When Invoked
+- Agentic Test Engineer
+- skill-card.md
+- Biome
+- React 19 patterns
+- Vite 8
+- Visual Companion Guide
+- NodeDebugger
+- Creation Log: Systematic Debugging Skill
+- vlm-analyze.ts
+- Session diagnosis: <session-id>
+- Hono
+- SKILL.md
+- Security Audit
+- Cross-cutting critical rules
+- Code Review Reception
+- Tailwind CSS v4
+- Testing CLAUDE.md Skills Documentation
+- Testing Skills With Subagents
+- Root Cause Tracing
+- Systematic Debugging
+- Persuasion Principles for Skill Design
+- Writing Skills
+- Finishing a Development Branch
+- Priority Rule Categories
+- ATTACK-CLASSES.md
+- SKILL.md
+- Using Git Worktrees
+- Dispatching Parallel Agents
+- Commands
+- shadcn/ui
+- SKILL.md
+- Defense-in-Depth Validation
+- [Analysis Title]
+- skill-card.md
+- Brainstorming
+- skill-card.md
+- skill-card.md
+- skill-card.md
+- skill-card.md
+- skill-card.md
+- Core Workflow
+- Client-Side and Browser Hunting
+- Desktop, Mobile, and Local IPC Hunting
+- Memory Safety, Binary, and Kernel Hunting
+- skill-card.md
+- Vitest
+- Returns: "OK" or lists conflicts
+- context-compactor.ts
+- mcp-client.ts
+- test_vlm_race_logic.mjs
+- issue.md
+- Debugging — Symptom to Cause
+- Reverse Proxy: Traps and Diagnosis
+- Redirects & Rewrites
+- Security — Rate Limits, Auth, and Hardening
+- AI, LLM, and Agent Hunting
+- Cloud and Deployment Hunting
+- Vulnerability Hunting
+- Protocols, RPC, and Messaging Hunting
+- Resource Exhaustion and Availability Hunting
+- HTTP-Protocol and Authentication Hunting
+- Condition-Based Waiting
+- Verification Before Completion
+- Skill structure
+- helper.js
+- Modern React Guidance
+- Operations — Signals, Upgrades, Monitoring, Rotation
+- Config Semantics: Where nginx Doesn't Behave Like It Reads
+- SSL/TLS: Traps and Diagnosis
+- Node.js Auto Debugger
+- Data Isolation and Lifecycle Hunting
+- Supply Chain and Release Hunting
+- Validation, Structured Output, Verification, and Reporting
+- Skill authoring best practices
+- Skill Discovery Optimization (SDO)
+- Containers — nginx in Docker and Kubernetes
+- Performance: Tuning That Actually Moves Numbers
+- Stream — TCP/UDP Proxying and TLS Passthrough
+- Patterns
+- Gemini CLI Tool Mapping
+- Writing Plans
+- db-conversations.ts
+- stop-server.sh
+- Diagnosing Superpowers
+- Superpowers session diagnosis bundle
+- Case: <session-id>
+- Executing Plans
+- FastCGI — PHP-FPM and Friends
+- final-review.md
+- Subagent-Driven Development
+- Dev server
+- Hermes Agent Tool Mapping
+- REFACTOR Phase: Close Loopholes (Stay Green)
+- Setup — Nginx
+- Requesting Code Review
+- The Task Loop
+- codex-tools.md
+- Muse Tool Mapping
+- SKILL.md
+- render-graphs.js
+- code-reviewer.md
+- The Task Loop
+- Pressure Test 1: Emergency Production Fix
+- Pressure Test 2: Sunk Cost + Exhaustion
+- Pressure Test 3: Authority + Social Pressure
+- anthropic-best-practices.md
+- VERIFY GREEN: Pressure Testing
+- Anti-Patterns
+- Testing All Skill Types
+- RED-GREEN-REFACTOR for Skills
+- GitHub issues
+- Pi Tool Mapping
+- Evaluation and iteration
+- Checklist for effective Skills
+- Core principles
+- File Organization
+- Skill Types
+- opencut-i18n-dictionary.ts
+- start-server.sh
+- nginx-config-linter — Status
+- Memory Template — Nginx
+- sdd-workspace
+- Antigravity CLI (`agy`) Tool Mapping
+- Claude Code Tool Notes
+- builder-check-prompt.md
+- context-safety.md
+- redaction-policy.md
+- session-discovery.md
+- task-done
+- task-start
+- review-package
+- task-brief
+- find-polluter.sh
+- test-academic.md
 
 ## God Nodes (most connected - your core abstractions)
-1. `Walkthrough: Revisão e Hardening (Arquitetura e Infraestrutura)` - 151 edges
+1. `Walkthrough: Revisão e Hardening (Arquitetura e Infraestrutura)` - 153 edges
 2. `AppContent()` - 105 edges
-3. `checkAuthAndRateLimit()` - 39 edges
+3. `checkAuthAndRateLimit()` - 41 edges
 4. `main()` - 39 edges
-5. `Document` - 36 edges
-6. `getEnv()` - 34 edges
+5. `getEnv()` - 36 edges
+6. `Document` - 36 edges
 7. `_request()` - 31 edges
 8. `_track_cost()` - 29 edges
 9. `DeckStage` - 29 edges
 10. `BaseSchemaValidator` - 25 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `PreviewDevTools()` --indirect_call--> `log()`  [INFERRED]
-  src/components/preview-devtools.tsx → skills/stock-analysis-skill/src/index.ts
+- `ConversationIndexItem` --references--> `ReasoningEffort`  [EXTRACTED]
+  api/db-conversations.ts → src/lib/types.ts
 - `AppContent()` --indirect_call--> `query()`  [INFERRED]
   src/App.tsx → skills/video-generation/scripts/video.ts
 - `handler()` --calls--> `getEnv()`  [EXTRACTED]
@@ -1050,19 +1189,19 @@
 ## Import Cycles
 - 1-file cycle: `skills/get-fortune-analysis/lunar_python.py -> skills/get-fortune-analysis/lunar_python.py`
 
-## Communities (1025 total, 111 thin omitted)
+## Communities (1182 total, 129 thin omitted)
 
 ### Community 0 - "_security.ts"
-Cohesion: 0.09
-Nodes (45): config, handler(), config, conversationToRow(), getSupabaseCredentials(), handler(), rowToConversation(), config (+37 more)
+Cohesion: 0.08
+Nodes (46): config, handler(), config, getSupabaseCredentials(), handler(), rowToIndexItem(), rowToSynapProject(), SupabaseRepoRow (+38 more)
 
 ### Community 1 - "aminer_client.py"
 Cohesion: 0.07
 Nodes (80): build_parser(), get_cost_summary(), main(), org_detail(), org_disambiguate(), org_disambiguate_pro(), org_paper_relation(), org_patent_relation() (+72 more)
 
 ### Community 2 - "App.tsx"
-Cohesion: 0.04
-Nodes (75): ALL_CHAT_TOOLS, BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL, DOCUMENT_GEN_TOOL (+67 more)
+Cohesion: 0.03
+Nodes (119): ALL_CHAT_TOOLS, AppContent(), BROWSER_CONTROL_TOOL, CANVAS_PROTOTYPE_TOOL, CREATE_PROJECT_TOOL, DEFAULT_CHAT_TOOLS, DEVTOOLS_INSPECT_TOOL, DISPATCH_SUBAGENT_TOOL (+111 more)
 
 ### Community 3 - "QuizMasteryService"
 Cohesion: 0.11
@@ -1082,7 +1221,7 @@ Nodes (57): check_conversion(), check_docx(), check_pdf(), check_run_hint_style(
 
 ### Community 7 - "github.ts"
 Cohesion: 0.05
-Nodes (75): CreateRepoModal(), CreateRepoModalProps, FileExplorer(), FileExplorerProps, RepoList(), RepoListProps, SettingsModal(), DiffViewer() (+67 more)
+Nodes (68): ChatHeader, ChatHeaderProps, CreateRepoModal(), CreateRepoModalProps, FileExplorer(), FileExplorerProps, RepoList(), RepoListProps (+60 more)
 
 ### Community 8 - "design_system.py"
 Cohesion: 0.06
@@ -1138,11 +1277,11 @@ Nodes (27): HTMLParser, _best_generic(), check_html(), check_pdf(), check_tex(),
 
 ### Community 21 - "graphify-engine.ts"
 Cohesion: 0.12
-Nodes (25): ColorPalette, getNodePalette(), GraphModal(), GraphModalProps, Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode() (+17 more)
+Nodes (26): ColorPalette, getNodePalette(), GraphModal(), GraphModalProps, Camera3DState, compute3DLayout(), deterministicHash(), findClosestProjectedNode() (+18 more)
 
 ### Community 22 - "run_loop"
-Cohesion: 0.14
-Nodes (19): generate_html(), main(), Generate HTML report from loop output data. If auto_refresh is True, adds a meta, _call_zai(), improve_description(), main(), Path, Run `z-ai chat -p` with the prompt and return the text response. (+11 more)
+Cohesion: 0.11
+Nodes (27): generate_html(), main(), Generate HTML report from loop output data. If auto_refresh is True, adds a meta, _call_zai(), improve_description(), main(), Path, Run `z-ai chat -p` with the prompt and return the text response. (+19 more)
 
 ### Community 23 - "pdf.py"
 Cohesion: 0.09
@@ -1166,7 +1305,7 @@ Nodes (27): llm, podcast, tts, z-ai, dependencies, z-ai-web-dev-sdk, description
 
 ### Community 29 - "run_pipeline"
 Cohesion: 0.06
-Nodes (37): ChatSidebar, ChatSidebarProps, ProjectsPanel, SwipeableConversationItem(), SwipeableConversationItemProps, DarkModeToggle(), DarkModeToggleProps, DownloaderPanel() (+29 more)
+Nodes (28): react, react, ChatImage(), ChatSidebar, ChatSidebarProps, ProjectsPanel, SwipeableConversationItem(), ClaudeLogoProps (+20 more)
 
 ### Community 30 - "compilerOptions"
 Cohesion: 0.07
@@ -1182,7 +1321,7 @@ Nodes (16): DocxXMLEditor, Add RSID and optionally enable track revisions and up
 
 ### Community 33 - "subagent-runner.ts"
 Cohesion: 0.09
-Nodes (39): ConversationIndexItem, TOOL_MODELS, ChatInput, ChatInputProps, ModelControls(), ModelControlsProps, extractImagesFromClipboardData(), ALLOWED_MODELS (+31 more)
+Nodes (38): TOOL_MODELS, ChatInput, ChatInputProps, ModelControls(), ModelControlsProps, extractImagesFromClipboardData(), ALLOWED_MODELS, CLOUDFLARE_MODELS (+30 more)
 
 ### Community 34 - "generate_review.py"
 Cohesion: 0.15
@@ -1209,8 +1348,8 @@ Cohesion: 0.06
 Nodes (34): align_header(), apply_chart_colors(), apply_pie_colors(), border_header(), copy_style(), create_bar_chart(), create_line_chart(), create_pie_chart() (+26 more)
 
 ### Community 40 - "deployment-service.ts"
-Cohesion: 0.13
-Nodes (19): ChatHeader, ChatHeaderProps, ClaudeLogoProps, EdenBonsaiLogo(), EdenBonsaiLogoProps, DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal() (+11 more)
+Cohesion: 0.18
+Nodes (15): DeploymentErrorCard(), DeploymentErrorCardProps, DeploymentLogModal(), DeploymentLogModalProps, DeploymentStatusBadge(), DeploymentStatusBadgeProps, DeploymentInfo, DeploymentLogResponse (+7 more)
 
 ### Community 41 - "BaseSchemaValidator"
 Cohesion: 0.08
@@ -1221,8 +1360,8 @@ Cohesion: 0.19
 Nodes (17): batch_list_query_params(), get_province_mode(), infer_grade_type(), normalize_subjects_for_api(), parse_subjects_list(), Any, 从请求体构建 batch/list 查询参数。, 按省份规则规范化 subjects 字段。 (+9 more)
 
 ### Community 43 - "add_toc_placeholders.py"
-Cohesion: 0.16
-Nodes (9): react, react, ChatImage(), ErrorBoundaryProps, ErrorBoundaryState, GlobalErrorBoundary, isDynamicChunkError(), lazyWithRetry() (+1 more)
+Cohesion: 0.04
+Nodes (45): Android, Angular, App Store Publishing, Architecture, Capacitor CLI, Capacitor Config, Capacitor Expert, Capawesome Cloud (+37 more)
 
 ### Community 44 - "generate.ts"
 Cohesion: 0.16
@@ -1249,8 +1388,8 @@ Cohesion: 0.18
 Nodes (15): main(), main(), build_extraction_prompt(), _parse_docx(), parse_file(), _parse_pdf(), _parse_ppt(), _parse_pptx() (+7 more)
 
 ### Community 50 - "settings-modal.tsx"
-Cohesion: 0.08
-Nodes (47): SupabaseConversationRow, CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatMessage, ChatMessageProps, CodeBlock(), CodeBlockProps, CompactionMarker() (+39 more)
+Cohesion: 0.06
+Nodes (56): SupabaseConversationRow, CanvasPrototypeCard(), CanvasPrototypeCardProps, ChatMessage, ChatMessageProps, CodeBlock(), CodeBlockProps, CompactionMarker() (+48 more)
 
 ### Community 51 - "dependencies"
 Cohesion: 0.06
@@ -1282,7 +1421,7 @@ Nodes (7): Generate detailed word-level differences using git word diff., Valida
 
 ### Community 58 - "._validate_single_file_xsd"
 Cohesion: 0.01
-Nodes (144): 100. Inicialização e Mapeamento Completo com Graphify, 101. Upgrades de Elite dos Agentes Éden: `patch_file`, Memória Contínua e Superpoderes Multi-Agente, 102. Modo Plano Obrigatório (Hard-Gate de Escrita + Botão Aprovar e Executar Plano), 103. Auditoria Arquitetural e Correção de 5 Bugs Críticos e Médios, 104. Correção do Travamento Infinito em "Pensando…" e Auto-Continuação Inteligente, 105. Aceleração de Conexão e Redução de Time-To-First-Token (TTFT) com a NVIDIA NIM, 106. Higienização do Live Preview (Import Map e Exclusão de Testes/Linters), 107. Superpoderes de Scraping, `curl`, `ffprobe` e Ponte de Rede Python no Éden (+136 more)
+Nodes (146): 100. Inicialização e Mapeamento Completo com Graphify, 101. Upgrades de Elite dos Agentes Éden: `patch_file`, Memória Contínua e Superpoderes Multi-Agente, 102. Modo Plano Obrigatório (Hard-Gate de Escrita + Botão Aprovar e Executar Plano), 103. Auditoria Arquitetural e Correção de 5 Bugs Críticos e Médios, 104. Correção do Travamento Infinito em "Pensando…" e Auto-Continuação Inteligente, 105. Aceleração de Conexão e Redução de Time-To-First-Token (TTFT) com a NVIDIA NIM, 106. Higienização do Live Preview (Import Map e Exclusão de Testes/Linters), 107. Superpoderes de Scraping, `curl`, `ffprobe` e Ponte de Rede Python no Éden (+138 more)
 
 ### Community 59 - "migrate-theme.mjs"
 Cohesion: 0.20
@@ -1533,8 +1672,8 @@ Cohesion: 0.04
 Nodes (47): 1. Visual Theme & Atmosphere, 2. Color Palette & Roles, 3. Typography Rules, 4. Component Stylings, 5. Layout Principles, 6. Depth & Elevation, 7. Do's and Don'ts, 8. Responsive Behavior (+39 more)
 
 ### Community 124 - "vercel.json"
-Cohesion: 0.07
-Nodes (51): FileAttachmentPreviews(), FileAttachmentPreviewsProps, applyFilePatches(), countOccurrences(), EffectiveFileResolution, normalizePatchArgs(), PatchBlock, PatchResult (+43 more)
+Cohesion: 0.08
+Nodes (41): FileAttachmentPreviews(), FileAttachmentPreviewsProps, SettingsModal(), SettingsModalProps, removeGitHubPat(), setGitHubPat(), verifyGitHubPat(), CloudUserState (+33 more)
 
 ### Community 125 - "magazine-bg-webgl.js"
 Cohesion: 0.83
@@ -2157,8 +2296,8 @@ Cohesion: 0.08
 Nodes (25): 100 Industry-Specific Reasoning Rules, Architecture & Contributing, Available Styles (67), Design System Command (Advanced), Example Prompts, Features, For Contributors, For Users (+17 more)
 
 ### Community 312 - "project-context.tsx"
-Cohesion: 0.13
-Nodes (34): ProjectsPanel(), TEMPLATES, normalizeRepoPath(), generateProjectId(), ProjectContext, ProjectContextType, ProjectProvider(), TEMPLATE_STARTERS (+26 more)
+Cohesion: 0.14
+Nodes (29): ProjectsPanel(), TEMPLATES, generateProjectId(), ProjectContext, ProjectContextType, ProjectProvider(), TEMPLATE_STARTERS, useProjects() (+21 more)
 
 ### Community 313 - "dot-matrix-xhs — Bayer 抖动黑白点阵封面"
 Cohesion: 0.08
@@ -3369,8 +3508,8 @@ Cohesion: 0.22
 Nodes (8): Analysis Tools, API Overview, Best Practices for Zhipu AI Stock Research (One-Shot Success Guide), Core Capabilities, Finance Skill, Market Data Retrieval, Market Intelligence, Zhipu AI - Hong Kong IPO Information
 
 ### Community 615 - "run_eval.py"
-Cohesion: 0.23
-Nodes (18): COBALT_INSTANCES, CobaltResponse, config, handler(), tryCobaltInstance(), isLocalOrPrivateUrl(), safeFetchWithRedirects(), detectMediaPlatform() (+10 more)
+Cohesion: 0.27
+Nodes (16): COBALT_INSTANCES, CobaltResponse, config, handler(), tryCobaltInstance(), detectMediaPlatform(), ExtractedMediaItem, ExtractedMediaResult (+8 more)
 
 ### Community 616 - "生成志愿填报报告"
 Cohesion: 0.22
@@ -3845,8 +3984,8 @@ Cohesion: 0.33
 Nodes (6): _best_font_for_char(), font_fallback(), _has_glyph(), Check whether *font_name* has a real glyph outline for *code*., Return the best registered font for a single character *code*., Wrap characters that *base_font* cannot render with ``<font>`` tags.      Pres
 
 ### Community 734 - "image.ts"
-Cohesion: 0.39
-Nodes (8): find_project_root(), main(), Path, Run the full eval set and return results., Find the project root by walking up from cwd looking for .glm/.      Mimics ho, Run a single query and return whether the skill was triggered.      Creates a, run_eval(), run_single_query()
+Cohesion: 0.05
+Nodes (35): Actions & Forms (React 19+), Common Pitfalls, Core Pattern, Key Rules, React 19+ API Cheat Sheet, Detection, Migration Tip, React Compiler & Memoization (+27 more)
 
 ### Community 735 - "What is Raycast?"
 Cohesion: 0.33
@@ -4074,7 +4213,7 @@ Nodes (5): 2.1 Core Iron Rule: Content Must Fill the Page, 2.2 Anti-Top-Heavy, 2
 
 ### Community 791 - "A0.3 - Z-Index Layer Management"
 Cohesion: 0.10
-Nodes (27): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), CODEC_MAP, CONTAINER_BOXES (+19 more)
+Nodes (29): ALLOWED_CUSTOM_HEADERS, config, extractTextFromHtml(), FetchUrlOptions, handler(), isMediaUrlOrContentType(), isLocalOrPrivateUrl(), safeFetchWithRedirects() (+21 more)
 
 ### Community 792 - "Template 01: HUD Data Terminal - Ultra-Thick Vertical Anchor Line"
 Cohesion: 0.40
@@ -4597,8 +4736,8 @@ Cohesion: 0.24
 Nodes (15): config, handler(), ImageInpaintModal(), ImageInpaintModalProps, base64ToUint8Array(), buildInpaintCloudflarePayload(), buildInpaintNvidiaPayload(), extractRawBase64() (+7 more)
 
 ### Community 1012 - "_best_font_for_char"
-Cohesion: 0.07
-Nodes (46): AppContent(), ComposedHarness, composeHarness(), detectHarnessNeed(), formatComposedHarnessForPrompt(), HarnessCandidate, HarnessFailureContext, probeHarnessCandidate() (+38 more)
+Cohesion: 0.05
+Nodes (35): Aggregations, Batch Operations, Cursor-Based Pagination (better than offset for large datasets), Performance Tips, Prisma Query Optimization Patterns, Raw Queries (when Prisma can't express it), Select vs Include, Serverless Considerations (+27 more)
 
 ### Community 1015 - "voice-button.tsx"
 Cohesion: 0.35
@@ -4609,8 +4748,8 @@ Cohesion: 0.50
 Nodes (4): 139. Banco de Dados Supabase para Repositórios GitHub + Velocidade 0ms (Nível IDE) (2026-10-24), 1. Diagnóstico & Arquitetura (Supabase vs Firebase), 2. Arquivos Criados e Modificados, 3. Evidências de Verificação e Code Review
 
 ### Community 1018 - "opencut-proxy.ts"
-Cohesion: 0.29
-Nodes (6): CLIENT_HEADERS_TO_FORWARD, config, SERVER_HEADERS_TO_FORWARD, buildOpenCutInjectorScript(), OPENCUT_DO_NOT_TRANSLATE, OPENCUT_I18N_DICTIONARY
+Cohesion: 0.13
+Nodes (29): downscaleImage(), ImageDeconstructModal(), ImageDeconstructModalProps, Phase, VlmAnalysis, VlmElement, COMMON_EMOJIS, FONTS (+21 more)
 
 ### Community 1019 - "A0.3 - Z-Index Layer Management"
 Cohesion: 0.40
@@ -4628,33 +4767,517 @@ Nodes (4): 143. Adição de 4 Novos Modelos NVIDIA NIM de Alta Performance (2026
 Cohesion: 0.50
 Nodes (4): 146. Correção dos Bugs de Print Duplicado (Ctrl+V) e Ditado por Voz Longo (2026-10-24), 1. Diagnóstico dos Problemas, 2. Implementações Realizadas, 3. Verificação & Deploy
 
+### Community 1023 - "DCL Skill Auditor — Leibniz Layer™"
+Cohesion: 0.06
+Nodes (31): BLOCK — credential exfiltration detected, C1 — Credential Exfiltration, C2 — Prompt Injection, C3 — Malicious Shell / Network, C4 — Obfuscation, C5 — Permission Abuse, C6 — Behavioral Mismatch, Calling the tool (+23 more)
+
 ### Community 1024 - "147. Botão `+` Estilo Google Gemini, Modos Ativos, Calibração de Canvas e Remoção de Cards no Studio (2026-10-24)"
 Cohesion: 0.50
 Nodes (4): 147. Botão `+` Estilo Google Gemini, Modos Ativos, Calibração de Canvas e Remoção de Cards no Studio (2026-10-24), 1. Diagnóstico do Incidente na Aba do Edge, 2. Implementações Realizadas, 3. Verificação & Deploy
 
 ### Community 1025 - "pyodide-client.ts"
+Cohesion: 0.06
+Nodes (31): 1. 数据采集, ==================== 1. 采集所有进程数据 ====================, 2. 数据存储, ==================== 2. 更新进程趋势数据 ====================, ==================== 3. 分析增长率 ====================, 3. 分析算法, ==================== 4. 生成报告 ====================, 4. 输出报告 (+23 more)
+
+### Community 1026 - "Test-Driven Development (TDD)"
+Cohesion: 0.06
+Nodes (29): Common Rationalizations, Debugging Integration, Example: Bug Fix, Final Rule, Good Tests, GREEN - Minimal Code, Overview, Red Flags - STOP and Start Over (+21 more)
+
+### Community 1027 - "nginx-config-linter.py"
+Cohesion: 0.14
+Nodes (27): Enum, check_performance(), check_security(), check_syntax(), collect_files(), find_directives(), find_in_context(), format_json() (+19 more)
+
+### Community 1028 - "Changelog"
+Cohesion: 0.07
+Nodes (28): [0.1.0] - 2026-06-05, [0.2.0] - 2026-06-09, [0.3.0] - 2026-07-01, [0.3.1] - 2026-07-10, [0.3.2] - 2026-07-22, [0.3.3] - 2026-08-07, [0.3.4] - 2026-08-21, [0.3.5] - 2026-09-09 (+20 more)
+
+### Community 1029 - "What You Must Do When Invoked"
+Cohesion: 0.08
+Nodes (24): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Interpreter guard for subcommands, Part A - Structural extraction for code files (+16 more)
+
+### Community 1030 - "Agentic Test Engineer"
+Cohesion: 0.08
+Nodes (23): Agentic Test Engineer, Best Practices, Changelog, Ecosystem Status (as of 2026-09-28), Example 1: Generate Unit Tests, Example 2: Self-Healing a Broken Playwright Test, Example 3: Flaky Test Diagnosis, Example 4: Coverage triage for a legacy module (+15 more)
+
+### Community 1031 - "skill-card.md"
+Cohesion: 0.13
+Nodes (15): Resources, Strict tsconfig for a Vite React app, TypeScript 7.0 (6.0-compatible), TypeScript 7 in practice, What changed in 6.0/7.0 (and why your tsconfig shrinks), Deployment Geography for Use:, Description:, Ethical Considerations: (+7 more)
+
+### Community 1032 - "Biome"
+Cohesion: 0.08
+Nodes (24): Biome, `biome.json` at the project root, CI, CLI reference, Configuration details, Critical rules, Domains, `files.includes` is the only file key (+16 more)
+
+### Community 1033 - "React 19 patterns"
+Cohesion: 0.09
+Nodes (23): Actions, Activity (19.2, stable), Component authoring, Context as provider, ref cleanup, Critical rules, Document metadata, ESLint integration, Extend native element props (+15 more)
+
+### Community 1034 - "Vite 8"
+Cohesion: 0.09
+Nodes (22): Build defaults, Build optimization, Bundle analysis, Chunk load errors after deploy, Cloudflare Workers (via TanStack Start), Code splitting (Rolldown), Configuration, Deployment (+14 more)
+
+### Community 1035 - "Visual Companion Guide"
+Cohesion: 0.10
+Nodes (19): Browser Events Format, Cards (visual designs), Cleaning Up, CSS Classes Available, Design Tips, File Naming, How It Works, Mock elements (wireframe building blocks) (+11 more)
+
+### Community 1036 - "NodeDebugger"
+Cohesion: 0.19
+Nodes (4): { execSync, spawnSync }, fs, NodeDebugger, path
+
+### Community 1037 - "Creation Log: Systematic Debugging Skill"
+Cohesion: 0.10
+Nodes (19): Bulletproofing Elements, Creation Log: Systematic Debugging Skill, Enhancement 1: TDD Reference, Extraction Decisions, Final Outcome, Initial Version, Iterations, Key Insight (+11 more)
+
+### Community 1038 - "vlm-analyze.ts"
+Cohesion: 0.15
+Nodes (17): callVlmModel(), config, CoordsDebug, extractBalancedJson(), extractJsonFromResponse(), handler(), normalizeAnalysis(), sanitizeAnalysis() (+9 more)
+
+### Community 1039 - "Session diagnosis: <session-id>"
+Cohesion: 0.11
+Nodes (18): 1. Problem statement (REQUIRED), 2. Triage verdict (REQUIRED), 3. Environment (REQUIRED), 4. Sessions examined (REQUIRED), 5. Timeline (REQUIRED), 6.1 Skill timeline, 6.2 Plan adherence, 6.3 Repeated work (+10 more)
+
+### Community 1040 - "Hono"
+Cohesion: 0.11
+Nodes (19): Best practices, Built-in middleware (import from `hono/<name>`), Context (`c`), Error handling, Grouping and sub-apps, Helpers (import from `hono/<name>`), Hono, HonoRequest (`c.req`) (+11 more)
+
+### Community 1041 - "SKILL.md"
+Cohesion: 0.11
+Nodes (17): Configuration, Core Rules, Debugging Order, Feedback, Location Matching (the real algorithm), Output Gates, Proxy Headers & Real IP, proxy_pass Path Rules (+9 more)
+
+### Community 1042 - "Security Audit"
+Cohesion: 0.11
+Nodes (18): Anti-patterns, Core principles, Cost budget, Coverage and prior runs, Full audit planning, Full audit setup, Full audit workflow, Operating modes (+10 more)
+
+### Community 1043 - "Cross-cutting critical rules"
+Cohesion: 0.11
+Nodes (18): A component, the way the whole stack wants it, Best practices, biome.json, Cross-cutting critical rules, End-to-end setup, Hono RPC ties the backend's types to the React frontend - keep them in sync, One Biome command, and `files.includes` is the only include key, React Compiler replaces manual memoization - and changes how you wire Vite (+10 more)
+
+### Community 1044 - "Code Review Reception"
+Cohesion: 0.12
+Nodes (16): Acknowledging Correct Feedback, Code Review Reception, Common Mistakes, Forbidden Responses, From External Reviewers, From your human partner, GitHub Thread Replies, Gracefully Correcting Your Pushback (+8 more)
+
+### Community 1045 - "Tailwind CSS v4"
+Cohesion: 0.12
+Nodes (17): Animations, `cn()` merge order, Critical rules, CSS-first configuration, Layout and responsiveness, Never build class names dynamically, Notes, OKLCH colors (+9 more)
+
+### Community 1046 - "Testing CLAUDE.md Skills Documentation"
+Cohesion: 0.12
+Nodes (16): Documentation Variants to Test, Expected Results, Next Steps, NULL (Baseline - no skills doc), Scenario 1: Time Pressure + Confidence, Scenario 2: Sunk Cost + Works Already, Scenario 3: Authority + Speed Bias, Scenario 4: Familiarity + Efficiency (+8 more)
+
+### Community 1047 - "Testing Skills With Subagents"
+Cohesion: 0.12
+Nodes (17): Common Mistakes (Same as TDD), Example: TDD Skill Bulletproofing, GREEN Phase: Write Minimal Skill (Make It Pass), Initial Test (Failed), Iteration 1 - Add Counter, Iteration 2 - Add Foundational Principle, Meta-Testing (When GREEN Isn't Working), Overview (+9 more)
+
+### Community 1048 - "Root Cause Tracing"
+Cohesion: 0.12
+Nodes (15): 1. Observe the Symptom, 2. Find Immediate Cause, 3. Ask: What Called This?, 4. Keep Tracing Up, 5. Find Original Trigger, Adding Stack Traces, Finding Which Test Causes Pollution, Key Principle (+7 more)
+
+### Community 1049 - "Systematic Debugging"
+Cohesion: 0.12
+Nodes (15): Common Rationalizations, Overview, Phase 1: Root Cause Investigation, Phase 2: Pattern Analysis, Phase 3: Hypothesis and Testing, Phase 4: Implementation, Quick Reference, Red Flags - STOP and Follow Process (+7 more)
+
+### Community 1050 - "Persuasion Principles for Skill Design"
+Cohesion: 0.12
+Nodes (15): 1. Authority, 2. Commitment, 3. Scarcity, 4. Social Proof, 5. Unity, 6. Reciprocity, 7. Liking, Ethical Use (+7 more)
+
+### Community 1051 - "Writing Skills"
+Cohesion: 0.12
+Nodes (16): Bulletproofing Against Rationalization, Code Examples, Common Rationalizations for Skipping Testing, Directory Structure, Discovery Workflow, Flowcharts, Match the Form to the Failure, Overview (+8 more)
+
+### Community 1052 - "Finishing a Development Branch"
+Cohesion: 0.13
+Nodes (14): Common Rationalizations, Finishing a Development Branch, If your human partner asks to discard the work, Option 1: Merge Locally, Option 2: Push and Create PR, Option 3: Keep As-Is, Overview, Quick Reference (+6 more)
+
+### Community 1053 - "Priority Rule Categories"
+Cohesion: 0.13
+Nodes (14): 1. CRITICAL — Authoring New Components Correctly, 2. CRITICAL — Trust the Compiler & Drop Manual Memo, 3. HIGH — Modern Forms & Mutations (Actions), 4. HIGH — Concurrent & Visual UX, 5. MEDIUM — Effects Hygiene, 6. MEDIUM — Context & Composition, 7. Migration & Deprecations (React 19+), Agent Workflow Checklist (+6 more)
+
+### Community 1054 - "ATTACK-CLASSES.md"
+Cohesion: 0.14
+Nodes (7): Attack Classes, Attack classes — choose and split based on Phase 1, Architecture summary and companion selection, Deterministic coverage ledger, Phase 1: Map the source and plan coverage, Prior-run input, Reconnaissance
+
+### Community 1055 - "SKILL.md"
+Cohesion: 0.13
+Nodes (7): Implementer Subagent Prompt Template, Batching Small Same-Shape Work, "Cannot Verify From Diff" Items, Handling a Report That Isn't DONE, The Pre-flight Scan, Resuming From an Existing Ledger, Task Reviewer Prompt Template
+
+### Community 1056 - "Using Git Worktrees"
+Cohesion: 0.13
+Nodes (14): 1a. Native Worktree Tools (preferred), 1b. Git Worktree Fallback, Common Rationalizations, Create the Worktree, Directory Selection, Overview, Quick Reference, Report (+6 more)
+
+### Community 1057 - "Dispatching Parallel Agents"
+Cohesion: 0.14
+Nodes (13): 1. Identify Independent Domains, 2. Create Focused Agent Tasks, 3. Dispatch in Parallel, 4. Review and Integrate, Agent Prompt Structure, Common Mistakes, Dispatching Parallel Agents, Overview (+5 more)
+
+### Community 1058 - "Commands"
+Cohesion: 0.14
+Nodes (13): Commands, Exit Codes, Full audit (lint + security + performance), Lint a config file, Nginx Config Linter, Options, Performance (10 rules), Performance check (+5 more)
+
+### Community 1059 - "shadcn/ui"
+Cohesion: 0.14
+Nodes (14): Accessibility, Card, CLI, Common patterns, Component authoring pattern, Form field (with Zod), MCP server, Primitives: Base UI, Radix, React Aria (+6 more)
+
+### Community 1060 - "SKILL.md"
+Cohesion: 0.15
+Nodes (9): Address "Spirit vs Letter" Arguments, Build Rationalization Table, Bulletproofing Skills Against Rationalization, Bulletproofing Skills Against Rationalization, Close Every Loophole Explicitly, Create Red Flags List, Update SDO for Violation Symptoms, Flowchart Usage (+1 more)
+
+### Community 1061 - "Defense-in-Depth Validation"
+Cohesion: 0.17
+Nodes (11): Applying the Pattern, Defense-in-Depth Validation, Example from Session, Key Insight, Layer 1: Entry Point Validation, Layer 2: Business Logic Validation, Layer 3: Environment Guards, Layer 4: Debug Instrumentation (+3 more)
+
+### Community 1062 - "[Analysis Title]"
+Cohesion: 0.17
+Nodes (12): Advanced: Skills with executable code, [Analysis Title], Anti-patterns to avoid, Avoid offering too many options, Avoid Windows-style paths, Conditional workflow pattern, Examples pattern, Executive summary (+4 more)
+
+### Community 1063 - "skill-card.md"
+Cohesion: 0.18
+Nodes (10): Deployment Geography for Use:, Description:, Ethical Considerations:, Known Risks and Mitigations:, License/Terms of Use:, Publisher:, Reference(s):, Skill Output: (+2 more)
+
+### Community 1064 - "Brainstorming"
+Cohesion: 0.18
+Nodes (10): Brainstorming, First: What Do You Actually Know?, Look Before You Ask, Play It Back, Red Flags, Size the Work, The Conversation, The Written Design (+2 more)
+
+### Community 1065 - "skill-card.md"
+Cohesion: 0.18
+Nodes (10): Deployment Geography for Use:, Description:, Ethical Considerations:, Known Risks and Mitigations:, License/Terms of Use:, Publisher:, Reference(s):, Skill Output: (+2 more)
+
+### Community 1066 - "skill-card.md"
+Cohesion: 0.18
+Nodes (10): Deployment Geography for Use:, Description:, Ethical Considerations:, Known Risks and Mitigations:, License/Terms of Use:, Publisher:, Reference(s):, Skill Output: (+2 more)
+
+### Community 1067 - "skill-card.md"
+Cohesion: 0.18
+Nodes (10): Deployment Geography for Use:, Description:, Ethical Considerations:, Known Risks and Mitigations:, License/Terms of Use:, Publisher:, Reference(s):, Skill Output: (+2 more)
+
+### Community 1068 - "skill-card.md"
+Cohesion: 0.18
+Nodes (10): Deployment Geography for Use:, Description:, Ethical Considerations:, Known Risks and Mitigations:, License/Terms of Use:, Publisher:, Reference(s):, Skill Output: (+2 more)
+
+### Community 1069 - "skill-card.md"
+Cohesion: 0.18
+Nodes (10): Deployment Geography for Use:, Description:, Ethical Considerations:, Known Risks and Mitigations:, License/Terms of Use:, Publisher:, Reference(s):, Skill Output: (+2 more)
+
+### Community 1070 - "Core Workflow"
+Cohesion: 0.18
+Nodes (10): 1. Schema Design Principles, 2. Migration Workflow, 3. Client Initialization (Singleton Pattern), 4. Common Query Patterns, 5. Transactions, 6. Error Handling, Best Practices, Core Workflow (+2 more)
+
+### Community 1071 - "Client-Side and Browser Hunting"
+Cohesion: 0.18
+Nodes (10): Client-Side and Browser Hunting, Core discipline (include in every agent prompt for this domain), Cross-origin messaging and network attack classes (subagent_type: `general`), Cross-site information leak classes (subagent_type: `general`), DOM and object-state attack classes (subagent_type: `general`), Service-worker and browser-storage attack classes (subagent_type: `general`), UI-redress and navigation attack classes (subagent_type: `general`), Universal moves (apply across the above) (+2 more)
+
+### Community 1072 - "Desktop, Mobile, and Local IPC Hunting"
+Cohesion: 0.18
+Nodes (10): Application-state and device-lifecycle attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), Deep-link, callback, and navigation attack classes (subagent_type: `general`), Desktop, Mobile, and Local IPC Hunting, Local IPC and exported-component attack classes (subagent_type: `general`), Privileged-helper and local-file attack classes (subagent_type: `general`), Universal moves (apply across the above), Validation rules (apply before reporting ANY finding here) (+2 more)
+
+### Community 1073 - "Memory Safety, Binary, and Kernel Hunting"
+Cohesion: 0.18
+Nodes (10): Binary loading and runtime attack classes (subagent_type: `general`), Bounds, integer, and representation attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), FFI and ABI attack classes (subagent_type: `general`), Kernel and privileged-interface attack classes (subagent_type: `general`), Lifetime, type, and concurrency attack classes (subagent_type: `general`), Memory Safety, Binary, and Kernel Hunting, Universal moves (apply across the above) (+2 more)
+
+### Community 1074 - "skill-card.md"
+Cohesion: 0.18
+Nodes (10): Deployment Geography for Use:, Description:, Ethical Considerations:, Known Risks and Mitigations:, License/Terms of Use:, Publisher:, Reference(s):, Skill Output: (+2 more)
+
+### Community 1075 - "Vitest"
+Cohesion: 0.18
+Nodes (11): Browser Mode, CLI, Component test, Configuration, Coverage, Migrating from v4, Mocking, Projects (+3 more)
+
+### Community 1076 - "Returns: "OK" or lists conflicts"
+Cohesion: 0.18
+Nodes (11): Avoid assuming tools are installed, Create verifiable intermediate outputs, MCP tool references, Next steps, Package dependencies, Returns: "OK" or lists conflicts, Runtime environment, Technical notes (+3 more)
+
+### Community 1077 - "context-compactor.ts"
+Cohesion: 0.36
+Nodes (9): SwipeableConversationItemProps, buildCompactionPrompt(), compactConversation(), estimateConversationTokens(), prepareMessagesForApi(), shouldCompact(), createMockMessage(), runTests() (+1 more)
+
+### Community 1078 - "mcp-client.ts"
+Cohesion: 0.44
+Nodes (9): buildMcpRpcRequest(), convertMcpToolsToOpenAi(), executeMcpToolCall(), McpRpcRequest, parseMcpResponsePayload(), parseMcpToolResponse(), runTests(), testMcpConnection() (+1 more)
+
+### Community 1079 - "test_vlm_race_logic.mjs"
+Cohesion: 0.27
+Nodes (7): AbortError2, callVlmModel(), run(), sleep(), STAGE_2_RACE, validAnalysis, VlmCallError
+
+### Community 1080 - "issue.md"
+Cohesion: 0.20
+Nodes (9): Actual behavior, Debug log or conversation transcript, Environment (required), Expected behavior, Human-authored summary (required, under 200 words), Is this a Superpowers issue or a platform issue?, Steps to reproduce, What happened? (+1 more)
+
+### Community 1081 - "Debugging — Symptom to Cause"
+Cohesion: 0.20
+Nodes (9): Debugging — Symptom to Cause, Deeper Tracing, SELinux (RHEL/CentOS/Fedora — the distro-specific 502/403), Sporadic 502 on a Healthy Backend (the keepalive race), Status Code Decoder (nginx-specific meanings), The 499 Spike, When You Are Truly Stuck, Won't Start / Dies at Startup (+1 more)
+
+### Community 1082 - "Reverse Proxy: Traps and Diagnosis"
+Cohesion: 0.20
+Nodes (9): 502 vs 504 (decide before touching config), Buffering & Streaming, gRPC, Header Details, Keepalive to Upstreams (the silent no-op), Retries & Failover, Reverse Proxy: Traps and Diagnosis, The DNS Trap (dynamic backends, Docker, K8s) (+1 more)
+
+### Community 1083 - "Redirects & Rewrites"
+Cohesion: 0.20
+Nodes (9): Bulk Redirects (the map pattern), Canonical Host (www ↔ apex, http → https), Diagnosis, Redirects & Rewrites, return vs rewrite (the default and the exception), rewrite Flags, Status Codes (method and cache semantics), The Port-Leak Redirect (containers and nonstandard ports) (+1 more)
+
+### Community 1084 - "Security — Rate Limits, Auth, and Hardening"
+Cohesion: 0.20
+Nodes (9): Access Control, auth_request (subrequest authentication), Blocking Sensitive Paths, Connection & Bandwidth Limits, CORS (do it once, correctly), Rate Limiting (beyond the base block), Security — Rate Limits, Auth, and Hardening, Surface Reduction (+1 more)
+
+### Community 1085 - "AI, LLM, and Agent Hunting"
+Cohesion: 0.20
+Nodes (9): AI, LLM, and Agent Hunting, Context, retrieval, and memory attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), MCP and sub-agent trust classes (subagent_type: `general`), Output and disclosure attack classes (subagent_type: `general`), Tool and action attack classes (subagent_type: `general`), Universal moves (apply across the above), Validation rules (apply before reporting ANY finding here) (+1 more)
+
+### Community 1086 - "Cloud and Deployment Hunting"
+Cohesion: 0.20
+Nodes (10): Cloud and Deployment Hunting, Configuration and secret lifecycle attack classes (subagent_type: `general`), Container and orchestration attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), Ingress, network, and control-plane attack classes (subagent_type: `general`), Managed storage, events, and edge attack classes (subagent_type: `general`), Universal moves (apply across the above), Validation rules (apply before reporting ANY finding here) (+2 more)
+
+### Community 1087 - "Vulnerability Hunting"
+Cohesion: 0.20
+Nodes (10): Core hunting method — include in every hunter prompt, Core validation rules — include in every hunter prompt, Coverage-critic waves, Local validation boundaries, Parent consolidation and ledger update, Phase 2: Run coverage-led hunting waves, Promotion procedure — copy this promotion procedure verbatim into every hunter prompt, Required hunter prompt (+2 more)
+
+### Community 1088 - "Protocols, RPC, and Messaging Hunting"
+Cohesion: 0.20
+Nodes (9): Broker and queue isolation attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), Framing, schema, and interpretation attack classes (subagent_type: `general`), Protocols, RPC, and Messaging Hunting, Replay, ordering, and transaction attack classes (subagent_type: `general`), RPC identity and authorization attack classes (subagent_type: `general`), Universal moves (apply across the above), Validation rules (apply before reporting ANY finding here) (+1 more)
+
+### Community 1089 - "Resource Exhaustion and Availability Hunting"
+Cohesion: 0.20
+Nodes (9): Computational amplification attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), Failure and recovery attack classes (subagent_type: `general`), Quota and scheduling attack classes (subagent_type: `general`), Resource accumulation attack classes (subagent_type: `general`), Resource Exhaustion and Availability Hunting, Universal moves (apply across the above), Validation rules (apply before reporting ANY finding here) (+1 more)
+
+### Community 1090 - "HTTP-Protocol and Authentication Hunting"
+Cohesion: 0.20
+Nodes (10): API-key and mTLS attack classes (subagent_type: `general`), Browser-session attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), Federated-identity attack classes (subagent_type: `general`), HTTP framing and cache attack classes (subagent_type: `general`), HTTP-Protocol and Authentication Hunting, MFA, passkey, and account-transition attack classes (subagent_type: `general`), Universal moves (apply across the above) (+2 more)
+
+### Community 1091 - "Condition-Based Waiting"
+Cohesion: 0.20
+Nodes (9): Common Mistakes, Condition-Based Waiting, Core Pattern, Implementation, Overview, Quick Patterns, Real-World Impact, When Arbitrary Timeout IS Correct (+1 more)
+
+### Community 1092 - "Verification Before Completion"
+Cohesion: 0.20
+Nodes (9): Common Failures, Key Patterns, Overview, Rationalization Prevention, Red Flags - STOP, The Gate Function, The Iron Law, Verification Before Completion (+1 more)
+
+### Community 1093 - "Skill structure"
+Cohesion: 0.20
+Nodes (10): Avoid deeply nested references, Naming conventions, Pattern 1: High-level guide with references, Pattern 2: Domain-specific organization, Pattern 3: Conditional details, Progressive disclosure patterns, Skill structure, Structure longer reference files with table of contents (+2 more)
+
+### Community 1094 - "helper.js"
+Cohesion: 0.42
+Nodes (7): connect(), nextReconnectDelay(), reloadAfterRecovery(), sessionKey(), setStatus(), showTombstone(), websocketUrl()
+
+### Community 1095 - "Modern React Guidance"
+Cohesion: 0.22
+Nodes (8): Author, Install, License, Manual, Modern React Guidance, Structure, Via skills.sh / agent skills CLI, What it covers
+
+### Community 1096 - "Operations — Signals, Upgrades, Monitoring, Rotation"
+Cohesion: 0.22
+Nodes (8): Config Testing in CI, Dynamic Modules, Log Rotation, Monitoring: stub_status, Operations — Signals, Upgrades, Monitoring, Rotation, Packaging & Versions, Signals (the complete map), Zero-Downtime Binary Upgrade (USR2/WINCH)
+
+### Community 1097 - "Config Semantics: Where nginx Doesn't Behave Like It Reads"
+Cohesion: 0.22
+Nodes (8): add_header / proxy_set_header Inheritance, Config Semantics: Where nginx Doesn't Behave Like It Reads, if Is a Pseudo-Location, Includes & File Layout, Root vs Alias, Server Selection, try_files Details, Variables
+
+### Community 1098 - "SSL/TLS: Traps and Diagnosis"
+Cohesion: 0.22
+Nodes (8): Certificates & Chain, Client Certificates (mTLS), HSTS (a one-way door), HTTP/2 and HTTP/3, Modern Baseline, OCSP Stapling, SSL/TLS: Traps and Diagnosis, The Redirect Loop (behind CDN/LB)
+
+### Community 1099 - "Node.js Auto Debugger"
+Cohesion: 0.22
+Nodes (8): Backend (Express/Fastify), Config, Fixing Hydration Issues (Next.js), Frontend (Next.js/React), Node.js Auto Debugger, Output, Quick Start, What It Checks
+
+### Community 1100 - "Data Isolation and Lifecycle Hunting"
+Cohesion: 0.22
+Nodes (9): Core discipline (include in every agent prompt for this domain), Data Isolation and Lifecycle Hunting, Deletion, revocation, and lifecycle attack classes (subagent_type: `general`), Derived-data and disclosure attack classes (subagent_type: `general`), Export, backup, restore, and migration attack classes (subagent_type: `general`), Tenant and object-isolation attack classes (subagent_type: `general`), Universal moves (apply across the above), Validation rules (apply before reporting ANY finding here) (+1 more)
+
+### Community 1101 - "Supply Chain and Release Hunting"
+Cohesion: 0.22
+Nodes (8): CI and automation attack classes (subagent_type: `general`), Core discipline (include in every agent prompt for this domain), Dependency and build-input attack classes (subagent_type: `general`), Release and update attack classes (subagent_type: `general`), Supply Chain and Release Hunting, Universal moves (apply across the above), Validation rules (apply before reporting ANY finding here), When to use this file
+
+### Community 1102 - "Validation, Structured Output, Verification, and Reporting"
+Cohesion: 0.22
+Nodes (9): Candidate-verifier prompt, `FINDINGS-DETAIL.md`, `NEEDS-VALIDATION.md`, Phase 3: Independently validate every candidate, Phase 4: Write and validate `findings.json`, Phase 5: Verify the final records with fresh eyes, Phase 6: Produce target-neutral reports from final records, `REPORT.md` (+1 more)
+
+### Community 1103 - "Skill authoring best practices"
+Cohesion: 0.22
+Nodes (9): Avoid time-sensitive information, Common patterns, Content guidelines, Implement feedback loops, Skill authoring best practices, Template pattern, Use consistent terminology, Use workflows for complex tasks (+1 more)
+
+### Community 1104 - "Skill Discovery Optimization (SDO)"
+Cohesion: 0.22
+Nodes (8): 1. Rich Description Field, 2. Keyword Coverage, 3. Descriptive Naming, 4. Token Efficiency (Critical), 5. Cross-Referencing Other Skills, Skill Discovery Optimization (SDO), SKILL.md Structure, Writing SKILL.md for Discovery
+
+### Community 1105 - "Containers — nginx in Docker and Kubernetes"
+Cohesion: 0.25
+Nodes (7): Compose Reference Shape, Config Injection (official image templates), Containers — nginx in Docker and Kubernetes, DNS for Dynamic Backends, Kubernetes Specifics, The Container Contract, Unprivileged & Read-Only
+
+### Community 1106 - "Performance: Tuning That Actually Moves Numbers"
+Cohesion: 0.25
+Nodes (7): Buffers, Gzip, Logging Cost, Performance: Tuning That Actually Moves Numbers, Proxy Cache, Static Files & FD Cache, Workers & Connections
+
+### Community 1107 - "Stream — TCP/UDP Proxying and TLS Passthrough"
+Cohesion: 0.25
+Nodes (7): Client IP at the TCP Layer, Logging & Diagnosis, Mail Proxy (boundary note), Minimal TCP Proxy, Stream — TCP/UDP Proxying and TLS Passthrough, TLS Passthrough by SNI (route without terminating), UDP
+
+### Community 1108 - "Patterns"
+Cohesion: 0.25
+Nodes (8): Component props, Discriminated unions over booleans, Generic components, Hook and event types, `import defer` (TS 5.9+), Patterns, `satisfies` for config literals, Zod v4 validation
+
+### Community 1109 - "Gemini CLI Tool Mapping"
+Cohesion: 0.25
+Nodes (7): Additional Gemini CLI tools, Gemini CLI Tool Mapping, Instructions file, Parallel dispatch, Personal skills directory, Prompt filling, Subagent support
+
+### Community 1110 - "Writing Plans"
+Cohesion: 0.25
+Nodes (7): Bite-Sized Task Granularity, Execution Handoff, Overview, Plan Document Header, Remember, Task Structure, Writing Plans
+
+### Community 1111 - "db-conversations.ts"
 Cohesion: 0.43
-Nodes (5): executePythonCode(), formatPythonOutput(), getWorker(), pendingRequests, PythonExecutionResult
+Nodes (6): config, ConversationIndexItem, conversationToRow(), getSupabaseCredentials(), handler(), rowToConversation()
+
+### Community 1112 - "stop-server.sh"
+Cohesion: 0.43
+Nodes (4): command_has_server_id(), is_brainstorm_server(), mark_stopped(), stop-server.sh script
+
+### Community 1113 - "Diagnosing Superpowers"
+Cohesion: 0.29
+Nodes (6): Diagnosing Superpowers, Hard rules, Overview, Quick reference, Red Flags, Workflow
+
+### Community 1114 - "Superpowers session diagnosis bundle"
+Cohesion: 0.29
+Nodes (6): Files, How to read it, Producer instructions, Redaction, Superpowers session diagnosis bundle, What this is
+
+### Community 1115 - "Case: <session-id>"
+Cohesion: 0.29
+Nodes (6): Case: <session-id>, Context-safety rules for every reader of these files, Discovered sources and record meanings, Environment, Problem statement (agreed with your human partner), Sessions
+
+### Community 1116 - "Executing Plans"
+Cohesion: 0.29
+Nodes (7): Common Rationalizations, Executing Plans, Final Review, Finish, Setup, The Process, When to Use
+
+### Community 1117 - "FastCGI — PHP-FPM and Friends"
+Cohesion: 0.29
+Nodes (6): FastCGI Cache (full-page cache for PHP sites), FastCGI — PHP-FPM and Friends, Framework Routing, PATH_INFO (front controllers and /index.php/route URLs), Symptom → Cause, The Minimal Correct PHP Block
+
+### Community 1118 - "final-review.md"
+Cohesion: 0.29
+Nodes (4): Scoped Re-Review Prompt Template, Final Review and Finish, Finish, The Fix Loop
+
+### Community 1119 - "Subagent-Driven Development"
+Cohesion: 0.29
+Nodes (7): Common Rationalizations, Final Review, Model Selection, Setup, Subagent-Driven Development, The Process, When to Use
+
+### Community 1120 - "Dev server"
+Cohesion: 0.29
+Nodes (7): allowedHosts (tunnels and custom domains), `cloudflare:workers` import errors, Dev server, File warmup, forwardConsole (new in Vite 8), HMR troubleshooting, Proxy
+
+### Community 1121 - "Hermes Agent Tool Mapping"
+Cohesion: 0.29
+Nodes (6): Hermes Agent Tool Mapping, Instructions file, Invoking a skill, Subagent dispatch, Task tracking, Tools
+
+### Community 1122 - "REFACTOR Phase: Close Loopholes (Stay Green)"
+Cohesion: 0.29
+Nodes (7): 1. Explicit Negation in Rules, 2. Entry in Rationalization Table, 3. Red Flag Entry, 4. Update description, Plugging Each Hole, Re-verify After Refactoring, REFACTOR Phase: Close Loopholes (Stay Green)
+
+### Community 1123 - "Setup — Nginx"
+Cohesion: 0.33
+Nodes (5): How To Load Preferences, Recording Preferences (only when the user declares one), Setup — Nginx, What Memory Holds, Your Attitude
+
+### Community 1124 - "Requesting Code Review"
+Cohesion: 0.33
+Nodes (6): Common Rationalizations, Example, How to Request, Red Flags, Requesting Code Review, When to Request Review
+
+### Community 1125 - "The Task Loop"
+Cohesion: 0.33
+Nodes (6): 1. Dispatch the implementer, 2. Handle the report, 3. Review the task, 4. The fix loop, 5. Complete the task, The Task Loop
+
+### Community 1126 - "codex-tools.md"
+Cohesion: 0.33
+Nodes (5): Codex App Finishing, Environment Detection, Model routing on spawns, Subagent dispatch requires multi-agent support, Waiting on children
+
+### Community 1127 - "Muse Tool Mapping"
+Cohesion: 0.33
+Nodes (5): Instructions file, Muse Tool Mapping, Skill invocation, Subagent dispatch, Task tracking
+
+### Community 1128 - "SKILL.md"
+Cohesion: 0.33
+Nodes (5): Platform Adaptation, Red Flags, Skill Priority, The Rule, User Instructions
+
+### Community 1129 - "render-graphs.js"
+Cohesion: 0.60
+Nodes (5): combineGraphs(), extractDotBlocks(), extractGraphBody(), main(), renderToSvg()
+
+### Community 1131 - "The Task Loop"
+Cohesion: 0.40
+Nodes (5): 1. Take the task, 2. Work the steps, 3. The completion contract, 4. Complete the task, The Task Loop
+
+### Community 1132 - "Pressure Test 1: Emergency Production Fix"
+Cohesion: 0.40
+Nodes (4): Choose A, B, or C, Pressure Test 1: Emergency Production Fix, Scenario, Your Options
+
+### Community 1133 - "Pressure Test 2: Sunk Cost + Exhaustion"
+Cohesion: 0.40
+Nodes (4): Choose A, B, or C, Pressure Test 2: Sunk Cost + Exhaustion, Scenario, Your Options
+
+### Community 1134 - "Pressure Test 3: Authority + Social Pressure"
+Cohesion: 0.40
+Nodes (4): Choose A, B, or C, Pressure Test 3: Authority + Social Pressure, Scenario, Your Options
+
+### Community 1135 - "anthropic-best-practices.md"
+Cohesion: 0.40
+Nodes (4): [Analysis Title], Executive summary, Key findings, Recommendations
+
+### Community 1136 - "VERIFY GREEN: Pressure Testing"
+Cohesion: 0.40
+Nodes (5): Key Elements of Good Scenarios, Pressure Types, Testing Setup, VERIFY GREEN: Pressure Testing, Writing Pressure Scenarios
+
+### Community 1137 - "Anti-Patterns"
+Cohesion: 0.40
+Nodes (5): Anti-Patterns, ❌ Code in Flowcharts, ❌ Generic Labels, ❌ Multi-Language Dilution, ❌ Narrative Example
+
+### Community 1138 - "Testing All Skill Types"
+Cohesion: 0.40
+Nodes (5): Discipline-Enforcing Skills (rules/requirements), Pattern Skills (mental models), Reference Skills (documentation/APIs), Technique Skills (how-to guides), Testing All Skill Types
+
+### Community 1139 - "RED-GREEN-REFACTOR for Skills"
+Cohesion: 0.40
+Nodes (5): GREEN: Write Minimal Skill, Micro-Test Wording Before Full Scenarios, RED-GREEN-REFACTOR for Skills, RED: Write Failing Test (Baseline), REFACTOR: Close Loopholes
+
+### Community 1140 - "GitHub issues"
+Cohesion: 0.50
+Nodes (3): File, GitHub issues, Search
+
+### Community 1142 - "Pi Tool Mapping"
+Cohesion: 0.50
+Nodes (3): Pi Tool Mapping, Subagents, Task lists
+
+### Community 1143 - "Evaluation and iteration"
+Cohesion: 0.50
+Nodes (4): Build evaluations first, Develop Skills iteratively with the agent, Evaluation and iteration, Observe how agents navigate Skills
+
+### Community 1144 - "Checklist for effective Skills"
+Cohesion: 0.50
+Nodes (4): Checklist for effective Skills, Code and scripts, Core quality, Testing
+
+### Community 1145 - "Core principles"
+Cohesion: 0.50
+Nodes (4): Concise is key, Core principles, Set appropriate degrees of freedom, Test with all models you plan to use
+
+### Community 1146 - "File Organization"
+Cohesion: 0.50
+Nodes (4): File Organization, Self-Contained Skill, Skill with Heavy Reference, Skill with Reusable Tool
+
+### Community 1147 - "Skill Types"
+Cohesion: 0.50
+Nodes (4): Pattern, Reference, Skill Types, Technique
 
 ## Knowledge Gaps
-- **9625 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+9620 more)
+- **10734 isolated node(s):** `config`, `config`, `config`, `modelFallbackCache`, `config` (+10729 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **111 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **129 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `PreviewDevTools()` connect `preview-html.ts` to `index.ts`?**
+- **Why does `dependencies` connect `dependencies` to `vite`, `package.json`, `thinking-orbs`, `@stackblitz/sdk`, `document-generator.ts`, `voice-button.tsx`, `cheerio`, `Éden - Arquitetura, Motores e Tipos`, `motion`, `Éden - Frontend, Componentes e Telas`, `Éden - Backend, Servidor e Rotas Edge`, `run_pipeline`, `cheerio`, `react-diff-viewer-continued`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `log()` connect `index.ts` to `preview-html.ts`?**
+- **Why does `react` connect `run_pipeline` to `App.tsx`, `dependencies`, `github.ts`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `Document` connect `._setup_tracking` to `DocxXMLEditor`, `toc_validate.py`, `jd_gap.py`, `main`, `dotenv`, `star_story_builder.py`, `.__init__`, `XMLEditor`?**
+- **Why does `AppContent()` connect `App.tsx` to `github.ts`, `preview-html.ts`, `studio-panel.tsx`, `types.ts`, `graphify-engine.ts`, `A0.3 - Z-Index Layer Management`, `DeckStage`, `remote-gate.ts`, `run_pipeline`, `subagent-runner.ts`, `deployment-service.ts`, `settings-modal.tsx`, `context-compactor.ts`, `mcp-client.ts`, `project-context.tsx`, `document-generator.ts`, `db-projects.ts`, `opencut-proxy.ts`, `vercel.json`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `AppContent()` (e.g. with `.prev()` and `query()`) actually correct?**
   _`AppContent()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 28 inferred relationships involving `main()` (e.g. with `org_detail()` and `org_disambiguate()`) actually correct?**
   _`main()` has 28 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 7 inferred relationships involving `Document` (e.g. with `_extract_headings_from_docx()` and `XMLEditor`) actually correct?**
-  _`Document` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `config`, `config`, `config` to the rest of the system?**
-  _9625 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _10734 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `_security.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.08243727598566308 - nodes in this community are weakly interconnected._

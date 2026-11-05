@@ -2826,3 +2826,32 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
      - Deploy publicado com sucesso em `https://eden-ia.pages.dev`.
 
 
+## 150. Correção de Bug e Fechamento no Editor de Camadas e Desconstrutor de Imagem (2026-11-05)
+
+- **Problema:** Ao usar a função de desconstruir imagem ("VLM -> Camadas") ou clicar em "Camadas" em um card de imagem gerada, ao ir para a tela de edição ("Abrir no Editor"), o modal travava, apresentava erro ou fechava imediatamente.
+- **Causas Raiz Identificadas:**
+  1. **Dessincronização de Estado:** O `ImageEditorModal` inicializava o projeto uma única vez no mount inicial da aplicação com um projeto vazio e não possuía sincronização reativa com o `initialProject` enviado pelo VLM.
+  2. **Ghost Click e Propagação de Eventos:** O botão "Abrir no Editor" em `ImageDeconstructModal` propagava o evento de clique e disparava concorrentemente `onProjectReady()` e `onClose()`, causando fechamento instantâneo do modal em cascata.
+  3. **CORS em Imagens Base64 (Data URLs):** O carregamento de imagem de fundo com `fabric.Image.fromURL(url, { crossOrigin: 'anonymous' })` falhava silenciosamente ou disparava alertas de segurança em strings `data:image/...`.
+  4. **Compatibilidade e Robustez no Fabric.js 6:** Propriedades de texto e shapes não mapeados podiam retornar nulo ou quebrar durante a renderização no canvas.
+  5. **Ergonomia Mobile:** A divisão do editor em 3 colunas horizontais espremia o canvas em telas pequenas de celular (< 640px).
+- **Soluções Implementadas:**
+  1. **Sincronização Reativa & Remount Limpo (`src/components/image-editor/image-editor-modal.tsx` & `src/App.tsx`):**
+     - Adicionado `key={imageEditorState.project?.id || ...}` na instância do modal em `App.tsx` para garantir desmontagem e recriação atômica do Fabric Canvas sem resíduos.
+     - Adicionado `useEffect` de sincronização direta entre `initialProject` e o estado `project`.
+  2. **Contenção de Eventos e Trava de Fechamento (`src/components/image-deconstruct-modal.tsx`):**
+     - `handleOpenInEditor` agora executa `e.preventDefault()` e `e.stopPropagation()`.
+     - Removida a chamada redundante e concorrente de `onClose()`.
+  3. **Tratamento Defensivo de CORS (`image-editor-modal.tsx`):**
+     - URLs locais (`data:` ou `blob:`) são carregadas sem cabeçalho `crossOrigin`, enquanto URLs remotas mantêm `crossOrigin: 'anonymous'`.
+     - Adicionado fallback automático para retângulos editáveis se qualquer imagem falhar.
+  4. **Padrão Mobile-First e Ergonomia:**
+     - Adicionado modo adaptativo (`mobileTab: 'canvas' | 'layers'`) com botão de alternância no header para telas `< 640px`.
+     - No celular, o canvas utiliza 100% da largura útil e o painel de camadas é exibido em visualização dedicada com botão "← Voltar ao Canvas".
+     - Touch targets da barra de ferramentas ajustados para o mínimo ergonômico de 44x44px (`min-h-[44px] min-w-[44px]`).
+- **Evidências de Verificação:**
+  - `npx tsc -p tsconfig.app.json --noEmit`: **0 erros de compilação**.
+  - `npm test`: **240/240 testes passando** (47 suítes, 100% verde).
+  - `npm run build`: Bundle Vite e Cloudflare Pages Functions Worker compilados com sucesso.
+  - Grafo Graphify sincronizado (`python -m graphify update .`).
+  - Code review formal: **Aprovado com rigor técnico**.
