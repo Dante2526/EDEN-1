@@ -2812,3 +2812,17 @@ Durante esta sessão massiva de engenharia, efetuamos uma varredura completa na 
   - `python -m graphify update .`: Grafo de conhecimento atualizado (15.086 nós, 17.371 arestas, 1.025 comunidades).
   - Code Review formal: **Ready to Merge: YES** (0 issues críticos ou importantes).
 
+## 149. Limpeza e Remoção dos Modelos Offline na NVIDIA NIM (2026-11-05)
+
+- **Problema:** Os modelos `z-ai/glm-5.3` (HTTP 410 descontinuado pela Zhipu na NVIDIA), `z-ai/glm-5.3-flash`, `deepseek-ai/deepseek-v4.1-flash` e `openai/gpt-oss-20b` estavam fora do ar na infraestrutura da NVIDIA NIM, poluindo o menu seletor e causando erros quando selecionados.
+- **Solução Implementada:**
+  1. **Remoção das Matrizes de Modelos (`src/lib/models.ts` & `lib/server/_security.ts`):** Reduzida a lista oficial para os 6 modelos 100% online (`nemotron-3.5-lightning-30b-a3b`, `gemma-4-31b-it`, `nemotron-3.5-super-vl-120b-a12b`, `minimax-m3.1-flash`, `diffusiongemma-26b-a4b-it` e `nemotron-3-ultra-550b-a55b`).
+  2. **Atualização da Tipagem Estrita (`src/lib/types.ts`):** `ConcreteModelId` ajustado com precisão.
+  3. **Interface Visual Limpa (`src/components/model-controls.tsx`):** Removidos todos os cards e opções dos 4 modelos descontinuados. O seletor agora exibe apenas os modelos ativos.
+  4. **Smart Model Router e Fallbacks (`src/lib/smart-model-router.ts`, `src/lib/context-compactor.ts`, `src/components/source-control/source-control-panel.tsx`, `src/lib/studio-config.ts`):** Compactador de contexto, gerador de commits e subagentes do Studio agora utilizam o `nemotron-3.5-lightning-30b-a3b` (500ms) e `gemma-4-31b-it`.
+  5. **Verificação & Deploy em Produção:**
+     - `npx tsc --noEmit`: 0 erros.
+     - `npm test`: 240/240 testes passando (100% verde).
+     - Deploy publicado com sucesso em `https://eden-ia.pages.dev`.
+
+
